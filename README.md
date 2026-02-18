@@ -63,15 +63,17 @@ portfolio/
 │       └── models/         # Interfaces TypeScript
 │
 ├── Server/                 # FastAPI backend
-│   └── app/
-│       ├── controllers/    # Rotas HTTP (camada de apresentacao)
-│       ├── services/       # Logica de negocio e orquestracao
-│       ├── domain/
-│       │   ├── models/     # Entidades SQLAlchemy
-│       │   └── schemas/    # Schemas Pydantic (request/response)
-│       └── repositories/   # Acesso a dados
-│   └── alembic/            # Migrations do banco
+│   ├── app/
+│   │   ├── controllers/    # Rotas HTTP (camada de apresentacao)
+│   │   ├── services/       # Logica de negocio e orquestracao
+│   │   ├── domain/
+│   │   │   ├── models/     # Entidades SQLAlchemy
+│   │   │   └── schemas/    # Schemas Pydantic (request/response)
+│   │   └── repositories/   # Acesso a dados
+│   ├── alembic/            # Migrations do banco
+│   └── tests/              # Testes automatizados (pytest)
 │
+├── CLAUDE.md               # Convencoes e principios de engenharia
 └── docker-compose.yml      # Orquestracao dos servicos
 ```
 
