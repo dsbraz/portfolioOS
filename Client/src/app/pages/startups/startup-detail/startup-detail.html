@@ -77,6 +77,13 @@
         }
       </mat-menu>
       <span class="header-spacer"></span>
+      <button mat-icon-button matTooltip="Links anteriores" (click)="openTokenListDialog()">
+        <mat-icon>history</mat-icon>
+      </button>
+      <button mat-stroked-button (click)="generateReportToken()">
+        <mat-icon>add_link</mat-icon>
+        Gerar link
+      </button>
       <button mat-stroked-button (click)="openEditStartup()">
         <mat-icon>edit</mat-icon>
         Editar

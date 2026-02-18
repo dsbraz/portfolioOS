@@ -24,6 +24,8 @@ import { StartupService } from '../../../services/startup.service';
 import { MonthlyIndicatorService } from '../../../services/monthly-indicator.service';
 import { BoardMeetingService } from '../../../services/board-meeting.service';
 import { ExecutiveService } from '../../../services/executive.service';
+import { ReportTokenService } from '../../../services/report-token.service';
+import { ReportToken } from '../../../models/report-token.model';
 import { StatusBadge } from '../../../components/status-badge/status-badge';
 import {
   StartupFormDialog,
@@ -41,6 +43,10 @@ import {
   ExecutiveFormDialog,
   ExecutiveFormDialogData,
 } from '../executive-form-dialog/executive-form-dialog';
+import {
+  ReportTokenListDialog,
+  ReportTokenListDialogData,
+} from '../report-token-list-dialog/report-token-list-dialog';
 
 @Component({
   selector: 'app-startup-detail',
@@ -73,11 +79,13 @@ export class StartupDetail implements OnInit {
   private readonly indicatorService = inject(MonthlyIndicatorService);
   private readonly meetingService = inject(BoardMeetingService);
   private readonly executiveService = inject(ExecutiveService);
+  private readonly reportTokenService = inject(ReportTokenService);
 
   readonly startup = signal<Startup | null>(null);
   readonly indicators = signal<MonthlyIndicator[]>([]);
   readonly meetings = signal<BoardMeeting[]>([]);
   readonly executives = signal<Executive[]>([]);
+  readonly reportTokens = signal<ReportToken[]>([]);
   readonly loading = signal(false);
   readonly monthLabels = MONTH_LABELS;
   readonly statusConfig = STARTUP_STATUS_CONFIG;
@@ -111,12 +119,14 @@ export class StartupDetail implements OnInit {
       indicators: this.indicatorService.list(this.startupId),
       meetings: this.meetingService.list(this.startupId),
       executives: this.executiveService.list(this.startupId),
+      reportTokens: this.reportTokenService.listTokens(this.startupId),
     }).subscribe({
-      next: ({ startup, indicators, meetings, executives }) => {
+      next: ({ startup, indicators, meetings, executives, reportTokens }) => {
         this.startup.set(startup);
         this.indicators.set(indicators.items);
         this.meetings.set(meetings.items);
         this.executives.set(executives.items);
+        this.reportTokens.set(reportTokens.items);
         this.loading.set(false);
       },
       error: (err) => {
@@ -395,6 +405,30 @@ export class StartupDetail implements OnInit {
         this.loadAll();
       },
       error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao excluir executivo', 'Fechar', { duration: 3000 }),
+    });
+  }
+
+  // Report Tokens
+  generateReportToken(): void {
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
+    this.reportTokenService.generateToken(this.startupId, month, year).subscribe({
+      next: (token) => {
+        const url = `${window.location.origin}/report/${token.token}`;
+        navigator.clipboard.writeText(url).then(() => {
+          this.snackBar.open('Link gerado e copiado!', 'Fechar', { duration: 3000 });
+        });
+        this.loadAll();
+      },
+      error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao gerar link', 'Fechar', { duration: 3000 }),
+    });
+  }
+
+  openTokenListDialog(): void {
+    this.dialog.open(ReportTokenListDialog, {
+      width: '400px',
+      data: { tokens: this.reportTokens() } as ReportTokenListDialogData,
     });
   }
 }
