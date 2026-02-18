@@ -48,3 +48,6 @@ class Startup(Base):
     executives: Mapped[list["Executive"]] = relationship(
         "Executive", back_populates="startup", cascade="all, delete-orphan"
     )
+    report_tokens: Mapped[list["ReportToken"]] = relationship(
+        "ReportToken", back_populates="startup", cascade="all, delete-orphan"
+    )

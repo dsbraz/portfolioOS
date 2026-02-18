@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.controllers.board_meeting_controller import router as board_meeting_router
 from app.controllers.portfolio_monitoring_controller import router as portfolio_monitoring_router
 from app.controllers.deal_controller import router as deal_router
+from app.controllers.report_token_controller import router as report_token_router
 from app.controllers.executive_controller import router as executive_router
 from app.controllers.health_controller import router as health_router
 from app.controllers.monthly_indicator_controller import router as monthly_indicator_router
@@ -53,3 +54,4 @@ app.include_router(board_meeting_router, prefix="/api")
 app.include_router(executive_router, prefix="/api")
 app.include_router(portfolio_monitoring_router, prefix="/api")
 app.include_router(deal_router, prefix="/api")
+app.include_router(report_token_router, prefix="/api")

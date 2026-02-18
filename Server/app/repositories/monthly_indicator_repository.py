@@ -44,6 +44,18 @@ class MonthlyIndicatorRepository:
         )
         return result.scalar_one_or_none()
 
+    async def get_by_startup_and_period(
+        self, startup_id: uuid.UUID, month: int, year: int
+    ) -> MonthlyIndicator | None:
+        result = await self._session.execute(
+            select(MonthlyIndicator).where(
+                MonthlyIndicator.startup_id == startup_id,
+                MonthlyIndicator.month == month,
+                MonthlyIndicator.year == year,
+            )
+        )
+        return result.scalar_one_or_none()
+
     async def exists_for_month(
         self, startup_id: uuid.UUID, month: int, year: int
     ) -> bool:
