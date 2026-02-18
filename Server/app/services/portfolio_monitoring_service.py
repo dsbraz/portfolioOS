@@ -1,3 +1,4 @@
+import uuid
 from datetime import date, timedelta
 from decimal import Decimal
 
@@ -6,6 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.models.board_meeting import BoardMeeting
 from app.domain.models.monthly_indicator import MonthlyIndicator
+from app.domain.models.portfolio_summary import (
+    HealthDistribution,
+    PortfolioSummary,
+    StartupMonitoringItem,
+)
 from app.domain.models.startup import Startup, StartupStatus
 
 
@@ -13,7 +19,7 @@ class PortfolioMonitoringService:
     def __init__(self, session: AsyncSession):
         self._session = session
 
-    async def get_summary(self) -> dict:
+    async def get_summary(self) -> PortfolioSummary:
         startups_result = await self._session.execute(
             select(Startup).order_by(Startup.name.asc())
         )
@@ -21,32 +27,32 @@ class PortfolioMonitoringService:
         total = len(startups)
 
         if total == 0:
-            return {
-                "total_startups": 0,
-                "portfolio_revenue": Decimal("0"),
-                "portfolio_health": {"healthy": 0, "warning": 0, "critical": 0},
-                "monthly_report_pct": 0.0,
-                "routines_up_to_date_pct": 0.0,
-                "startups": [],
-            }
+            return PortfolioSummary(
+                total_startups=0,
+                portfolio_revenue=Decimal("0"),
+                portfolio_health=HealthDistribution(),
+                monthly_report_pct=0.0,
+                routines_up_to_date_pct=0.0,
+                startups=[],
+            )
 
         startup_ids = [s.id for s in startups]
 
         latest_indicators = await self._get_latest_indicators(startup_ids)
 
-        health = {"healthy": 0, "warning": 0, "critical": 0}
+        healthy = warning = critical = 0
         for s in startups:
             if s.status == StartupStatus.HEALTHY:
-                health["healthy"] += 1
+                healthy += 1
             elif s.status == StartupStatus.WARNING:
-                health["warning"] += 1
+                warning += 1
             elif s.status == StartupStatus.CRITICAL:
-                health["critical"] += 1
+                critical += 1
 
         portfolio_revenue = Decimal("0")
         for ind in latest_indicators.values():
-            if ind.get("total_revenue"):
-                portfolio_revenue += ind["total_revenue"]
+            if ind.total_revenue:
+                portfolio_revenue += ind.total_revenue
 
         today = date.today()
         current_month = today.month
@@ -54,7 +60,7 @@ class PortfolioMonitoringService:
         startups_with_report = 0
         for sid in startup_ids:
             ind = latest_indicators.get(sid)
-            if ind and ind.get("month") == current_month and ind.get("year") == current_year:
+            if ind and ind.month == current_month and ind.year == current_year:
                 startups_with_report += 1
         report_pct = (startups_with_report / total) * 100
 
@@ -72,27 +78,31 @@ class PortfolioMonitoringService:
 
         monitoring_items = []
         for s in startups:
-            ind = latest_indicators.get(s.id, {})
-            monitoring_items.append({
-                "startup": s,
-                "total_revenue": ind.get("total_revenue"),
-                "cash_balance": ind.get("cash_balance"),
-                "ebitda_burn": ind.get("ebitda_burn"),
-                "headcount": ind.get("headcount"),
-            })
+            ind = latest_indicators.get(s.id)
+            monitoring_items.append(
+                StartupMonitoringItem(
+                    startup=s,
+                    total_revenue=ind.total_revenue if ind else None,
+                    cash_balance=ind.cash_balance if ind else None,
+                    ebitda_burn=ind.ebitda_burn if ind else None,
+                    headcount=ind.headcount if ind else None,
+                )
+            )
 
-        return {
-            "total_startups": total,
-            "portfolio_revenue": portfolio_revenue,
-            "portfolio_health": health,
-            "monthly_report_pct": round(report_pct, 1),
-            "routines_up_to_date_pct": round(routines_pct, 1),
-            "startups": monitoring_items,
-        }
+        return PortfolioSummary(
+            total_startups=total,
+            portfolio_revenue=portfolio_revenue,
+            portfolio_health=HealthDistribution(
+                healthy=healthy, warning=warning, critical=critical,
+            ),
+            monthly_report_pct=round(report_pct, 1),
+            routines_up_to_date_pct=round(routines_pct, 1),
+            startups=monitoring_items,
+        )
 
     async def _get_latest_indicators(
-        self, startup_ids: list,
-    ) -> dict:
+        self, startup_ids: list[uuid.UUID],
+    ) -> dict[uuid.UUID, MonthlyIndicator]:
         latest_subq = (
             select(
                 MonthlyIndicator.startup_id,
@@ -117,14 +127,4 @@ class PortfolioMonitoringService:
         )
         indicators = list(result.scalars().all())
 
-        return {
-            ind.startup_id: {
-                "month": ind.month,
-                "year": ind.year,
-                "total_revenue": ind.total_revenue,
-                "cash_balance": ind.cash_balance,
-                "ebitda_burn": ind.ebitda_burn,
-                "headcount": ind.headcount,
-            }
-            for ind in indicators
-        }
+        return {ind.startup_id: ind for ind in indicators}

@@ -21,21 +21,25 @@ def _get_service(session: AsyncSession = Depends(get_session)) -> PortfolioMonit
 async def get_monitoring_summary(
     service: PortfolioMonitoringService = Depends(_get_service),
 ):
-    data = await service.get_summary()
+    summary = await service.get_summary()
     return MonitoringSummary(
-        total_startups=data["total_startups"],
-        portfolio_revenue=data["portfolio_revenue"],
-        portfolio_health=HealthDistribution(**data["portfolio_health"]),
-        monthly_report_pct=data["monthly_report_pct"],
-        routines_up_to_date_pct=data["routines_up_to_date_pct"],
+        total_startups=summary.total_startups,
+        portfolio_revenue=summary.portfolio_revenue,
+        portfolio_health=HealthDistribution(
+            healthy=summary.portfolio_health.healthy,
+            warning=summary.portfolio_health.warning,
+            critical=summary.portfolio_health.critical,
+        ),
+        monthly_report_pct=summary.monthly_report_pct,
+        routines_up_to_date_pct=summary.routines_up_to_date_pct,
         startups=[
             StartupMonitoringItem(
-                startup=StartupResponse.model_validate(item["startup"]),
-                total_revenue=item["total_revenue"],
-                cash_balance=item["cash_balance"],
-                ebitda_burn=item["ebitda_burn"],
-                headcount=item["headcount"],
+                startup=StartupResponse.model_validate(item.startup),
+                total_revenue=item.total_revenue,
+                cash_balance=item.cash_balance,
+                ebitda_burn=item.ebitda_burn,
+                headcount=item.headcount,
             )
-            for item in data["startups"]
+            for item in summary.startups
         ],
     )
