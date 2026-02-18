@@ -64,8 +64,8 @@ export class PortfolioMonitoring implements OnInit {
         this.summary.set(data);
         this.loading.set(false);
       },
-      error: () => {
-        this.snackBar.open('Erro ao carregar monitoramento', 'Fechar', { duration: 3000 });
+      error: (err) => {
+        this.snackBar.open(err.error?.detail || 'Erro ao carregar monitoramento', 'Fechar', { duration: 3000 });
         this.loading.set(false);
       },
     });
@@ -93,8 +93,8 @@ export class PortfolioMonitoring implements OnInit {
             this.snackBar.open('Startup criada com sucesso', 'Fechar', { duration: 3000 });
             this.loadSummary();
           },
-          error: () =>
-            this.snackBar.open('Erro ao criar startup', 'Fechar', { duration: 3000 }),
+          error: (err) =>
+            this.snackBar.open(err.error?.detail || 'Erro ao criar startup', 'Fechar', { duration: 3000 }),
         });
       }
     });

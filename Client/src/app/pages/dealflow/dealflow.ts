@@ -62,8 +62,8 @@ export class Dealflow implements OnInit {
         this.groupDealsByColumn(response.items);
         this.loading.set(false);
       },
-      error: () => {
-        this.snackBar.open('Erro ao carregar deals', 'Fechar', { duration: 3000 });
+      error: (err) => {
+        this.snackBar.open(err.error?.detail || 'Erro ao carregar deals', 'Fechar', { duration: 3000 });
         this.loading.set(false);
       },
     });
@@ -93,8 +93,8 @@ export class Dealflow implements OnInit {
     }
 
     this.dealService.move(deal.id, { column: targetColumn, position: event.currentIndex }).subscribe({
-      error: () => {
-        this.snackBar.open('Erro ao mover deal', 'Fechar', { duration: 3000 });
+      error: (err) => {
+        this.snackBar.open(err.error?.detail || 'Erro ao mover deal', 'Fechar', { duration: 3000 });
         this.loadDeals();
       },
     });
@@ -113,7 +113,7 @@ export class Dealflow implements OnInit {
             this.snackBar.open('Deal criado', 'Fechar', { duration: 3000 });
             this.loadDeals();
           },
-          error: () => this.snackBar.open('Erro ao criar deal', 'Fechar', { duration: 3000 }),
+          error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao criar deal', 'Fechar', { duration: 3000 }),
         });
       }
     });
@@ -132,7 +132,7 @@ export class Dealflow implements OnInit {
             this.snackBar.open('Deal atualizado', 'Fechar', { duration: 3000 });
             this.loadDeals();
           },
-          error: () => this.snackBar.open('Erro ao atualizar', 'Fechar', { duration: 3000 }),
+          error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao atualizar deal', 'Fechar', { duration: 3000 }),
         });
       }
     });
@@ -148,7 +148,7 @@ export class Dealflow implements OnInit {
         );
         this.loadDeals();
       },
-      error: () => this.snackBar.open('Erro ao mover deal', 'Fechar', { duration: 3000 }),
+      error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao mover deal', 'Fechar', { duration: 3000 }),
     });
   }
 
@@ -159,7 +159,7 @@ export class Dealflow implements OnInit {
         this.snackBar.open('Deal excluido', 'Fechar', { duration: 3000 });
         this.loadDeals();
       },
-      error: () => this.snackBar.open('Erro ao excluir', 'Fechar', { duration: 3000 }),
+      error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao excluir deal', 'Fechar', { duration: 3000 }),
     });
   }
 }

@@ -119,8 +119,8 @@ export class StartupDetail implements OnInit {
         this.executives.set(executives.items);
         this.loading.set(false);
       },
-      error: () => {
-        this.snackBar.open('Erro ao carregar dados', 'Fechar', { duration: 3000 });
+      error: (err) => {
+        this.snackBar.open(err.error?.detail || 'Erro ao carregar dados', 'Fechar', { duration: 3000 });
         this.loading.set(false);
       },
     });
@@ -163,7 +163,7 @@ export class StartupDetail implements OnInit {
             this.snackBar.open('Startup atualizada', 'Fechar', { duration: 3000 });
             this.loadAll();
           },
-          error: () => this.snackBar.open('Erro ao atualizar', 'Fechar', { duration: 3000 }),
+          error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao atualizar startup', 'Fechar', { duration: 3000 }),
         });
       }
     });
@@ -175,7 +175,7 @@ export class StartupDetail implements OnInit {
         this.snackBar.open('Status atualizado', 'Fechar', { duration: 3000 });
         this.loadAll();
       },
-      error: () => this.snackBar.open('Erro ao atualizar status', 'Fechar', { duration: 3000 }),
+      error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao atualizar status', 'Fechar', { duration: 3000 }),
     });
   }
 
@@ -216,7 +216,7 @@ export class StartupDetail implements OnInit {
         this.snackBar.open('Startup atualizada', 'Fechar', { duration: 3000 });
         this.loadAll();
       },
-      error: () => this.snackBar.open('Erro ao atualizar', 'Fechar', { duration: 3000 }),
+      error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao atualizar startup', 'Fechar', { duration: 3000 }),
     });
   }
 
@@ -234,7 +234,7 @@ export class StartupDetail implements OnInit {
         this.snackBar.open('Startup atualizada', 'Fechar', { duration: 3000 });
         this.loadAll();
       },
-      error: () => this.snackBar.open('Erro ao atualizar', 'Fechar', { duration: 3000 }),
+      error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao atualizar startup', 'Fechar', { duration: 3000 }),
     });
   }
 
@@ -267,7 +267,7 @@ export class StartupDetail implements OnInit {
             this.snackBar.open('Indicador criado', 'Fechar', { duration: 3000 });
             this.loadAll();
           },
-          error: () => this.snackBar.open('Erro ao criar indicador', 'Fechar', { duration: 3000 }),
+          error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao criar indicador', 'Fechar', { duration: 3000 }),
         });
       }
     });
@@ -285,7 +285,7 @@ export class StartupDetail implements OnInit {
             this.snackBar.open('Indicador atualizado', 'Fechar', { duration: 3000 });
             this.loadAll();
           },
-          error: () => this.snackBar.open('Erro ao atualizar', 'Fechar', { duration: 3000 }),
+          error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao atualizar indicador', 'Fechar', { duration: 3000 }),
         });
       }
     });
@@ -298,7 +298,7 @@ export class StartupDetail implements OnInit {
         this.snackBar.open('Indicador excluido', 'Fechar', { duration: 3000 });
         this.loadAll();
       },
-      error: () => this.snackBar.open('Erro ao excluir', 'Fechar', { duration: 3000 }),
+      error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao excluir indicador', 'Fechar', { duration: 3000 }),
     });
   }
 
@@ -315,7 +315,7 @@ export class StartupDetail implements OnInit {
             this.snackBar.open('Reuniao criada', 'Fechar', { duration: 3000 });
             this.loadAll();
           },
-          error: () => this.snackBar.open('Erro ao criar reuniao', 'Fechar', { duration: 3000 }),
+          error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao criar reunião', 'Fechar', { duration: 3000 }),
         });
       }
     });
@@ -333,7 +333,7 @@ export class StartupDetail implements OnInit {
             this.snackBar.open('Reuniao atualizada', 'Fechar', { duration: 3000 });
             this.loadAll();
           },
-          error: () => this.snackBar.open('Erro ao atualizar', 'Fechar', { duration: 3000 }),
+          error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao atualizar reunião', 'Fechar', { duration: 3000 }),
         });
       }
     });
@@ -346,7 +346,7 @@ export class StartupDetail implements OnInit {
         this.snackBar.open('Reuniao excluida', 'Fechar', { duration: 3000 });
         this.loadAll();
       },
-      error: () => this.snackBar.open('Erro ao excluir', 'Fechar', { duration: 3000 }),
+      error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao excluir reunião', 'Fechar', { duration: 3000 }),
     });
   }
 
@@ -363,7 +363,7 @@ export class StartupDetail implements OnInit {
             this.snackBar.open('Executivo criado', 'Fechar', { duration: 3000 });
             this.loadAll();
           },
-          error: () => this.snackBar.open('Erro ao criar executivo', 'Fechar', { duration: 3000 }),
+          error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao criar executivo', 'Fechar', { duration: 3000 }),
         });
       }
     });
@@ -381,7 +381,7 @@ export class StartupDetail implements OnInit {
             this.snackBar.open('Executivo atualizado', 'Fechar', { duration: 3000 });
             this.loadAll();
           },
-          error: () => this.snackBar.open('Erro ao atualizar', 'Fechar', { duration: 3000 }),
+          error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao atualizar executivo', 'Fechar', { duration: 3000 }),
         });
       }
     });
@@ -394,7 +394,7 @@ export class StartupDetail implements OnInit {
         this.snackBar.open('Executivo excluido', 'Fechar', { duration: 3000 });
         this.loadAll();
       },
-      error: () => this.snackBar.open('Erro ao excluir', 'Fechar', { duration: 3000 }),
+      error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao excluir executivo', 'Fechar', { duration: 3000 }),
     });
   }
 }
