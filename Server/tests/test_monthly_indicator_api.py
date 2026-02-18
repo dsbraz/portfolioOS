@@ -118,7 +118,7 @@ async def test_get_indicator(client):
 
     create_resp = await client.post(
         f"/api/startups/{startup_id}/indicators",
-        json={"month": 3, "year": 2026, "headcount": 10},
+        json={"month": 1, "year": 2025, "headcount": 10},
     )
     indicator_id = create_resp.json()["id"]
 
@@ -141,7 +141,7 @@ async def test_update_indicator(client):
 
     create_resp = await client.post(
         f"/api/startups/{startup_id}/indicators",
-        json={"month": 4, "year": 2026, "headcount": 10},
+        json={"month": 1, "year": 2025, "headcount": 10},
     )
     indicator_id = create_resp.json()["id"]
 
@@ -168,7 +168,7 @@ async def test_delete_indicator(client):
 
     create_resp = await client.post(
         f"/api/startups/{startup_id}/indicators",
-        json={"month": 5, "year": 2026},
+        json={"month": 1, "year": 2025},
     )
     indicator_id = create_resp.json()["id"]
 
