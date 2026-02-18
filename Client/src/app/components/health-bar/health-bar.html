@@ -1,0 +1,22 @@
+@if (total() > 0) {
+  <div class="health-bar">
+    @for (seg of segments(); track seg.label) {
+      <div
+        class="segment"
+        [style.width.%]="seg.pct"
+        [style.--_seg-color]="seg.color"
+        [matTooltip]="seg.label + ': ' + seg.count"
+      ></div>
+    }
+  </div>
+  <div class="legend">
+    @for (seg of segments(); track seg.label) {
+      <span class="legend-item">
+        <span class="legend-dot" [style.--_seg-color]="seg.color"></span>
+        {{ seg.label }} ({{ seg.count }})
+      </span>
+    }
+  </div>
+} @else {
+  <span class="no-data">Sem dados</span>
+}

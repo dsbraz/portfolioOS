@@ -1,0 +1,40 @@
+.indicator-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 500px;
+  padding-top: 8px;
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+
+  mat-form-field {
+    flex: 1;
+  }
+}
+
+.section-title {
+  margin: 8px 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--mat-sys-on-surface-variant);
+  letter-spacing: 0.5px;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  .indicator-form {
+    min-width: unset;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+}

@@ -1,0 +1,62 @@
+<h2 mat-dialog-title>{{ isEditMode ? 'Editar Startup' : 'Nova Startup' }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="startup-form">
+    <mat-form-field appearance="outline">
+      <mat-label>Nome</mat-label>
+      <input matInput formControlName="name" />
+      @if (form.controls.name.hasError('required')) {
+        <mat-error>Nome e obrigatorio</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Site</mat-label>
+      <input matInput formControlName="site" placeholder="https://..." />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>URL do Logotipo</mat-label>
+      <input matInput formControlName="logo_url" placeholder="https://..." />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Status</mat-label>
+      <mat-select formControlName="status">
+        @for (opt of statusOptions; track opt) {
+          <mat-option [value]="opt">{{ statusConfig[opt].label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Setor</mat-label>
+      <input matInput formControlName="sector" />
+      @if (form.controls.sector.hasError('required')) {
+        <mat-error>Setor e obrigatorio</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Data do Investimento</mat-label>
+      <input matInput [matDatepicker]="picker" formControlName="investment_date" />
+      <mat-datepicker-toggle matIconSuffix [for]="picker" />
+      <mat-datepicker #picker />
+      @if (form.controls.investment_date.hasError('required')) {
+        <mat-error>Data e obrigatoria</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Observacao</mat-label>
+      <textarea matInput formControlName="notes" rows="3"></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancelar</button>
+  <button mat-flat-button color="primary" (click)="onSubmit()" [disabled]="form.invalid">
+    {{ isEditMode ? 'Salvar' : 'Criar' }}
+  </button>
+</mat-dialog-actions>

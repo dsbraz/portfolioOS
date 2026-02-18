@@ -1,0 +1,126 @@
+<div class="monitoring-page">
+  <div class="page-header">
+    <div class="header-content">
+      <div>
+        <h1 class="page-title">Monitoramento</h1>
+        <p class="page-subtitle">
+          {{ summary()?.total_startups ?? 0 }} startup(s) no portfolio
+        </p>
+      </div>
+      <button mat-fab extended color="primary" (click)="openCreateDialog()">
+        <mat-icon>add</mat-icon>
+        Nova Startup
+      </button>
+    </div>
+  </div>
+
+  @if (summary(); as s) {
+    <div class="kpi-grid">
+      <app-kpi-card
+        icon="trending_up"
+        label="Receita do Portfolio"
+        [value]="formatCurrency(s.portfolio_revenue)"
+        subtitle="Soma do ultimo indicador"
+      />
+      <div class="kpi-health-card">
+        <mat-card class="kpi-card">
+          <mat-card-content>
+            <div class="kpi-icon-wrapper">
+              <mat-icon>monitor_heart</mat-icon>
+            </div>
+            <div class="kpi-info">
+              <span class="kpi-label">Saude do Portfolio</span>
+              <app-health-bar [distribution]="s.portfolio_health" />
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+      <app-kpi-card
+        icon="description"
+        label="Report Mensal"
+        [value]="s.monthly_report_pct + '%'"
+        subtitle="Startups com indicador no mes"
+      />
+      <app-kpi-card
+        icon="groups"
+        label="Rotinas em Dia"
+        [value]="s.routines_up_to_date_pct + '%'"
+        subtitle="Conselho nos ultimos 90 dias"
+      />
+    </div>
+
+    @if (s.startups.length === 0) {
+      <mat-card class="empty-state">
+        <mat-card-content>
+          <mat-icon class="empty-icon">rocket_launch</mat-icon>
+          <h2>Nenhuma startup cadastrada</h2>
+          <p>Clique em "Nova Startup" para adicionar a primeira.</p>
+        </mat-card-content>
+      </mat-card>
+    } @else {
+      <mat-card class="table-card">
+        <table mat-table [dataSource]="s.startups" class="monitoring-table">
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Startup</th>
+            <td mat-cell *matCellDef="let item">
+              <div class="startup-cell">
+                @if (item.startup.logo_url) {
+                  <img [src]="item.startup.logo_url" [alt]="item.startup.name" class="startup-logo" />
+                } @else {
+                  <mat-icon class="startup-logo-fallback">business</mat-icon>
+                }
+                <div>
+                  <div class="startup-name">{{ item.startup.name }}</div>
+                  <span class="startup-setor">{{ item.startup.sector }}</span>
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let item">
+              <app-status-badge [status]="item.startup.status" />
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="total_revenue">
+            <th mat-header-cell *matHeaderCellDef>Receita</th>
+            <td mat-cell *matCellDef="let item">
+              {{ formatCurrency(item.total_revenue) }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="cash_balance">
+            <th mat-header-cell *matHeaderCellDef>Caixa</th>
+            <td mat-cell *matCellDef="let item">
+              {{ formatCurrency(item.cash_balance) }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="ebitda_burn">
+            <th mat-header-cell *matHeaderCellDef>EBITDA/Burn</th>
+            <td mat-cell *matCellDef="let item">
+              {{ formatCurrency(item.ebitda_burn) }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="headcount">
+            <th mat-header-cell *matHeaderCellDef>Headcount</th>
+            <td mat-cell *matCellDef="let item">
+              {{ item.headcount ?? '-' }}
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: displayedColumns"
+            class="clickable-row"
+            (click)="navigateToStartup(row)"
+          ></tr>
+        </table>
+      </mat-card>
+    }
+  }
+</div>

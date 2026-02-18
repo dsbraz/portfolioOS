@@ -1,0 +1,86 @@
+<h2 mat-dialog-title>{{ isEditMode ? 'Editar Indicador Mensal' : 'Novo Indicador Mensal' }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="indicator-form">
+    <div class="form-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Mes</mat-label>
+        <mat-select formControlName="month">
+          @for (m of monthOptions; track m) {
+            <mat-option [value]="m">{{ monthLabels[m] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Ano</mat-label>
+        <input matInput type="number" formControlName="year" />
+      </mat-form-field>
+    </div>
+    @if (form.hasError('futurePeriod')) {
+      <mat-error class="period-error">Periodo nao pode ser no futuro.</mat-error>
+    }
+
+    <h3 class="section-title">Quantitativos</h3>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Receita Total (R$)</mat-label>
+        <input matInput type="number" formControlName="total_revenue" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Receita Recorrente (%)</mat-label>
+        <input matInput type="number" formControlName="recurring_revenue_pct" />
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Margem Bruta (%)</mat-label>
+        <input matInput type="number" formControlName="gross_margin_pct" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Saldo em Caixa (R$)</mat-label>
+        <input matInput type="number" formControlName="cash_balance" />
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Headcount</mat-label>
+        <input matInput type="number" formControlName="headcount" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>EBITDA / Burn (R$)</mat-label>
+        <input matInput type="number" formControlName="ebitda_burn" />
+      </mat-form-field>
+    </div>
+
+    <h3 class="section-title">Qualitativos</h3>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Conquistas do mes</mat-label>
+      <textarea matInput formControlName="achievements" rows="3"></textarea>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Desafios do mes</mat-label>
+      <textarea matInput formControlName="challenges" rows="3"></textarea>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Comentarios</mat-label>
+      <textarea matInput formControlName="comments" rows="3"></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancelar</button>
+  <button mat-flat-button color="primary" (click)="onSubmit()" [disabled]="form.invalid">
+    {{ isEditMode ? 'Salvar' : 'Adicionar' }}
+  </button>
+</mat-dialog-actions>

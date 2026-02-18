@@ -1,0 +1,14 @@
+<mat-card class="kpi-card">
+  <mat-card-content>
+    <div class="kpi-icon-wrapper">
+      <mat-icon>{{ icon() }}</mat-icon>
+    </div>
+    <div class="kpi-info">
+      <span class="kpi-label">{{ label() }}</span>
+      <span class="kpi-value">{{ value() }}</span>
+      @if (subtitle()) {
+        <span class="kpi-subtitle">{{ subtitle() }}</span>
+      }
+    </div>
+  </mat-card-content>
+</mat-card>

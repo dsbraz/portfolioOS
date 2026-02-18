@@ -1,0 +1,203 @@
+.dealflow-page {
+  padding: 32px 24px;
+  height: calc(100vh - 64px - 64px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dealflow-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.page-header {
+  margin-bottom: 24px;
+  flex-shrink: 0;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.page-title {
+  font-size: 28px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.page-subtitle {
+  color: var(--mat-sys-on-surface-variant);
+  margin: 4px 0 0;
+  font-size: 14px;
+}
+
+.kanban-board {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+  overflow-x: auto;
+  padding-bottom: 16px;
+}
+
+.kanban-column {
+  min-width: 280px;
+  max-width: 320px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--mat-sys-surface-container-low);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.column-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-top: 3px solid var(--_column-color);
+  gap: 8px;
+}
+
+.column-title {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.column-count {
+  background: var(--mat-sys-surface-variant);
+  color: var(--mat-sys-on-surface-variant);
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.column-add {
+  margin-left: auto;
+  width: 28px !important;
+  height: 28px !important;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.column-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.deal-card {
+  background: var(--mat-sys-surface-bright);
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+
+  &:hover {
+    box-shadow: var(--mat-sys-level2);
+  }
+
+  mat-card-content {
+    padding: 12px !important;
+    position: relative;
+  }
+}
+
+.deal-empresa {
+  font-weight: 500;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.deal-setor {
+  font-size: 12px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.deal-chips {
+  margin-top: 8px;
+
+  mat-chip {
+    font-size: 11px;
+  }
+}
+
+.deal-next-step {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--mat-sys-on-surface-variant);
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.deal-actions {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+}
+
+.deal-menu-btn {
+  width: 28px !important;
+  height: 28px !important;
+  opacity: 0;
+  transition: opacity 0.2s;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.deal-card:hover .deal-menu-btn {
+  opacity: 1;
+}
+
+// Drag-and-drop styles (scoped — preview/placeholder globals are in styles.scss)
+.deal-card.cdk-drag-animating {
+  transition: transform 200ms ease-out;
+}
+
+.column-content.cdk-drop-list-dragging .deal-card:not(.cdk-drag-placeholder) {
+  transition: transform 200ms ease-out;
+}
+
+.empty-column {
+  text-align: center;
+  padding: 24px 8px;
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 13px;
+}
+
+@media (max-width: 768px) {
+  .dealflow-page {
+    padding: 16px;
+  }
+
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .kanban-column {
+    min-width: 260px;
+  }
+}

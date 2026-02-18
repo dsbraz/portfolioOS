@@ -1,0 +1,42 @@
+<h2 mat-dialog-title>{{ isEditMode ? 'Editar Reuniao de Conselho' : 'Nova Reuniao de Conselho' }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="meeting-form">
+    <mat-form-field appearance="outline">
+      <mat-label>Data</mat-label>
+      <input matInput [matDatepicker]="picker" formControlName="meeting_date" />
+      <mat-datepicker-toggle matIconSuffix [for]="picker" />
+      <mat-datepicker #picker />
+      @if (form.controls.meeting_date.hasError('required')) {
+        <mat-error>Data e obrigatoria</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Participantes</mat-label>
+      <textarea matInput formControlName="participants" rows="3"></textarea>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Resumo</mat-label>
+      <textarea matInput formControlName="summary" rows="3"></textarea>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Pontos de Atencao</mat-label>
+      <textarea matInput formControlName="attention_points" rows="3"></textarea>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Proximos Passos</mat-label>
+      <textarea matInput formControlName="next_steps" rows="3"></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancelar</button>
+  <button mat-flat-button color="primary" (click)="onSubmit()" [disabled]="form.invalid">
+    {{ isEditMode ? 'Salvar' : 'Adicionar' }}
+  </button>
+</mat-dialog-actions>

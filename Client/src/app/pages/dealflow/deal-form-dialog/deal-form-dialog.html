@@ -1,0 +1,63 @@
+<h2 mat-dialog-title>{{ isEditMode ? 'Editar Deal' : 'Novo Deal' }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="deal-form">
+    <mat-form-field>
+      <mat-label>Empresa</mat-label>
+      <input matInput formControlName="company" />
+    </mat-form-field>
+
+    <div class="form-row">
+      <mat-form-field>
+        <mat-label>Setor</mat-label>
+        <input matInput formControlName="sector" />
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Estagio</mat-label>
+        <mat-select formControlName="stage">
+          <mat-option value="">Nenhum</mat-option>
+          @for (opt of stageOptions; track opt) {
+            <mat-option [value]="opt">{{ opt }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <mat-form-field>
+      <mat-label>Fundadores</mat-label>
+      <textarea matInput formControlName="founders" rows="2"></textarea>
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Coluna</mat-label>
+      <mat-select formControlName="column">
+        @for (col of columnOptions; track col) {
+          <mat-option [value]="col">{{ columnConfig[col].label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Responsavel Interno</mat-label>
+      <input matInput formControlName="internal_owner" />
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Proximo Passo</mat-label>
+      <textarea matInput formControlName="next_step" rows="2"></textarea>
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Notas</mat-label>
+      <textarea matInput formControlName="notes" rows="3"></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancelar</button>
+  <button mat-flat-button color="primary" (click)="onSubmit()" [disabled]="form.invalid">
+    {{ isEditMode ? 'Salvar' : 'Criar' }}
+  </button>
+</mat-dialog-actions>

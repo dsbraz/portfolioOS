@@ -1,0 +1,17 @@
+.meeting-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 400px;
+  padding-top: 8px;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  .meeting-form {
+    min-width: unset;
+  }
+}

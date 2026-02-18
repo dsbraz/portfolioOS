@@ -1,0 +1,88 @@
+<div class="dealflow-page">
+  <div class="dealflow-content">
+    <div class="page-header">
+      <div class="header-content">
+        <div>
+          <h1 class="page-title">Dealflow</h1>
+          <p class="page-subtitle">Pipeline de oportunidades</p>
+        </div>
+        <button mat-fab extended color="primary" (click)="openCreateDialog()">
+          <mat-icon>add</mat-icon>
+          Novo Deal
+        </button>
+      </div>
+    </div>
+
+    <div class="kanban-board">
+    @for (col of columns; track col) {
+      <div class="kanban-column">
+        <div class="column-header" [style.--_column-color]="columnConfig[col].color">
+          <span class="column-title">{{ columnConfig[col].label }}</span>
+          <span class="column-count">{{ dealsByColumn()[col].length }}</span>
+          <button mat-icon-button class="column-add" (click)="openCreateDialog(col)">
+            <mat-icon>add</mat-icon>
+          </button>
+        </div>
+        <div
+          class="column-content"
+          cdkDropList
+          [id]="col"
+          [cdkDropListData]="dealsByColumn()[col]"
+          [cdkDropListConnectedTo]="columns"
+          (cdkDropListDropped)="onDealDrop($event)"
+        >
+          @for (deal of dealsByColumn()[col]; track deal.id) {
+            <mat-card class="deal-card" cdkDrag [cdkDragData]="deal" (click)="openEditDialog(deal)">
+              <mat-card-content>
+                <div class="deal-empresa">{{ deal.company }}</div>
+                @if (deal.sector) {
+                  <span class="deal-setor">{{ deal.sector }}</span>
+                }
+                @if (deal.stage) {
+                  <mat-chip-set class="deal-chips">
+                    <mat-chip>{{ deal.stage }}</mat-chip>
+                  </mat-chip-set>
+                }
+                @if (deal.next_step) {
+                  <div class="deal-next-step">
+                    <mat-icon>arrow_forward</mat-icon>
+                    <span>{{ deal.next_step }}</span>
+                  </div>
+                }
+                <div class="deal-actions" (click)="$event.stopPropagation()">
+                  <button mat-icon-button [matMenuTriggerFor]="dealMenu" class="deal-menu-btn">
+                    <mat-icon>more_horiz</mat-icon>
+                  </button>
+                  <mat-menu #dealMenu="matMenu">
+                    <button mat-menu-item (click)="openEditDialog(deal)">
+                      <mat-icon>edit</mat-icon> Editar
+                    </button>
+                    <button mat-menu-item [matMenuTriggerFor]="moveMenu">
+                      <mat-icon>swap_horiz</mat-icon> Mover para...
+                    </button>
+                    <button mat-menu-item (click)="deleteDeal(deal)">
+                      <mat-icon color="warn">delete</mat-icon> Excluir
+                    </button>
+                  </mat-menu>
+                  <mat-menu #moveMenu="matMenu">
+                    @for (target of otherColumns(deal.column); track target) {
+                      <button mat-menu-item (click)="moveDeal(deal, target)">
+                        {{ columnConfig[target].label }}
+                      </button>
+                    }
+                  </mat-menu>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          }
+          @if (dealsByColumn()[col].length === 0) {
+            <div class="empty-column">
+              <span>Nenhum deal</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+    </div>
+  </div>
+</div>
