@@ -1,0 +1,123 @@
+<div class="report-page">
+  @if (loading()) {
+    <div class="report-center">
+      <mat-spinner diameter="48" />
+    </div>
+  } @else if (error()) {
+    <div class="report-center">
+      <mat-icon class="error-icon">error_outline</mat-icon>
+      <p class="error-text">{{ error() }}</p>
+    </div>
+  } @else if (submitted()) {
+    <div class="report-center">
+      <mat-icon class="success-icon">check_circle</mat-icon>
+      <h2>Relatorio enviado com sucesso!</h2>
+      <p class="success-text">
+        Obrigado por preencher o relatorio de
+        {{ monthLabels[context()!.month] }}/{{ context()!.year }}.
+      </p>
+    </div>
+  } @else if (context(); as ctx) {
+    <div class="report-container">
+      <div class="report-header">
+        @if (ctx.startup_logo_url) {
+          <img
+            [src]="ctx.startup_logo_url"
+            [alt]="ctx.startup_name + ' logo'"
+            class="report-logo"
+          />
+        } @else {
+          <mat-icon class="report-logo-fallback">business</mat-icon>
+        }
+        <div>
+          <h1 class="report-title">Relatorio Mensal</h1>
+          <p class="report-subtitle">
+            {{ ctx.startup_name }} &middot;
+            {{ monthLabels[ctx.month] }}/{{ ctx.year }}
+          </p>
+        </div>
+      </div>
+
+      <mat-card class="report-card">
+        <mat-card-content>
+          <form [formGroup]="form" class="report-form">
+            <h3 class="section-title">Indicadores Financeiros</h3>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Receita do mes (R$)</mat-label>
+                <input matInput type="number" formControlName="total_revenue" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Receita Recorrente (%)</mat-label>
+                <input matInput type="number" formControlName="recurring_revenue_pct" />
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Margem Bruta (%)</mat-label>
+                <input matInput type="number" formControlName="gross_margin_pct" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Saldo em caixa (R$)</mat-label>
+                <input matInput type="number" formControlName="cash_balance" />
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Headcount</mat-label>
+                <input matInput type="number" formControlName="headcount" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Burn / EBITDA (R$)</mat-label>
+                <input matInput type="number" formControlName="ebitda_burn" />
+                <mat-hint>Negativo para burn, positivo para EBITDA</mat-hint>
+              </mat-form-field>
+            </div>
+
+            <h3 class="section-title">Comentarios</h3>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Destaques do mes</mat-label>
+              <textarea
+                matInput
+                formControlName="achievements"
+                rows="4"
+                placeholder="Principais conquistas, marcos atingidos, resultados relevantes..."
+              ></textarea>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Proximos passos e necessidades</mat-label>
+              <textarea
+                matInput
+                formControlName="challenges"
+                rows="4"
+                placeholder="Planos para o proximo mes, desafios, apoio necessario do fundo..."
+              ></textarea>
+            </mat-form-field>
+
+            <div class="form-actions">
+              <button
+                mat-flat-button
+                (click)="onSubmit()"
+                [disabled]="submitting()"
+              >
+                @if (submitting()) {
+                  <mat-spinner diameter="20" />
+                } @else {
+                  Enviar Relatorio
+                }
+              </button>
+            </div>
+          </form>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  }
+</div>

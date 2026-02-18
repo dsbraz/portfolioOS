@@ -21,4 +21,9 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/dealflow/dealflow').then((m) => m.Dealflow),
   },
+  {
+    path: 'report/:token',
+    loadComponent: () => import('./pages/report/report-form'),
+    data: { public: true },
+  },
 ];

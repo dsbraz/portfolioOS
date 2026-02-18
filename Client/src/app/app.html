@@ -1,38 +1,42 @@
-<mat-sidenav-container class="app-container">
-  <mat-sidenav mode="side" [opened]="sidenavOpened()" class="app-sidenav">
-    <div class="sidenav-header">
-      <h1 class="app-logo">PortfolioOS</h1>
-      <button
-        mat-icon-button
-        class="sidenav-toggle"
-        (click)="toggleSidenav()"
-        aria-label="Fechar menu lateral">
-        <mat-icon>menu_open</mat-icon>
-      </button>
-    </div>
-    <mat-nav-list>
-      <a mat-list-item routerLink="/portfolio-monitoring" routerLinkActive="active-link">
-        <mat-icon matListItemIcon>dashboard</mat-icon>
-        <span matListItemTitle>Monitoramento</span>
-      </a>
-      <a mat-list-item routerLink="/dealflow" routerLinkActive="active-link">
-        <mat-icon matListItemIcon>view_kanban</mat-icon>
-        <span matListItemTitle>Dealflow</span>
-      </a>
-    </mat-nav-list>
-  </mat-sidenav>
-  <mat-sidenav-content class="app-content">
-    @if (!sidenavOpened()) {
-      <div class="sidenav-open-bar">
+@if (isPublicRoute()) {
+  <router-outlet />
+} @else {
+  <mat-sidenav-container class="app-container">
+    <mat-sidenav mode="side" [opened]="sidenavOpened()" class="app-sidenav">
+      <div class="sidenav-header">
+        <h1 class="app-logo">PortfolioOS</h1>
         <button
           mat-icon-button
-          class="sidenav-open-btn"
+          class="sidenav-toggle"
           (click)="toggleSidenav()"
-          aria-label="Abrir menu lateral">
-          <mat-icon>menu</mat-icon>
+          aria-label="Fechar menu lateral">
+          <mat-icon>menu_open</mat-icon>
         </button>
       </div>
-    }
-    <router-outlet />
-  </mat-sidenav-content>
-</mat-sidenav-container>
+      <mat-nav-list>
+        <a mat-list-item routerLink="/portfolio-monitoring" routerLinkActive="active-link">
+          <mat-icon matListItemIcon>dashboard</mat-icon>
+          <span matListItemTitle>Monitoramento</span>
+        </a>
+        <a mat-list-item routerLink="/dealflow" routerLinkActive="active-link">
+          <mat-icon matListItemIcon>view_kanban</mat-icon>
+          <span matListItemTitle>Dealflow</span>
+        </a>
+      </mat-nav-list>
+    </mat-sidenav>
+    <mat-sidenav-content class="app-content">
+      @if (!sidenavOpened()) {
+        <div class="sidenav-open-bar">
+          <button
+            mat-icon-button
+            class="sidenav-open-btn"
+            (click)="toggleSidenav()"
+            aria-label="Abrir menu lateral">
+            <mat-icon>menu</mat-icon>
+          </button>
+        </div>
+      }
+      <router-outlet />
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+}

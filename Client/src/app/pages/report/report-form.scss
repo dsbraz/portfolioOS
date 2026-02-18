@@ -1,0 +1,137 @@
+.report-page {
+  min-height: 100vh;
+  background: var(--mat-sys-surface);
+  display: flex;
+  justify-content: center;
+  padding: 40px 16px;
+}
+
+.report-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 200px;
+}
+
+.error-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  color: var(--mat-sys-error);
+}
+
+.error-text {
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 16px;
+}
+
+.success-icon {
+  font-size: 64px;
+  width: 64px;
+  height: 64px;
+  color: var(--app-status-healthy);
+}
+
+.success-text {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.report-container {
+  width: 100%;
+  max-width: 600px;
+}
+
+.report-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.report-logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  object-fit: contain;
+  background: var(--mat-sys-surface-variant);
+  flex-shrink: 0;
+}
+
+.report-logo-fallback {
+  width: 56px;
+  height: 56px;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--mat-sys-surface-variant);
+  color: var(--mat-sys-on-surface-variant);
+  flex-shrink: 0;
+}
+
+.report-title {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0 0 4px;
+  color: var(--mat-sys-on-surface);
+}
+
+.report-subtitle {
+  font-size: 14px;
+  color: var(--mat-sys-on-surface-variant);
+  margin: 0;
+}
+
+.report-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.section-title {
+  margin: 12px 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--mat-sys-on-surface-variant);
+  letter-spacing: 0.5px;
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+
+  mat-form-field {
+    flex: 1;
+  }
+}
+
+mat-form-field {
+  width: 100%;
+
+  --mat-form-field-subscript-text-size: 11px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: stretch;
+  margin-top: 8px;
+
+  button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .report-page {
+    padding: 24px 12px;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
