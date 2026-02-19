@@ -35,6 +35,22 @@ Backend flow (required): `controllers -> service -> domain -> repos`.
 - Prefer dependency inversion (interfaces/protocols) when crossing boundaries.
 - Keep modules cohesive: each file/class should have a single clear reason to change.
 
+### Backend Import Boundaries
+- **Services must never import `fastapi`** — no `HTTPException`, no `status`, no `Depends`. Services work exclusively with domain models, primitive types, and `dict`s.
+- **Services must never import schemas** (`app.domain.schemas.*`). Schema validation and serialization belong in controllers.
+- **Domain models and exceptions** (`app.domain.models.*`, `app.domain.exceptions`) are the shared language between layers.
+
+### Error Handling Convention
+- **Services** raise domain exceptions for business-rule violations: `ValueError` for invalid input, `ConflictError` (`app.domain.exceptions`) for state conflicts (e.g. duplicates).
+- **Services** return `None` for not-found scenarios (e.g. `get_by_id` returns `Model | None`).
+- **Controllers** catch domain exceptions and map them to HTTP status codes (`ValueError` → 400, `ConflictError` → 409, `None` → 404).
+- **Controllers** own all existence checks: use FastAPI dependencies like `_verify_startup_exists` for parent-resource validation, or inline checks for entity lookups.
+
+### Controller ↔ Service Data Flow
+- **Input**: controllers convert schemas to domain models or `dict`s before calling services (e.g. `Startup(**data.model_dump())`, `data.model_dump(exclude_unset=True)`).
+- **Output**: services return domain models; controllers convert to response schemas (e.g. `Response.model_validate(entity)`).
+- **Entity resolution**: controllers look up and validate entities exist, then pass resolved domain objects to service methods (e.g. `service.update(entity, updates)` not `service.update(entity_id, updates)`).
+
 ## Build, Test, and Development Commands
 - Development environment standard: use Docker (`docker compose`) as the default and official workflow for local development.
 - Do not install Python or Node dependencies on the host machine; use containers for dependency installation and execution.
