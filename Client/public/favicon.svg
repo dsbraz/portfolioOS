@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <style>
+      .window { fill: #6750A4; }
+      .titlebar { fill: #7E67AE; }
+      .dot1 { fill: #FF8A65; }
+      .dot2 { fill: #FFB74D; }
+      .dot3 { fill: #E0D5F0; }
+      .letter-p { fill: #E0D5F0; font-family: 'Segoe UI', Roboto, Arial, sans-serif; font-weight: 600; font-size: 18px; }
+      .letter-os { fill: #FFB74D; font-family: 'Segoe UI', Roboto, Arial, sans-serif; font-weight: 800; font-size: 28px; }
+      @media (prefers-color-scheme: dark) {
+        .window { fill: #D0BCFF; }
+        .titlebar { fill: #B8A4E0; }
+        .dot3 { fill: #4A3880; }
+        .letter-p { fill: #4A3880; }
+        .letter-os { fill: #FF8A65; }
+      }
+    </style>
+  </defs>
+  <!-- Window frame -->
+  <rect class="window" x="4" y="4" width="56" height="56" rx="10"/>
+  <!-- Title bar -->
+  <rect class="titlebar" x="4" y="4" width="56" height="14" rx="10"/>
+  <rect class="titlebar" x="4" y="11" width="56" height="7"/>
+  <!-- Window dots -->
+  <circle class="dot1" cx="14" cy="11" r="2.5"/>
+  <circle class="dot2" cx="22" cy="11" r="2.5"/>
+  <circle class="dot3" cx="30" cy="11" r="2.5"/>
+  <!-- pOS text, centered in content area (x=32, y mid ~40) -->
+  <text x="32" y="48" text-anchor="middle">
+    <tspan class="letter-p">p</tspan><tspan class="letter-os">OS</tspan>
+  </text>
+</svg>
