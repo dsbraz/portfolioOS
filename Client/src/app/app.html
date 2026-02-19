@@ -4,7 +4,10 @@
   <mat-sidenav-container class="app-container">
     <mat-sidenav mode="side" [opened]="sidenavOpened()" class="app-sidenav">
       <div class="sidenav-header">
-        <h1 class="app-logo">PortfolioOS</h1>
+        <picture class="app-logo">
+          <source srcset="logo-dark.svg" media="(prefers-color-scheme: dark)" />
+          <img src="logo-light.svg" alt="BRQ Portfolio" />
+        </picture>
         <button
           mat-icon-button
           class="sidenav-toggle"

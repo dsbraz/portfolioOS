@@ -29,11 +29,13 @@
 }
 
 .app-logo {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--mat-sys-on-surface);
-  margin: 0;
-  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+
+  img {
+    height: 28px;
+    width: auto;
+  }
 }
 
 mat-nav-list {
