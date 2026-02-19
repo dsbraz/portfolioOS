@@ -6,6 +6,8 @@
   width: 220px;
   background: var(--mat-sys-surface-container-high);
   border-right: 1px solid var(--mat-sys-outline-variant);
+  display: flex;
+  flex-direction: column;
 
   --mat-list-list-item-label-text-color: var(--mat-sys-on-surface-variant);
   --mat-list-list-item-leading-icon-color: var(--mat-sys-on-surface-variant);
@@ -64,4 +66,9 @@ mat-nav-list {
 
 .sidenav-open-btn {
   color: var(--mat-sys-on-surface-variant);
+}
+
+.sidenav-footer {
+  margin-top: auto;
+  border-top: 1px solid var(--mat-sys-outline-variant);
 }

@@ -2,6 +2,7 @@ import os
 from collections.abc import AsyncGenerator
 
 os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///./test.db")
+os.environ.setdefault("SECRET_KEY", "test-secret-key-for-testing-only")
 
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
@@ -11,9 +12,12 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from app.config import settings
 from app.database import get_session
 from app.domain.models import Base
+from app.domain.models.user import User
 from app.main import app
+from app.services.auth_service import AuthService, pwd_context
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 
@@ -36,8 +40,48 @@ async def session() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
+async def _create_test_user(session: AsyncSession) -> User:
+    user = User(
+        username="testadmin",
+        email="testadmin@example.com",
+        hashed_password=pwd_context.hash("testpass123"),
+    )
+    session.add(user)
+    await session.flush()
+    await session.refresh(user)
+    return user
+
+
 @pytest_asyncio.fixture
 async def client(session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+    user = await _create_test_user(session)
+    auth_service = AuthService(
+        repository=None,
+        secret_key=settings.secret_key,
+        token_expire_minutes=settings.access_token_expire_minutes,
+    )
+    token = auth_service.create_access_token(user)
+
+    async def override_get_session():
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+
+    app.dependency_overrides[get_session] = override_get_session
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+        headers={"Authorization": f"Bearer {token}"},
+    ) as ac:
+        yield ac
+    app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture
+async def anon_client(session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     async def override_get_session():
         try:
             yield session

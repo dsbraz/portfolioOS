@@ -6,6 +6,8 @@ import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 
+import { AuthService } from './services/auth.service';
+
 @Component({
   selector: 'app-root',
   imports: [
@@ -22,6 +24,7 @@ import { MatButtonModule } from '@angular/material/button';
 })
 export class App implements OnInit {
   private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
 
   readonly sidenavOpened = signal(true);
   readonly isPublicRoute = signal(false);
@@ -40,5 +43,10 @@ export class App implements OnInit {
 
   toggleSidenav(): void {
     this.sidenavOpened.update(opened => !opened);
+  }
+
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 }

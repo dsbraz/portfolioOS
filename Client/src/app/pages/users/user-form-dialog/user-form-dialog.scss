@@ -1,0 +1,21 @@
+.user-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 400px;
+  padding-top: 8px;
+
+  mat-form-field {
+    width: 100%;
+  }
+
+  mat-slide-toggle {
+    margin-top: 4px;
+  }
+}
+
+@media (max-width: 600px) {
+  .user-form {
+    min-width: unset;
+  }
+}

@@ -1,0 +1,69 @@
+<h2 mat-dialog-title>{{ isEditMode ? 'Editar Usuário' : 'Novo Usuário' }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" id="user-form" (ngSubmit)="onSubmit()" class="user-form">
+    <mat-form-field appearance="outline">
+      <mat-label>Usuário</mat-label>
+      <input matInput formControlName="username" autocomplete="off" />
+      <mat-icon matPrefix>person</mat-icon>
+      @if (form.controls.username.hasError('required')) {
+        <mat-error>Usuário é obrigatório</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Email</mat-label>
+      <input matInput formControlName="email" type="email" autocomplete="off" />
+      <mat-icon matPrefix>email</mat-icon>
+      @if (form.controls.email.hasError('required')) {
+        <mat-error>Email é obrigatório</mat-error>
+      } @else if (form.controls.email.hasError('email')) {
+        <mat-error>Email inválido</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>{{ isEditMode ? 'Nova senha (deixe vazio para manter)' : 'Senha' }}</mat-label>
+      <input
+        matInput
+        formControlName="password"
+        [type]="hidePassword() ? 'password' : 'text'"
+        autocomplete="new-password" />
+      <mat-icon matPrefix>lock</mat-icon>
+      <button
+        mat-icon-button
+        matSuffix
+        type="button"
+        (click)="hidePassword.set(!hidePassword())"
+        [attr.aria-label]="hidePassword() ? 'Mostrar senha' : 'Esconder senha'">
+        <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+      </button>
+      @if (form.controls.password.hasError('required')) {
+        <mat-error>Senha é obrigatória</mat-error>
+      } @else if (form.controls.password.hasError('minlength')) {
+        <mat-error>Mínimo de 8 caracteres</mat-error>
+      }
+    </mat-form-field>
+
+    @if (isEditMode) {
+      <mat-slide-toggle formControlName="is_active" color="primary">
+        Usuário ativo
+      </mat-slide-toggle>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancelar</button>
+  <button
+    mat-flat-button
+    type="submit"
+    form="user-form"
+    [disabled]="form.invalid || loading()">
+    @if (loading()) {
+      {{ isEditMode ? 'Salvando...' : 'Criando...' }}
+    } @else {
+      {{ isEditMode ? 'Salvar' : 'Criar' }}
+    }
+  </button>
+</mat-dialog-actions>
