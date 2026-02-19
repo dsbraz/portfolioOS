@@ -36,12 +36,14 @@
         </mat-card>
       </div>
       <app-kpi-card
+        class="kpi-report"
         icon="description"
         label="Report Mensal"
         [value]="s.monthly_report_pct + '%'"
         subtitle="Startups com indicador no mes"
       />
       <app-kpi-card
+        class="kpi-routines"
         icon="groups"
         label="Rotinas em Dia"
         [value]="s.routines_up_to_date_pct + '%'"

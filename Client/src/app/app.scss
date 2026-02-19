@@ -5,7 +5,7 @@
 .app-sidenav {
   width: 220px;
   background: var(--mat-sys-surface-container-high);
-  border-right: none;
+  border-right: 1px solid var(--mat-sys-outline-variant);
 
   --mat-list-list-item-label-text-color: var(--mat-sys-on-surface-variant);
   --mat-list-list-item-leading-icon-color: var(--mat-sys-on-surface-variant);

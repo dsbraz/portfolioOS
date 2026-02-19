@@ -28,8 +28,8 @@
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  background-color: var(--mat-sys-surface-variant);
-  color: var(--mat-sys-on-surface-variant);
+  background-color: var(--mat-sys-tertiary-container);
+  color: var(--mat-sys-on-tertiary-container);
   flex-shrink: 0;
 }
 
@@ -152,6 +152,9 @@
 .summary-item {
   display: flex;
   flex-direction: column;
+  background: var(--mat-sys-surface-container-low);
+  padding: 16px;
+  border-radius: 12px;
 }
 
 .summary-label {
