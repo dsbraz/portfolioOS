@@ -175,6 +175,21 @@
   margin-bottom: 0;
 }
 
+.section-panel {
+  margin-bottom: 16px;
+
+  mat-panel-title {
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  mat-expansion-panel-header {
+    button {
+      margin-left: auto;
+    }
+  }
+}
+
 .section-table {
   width: 100%;
 }

@@ -12,6 +12,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
+import { MatExpansionModule } from '@angular/material/expansion';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { forkJoin } from 'rxjs';
@@ -63,6 +64,7 @@ import {
     MatNativeDateModule,
     MatSnackBarModule,
     MatTableModule,
+    MatExpansionModule,
     MatMenuModule,
     MatTooltipModule,
     StatusBadge,

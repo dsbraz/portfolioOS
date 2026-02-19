@@ -123,157 +123,148 @@
     </mat-card>
 
     <!-- Indicadores Mensais -->
-    <mat-card class="section-card">
-      <mat-card-header>
-        <mat-card-title>Indicadores Mensais</mat-card-title>
-        <span class="section-spacer"></span>
-        <button mat-stroked-button (click)="openCreateIndicator()">
+    <mat-expansion-panel class="section-panel" [expanded]="false" [togglePosition]="'before'">
+      <mat-expansion-panel-header>
+        <mat-panel-title>Indicadores Mensais</mat-panel-title>
+        <button mat-stroked-button (click)="openCreateIndicator(); $event.stopPropagation()">
           <mat-icon>add</mat-icon>
           Adicionar
         </button>
-      </mat-card-header>
-      <mat-card-content>
-        @if (indicators().length === 0) {
-          <p class="empty-text">Nenhum indicador cadastrado ainda.</p>
-        } @else {
-          <table mat-table [dataSource]="indicators()" class="section-table">
-            <ng-container matColumnDef="period">
-              <th mat-header-cell *matHeaderCellDef>Periodo</th>
-              <td mat-cell *matCellDef="let ind">{{ monthLabels[ind.month] }}/{{ ind.year }}</td>
-            </ng-container>
-            <ng-container matColumnDef="total_revenue">
-              <th mat-header-cell *matHeaderCellDef>Receita</th>
-              <td mat-cell *matCellDef="let ind">{{ formatCurrency(ind.total_revenue) }}</td>
-            </ng-container>
-            <ng-container matColumnDef="cash_balance">
-              <th mat-header-cell *matHeaderCellDef>Caixa</th>
-              <td mat-cell *matCellDef="let ind">{{ formatCurrency(ind.cash_balance) }}</td>
-            </ng-container>
-            <ng-container matColumnDef="ebitda_burn">
-              <th mat-header-cell *matHeaderCellDef>EBITDA/Burn</th>
-              <td mat-cell *matCellDef="let ind">{{ formatCurrency(ind.ebitda_burn) }}</td>
-            </ng-container>
-            <ng-container matColumnDef="headcount">
-              <th mat-header-cell *matHeaderCellDef>Headcount</th>
-              <td mat-cell *matCellDef="let ind">{{ ind.headcount ?? '-' }}</td>
-            </ng-container>
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef></th>
-              <td mat-cell *matCellDef="let ind">
-                <button mat-icon-button [matMenuTriggerFor]="indMenu">
-                  <mat-icon>more_vert</mat-icon>
+      </mat-expansion-panel-header>
+      @if (indicators().length === 0) {
+        <p class="empty-text">Nenhum indicador cadastrado ainda.</p>
+      } @else {
+        <table mat-table [dataSource]="indicators()" class="section-table">
+          <ng-container matColumnDef="period">
+            <th mat-header-cell *matHeaderCellDef>Periodo</th>
+            <td mat-cell *matCellDef="let ind">{{ monthLabels[ind.month] }}/{{ ind.year }}</td>
+          </ng-container>
+          <ng-container matColumnDef="total_revenue">
+            <th mat-header-cell *matHeaderCellDef>Receita</th>
+            <td mat-cell *matCellDef="let ind">{{ formatCurrency(ind.total_revenue) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="cash_balance">
+            <th mat-header-cell *matHeaderCellDef>Caixa</th>
+            <td mat-cell *matCellDef="let ind">{{ formatCurrency(ind.cash_balance) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="ebitda_burn">
+            <th mat-header-cell *matHeaderCellDef>EBITDA/Burn</th>
+            <td mat-cell *matCellDef="let ind">{{ formatCurrency(ind.ebitda_burn) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="headcount">
+            <th mat-header-cell *matHeaderCellDef>Headcount</th>
+            <td mat-cell *matCellDef="let ind">{{ ind.headcount ?? '-' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let ind">
+              <button mat-icon-button [matMenuTriggerFor]="indMenu">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #indMenu="matMenu">
+                <button mat-menu-item (click)="openEditIndicator(ind)">
+                  <mat-icon>edit</mat-icon> Editar
                 </button>
-                <mat-menu #indMenu="matMenu">
-                  <button mat-menu-item (click)="openEditIndicator(ind)">
-                    <mat-icon>edit</mat-icon> Editar
-                  </button>
-                  <button mat-menu-item (click)="deleteIndicator(ind)">
-                    <mat-icon color="warn">delete</mat-icon> Excluir
-                  </button>
-                </mat-menu>
-              </td>
-            </ng-container>
-            <tr mat-header-row *matHeaderRowDef="indicatorColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: indicatorColumns"></tr>
-          </table>
-        }
-      </mat-card-content>
-    </mat-card>
+                <button mat-menu-item (click)="deleteIndicator(ind)">
+                  <mat-icon color="warn">delete</mat-icon> Excluir
+                </button>
+              </mat-menu>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="indicatorColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: indicatorColumns"></tr>
+        </table>
+      }
+    </mat-expansion-panel>
 
     <!-- Reunioes de Conselho -->
-    <mat-card class="section-card">
-      <mat-card-header>
-        <mat-card-title>Reunioes de Conselho</mat-card-title>
-        <span class="section-spacer"></span>
-        <button mat-stroked-button (click)="openCreateMeeting()">
+    <mat-expansion-panel class="section-panel" [expanded]="false" [togglePosition]="'before'">
+      <mat-expansion-panel-header>
+        <mat-panel-title>Reunioes de Conselho</mat-panel-title>
+        <button mat-stroked-button (click)="openCreateMeeting(); $event.stopPropagation()">
           <mat-icon>add</mat-icon>
           Adicionar
         </button>
-      </mat-card-header>
-      <mat-card-content>
-        @if (meetings().length === 0) {
-          <p class="empty-text">Nenhuma reuniao cadastrada ainda.</p>
-        } @else {
-          <table mat-table [dataSource]="meetings()" class="section-table">
-            <ng-container matColumnDef="meeting_date">
-              <th mat-header-cell *matHeaderCellDef>Data</th>
-              <td mat-cell *matCellDef="let m">{{ m.meeting_date | date:'dd/MM/yyyy' }}</td>
-            </ng-container>
-            <ng-container matColumnDef="summary">
-              <th mat-header-cell *matHeaderCellDef>Resumo</th>
-              <td mat-cell *matCellDef="let m" class="truncate-cell">{{ m.summary ?? '-' }}</td>
-            </ng-container>
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef></th>
-              <td mat-cell *matCellDef="let m">
-                <button mat-icon-button [matMenuTriggerFor]="meetMenu">
-                  <mat-icon>more_vert</mat-icon>
+      </mat-expansion-panel-header>
+      @if (meetings().length === 0) {
+        <p class="empty-text">Nenhuma reuniao cadastrada ainda.</p>
+      } @else {
+        <table mat-table [dataSource]="meetings()" class="section-table">
+          <ng-container matColumnDef="meeting_date">
+            <th mat-header-cell *matHeaderCellDef>Data</th>
+            <td mat-cell *matCellDef="let m">{{ m.meeting_date | date:'dd/MM/yyyy' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="summary">
+            <th mat-header-cell *matHeaderCellDef>Resumo</th>
+            <td mat-cell *matCellDef="let m" class="truncate-cell">{{ m.summary ?? '-' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let m">
+              <button mat-icon-button [matMenuTriggerFor]="meetMenu">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #meetMenu="matMenu">
+                <button mat-menu-item (click)="openEditMeeting(m)">
+                  <mat-icon>edit</mat-icon> Editar
                 </button>
-                <mat-menu #meetMenu="matMenu">
-                  <button mat-menu-item (click)="openEditMeeting(m)">
-                    <mat-icon>edit</mat-icon> Editar
-                  </button>
-                  <button mat-menu-item (click)="deleteMeeting(m)">
-                    <mat-icon color="warn">delete</mat-icon> Excluir
-                  </button>
-                </mat-menu>
-              </td>
-            </ng-container>
-            <tr mat-header-row *matHeaderRowDef="meetingColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: meetingColumns"></tr>
-          </table>
-        }
-      </mat-card-content>
-    </mat-card>
+                <button mat-menu-item (click)="deleteMeeting(m)">
+                  <mat-icon color="warn">delete</mat-icon> Excluir
+                </button>
+              </mat-menu>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="meetingColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: meetingColumns"></tr>
+        </table>
+      }
+    </mat-expansion-panel>
 
     <!-- Executivos -->
-    <mat-card class="section-card">
-      <mat-card-header>
-        <mat-card-title>Executivos</mat-card-title>
-        <span class="section-spacer"></span>
-        <button mat-stroked-button (click)="openCreateExecutive()">
+    <mat-expansion-panel class="section-panel" [expanded]="false" [togglePosition]="'before'">
+      <mat-expansion-panel-header>
+        <mat-panel-title>Executivos</mat-panel-title>
+        <button mat-stroked-button (click)="openCreateExecutive(); $event.stopPropagation()">
           <mat-icon>add</mat-icon>
           Adicionar
         </button>
-      </mat-card-header>
-      <mat-card-content>
-        @if (executives().length === 0) {
-          <p class="empty-text">Nenhum executivo cadastrado ainda.</p>
-        } @else {
-          <table mat-table [dataSource]="executives()" class="section-table">
-            <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef>Nome</th>
-              <td mat-cell *matCellDef="let e">{{ e.name }}</td>
-            </ng-container>
-            <ng-container matColumnDef="role">
-              <th mat-header-cell *matHeaderCellDef>Cargo</th>
-              <td mat-cell *matCellDef="let e">{{ e.role ?? '-' }}</td>
-            </ng-container>
-            <ng-container matColumnDef="email">
-              <th mat-header-cell *matHeaderCellDef>Email</th>
-              <td mat-cell *matCellDef="let e">{{ e.email ?? '-' }}</td>
-            </ng-container>
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef></th>
-              <td mat-cell *matCellDef="let e">
-                <button mat-icon-button [matMenuTriggerFor]="execMenu">
-                  <mat-icon>more_vert</mat-icon>
+      </mat-expansion-panel-header>
+      @if (executives().length === 0) {
+        <p class="empty-text">Nenhum executivo cadastrado ainda.</p>
+      } @else {
+        <table mat-table [dataSource]="executives()" class="section-table">
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Nome</th>
+            <td mat-cell *matCellDef="let e">{{ e.name }}</td>
+          </ng-container>
+          <ng-container matColumnDef="role">
+            <th mat-header-cell *matHeaderCellDef>Cargo</th>
+            <td mat-cell *matCellDef="let e">{{ e.role ?? '-' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="email">
+            <th mat-header-cell *matHeaderCellDef>Email</th>
+            <td mat-cell *matCellDef="let e">{{ e.email ?? '-' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let e">
+              <button mat-icon-button [matMenuTriggerFor]="execMenu">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #execMenu="matMenu">
+                <button mat-menu-item (click)="openEditExecutive(e)">
+                  <mat-icon>edit</mat-icon> Editar
                 </button>
-                <mat-menu #execMenu="matMenu">
-                  <button mat-menu-item (click)="openEditExecutive(e)">
-                    <mat-icon>edit</mat-icon> Editar
-                  </button>
-                  <button mat-menu-item (click)="deleteExecutive(e)">
-                    <mat-icon color="warn">delete</mat-icon> Excluir
-                  </button>
-                </mat-menu>
-              </td>
-            </ng-container>
-            <tr mat-header-row *matHeaderRowDef="executiveColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: executiveColumns"></tr>
-          </table>
-        }
-      </mat-card-content>
-    </mat-card>
+                <button mat-menu-item (click)="deleteExecutive(e)">
+                  <mat-icon color="warn">delete</mat-icon> Excluir
+                </button>
+              </mat-menu>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="executiveColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: executiveColumns"></tr>
+        </table>
+      }
+    </mat-expansion-panel>
   </div>
 }
