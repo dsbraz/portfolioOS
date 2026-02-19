@@ -1,12 +1,10 @@
-import asyncio
-import logging
 from contextlib import asynccontextmanager
 
-from alembic import command
-from alembic.config import Config
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.config import settings
+from app.database import engine
 from app.controllers.auth_controller import router as auth_router
 from app.controllers.auth_dependency import get_current_user
 from app.controllers.board_meeting_controller import router as board_meeting_router
@@ -20,20 +18,11 @@ from app.controllers.report_token_controller import router as report_token_route
 from app.controllers.startup_controller import router as startup_router
 from app.controllers.user_controller import router as user_router
 
-logger = logging.getLogger("portfolio")
-
-
-def _run_migrations():
-    alembic_cfg = Config("alembic.ini")
-    command.upgrade(alembic_cfg, "head")
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    loop = asyncio.get_running_loop()
-    await loop.run_in_executor(None, _run_migrations)
-    logger.info("Database migrations applied")
     yield
+    await engine.dispose()
 
 
 app = FastAPI(
@@ -45,7 +34,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4200"],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

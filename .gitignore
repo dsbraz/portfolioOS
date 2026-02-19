@@ -15,6 +15,7 @@ dist/
 
 # Environment
 .env
+.env.production
 
 # Database files
 *.db
