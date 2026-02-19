@@ -1,10 +1,11 @@
 import uuid
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_session
 from app.domain.schemas.report_token import (
+    PublicIndicatorData,
     PublicReportSubmit,
     ReportFormContext,
     ReportTokenCreate,
@@ -27,6 +28,19 @@ def _get_service(session: AsyncSession = Depends(get_session)) -> ReportTokenSer
     )
 
 
+async def _verify_startup_exists(
+    startup_id: uuid.UUID,
+    session: AsyncSession = Depends(get_session),
+) -> uuid.UUID:
+    startup = await StartupRepository(session).get_by_id(startup_id)
+    if not startup:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Startup com id {startup_id} nao encontrada",
+        )
+    return startup_id
+
+
 # --- Admin routes ---
 
 
@@ -36,11 +50,17 @@ def _get_service(session: AsyncSession = Depends(get_session)) -> ReportTokenSer
     status_code=status.HTTP_200_OK,
 )
 async def generate_token(
-    startup_id: uuid.UUID,
     data: ReportTokenCreate,
+    startup_id: uuid.UUID = Depends(_verify_startup_exists),
     service: ReportTokenService = Depends(_get_service),
 ):
-    token = await service.generate_token(startup_id, data.month, data.year)
+    try:
+        token = await service.generate_token(startup_id, data.month, data.year)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
     return ReportTokenResponse.model_validate(token)
 
 
@@ -49,7 +69,7 @@ async def generate_token(
     response_model=ReportTokenListResponse,
 )
 async def list_tokens(
-    startup_id: uuid.UUID,
+    startup_id: uuid.UUID = Depends(_verify_startup_exists),
     service: ReportTokenService = Depends(_get_service),
 ):
     items, total = await service.list_tokens(startup_id)
@@ -70,7 +90,31 @@ async def get_form_context(
     token: uuid.UUID,
     service: ReportTokenService = Depends(_get_service),
 ):
-    return await service.get_form_context(token)
+    report_token = await service.get_token_by_value(token)
+    if not report_token:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Token invalido ou expirado",
+        )
+
+    startup, indicator = await service.get_form_context(report_token)
+    if not startup:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Startup nao encontrada",
+        )
+
+    existing = None
+    if indicator:
+        existing = PublicIndicatorData.model_validate(indicator)
+
+    return ReportFormContext(
+        startup_name=startup.name,
+        startup_logo_url=startup.logo_url,
+        month=report_token.month,
+        year=report_token.year,
+        existing_indicator=existing,
+    )
 
 
 @router.post(
@@ -82,4 +126,10 @@ async def submit_report(
     data: PublicReportSubmit,
     service: ReportTokenService = Depends(_get_service),
 ):
-    await service.submit_report(token, data)
+    report_token = await service.get_token_by_value(token)
+    if not report_token:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Token invalido ou expirado",
+        )
+    await service.submit_report(report_token, data.model_dump())

@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_session
+from app.domain.exceptions import ConflictError
 from app.domain.models.monthly_indicator import MonthlyIndicator
 from app.domain.schemas.monthly_indicator import (
     MonthlyIndicatorCreate,
@@ -60,7 +61,18 @@ async def create_indicator(
     service: MonthlyIndicatorService = Depends(_get_service),
 ):
     indicator = MonthlyIndicator(startup_id=startup_id, **data.model_dump())
-    created = await service.create_indicator(indicator)
+    try:
+        created = await service.create_indicator(indicator)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+    except ConflictError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(e),
+        )
     return MonthlyIndicatorResponse.model_validate(created)
 
 
@@ -92,7 +104,13 @@ async def update_indicator(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Indicador com id {indicator_id} não encontrado",
         )
-    updated = await service.update_indicator(indicator, data.model_dump(exclude_unset=True))
+    try:
+        updated = await service.update_indicator(indicator, data.model_dump(exclude_unset=True))
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
     return MonthlyIndicatorResponse.model_validate(updated)
 
 

@@ -29,6 +29,8 @@ class ReportTokenListResponse(BaseModel):
 
 
 class PublicIndicatorData(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     total_revenue: Decimal | None = None
     cash_balance: Decimal | None = None
     ebitda_burn: Decimal | None = None
