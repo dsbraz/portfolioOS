@@ -11,7 +11,7 @@ from app.domain.schemas.report_token import (
 )
 from app.repositories.report_token_repository import ReportTokenRepository
 from app.repositories.startup_repository import StartupRepository
-from app.use_cases.report_token.generate_report_token import GenerateReportToken
+from app.application.report_token.generate_report_token import GenerateReportToken
 
 router = APIRouter(tags=["Report Tokens"])
 

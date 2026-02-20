@@ -12,7 +12,7 @@ from app.repositories.portfolio_monitoring_repository import (
     PortfolioMonitoringRepository,
 )
 from app.repositories.startup_repository import StartupRepository
-from app.use_cases.portfolio_monitoring.get_portfolio_summary import (
+from app.application.portfolio_monitoring.get_portfolio_summary import (
     GetPortfolioSummary,
 )
 

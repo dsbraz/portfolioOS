@@ -7,8 +7,8 @@ from app.domain.schemas.auth import LoginRequest, TokenResponse
 from app.infrastructure.bcrypt_password_hasher import BcryptPasswordHasher
 from app.infrastructure.jwt_token_generator import JwtTokenGenerator
 from app.repositories.user_repository import UserRepository
-from app.use_cases.auth.authenticate_user import AuthenticateUser
-from app.use_cases.auth.create_access_token import CreateAccessToken
+from app.application.auth.authenticate_user import AuthenticateUser
+from app.application.auth.create_access_token import CreateAccessToken
 
 router = APIRouter(tags=["Auth"])
 

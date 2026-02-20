@@ -5,7 +5,7 @@ Scope note: at this stage, this guide covers local development workflows only.
 ## Project Structure & Module Organization
 This repository is split into two apps plus infrastructure:
 - `Client/`: Angular frontend (`src/` for app code, `public/` for static assets, `angular.json` for build/test targets).
-- `Server/`: FastAPI backend (`app/controllers/` for routes, `app/use_cases/` for business operations, `app/repositories/` for persistence, `app/domain/` for models/schemas, `app/infrastructure/` for framework adapters, `alembic/` for migrations).
+- `Server/`: FastAPI backend (`app/controllers/` for routes, `app/application/` for business operations, `app/repositories/` for persistence, `app/domain/` for models/schemas, `app/infrastructure/` for framework adapters, `alembic/` for migrations).
 - `docker-compose.yml`: local stack (client, server, PostgreSQL).
 
 Keep frontend and backend changes scoped to their folders; shared API contracts should be updated in both sides in the same PR.
@@ -15,14 +15,14 @@ Use clear boundaries between layers and keep dependencies pointing inward.
 
 ### Backend (`Server/app`)
 - `controllers/` (Presentation/API layer): define HTTP routes, validate/parse request/response contracts, map errors to HTTP status codes. Keep controllers thin; no business rules here.
-- `use_cases/` (Application layer): single-purpose classes that implement business operations. Each use case has an `execute` method. A generic `CrudUseCase[T]` handles standard CRUD for entities without business rules.
+- `application/` (Application layer): single-purpose classes that implement business operations. Each use case has an `execute` method. A generic `CrudUseCase[T]` handles standard CRUD for entities without business rules.
 - `domain/` (Domain layer): entities, business rules, and shared validators. Keep business logic framework-light even when persistence models use SQLAlchemy.
   - `domain/validators.py`: shared domain validation functions (e.g. `validate_period_not_future`).
 - `infrastructure/` (Adapter layer): concrete implementations of domain protocols for external concerns (e.g. `BcryptPasswordHasher`, `JwtTokenGenerator`).
 - `repositories/` (Persistence layer): database access and persistence implementations. Never leak ORM or infra details into domain models.
 - `alembic/`: schema evolution only. Migrations must reflect domain/infrastructure changes and be versioned with code.
 
-Backend flow (required): `controllers -> use_cases -> domain -> repos`.
+Backend flow (required): `controllers -> application -> domain -> repos`.
 
 ### Frontend (`Client/src`)
 - `pages`/route components (Presentation layer): compose screens and user interactions.
@@ -31,14 +31,14 @@ Backend flow (required): `controllers -> use_cases -> domain -> repos`.
 - `models`/`types` (Domain contract layer): explicit interfaces/types shared across features to avoid ad-hoc payloads.
 
 ### Layering Rules
-- In backend, follow the chain strictly: `controllers -> use_cases -> domain -> repos`.
+- In backend, follow the chain strictly: `controllers -> application -> domain -> repos`.
 - Route handlers call use cases for business behavior; dependency wiring in controller modules composes repositories and use cases.
 - Domain logic should stay isolated from transport concerns and remain easily testable in isolation.
 - Keep modules cohesive: each file/class should have a single clear reason to change.
 
 ### Backend Import Boundaries
-- **Use cases must never import `fastapi`** — no `HTTPException`, no `status`, no `Depends`. Use cases work with domain models, repositories, infrastructure adapters, primitive types, and `dict`s.
-- **Use cases must never import schemas** (`app.domain.schemas.*`). Schema validation and serialization belong in controllers.
+- **Application layer must never import `fastapi`** — no `HTTPException`, no `status`, no `Depends`. Use cases work with domain models, repositories, infrastructure adapters, primitive types, and `dict`s.
+- **Application layer must never import schemas** (`app.domain.schemas.*`). Schema validation and serialization belong in controllers.
 - **Domain models and exceptions** (`app.domain.models.*`, `app.domain.exceptions`) are the shared language between layers.
 
 ### Error Handling Convention

@@ -12,8 +12,8 @@ from app.domain.schemas.report_token import (
 from app.repositories.monthly_indicator_repository import MonthlyIndicatorRepository
 from app.repositories.report_token_repository import ReportTokenRepository
 from app.repositories.startup_repository import StartupRepository
-from app.use_cases.report_token.get_report_form_context import GetReportFormContext
-from app.use_cases.report_token.submit_report import SubmitReport
+from app.application.report_token.get_report_form_context import GetReportFormContext
+from app.application.report_token.submit_report import SubmitReport
 
 router = APIRouter(tags=["Public Reports"])
 

@@ -15,8 +15,8 @@ from app.domain.schemas.user import (
 )
 from app.infrastructure.bcrypt_password_hasher import BcryptPasswordHasher
 from app.repositories.user_repository import UserRepository
-from app.use_cases.auth.register_user import RegisterUser
-from app.use_cases.auth.update_user import UpdateUser
+from app.application.auth.register_user import RegisterUser
+from app.application.auth.update_user import UpdateUser
 
 router = APIRouter(tags=["Users"])
 
