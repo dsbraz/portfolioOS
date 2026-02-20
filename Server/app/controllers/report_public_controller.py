@@ -12,19 +12,31 @@ from app.domain.schemas.report_token import (
 from app.repositories.monthly_indicator_repository import MonthlyIndicatorRepository
 from app.repositories.report_token_repository import ReportTokenRepository
 from app.repositories.startup_repository import StartupRepository
-from app.services.report_token_service import ReportTokenService
+from app.use_cases.report_token.get_report_form_context import GetReportFormContext
+from app.use_cases.report_token.submit_report import SubmitReport
 
 router = APIRouter(tags=["Public Reports"])
 
 
-def _get_service(
+def _get_token_repo(
     session: AsyncSession = Depends(get_session),
-) -> ReportTokenService:
-    return ReportTokenService(
-        ReportTokenRepository(session),
+) -> ReportTokenRepository:
+    return ReportTokenRepository(session)
+
+
+def _get_form_context_use_case(
+    session: AsyncSession = Depends(get_session),
+) -> GetReportFormContext:
+    return GetReportFormContext(
         StartupRepository(session),
         MonthlyIndicatorRepository(session),
     )
+
+
+def _get_submit_use_case(
+    session: AsyncSession = Depends(get_session),
+) -> SubmitReport:
+    return SubmitReport(MonthlyIndicatorRepository(session))
 
 
 @router.get(
@@ -33,16 +45,17 @@ def _get_service(
 )
 async def get_form_context(
     token: uuid.UUID,
-    service: ReportTokenService = Depends(_get_service),
+    token_repo: ReportTokenRepository = Depends(_get_token_repo),
+    form_context: GetReportFormContext = Depends(_get_form_context_use_case),
 ):
-    report_token = await service.get_token_by_value(token)
+    report_token = await token_repo.get_by_token(token)
     if not report_token:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Token invalido ou expirado",
         )
 
-    startup, indicator = await service.get_form_context(report_token)
+    startup, indicator = await form_context.execute(report_token)
     if not startup:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -69,12 +82,13 @@ async def get_form_context(
 async def submit_report(
     token: uuid.UUID,
     data: PublicReportSubmit,
-    service: ReportTokenService = Depends(_get_service),
+    token_repo: ReportTokenRepository = Depends(_get_token_repo),
+    submit: SubmitReport = Depends(_get_submit_use_case),
 ):
-    report_token = await service.get_token_by_value(token)
+    report_token = await token_repo.get_by_token(token)
     if not report_token:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Token invalido ou expirado",
         )
-    await service.submit_report(report_token, data.model_dump())
+    await submit.execute(report_token, data.model_dump())

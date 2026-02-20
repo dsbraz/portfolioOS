@@ -16,13 +16,19 @@ from app.config import settings
 from app.database import get_session
 from app.domain.models import Base
 from app.domain.models.user import User
+from app.infrastructure.bcrypt_password_hasher import BcryptPasswordHasher
+from app.infrastructure.jwt_token_generator import JwtTokenGenerator
 from app.main import app
-from app.services.auth_service import AuthService, pwd_context
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 
 engine = create_async_engine(TEST_DATABASE_URL, echo=False)
 TestSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
+
+_hasher = BcryptPasswordHasher()
+_token_gen = JwtTokenGenerator(
+    settings.secret_key, settings.access_token_expire_minutes
+)
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -44,7 +50,7 @@ async def _create_test_user(session: AsyncSession) -> User:
     user = User(
         username="testadmin",
         email="testadmin@example.com",
-        hashed_password=pwd_context.hash("testpass123"),
+        hashed_password=_hasher.hash("testpass123"),
     )
     session.add(user)
     await session.flush()
@@ -55,12 +61,7 @@ async def _create_test_user(session: AsyncSession) -> User:
 @pytest_asyncio.fixture
 async def client(session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     user = await _create_test_user(session)
-    auth_service = AuthService(
-        repository=None,
-        secret_key=settings.secret_key,
-        token_expire_minutes=settings.access_token_expire_minutes,
-    )
-    token = auth_service.create_access_token(user)
+    token = _token_gen.create_token(user)
 
     async def override_get_session():
         try:

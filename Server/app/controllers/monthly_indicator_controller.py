@@ -14,13 +14,37 @@ from app.domain.schemas.monthly_indicator import (
 )
 from app.repositories.monthly_indicator_repository import MonthlyIndicatorRepository
 from app.repositories.startup_repository import StartupRepository
-from app.services.monthly_indicator_service import MonthlyIndicatorService
+from app.use_cases.base_crud import CrudUseCase
+from app.use_cases.monthly_indicator.create_monthly_indicator import (
+    CreateMonthlyIndicator,
+)
+from app.use_cases.monthly_indicator.update_monthly_indicator import (
+    UpdateMonthlyIndicator,
+)
 
 router = APIRouter(prefix="/startups/{startup_id}/indicators", tags=["Monthly Indicators"])
 
 
-def _get_service(session: AsyncSession = Depends(get_session)) -> MonthlyIndicatorService:
-    return MonthlyIndicatorService(MonthlyIndicatorRepository(session))
+def _get_repo(session: AsyncSession = Depends(get_session)) -> MonthlyIndicatorRepository:
+    return MonthlyIndicatorRepository(session)
+
+
+def _get_crud(
+    repo: MonthlyIndicatorRepository = Depends(_get_repo),
+) -> CrudUseCase[MonthlyIndicator]:
+    return CrudUseCase(repo)
+
+
+def _get_create_use_case(
+    repo: MonthlyIndicatorRepository = Depends(_get_repo),
+) -> CreateMonthlyIndicator:
+    return CreateMonthlyIndicator(repo)
+
+
+def _get_update_use_case(
+    repo: MonthlyIndicatorRepository = Depends(_get_repo),
+) -> UpdateMonthlyIndicator:
+    return UpdateMonthlyIndicator(repo)
 
 
 def _get_startup_repo(session: AsyncSession = Depends(get_session)) -> StartupRepository:
@@ -43,9 +67,9 @@ async def _verify_startup_exists(
 @router.get("", response_model=MonthlyIndicatorListResponse)
 async def list_indicators(
     startup_id: uuid.UUID = Depends(_verify_startup_exists),
-    service: MonthlyIndicatorService = Depends(_get_service),
+    crud: CrudUseCase[MonthlyIndicator] = Depends(_get_crud),
 ):
-    items, total = await service.list_indicators(startup_id)
+    items, total = await crud.list_by_parent(startup_id)
     return MonthlyIndicatorListResponse(
         items=[MonthlyIndicatorResponse.model_validate(i) for i in items],
         total=total,
@@ -58,11 +82,11 @@ async def list_indicators(
 async def create_indicator(
     data: MonthlyIndicatorCreate,
     startup_id: uuid.UUID = Depends(_verify_startup_exists),
-    service: MonthlyIndicatorService = Depends(_get_service),
+    create_use_case: CreateMonthlyIndicator = Depends(_get_create_use_case),
 ):
     indicator = MonthlyIndicator(startup_id=startup_id, **data.model_dump())
     try:
-        created = await service.create_indicator(indicator)
+        created = await create_use_case.execute(indicator)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -80,9 +104,9 @@ async def create_indicator(
 async def get_indicator(
     indicator_id: uuid.UUID,
     startup_id: uuid.UUID = Depends(_verify_startup_exists),
-    service: MonthlyIndicatorService = Depends(_get_service),
+    crud: CrudUseCase[MonthlyIndicator] = Depends(_get_crud),
 ):
-    indicator = await service.get_indicator(indicator_id)
+    indicator = await crud.get_by_id(indicator_id)
     if not indicator or indicator.startup_id != startup_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -96,16 +120,19 @@ async def update_indicator(
     indicator_id: uuid.UUID,
     data: MonthlyIndicatorUpdate,
     startup_id: uuid.UUID = Depends(_verify_startup_exists),
-    service: MonthlyIndicatorService = Depends(_get_service),
+    crud: CrudUseCase[MonthlyIndicator] = Depends(_get_crud),
+    update_use_case: UpdateMonthlyIndicator = Depends(_get_update_use_case),
 ):
-    indicator = await service.get_indicator(indicator_id)
+    indicator = await crud.get_by_id(indicator_id)
     if not indicator or indicator.startup_id != startup_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Indicador com id {indicator_id} não encontrado",
         )
     try:
-        updated = await service.update_indicator(indicator, data.model_dump(exclude_unset=True))
+        updated = await update_use_case.execute(
+            indicator, data.model_dump(exclude_unset=True)
+        )
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -118,12 +145,12 @@ async def update_indicator(
 async def delete_indicator(
     indicator_id: uuid.UUID,
     startup_id: uuid.UUID = Depends(_verify_startup_exists),
-    service: MonthlyIndicatorService = Depends(_get_service),
+    crud: CrudUseCase[MonthlyIndicator] = Depends(_get_crud),
 ):
-    indicator = await service.get_indicator(indicator_id)
+    indicator = await crud.get_by_id(indicator_id)
     if not indicator or indicator.startup_id != startup_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Indicador com id {indicator_id} não encontrado",
         )
-    await service.delete_indicator(indicator)
+    await crud.delete(indicator)

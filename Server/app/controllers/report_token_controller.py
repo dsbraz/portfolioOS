@@ -9,20 +9,23 @@ from app.domain.schemas.report_token import (
     ReportTokenListResponse,
     ReportTokenResponse,
 )
-from app.repositories.monthly_indicator_repository import MonthlyIndicatorRepository
 from app.repositories.report_token_repository import ReportTokenRepository
 from app.repositories.startup_repository import StartupRepository
-from app.services.report_token_service import ReportTokenService
+from app.use_cases.report_token.generate_report_token import GenerateReportToken
 
 router = APIRouter(tags=["Report Tokens"])
 
 
-def _get_service(session: AsyncSession = Depends(get_session)) -> ReportTokenService:
-    return ReportTokenService(
-        ReportTokenRepository(session),
-        StartupRepository(session),
-        MonthlyIndicatorRepository(session),
-    )
+def _get_token_repo(
+    session: AsyncSession = Depends(get_session),
+) -> ReportTokenRepository:
+    return ReportTokenRepository(session)
+
+
+def _get_generate_use_case(
+    token_repo: ReportTokenRepository = Depends(_get_token_repo),
+) -> GenerateReportToken:
+    return GenerateReportToken(token_repo)
 
 
 async def _verify_startup_exists(
@@ -49,10 +52,10 @@ async def _verify_startup_exists(
 async def generate_token(
     data: ReportTokenCreate,
     startup_id: uuid.UUID = Depends(_verify_startup_exists),
-    service: ReportTokenService = Depends(_get_service),
+    generate: GenerateReportToken = Depends(_get_generate_use_case),
 ):
     try:
-        token = await service.generate_token(startup_id, data.month, data.year)
+        token = await generate.execute(startup_id, data.month, data.year)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -67,9 +70,9 @@ async def generate_token(
 )
 async def list_tokens(
     startup_id: uuid.UUID = Depends(_verify_startup_exists),
-    service: ReportTokenService = Depends(_get_service),
+    token_repo: ReportTokenRepository = Depends(_get_token_repo),
 ):
-    items, total = await service.list_tokens(startup_id)
+    items, total = await token_repo.get_all_by_startup(startup_id)
     return ReportTokenListResponse(
         items=[ReportTokenResponse.model_validate(t) for t in items],
         total=total,

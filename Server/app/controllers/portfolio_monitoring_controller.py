@@ -8,20 +8,31 @@ from app.domain.schemas.portfolio_monitoring import (
     StartupMonitoringItem,
 )
 from app.domain.schemas.startup import StartupResponse
-from app.services.portfolio_monitoring_service import PortfolioMonitoringService
+from app.repositories.portfolio_monitoring_repository import (
+    PortfolioMonitoringRepository,
+)
+from app.repositories.startup_repository import StartupRepository
+from app.use_cases.portfolio_monitoring.get_portfolio_summary import (
+    GetPortfolioSummary,
+)
 
 router = APIRouter(prefix="/portfolio-monitoring", tags=["Portfolio Monitoring"])
 
 
-def _get_service(session: AsyncSession = Depends(get_session)) -> PortfolioMonitoringService:
-    return PortfolioMonitoringService(session)
+def _get_use_case(
+    session: AsyncSession = Depends(get_session),
+) -> GetPortfolioSummary:
+    return GetPortfolioSummary(
+        StartupRepository(session),
+        PortfolioMonitoringRepository(session),
+    )
 
 
 @router.get("/summary", response_model=MonitoringSummary)
 async def get_monitoring_summary(
-    service: PortfolioMonitoringService = Depends(_get_service),
+    use_case: GetPortfolioSummary = Depends(_get_use_case),
 ):
-    summary = await service.get_summary()
+    summary = await use_case.execute()
     return MonitoringSummary(
         total_startups=summary.total_startups,
         portfolio_revenue=summary.portfolio_revenue,

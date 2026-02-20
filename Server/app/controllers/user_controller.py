@@ -3,7 +3,6 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import settings
 from app.controllers.auth_dependency import get_current_user
 from app.database import get_session
 from app.domain.exceptions import ConflictError
@@ -14,20 +13,26 @@ from app.domain.schemas.user import (
     UserResponse,
     UserUpdate,
 )
+from app.infrastructure.bcrypt_password_hasher import BcryptPasswordHasher
 from app.repositories.user_repository import UserRepository
-from app.services.auth_service import AuthService
+from app.use_cases.auth.register_user import RegisterUser
+from app.use_cases.auth.update_user import UpdateUser
 
 router = APIRouter(tags=["Users"])
 
+_hasher = BcryptPasswordHasher()
 
-def _get_service(
+
+def _get_register(
     session: AsyncSession = Depends(get_session),
-) -> AuthService:
-    return AuthService(
-        UserRepository(session),
-        settings.secret_key,
-        settings.access_token_expire_minutes,
-    )
+) -> RegisterUser:
+    return RegisterUser(UserRepository(session), _hasher)
+
+
+def _get_update_user(
+    session: AsyncSession = Depends(get_session),
+) -> UpdateUser:
+    return UpdateUser(UserRepository(session), _hasher)
 
 
 async def _get_user_or_404(
@@ -51,10 +56,10 @@ async def _get_user_or_404(
 )
 async def create_user(
     data: UserCreate,
-    service: AuthService = Depends(_get_service),
+    register: RegisterUser = Depends(_get_register),
 ):
     try:
-        user = await service.register(
+        user = await register.execute(
             data.username, data.email, data.password
         )
     except ConflictError as e:
@@ -88,10 +93,10 @@ async def update_user(
     data: UserUpdate,
     user=Depends(_get_user_or_404),
     current_user: User = Depends(get_current_user),
-    service: AuthService = Depends(_get_service),
+    update_use_case: UpdateUser = Depends(_get_update_user),
 ):
     try:
-        updated = await service.update_user(
+        updated = await update_use_case.execute(
             user, data.model_dump(exclude_unset=True), current_user.id
         )
     except ConflictError as e:

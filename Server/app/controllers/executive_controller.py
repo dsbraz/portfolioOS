@@ -13,13 +13,15 @@ from app.domain.schemas.executive import (
 )
 from app.repositories.executive_repository import ExecutiveRepository
 from app.repositories.startup_repository import StartupRepository
-from app.services.executive_service import ExecutiveService
+from app.use_cases.base_crud import CrudUseCase
 
 router = APIRouter(prefix="/startups/{startup_id}/executives", tags=["Executives"])
 
 
-def _get_service(session: AsyncSession = Depends(get_session)) -> ExecutiveService:
-    return ExecutiveService(ExecutiveRepository(session))
+def _get_use_case(
+    session: AsyncSession = Depends(get_session),
+) -> CrudUseCase[Executive]:
+    return CrudUseCase(ExecutiveRepository(session))
 
 
 def _get_startup_repo(session: AsyncSession = Depends(get_session)) -> StartupRepository:
@@ -42,9 +44,9 @@ async def _verify_startup_exists(
 @router.get("", response_model=ExecutiveListResponse)
 async def list_executives(
     startup_id: uuid.UUID = Depends(_verify_startup_exists),
-    service: ExecutiveService = Depends(_get_service),
+    use_case: CrudUseCase[Executive] = Depends(_get_use_case),
 ):
-    items, total = await service.list_executives(startup_id)
+    items, total = await use_case.list_by_parent(startup_id)
     return ExecutiveListResponse(
         items=[ExecutiveResponse.model_validate(e) for e in items],
         total=total,
@@ -57,10 +59,10 @@ async def list_executives(
 async def create_executive(
     data: ExecutiveCreate,
     startup_id: uuid.UUID = Depends(_verify_startup_exists),
-    service: ExecutiveService = Depends(_get_service),
+    use_case: CrudUseCase[Executive] = Depends(_get_use_case),
 ):
     executive = Executive(startup_id=startup_id, **data.model_dump())
-    created = await service.create_executive(executive)
+    created = await use_case.create(executive)
     return ExecutiveResponse.model_validate(created)
 
 
@@ -68,9 +70,9 @@ async def create_executive(
 async def get_executive(
     executive_id: uuid.UUID,
     startup_id: uuid.UUID = Depends(_verify_startup_exists),
-    service: ExecutiveService = Depends(_get_service),
+    use_case: CrudUseCase[Executive] = Depends(_get_use_case),
 ):
-    executive = await service.get_executive(executive_id)
+    executive = await use_case.get_by_id(executive_id)
     if not executive or executive.startup_id != startup_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -84,15 +86,15 @@ async def update_executive(
     executive_id: uuid.UUID,
     data: ExecutiveUpdate,
     startup_id: uuid.UUID = Depends(_verify_startup_exists),
-    service: ExecutiveService = Depends(_get_service),
+    use_case: CrudUseCase[Executive] = Depends(_get_use_case),
 ):
-    executive = await service.get_executive(executive_id)
+    executive = await use_case.get_by_id(executive_id)
     if not executive or executive.startup_id != startup_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Executivo com id {executive_id} não encontrado",
         )
-    updated = await service.update_executive(executive, data.model_dump(exclude_unset=True))
+    updated = await use_case.update(executive, data.model_dump(exclude_unset=True))
     return ExecutiveResponse.model_validate(updated)
 
 
@@ -100,12 +102,12 @@ async def update_executive(
 async def delete_executive(
     executive_id: uuid.UUID,
     startup_id: uuid.UUID = Depends(_verify_startup_exists),
-    service: ExecutiveService = Depends(_get_service),
+    use_case: CrudUseCase[Executive] = Depends(_get_use_case),
 ):
-    executive = await service.get_executive(executive_id)
+    executive = await use_case.get_by_id(executive_id)
     if not executive or executive.startup_id != startup_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Executivo com id {executive_id} não encontrado",
         )
-    await service.delete_executive(executive)
+    await use_case.delete(executive)

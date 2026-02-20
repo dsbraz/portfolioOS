@@ -13,18 +13,29 @@ from app.domain.schemas.deal import (
     DealUpdate,
 )
 from app.repositories.deal_repository import DealRepository
-from app.services.deal_service import DealService
+from app.use_cases.base_crud import CrudUseCase
+from app.use_cases.deal.move_deal import MoveDeal
 
 router = APIRouter(prefix="/deals", tags=["Deals"])
 
 
-def _get_service(session: AsyncSession = Depends(get_session)) -> DealService:
-    return DealService(DealRepository(session))
+def _get_use_case(
+    session: AsyncSession = Depends(get_session),
+) -> CrudUseCase[Deal]:
+    return CrudUseCase(DealRepository(session))
+
+
+def _get_move_deal(
+    session: AsyncSession = Depends(get_session),
+) -> MoveDeal:
+    return MoveDeal(DealRepository(session))
 
 
 @router.get("", response_model=DealListResponse)
-async def list_deals(service: DealService = Depends(_get_service)):
-    items, total = await service.list_deals()
+async def list_deals(
+    use_case: CrudUseCase[Deal] = Depends(_get_use_case),
+):
+    items, total = await use_case.list_all()
     return DealListResponse(
         items=[DealResponse.model_validate(d) for d in items],
         total=total,
@@ -34,19 +45,19 @@ async def list_deals(service: DealService = Depends(_get_service)):
 @router.post("", response_model=DealResponse, status_code=status.HTTP_201_CREATED)
 async def create_deal(
     data: DealCreate,
-    service: DealService = Depends(_get_service),
+    use_case: CrudUseCase[Deal] = Depends(_get_use_case),
 ):
     deal = Deal(**data.model_dump())
-    created = await service.create_deal(deal)
+    created = await use_case.create(deal)
     return DealResponse.model_validate(created)
 
 
 @router.get("/{deal_id}", response_model=DealResponse)
 async def get_deal(
     deal_id: uuid.UUID,
-    service: DealService = Depends(_get_service),
+    use_case: CrudUseCase[Deal] = Depends(_get_use_case),
 ):
-    deal = await service.get_deal(deal_id)
+    deal = await use_case.get_by_id(deal_id)
     if not deal:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -59,15 +70,15 @@ async def get_deal(
 async def update_deal(
     deal_id: uuid.UUID,
     data: DealUpdate,
-    service: DealService = Depends(_get_service),
+    use_case: CrudUseCase[Deal] = Depends(_get_use_case),
 ):
-    deal = await service.get_deal(deal_id)
+    deal = await use_case.get_by_id(deal_id)
     if not deal:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Deal com id {deal_id} não encontrado",
         )
-    updated = await service.update_deal(deal, data.model_dump(exclude_unset=True))
+    updated = await use_case.update(deal, data.model_dump(exclude_unset=True))
     return DealResponse.model_validate(updated)
 
 
@@ -75,27 +86,28 @@ async def update_deal(
 async def move_deal(
     deal_id: uuid.UUID,
     data: DealMoveRequest,
-    service: DealService = Depends(_get_service),
+    use_case: CrudUseCase[Deal] = Depends(_get_use_case),
+    move_use_case: MoveDeal = Depends(_get_move_deal),
 ):
-    deal = await service.get_deal(deal_id)
+    deal = await use_case.get_by_id(deal_id)
     if not deal:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Deal com id {deal_id} não encontrado",
         )
-    moved = await service.move_deal(deal, data.column, data.position)
+    moved = await move_use_case.execute(deal, data.column, data.position)
     return DealResponse.model_validate(moved)
 
 
 @router.delete("/{deal_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_deal(
     deal_id: uuid.UUID,
-    service: DealService = Depends(_get_service),
+    use_case: CrudUseCase[Deal] = Depends(_get_use_case),
 ):
-    deal = await service.get_deal(deal_id)
+    deal = await use_case.get_by_id(deal_id)
     if not deal:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Deal com id {deal_id} não encontrado",
         )
-    await service.delete_deal(deal)
+    await use_case.delete(deal)
