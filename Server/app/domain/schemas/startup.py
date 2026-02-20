@@ -4,7 +4,7 @@ from datetime import date, datetime
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.domain.models.startup import StartupStatus
-from app.domain.schemas.common import PaginatedResponse, make_optional_model
+from app.domain.schemas.common import PaginatedResponse
 
 
 class StartupBase(BaseModel):
@@ -21,7 +21,14 @@ class StartupCreate(StartupBase):
     pass
 
 
-StartupUpdate = make_optional_model(StartupBase, "StartupUpdate")
+class StartupUpdate(BaseModel):
+    name: str | None = Field(None, min_length=1, max_length=255)
+    site: str | None = Field(None, max_length=512)
+    logo_url: str | None = Field(None, max_length=512)
+    status: StartupStatus | None = None
+    sector: str | None = Field(None, min_length=1, max_length=255)
+    investment_date: date | None = None
+    notes: str | None = None
 
 
 class StartupResponse(StartupBase):

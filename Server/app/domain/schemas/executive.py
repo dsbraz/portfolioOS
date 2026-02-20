@@ -3,7 +3,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.domain.schemas.common import PaginatedResponse, make_optional_model
+from app.domain.schemas.common import PaginatedResponse
 
 
 class ExecutiveBase(BaseModel):
@@ -17,7 +17,12 @@ class ExecutiveBase(BaseModel):
 class ExecutiveCreate(ExecutiveBase):
     pass
 
-ExecutiveUpdate = make_optional_model(ExecutiveBase, "ExecutiveUpdate")
+class ExecutiveUpdate(BaseModel):
+    name: str | None = Field(None, min_length=1, max_length=255)
+    role: str | None = Field(None, max_length=255)
+    email: str | None = Field(None, max_length=255)
+    phone: str | None = Field(None, max_length=50)
+    linkedin: str | None = Field(None, max_length=512)
 
 
 class ExecutiveResponse(ExecutiveBase):

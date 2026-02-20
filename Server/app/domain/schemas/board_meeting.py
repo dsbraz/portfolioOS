@@ -3,7 +3,7 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict
 
-from app.domain.schemas.common import PaginatedResponse, make_optional_model
+from app.domain.schemas.common import PaginatedResponse
 
 
 class BoardMeetingBase(BaseModel):
@@ -17,7 +17,12 @@ class BoardMeetingBase(BaseModel):
 class BoardMeetingCreate(BoardMeetingBase):
     pass
 
-BoardMeetingUpdate = make_optional_model(BoardMeetingBase, "BoardMeetingUpdate")
+class BoardMeetingUpdate(BaseModel):
+    meeting_date: date | None = None
+    participants: str | None = None
+    summary: str | None = None
+    attention_points: str | None = None
+    next_steps: str | None = None
 
 
 class BoardMeetingResponse(BoardMeetingBase):

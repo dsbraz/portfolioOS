@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.domain.schemas.common import PaginatedResponse, make_optional_model
+from app.domain.schemas.common import PaginatedResponse
 
 
 class MonthlyIndicatorBase(BaseModel):
@@ -25,7 +25,18 @@ class MonthlyIndicatorCreate(MonthlyIndicatorBase):
     pass
 
 
-MonthlyIndicatorUpdate = make_optional_model(MonthlyIndicatorBase, "MonthlyIndicatorUpdate")
+class MonthlyIndicatorUpdate(BaseModel):
+    month: int | None = Field(None, ge=1, le=12)
+    year: int | None = Field(None, ge=2000, le=2100)
+    total_revenue: Decimal | None = None
+    recurring_revenue_pct: Decimal | None = None
+    gross_margin_pct: Decimal | None = None
+    cash_balance: Decimal | None = None
+    headcount: int | None = None
+    ebitda_burn: Decimal | None = None
+    achievements: str | None = None
+    challenges: str | None = None
+    comments: str | None = None
 
 
 class MonthlyIndicatorResponse(MonthlyIndicatorBase):
