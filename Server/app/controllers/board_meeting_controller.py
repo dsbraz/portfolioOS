@@ -1,9 +1,13 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_session
+from app.application.board_meeting.create_board_meeting import CreateBoardMeeting
+from app.application.board_meeting.delete_board_meeting import DeleteBoardMeeting
+from app.application.board_meeting.get_board_meeting import GetBoardMeeting
+from app.application.board_meeting.list_board_meetings import ListBoardMeetings
+from app.application.board_meeting.update_board_meeting import UpdateBoardMeeting
+from app.controllers.dependencies import board_meeting_builder, verify_startup_exists
 from app.domain.models.board_meeting import BoardMeeting
 from app.domain.schemas.board_meeting import (
     BoardMeetingCreate,
@@ -11,42 +15,16 @@ from app.domain.schemas.board_meeting import (
     BoardMeetingResponse,
     BoardMeetingUpdate,
 )
-from app.repositories.board_meeting_repository import BoardMeetingRepository
-from app.repositories.startup_repository import StartupRepository
-from app.use_cases.base_crud import CrudUseCase
 
 router = APIRouter(prefix="/startups/{startup_id}/meetings", tags=["Board Meetings"])
 
 
-def _get_use_case(
-    session: AsyncSession = Depends(get_session),
-) -> CrudUseCase[BoardMeeting]:
-    return CrudUseCase(BoardMeetingRepository(session))
-
-
-def _get_startup_repo(session: AsyncSession = Depends(get_session)) -> StartupRepository:
-    return StartupRepository(session)
-
-
-async def _verify_startup_exists(
-    startup_id: uuid.UUID,
-    startup_repo: StartupRepository = Depends(_get_startup_repo),
-) -> uuid.UUID:
-    startup = await startup_repo.get_by_id(startup_id)
-    if not startup:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Startup com id {startup_id} não encontrada",
-        )
-    return startup_id
-
-
 @router.get("", response_model=BoardMeetingListResponse)
 async def list_meetings(
-    startup_id: uuid.UUID = Depends(_verify_startup_exists),
-    use_case: CrudUseCase[BoardMeeting] = Depends(_get_use_case),
+    startup_id: uuid.UUID = Depends(verify_startup_exists),
+    use_case: ListBoardMeetings = Depends(board_meeting_builder(ListBoardMeetings)),
 ):
-    items, total = await use_case.list_by_parent(startup_id)
+    items, total = await use_case.execute(startup_id)
     return BoardMeetingListResponse(
         items=[BoardMeetingResponse.model_validate(m) for m in items],
         total=total,
@@ -58,21 +36,21 @@ async def list_meetings(
 )
 async def create_meeting(
     data: BoardMeetingCreate,
-    startup_id: uuid.UUID = Depends(_verify_startup_exists),
-    use_case: CrudUseCase[BoardMeeting] = Depends(_get_use_case),
+    startup_id: uuid.UUID = Depends(verify_startup_exists),
+    use_case: CreateBoardMeeting = Depends(board_meeting_builder(CreateBoardMeeting)),
 ):
     meeting = BoardMeeting(startup_id=startup_id, **data.model_dump())
-    created = await use_case.create(meeting)
+    created = await use_case.execute(meeting)
     return BoardMeetingResponse.model_validate(created)
 
 
 @router.get("/{meeting_id}", response_model=BoardMeetingResponse)
 async def get_meeting(
     meeting_id: uuid.UUID,
-    startup_id: uuid.UUID = Depends(_verify_startup_exists),
-    use_case: CrudUseCase[BoardMeeting] = Depends(_get_use_case),
+    startup_id: uuid.UUID = Depends(verify_startup_exists),
+    use_case: GetBoardMeeting = Depends(board_meeting_builder(GetBoardMeeting)),
 ):
-    meeting = await use_case.get_by_id(meeting_id)
+    meeting = await use_case.execute(meeting_id)
     if not meeting or meeting.startup_id != startup_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -85,29 +63,31 @@ async def get_meeting(
 async def update_meeting(
     meeting_id: uuid.UUID,
     data: BoardMeetingUpdate,
-    startup_id: uuid.UUID = Depends(_verify_startup_exists),
-    use_case: CrudUseCase[BoardMeeting] = Depends(_get_use_case),
+    startup_id: uuid.UUID = Depends(verify_startup_exists),
+    get_uc: GetBoardMeeting = Depends(board_meeting_builder(GetBoardMeeting)),
+    update_uc: UpdateBoardMeeting = Depends(board_meeting_builder(UpdateBoardMeeting)),
 ):
-    meeting = await use_case.get_by_id(meeting_id)
+    meeting = await get_uc.execute(meeting_id)
     if not meeting or meeting.startup_id != startup_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Reunião com id {meeting_id} não encontrada",
         )
-    updated = await use_case.update(meeting, data.model_dump(exclude_unset=True))
+    updated = await update_uc.execute(meeting, data.model_dump(exclude_unset=True))
     return BoardMeetingResponse.model_validate(updated)
 
 
 @router.delete("/{meeting_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_meeting(
     meeting_id: uuid.UUID,
-    startup_id: uuid.UUID = Depends(_verify_startup_exists),
-    use_case: CrudUseCase[BoardMeeting] = Depends(_get_use_case),
+    startup_id: uuid.UUID = Depends(verify_startup_exists),
+    get_uc: GetBoardMeeting = Depends(board_meeting_builder(GetBoardMeeting)),
+    delete_uc: DeleteBoardMeeting = Depends(board_meeting_builder(DeleteBoardMeeting)),
 ):
-    meeting = await use_case.get_by_id(meeting_id)
+    meeting = await get_uc.execute(meeting_id)
     if not meeting or meeting.startup_id != startup_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Reunião com id {meeting_id} não encontrada",
         )
-    await use_case.delete(meeting)
+    await delete_uc.execute(meeting)

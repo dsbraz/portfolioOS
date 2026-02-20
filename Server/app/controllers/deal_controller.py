@@ -1,9 +1,14 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_session
+from app.application.deal.create_deal import CreateDeal
+from app.application.deal.delete_deal import DeleteDeal
+from app.application.deal.get_deal import GetDeal
+from app.application.deal.list_deals import ListDeals
+from app.application.deal.move_deal import MoveDeal
+from app.application.deal.update_deal import UpdateDeal
+from app.controllers.dependencies import deal_builder
 from app.domain.models.deal import Deal
 from app.domain.schemas.deal import (
     DealCreate,
@@ -12,30 +17,15 @@ from app.domain.schemas.deal import (
     DealResponse,
     DealUpdate,
 )
-from app.repositories.deal_repository import DealRepository
-from app.use_cases.base_crud import CrudUseCase
-from app.use_cases.deal.move_deal import MoveDeal
 
 router = APIRouter(prefix="/deals", tags=["Deals"])
 
 
-def _get_use_case(
-    session: AsyncSession = Depends(get_session),
-) -> CrudUseCase[Deal]:
-    return CrudUseCase(DealRepository(session))
-
-
-def _get_move_deal(
-    session: AsyncSession = Depends(get_session),
-) -> MoveDeal:
-    return MoveDeal(DealRepository(session))
-
-
 @router.get("", response_model=DealListResponse)
 async def list_deals(
-    use_case: CrudUseCase[Deal] = Depends(_get_use_case),
+    use_case: ListDeals = Depends(deal_builder(ListDeals)),
 ):
-    items, total = await use_case.list_all()
+    items, total = await use_case.execute()
     return DealListResponse(
         items=[DealResponse.model_validate(d) for d in items],
         total=total,
@@ -45,19 +35,19 @@ async def list_deals(
 @router.post("", response_model=DealResponse, status_code=status.HTTP_201_CREATED)
 async def create_deal(
     data: DealCreate,
-    use_case: CrudUseCase[Deal] = Depends(_get_use_case),
+    use_case: CreateDeal = Depends(deal_builder(CreateDeal)),
 ):
     deal = Deal(**data.model_dump())
-    created = await use_case.create(deal)
+    created = await use_case.execute(deal)
     return DealResponse.model_validate(created)
 
 
 @router.get("/{deal_id}", response_model=DealResponse)
 async def get_deal(
     deal_id: uuid.UUID,
-    use_case: CrudUseCase[Deal] = Depends(_get_use_case),
+    use_case: GetDeal = Depends(deal_builder(GetDeal)),
 ):
-    deal = await use_case.get_by_id(deal_id)
+    deal = await use_case.execute(deal_id)
     if not deal:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -70,15 +60,16 @@ async def get_deal(
 async def update_deal(
     deal_id: uuid.UUID,
     data: DealUpdate,
-    use_case: CrudUseCase[Deal] = Depends(_get_use_case),
+    get_uc: GetDeal = Depends(deal_builder(GetDeal)),
+    update_uc: UpdateDeal = Depends(deal_builder(UpdateDeal)),
 ):
-    deal = await use_case.get_by_id(deal_id)
+    deal = await get_uc.execute(deal_id)
     if not deal:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Deal com id {deal_id} não encontrado",
         )
-    updated = await use_case.update(deal, data.model_dump(exclude_unset=True))
+    updated = await update_uc.execute(deal, data.model_dump(exclude_unset=True))
     return DealResponse.model_validate(updated)
 
 
@@ -86,28 +77,29 @@ async def update_deal(
 async def move_deal(
     deal_id: uuid.UUID,
     data: DealMoveRequest,
-    use_case: CrudUseCase[Deal] = Depends(_get_use_case),
-    move_use_case: MoveDeal = Depends(_get_move_deal),
+    get_uc: GetDeal = Depends(deal_builder(GetDeal)),
+    move_uc: MoveDeal = Depends(deal_builder(MoveDeal)),
 ):
-    deal = await use_case.get_by_id(deal_id)
+    deal = await get_uc.execute(deal_id)
     if not deal:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Deal com id {deal_id} não encontrado",
         )
-    moved = await move_use_case.execute(deal, data.column, data.position)
+    moved = await move_uc.execute(deal, data.column, data.position)
     return DealResponse.model_validate(moved)
 
 
 @router.delete("/{deal_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_deal(
     deal_id: uuid.UUID,
-    use_case: CrudUseCase[Deal] = Depends(_get_use_case),
+    get_uc: GetDeal = Depends(deal_builder(GetDeal)),
+    delete_uc: DeleteDeal = Depends(deal_builder(DeleteDeal)),
 ):
-    deal = await use_case.get_by_id(deal_id)
+    deal = await get_uc.execute(deal_id)
     if not deal:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Deal com id {deal_id} não encontrado",
         )
-    await use_case.delete(deal)
+    await delete_uc.execute(deal)
