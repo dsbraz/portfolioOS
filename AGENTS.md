@@ -15,7 +15,7 @@ Use clear boundaries between layers and keep dependencies pointing inward.
 
 ### Backend (`Server/app`)
 - `controllers/` (Presentation/API layer): define HTTP routes, validate/parse request/response contracts, map errors to HTTP status codes. Keep controllers thin; no business rules here.
-- `application/` (Application layer): single-purpose classes that implement business operations. Each use case has an `execute` method. A generic `CrudUseCase[T]` handles standard CRUD for entities without business rules.
+- `application/` (Application layer): single-purpose classes that implement business operations. Each use case has an `execute` method. Every entity has its own dedicated use cases (e.g. `CreateStartup`, `ListStartups`).
 - `domain/` (Domain layer): entities, business rules, and shared validators. Keep business logic framework-light even when persistence models use SQLAlchemy.
   - `domain/validators.py`: shared domain validation functions (e.g. `validate_period_not_future`).
 - `infrastructure/` (Adapter layer): concrete implementations of domain protocols for external concerns (e.g. `BcryptPasswordHasher`, `JwtTokenGenerator`).
