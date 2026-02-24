@@ -90,6 +90,7 @@ export class Dealflow implements OnInit {
         event.previousIndex,
         event.currentIndex,
       );
+      deal.stage = targetStage;
     }
 
     this.dealService.move(deal.id, { stage: targetStage, position: event.currentIndex }).subscribe({
