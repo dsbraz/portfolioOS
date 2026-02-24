@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domain.models.deal import Deal, DealColumn
+from app.domain.models.deal import Deal
 
 
 class DealRepository:
@@ -17,7 +17,7 @@ class DealRepository:
         total = count_result.scalar_one()
 
         result = await self._session.execute(
-            select(Deal).order_by(Deal.column, Deal.position, Deal.created_at.desc())
+            select(Deal).order_by(Deal.stage, Deal.position, Deal.created_at.desc())
         )
         return list(result.scalars().all()), total
 
@@ -41,12 +41,3 @@ class DealRepository:
     async def delete(self, deal: Deal) -> None:
         await self._session.delete(deal)
         await self._session.flush()
-
-    async def move_deal(
-        self, deal: Deal, column: DealColumn, position: int
-    ) -> Deal:
-        deal.column = column
-        deal.position = position
-        await self._session.flush()
-        await self._session.refresh(deal)
-        return deal

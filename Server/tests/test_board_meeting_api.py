@@ -13,7 +13,7 @@ async def test_list_meetings_empty(client):
     )
     startup_id = startup_resp.json()["id"]
 
-    resp = await client.get(f"/api/startups/{startup_id}/meetings")
+    resp = await client.get(f"/api/startups/{startup_id}/board-meetings")
     assert resp.status_code == 200
     data = resp.json()
     assert data["items"] == []
@@ -33,7 +33,7 @@ async def test_create_meeting(client):
     startup_id = startup_resp.json()["id"]
 
     resp = await client.post(
-        f"/api/startups/{startup_id}/meetings",
+        f"/api/startups/{startup_id}/board-meetings",
         json={
             "meeting_date": "2026-02-10",
             "participants": "Joao, Maria, Pedro",
@@ -64,7 +64,7 @@ async def test_create_meeting_required_fields_only(client):
     startup_id = startup_resp.json()["id"]
 
     resp = await client.post(
-        f"/api/startups/{startup_id}/meetings",
+        f"/api/startups/{startup_id}/board-meetings",
         json={"meeting_date": "2026-03-01"},
     )
     assert resp.status_code == 201
@@ -86,12 +86,12 @@ async def test_get_meeting(client):
     startup_id = startup_resp.json()["id"]
 
     create_resp = await client.post(
-        f"/api/startups/{startup_id}/meetings",
+        f"/api/startups/{startup_id}/board-meetings",
         json={"meeting_date": "2026-02-15", "summary": "Reuniao mensal"},
     )
     meeting_id = create_resp.json()["id"]
 
-    resp = await client.get(f"/api/startups/{startup_id}/meetings/{meeting_id}")
+    resp = await client.get(f"/api/startups/{startup_id}/board-meetings/{meeting_id}")
     assert resp.status_code == 200
     assert resp.json()["summary"] == "Reuniao mensal"
 
@@ -109,13 +109,13 @@ async def test_update_meeting(client):
     startup_id = startup_resp.json()["id"]
 
     create_resp = await client.post(
-        f"/api/startups/{startup_id}/meetings",
+        f"/api/startups/{startup_id}/board-meetings",
         json={"meeting_date": "2026-02-20", "summary": "Original"},
     )
     meeting_id = create_resp.json()["id"]
 
     resp = await client.patch(
-        f"/api/startups/{startup_id}/meetings/{meeting_id}",
+        f"/api/startups/{startup_id}/board-meetings/{meeting_id}",
         json={"summary": "Atualizado", "attention_points": "Novo ponto"},
     )
     assert resp.status_code == 200
@@ -136,20 +136,20 @@ async def test_delete_meeting(client):
     startup_id = startup_resp.json()["id"]
 
     create_resp = await client.post(
-        f"/api/startups/{startup_id}/meetings",
+        f"/api/startups/{startup_id}/board-meetings",
         json={"meeting_date": "2026-02-25"},
     )
     meeting_id = create_resp.json()["id"]
 
-    resp = await client.delete(f"/api/startups/{startup_id}/meetings/{meeting_id}")
+    resp = await client.delete(f"/api/startups/{startup_id}/board-meetings/{meeting_id}")
     assert resp.status_code == 204
 
-    resp = await client.get(f"/api/startups/{startup_id}/meetings/{meeting_id}")
+    resp = await client.get(f"/api/startups/{startup_id}/board-meetings/{meeting_id}")
     assert resp.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_meeting_startup_not_found(client):
     fake_id = "00000000-0000-0000-0000-000000000001"
-    resp = await client.get(f"/api/startups/{fake_id}/meetings")
+    resp = await client.get(f"/api/startups/{fake_id}/board-meetings")
     assert resp.status_code == 404

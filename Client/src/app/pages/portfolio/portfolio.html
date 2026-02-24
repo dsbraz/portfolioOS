@@ -4,7 +4,7 @@
       <div>
         <h1 class="page-title">Monitoramento</h1>
         <p class="page-subtitle">
-          {{ summary()?.total_startups ?? 0 }} startup(s) no portfolio
+          {{ summary()?.total_startups ?? 0 }} startup(s) monitoradas
         </p>
       </div>
       <button mat-fab extended color="primary" (click)="openCreateDialog()">
@@ -18,8 +18,8 @@
     <div class="kpi-grid">
       <app-kpi-card
         icon="trending_up"
-        label="Receita do Portfolio"
-        [value]="formatCurrency(s.portfolio_revenue)"
+        label="Receita Total"
+        [value]="formatCurrency(s.revenue)"
         subtitle="Soma do ultimo indicador"
       />
       <div class="kpi-health-card">
@@ -29,8 +29,8 @@
               <mat-icon>monitor_heart</mat-icon>
             </div>
             <div class="kpi-info">
-              <span class="kpi-label">Saude do Portfolio</span>
-              <app-health-bar [distribution]="s.portfolio_health" />
+              <span class="kpi-label">Saúde Geral</span>
+              <app-health-bar [distribution]="s.health" />
             </div>
           </mat-card-content>
         </mat-card>

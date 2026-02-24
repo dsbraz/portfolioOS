@@ -1,9 +1,3 @@
-"""Value objects para o agregado de monitoramento do portfolio.
-
-Dataclasses imutáveis que representam resumos computados
-sem mapeamento direto a tabela no banco.
-"""
-
 from dataclasses import dataclass
 from decimal import Decimal
 
@@ -18,7 +12,7 @@ class HealthDistribution:
 
 
 @dataclass(frozen=True)
-class StartupMonitoringItem:
+class StartupSummary:
     startup: Startup
     total_revenue: Decimal | None = None
     cash_balance: Decimal | None = None
@@ -29,8 +23,8 @@ class StartupMonitoringItem:
 @dataclass(frozen=True)
 class PortfolioSummary:
     total_startups: int
-    portfolio_revenue: Decimal
-    portfolio_health: HealthDistribution
+    revenue: Decimal
+    health: HealthDistribution
     monthly_report_pct: float
     routines_up_to_date_pct: float
-    startups: list[StartupMonitoringItem]
+    startups: list[StartupSummary]

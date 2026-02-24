@@ -16,11 +16,11 @@ from app.domain.schemas.board_meeting import (
     BoardMeetingUpdate,
 )
 
-router = APIRouter(prefix="/startups/{startup_id}/meetings", tags=["Board Meetings"])
+router = APIRouter(prefix="/startups/{startup_id}/board-meetings", tags=["Board Meetings"])
 
 
 @router.get("", response_model=BoardMeetingListResponse)
-async def list_meetings(
+async def list_board_meetings(
     startup_id: uuid.UUID = Depends(verify_startup_exists),
     use_case: ListBoardMeetings = Depends(board_meeting_builder(ListBoardMeetings)),
 ):
@@ -34,7 +34,7 @@ async def list_meetings(
 @router.post(
     "", response_model=BoardMeetingResponse, status_code=status.HTTP_201_CREATED
 )
-async def create_meeting(
+async def create_board_meeting(
     data: BoardMeetingCreate,
     startup_id: uuid.UUID = Depends(verify_startup_exists),
     use_case: CreateBoardMeeting = Depends(board_meeting_builder(CreateBoardMeeting)),
@@ -45,7 +45,7 @@ async def create_meeting(
 
 
 @router.get("/{meeting_id}", response_model=BoardMeetingResponse)
-async def get_meeting(
+async def get_board_meeting(
     meeting_id: uuid.UUID,
     startup_id: uuid.UUID = Depends(verify_startup_exists),
     use_case: GetBoardMeeting = Depends(board_meeting_builder(GetBoardMeeting)),
@@ -60,7 +60,7 @@ async def get_meeting(
 
 
 @router.patch("/{meeting_id}", response_model=BoardMeetingResponse)
-async def update_meeting(
+async def update_board_meeting(
     meeting_id: uuid.UUID,
     data: BoardMeetingUpdate,
     startup_id: uuid.UUID = Depends(verify_startup_exists),
@@ -78,7 +78,7 @@ async def update_meeting(
 
 
 @router.delete("/{meeting_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_meeting(
+async def delete_board_meeting(
     meeting_id: uuid.UUID,
     startup_id: uuid.UUID = Depends(verify_startup_exists),
     get_uc: GetBoardMeeting = Depends(board_meeting_builder(GetBoardMeeting)),

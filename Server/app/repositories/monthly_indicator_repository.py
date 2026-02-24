@@ -1,9 +1,10 @@
 import uuid
 
-from sqlalchemy import func, select
+from sqlalchemy import Integer, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.models.monthly_indicator import MonthlyIndicator
+from app.domain.models.monthly_indicator_token import MonthlyIndicatorToken
 
 
 class MonthlyIndicatorRepository:
@@ -56,20 +57,6 @@ class MonthlyIndicatorRepository:
         )
         return result.scalar_one_or_none()
 
-    async def exists_for_month(
-        self, startup_id: uuid.UUID, month: int, year: int
-    ) -> bool:
-        result = await self._session.execute(
-            select(func.count())
-            .select_from(MonthlyIndicator)
-            .where(
-                MonthlyIndicator.startup_id == startup_id,
-                MonthlyIndicator.month == month,
-                MonthlyIndicator.year == year,
-            )
-        )
-        return result.scalar_one() > 0
-
     async def create(self, indicator: MonthlyIndicator) -> MonthlyIndicator:
         self._session.add(indicator)
         await self._session.flush()
@@ -84,3 +71,89 @@ class MonthlyIndicatorRepository:
     async def delete(self, indicator: MonthlyIndicator) -> None:
         await self._session.delete(indicator)
         await self._session.flush()
+
+    async def get_latest_by_startups(
+        self, startup_ids: list[uuid.UUID]
+    ) -> dict[uuid.UUID, MonthlyIndicator]:
+        if not startup_ids:
+            return {}
+
+        latest_subq = (
+            select(
+                MonthlyIndicator.startup_id,
+                func.max(
+                    cast(MonthlyIndicator.year, Integer) * 100
+                    + cast(MonthlyIndicator.month, Integer)
+                ).label("max_period"),
+            )
+            .where(MonthlyIndicator.startup_id.in_(startup_ids))
+            .group_by(MonthlyIndicator.startup_id)
+            .subquery()
+        )
+
+        result = await self._session.execute(
+            select(MonthlyIndicator).join(
+                latest_subq,
+                (MonthlyIndicator.startup_id == latest_subq.c.startup_id)
+                & (
+                    cast(MonthlyIndicator.year, Integer) * 100
+                    + cast(MonthlyIndicator.month, Integer)
+                    == latest_subq.c.max_period
+                ),
+            )
+        )
+        indicators = list(result.scalars().all())
+
+        return {ind.startup_id: ind for ind in indicators}
+
+    # --- Token methods ---
+
+    async def get_token_by_value(
+        self, token: uuid.UUID
+    ) -> MonthlyIndicatorToken | None:
+        result = await self._session.execute(
+            select(MonthlyIndicatorToken).where(
+                MonthlyIndicatorToken.token == token
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def get_token_by_startup_and_period(
+        self, startup_id: uuid.UUID, month: int, year: int
+    ) -> MonthlyIndicatorToken | None:
+        result = await self._session.execute(
+            select(MonthlyIndicatorToken).where(
+                MonthlyIndicatorToken.startup_id == startup_id,
+                MonthlyIndicatorToken.month == month,
+                MonthlyIndicatorToken.year == year,
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def get_all_tokens_by_startup(
+        self, startup_id: uuid.UUID
+    ) -> tuple[list[MonthlyIndicatorToken], int]:
+        count_result = await self._session.execute(
+            select(func.count())
+            .select_from(MonthlyIndicatorToken)
+            .where(MonthlyIndicatorToken.startup_id == startup_id)
+        )
+        total = count_result.scalar_one()
+
+        result = await self._session.execute(
+            select(MonthlyIndicatorToken)
+            .where(MonthlyIndicatorToken.startup_id == startup_id)
+            .order_by(
+                MonthlyIndicatorToken.year.desc(),
+                MonthlyIndicatorToken.month.desc(),
+            )
+        )
+        return list(result.scalars().all()), total
+
+    async def create_token(
+        self, token: MonthlyIndicatorToken
+    ) -> MonthlyIndicatorToken:
+        self._session.add(token)
+        await self._session.flush()
+        await self._session.refresh(token)
+        return token

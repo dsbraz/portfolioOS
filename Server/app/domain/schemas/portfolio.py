@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from app.domain.schemas.startup import StartupResponse
 
 
-class StartupMonitoringItem(BaseModel):
+class StartupSummary(BaseModel):
     startup: StartupResponse
     total_revenue: Decimal | None = None
     cash_balance: Decimal | None = None
@@ -19,10 +19,10 @@ class HealthDistribution(BaseModel):
     critical: int = 0
 
 
-class MonitoringSummary(BaseModel):
+class PortfolioSummary(BaseModel):
     total_startups: int
-    portfolio_revenue: Decimal
-    portfolio_health: HealthDistribution
+    revenue: Decimal
+    health: HealthDistribution
     monthly_report_pct: float
     routines_up_to_date_pct: float
-    startups: list[StartupMonitoringItem]
+    startups: list[StartupSummary]

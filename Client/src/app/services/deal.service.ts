@@ -6,7 +6,6 @@ import {
   Deal,
   DealCreate,
   DealListResponse,
-  DealMoveRequest,
   DealUpdate,
 } from '../models/deal.model';
 
@@ -31,8 +30,8 @@ export class DealService {
     return this.http.patch<Deal>(`${this.baseUrl}/${id}`, data);
   }
 
-  move(id: string, data: DealMoveRequest): Observable<Deal> {
-    return this.http.patch<Deal>(`${this.baseUrl}/${id}/move`, data);
+  move(id: string, data: DealUpdate): Observable<Deal> {
+    return this.http.patch<Deal>(`${this.baseUrl}/${id}`, data);
   }
 
   delete(id: string): Observable<void> {

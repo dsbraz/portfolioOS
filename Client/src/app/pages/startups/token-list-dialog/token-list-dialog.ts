@@ -6,15 +6,15 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
-import { ReportToken } from '../../../models/report-token.model';
+import { MonthlyIndicatorToken } from '../../../models/monthly-indicator-token.model';
 import { MONTH_LABELS } from '../../../models/monthly-indicator.model';
 
-export interface ReportTokenListDialogData {
-  tokens: ReportToken[];
+export interface TokenListDialogData {
+  tokens: MonthlyIndicatorToken[];
 }
 
 @Component({
-  selector: 'app-report-token-list-dialog',
+  selector: 'app-token-list-dialog',
   imports: [
     MatDialogModule,
     MatButtonModule,
@@ -62,14 +62,14 @@ export interface ReportTokenListDialogData {
     }
   `,
 })
-export class ReportTokenListDialog {
-  readonly data = inject<ReportTokenListDialogData>(MAT_DIALOG_DATA);
+export class TokenListDialog {
+  readonly data = inject<TokenListDialogData>(MAT_DIALOG_DATA);
   private readonly snackBar = inject(MatSnackBar);
   readonly monthLabels = MONTH_LABELS;
   readonly columns = ['period', 'actions'];
 
-  copyLink(token: ReportToken): void {
-    const url = `${window.location.origin}/report/${token.token}`;
+  copyLink(token: MonthlyIndicatorToken): void {
+    const url = `${window.location.origin}/monthly-indicator/${token.token}`;
     navigator.clipboard.writeText(url).then(() => {
       this.snackBar.open('Link copiado!', 'Fechar', { duration: 2000 });
     });

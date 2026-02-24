@@ -59,7 +59,7 @@ portfolio/
 │       ├── interceptors/   # Auth interceptor (JWT em requests HTTP)
 │       ├── pages/          # Paginas / rotas
 │       │   ├── login/                 # Tela de login
-│       │   ├── portfolio-monitoring/  # Monitoramento do portfolio
+│       │   ├── portfolio/             # Monitoramento do portfolio
 │       │   ├── startups/              # Detalhe + formularios (indicadores, reunioes, executivos, tokens)
 │       │   ├── dealflow/              # Board kanban de deals
 │       │   ├── users/                 # Gestao de usuarios
@@ -163,7 +163,7 @@ Demais rotas exigem JWT bearer token.
 | GET | `/health` | Health check |
 | GET | `/health/ready` | Readiness check |
 | POST | `/auth/login` | Autenticacao (retorna JWT) |
-| GET | `/portfolio-monitoring/summary` | Resumo do portfolio (KPIs) |
+| GET | `/portfolio` | Resumo do portfolio (KPIs) |
 | GET/POST | `/startups` | Listar / criar startups |
 | GET/PATCH/DELETE | `/startups/{id}` | Detalhe / atualizar / remover startup |
 | GET/POST | `/startups/{id}/indicators` | Indicadores mensais |

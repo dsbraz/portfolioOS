@@ -14,7 +14,7 @@ export class BoardMeetingService {
   private readonly http = inject(HttpClient);
 
   private baseUrl(startupId: string): string {
-    return `/api/startups/${startupId}/meetings`;
+    return `/api/startups/${startupId}/board-meetings`;
   }
 
   list(startupId: string): Observable<BoardMeetingListResponse> {

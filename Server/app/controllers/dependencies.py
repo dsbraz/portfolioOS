@@ -11,26 +11,13 @@ from app.repositories.deal_repository import DealRepository
 from app.repositories.executive_repository import ExecutiveRepository
 from app.repositories.monthly_indicator_repository import MonthlyIndicatorRepository
 from app.repositories.startup_repository import StartupRepository
+from app.repositories.user_repository import UserRepository
 
 T = TypeVar("T")
 
 
-def use_case_builder(repo_class: type) -> Callable:
-    """Create a use-case factory bound to a shared repository dependency.
-
-    Internally creates a repository dependency from *repo_class* so that
-    every use-case produced by the returned ``_builder`` callable shares
-    the same repository instance (and therefore DB session) per request,
-    thanks to FastAPI's dependency cache.
-
-    Usage inside a controller module::
-
-        _builder = use_case_builder(DealRepository)
-
-        @router.get("")
-        async def list_deals(use_case: ListDeals = Depends(_builder(ListDeals))):
-            ...
-    """
+def _use_case_builder(repo_class: type) -> Callable:
+    """Use case factory for single-repo use cases."""
 
     def _get_repo(session: AsyncSession = Depends(get_session)):  # noqa: ANN202
         return repo_class(session)
@@ -44,11 +31,31 @@ def use_case_builder(repo_class: type) -> Callable:
     return _builder
 
 
-startup_builder = use_case_builder(StartupRepository)
-deal_builder = use_case_builder(DealRepository)
-board_meeting_builder = use_case_builder(BoardMeetingRepository)
-executive_builder = use_case_builder(ExecutiveRepository)
-monthly_indicator_builder = use_case_builder(MonthlyIndicatorRepository)
+def _multi_builder(*repo_classes: type) -> Callable:
+    """Use case factory for multi-repo use cases."""
+
+    def _builder(uc_class: type[T]) -> Callable[..., T]:
+        def factory(session: AsyncSession = Depends(get_session)):  # noqa: ANN202
+            repos = [cls(session) for cls in repo_classes]
+            return uc_class(*repos)
+
+        return factory
+
+    return _builder
+
+
+startup_builder = _use_case_builder(StartupRepository)
+deal_builder = _use_case_builder(DealRepository)
+board_meeting_builder = _use_case_builder(BoardMeetingRepository)
+executive_builder = _use_case_builder(ExecutiveRepository)
+monthly_indicator_builder = _use_case_builder(MonthlyIndicatorRepository)
+portfolio_builder = _multi_builder(
+    StartupRepository, MonthlyIndicatorRepository, BoardMeetingRepository
+)
+public_form_builder = _multi_builder(
+    StartupRepository, MonthlyIndicatorRepository
+)
+user_builder = _use_case_builder(UserRepository)
 
 
 async def verify_startup_exists(

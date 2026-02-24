@@ -1,14 +1,15 @@
 from datetime import date
 from decimal import Decimal
 
-from app.domain.models.portfolio_summary import (
+from app.application.portfolio.readmodels import (
     HealthDistribution,
     PortfolioSummary,
-    StartupMonitoringItem,
+    StartupSummary,
 )
 from app.domain.models.startup import StartupStatus
-from app.repositories.portfolio_monitoring_repository import (
-    PortfolioMonitoringRepository,
+from app.repositories.board_meeting_repository import BoardMeetingRepository
+from app.repositories.monthly_indicator_repository import (
+    MonthlyIndicatorRepository,
 )
 from app.repositories.startup_repository import StartupRepository
 
@@ -19,10 +20,12 @@ class GetPortfolioSummary:
     def __init__(
         self,
         startup_repo: StartupRepository,
-        monitoring_repo: PortfolioMonitoringRepository,
+        indicator_repo: MonthlyIndicatorRepository,
+        meeting_repo: BoardMeetingRepository,
     ) -> None:
         self._startup_repo = startup_repo
-        self._monitoring_repo = monitoring_repo
+        self._indicator_repo = indicator_repo
+        self._meeting_repo = meeting_repo
 
     async def execute(self) -> PortfolioSummary:
         startups, total = await self._startup_repo.get_all()
@@ -30,8 +33,8 @@ class GetPortfolioSummary:
         if total == 0:
             return PortfolioSummary(
                 total_startups=0,
-                portfolio_revenue=Decimal("0"),
-                portfolio_health=HealthDistribution(),
+                revenue=Decimal("0"),
+                health=HealthDistribution(),
                 monthly_report_pct=0.0,
                 routines_up_to_date_pct=0.0,
                 startups=[],
@@ -39,7 +42,7 @@ class GetPortfolioSummary:
 
         startup_ids = [s.id for s in startups]
         latest_indicators = (
-            await self._monitoring_repo.get_latest_indicators(startup_ids)
+            await self._indicator_repo.get_latest_by_startups(startup_ids)
         )
 
         healthy = warning = critical = 0
@@ -51,10 +54,10 @@ class GetPortfolioSummary:
             elif s.status == StartupStatus.CRITICAL:
                 critical += 1
 
-        portfolio_revenue = Decimal("0")
+        total_revenue = Decimal("0")
         for ind in latest_indicators.values():
             if ind.total_revenue:
-                portfolio_revenue += ind.total_revenue
+                total_revenue += ind.total_revenue
 
         today = date.today()
         startups_with_report = sum(
@@ -67,7 +70,7 @@ class GetPortfolioSummary:
         report_pct = (startups_with_report / total) * 100
 
         ids_with_meetings = (
-            await self._monitoring_repo.get_startup_ids_with_recent_meetings(
+            await self._meeting_repo.get_startup_ids_with_recent_meetings(
                 startup_ids, MEETING_CUTOFF_DAYS
             )
         )
@@ -77,7 +80,7 @@ class GetPortfolioSummary:
         for s in startups:
             ind = latest_indicators.get(s.id)
             monitoring_items.append(
-                StartupMonitoringItem(
+                StartupSummary(
                     startup=s,
                     total_revenue=ind.total_revenue if ind else None,
                     cash_balance=ind.cash_balance if ind else None,
@@ -88,8 +91,8 @@ class GetPortfolioSummary:
 
         return PortfolioSummary(
             total_startups=total,
-            portfolio_revenue=portfolio_revenue,
-            portfolio_health=HealthDistribution(
+            revenue=total_revenue,
+            health=HealthDistribution(
                 healthy=healthy, warning=warning, critical=critical
             ),
             monthly_report_pct=round(report_pct, 1),

@@ -17,9 +17,9 @@ async def test_create_deal(client):
         json={
             "company": "TechCo",
             "sector": "SaaS",
-            "stage": "Seed",
+            "funding_round": "Seed",
             "founders": "Joao e Maria",
-            "column": "novo",
+            "stage": "novo",
             "notes": "Empresa promissora",
             "next_step": "Agendar reuniao",
             "internal_owner": "Carlos",
@@ -28,7 +28,7 @@ async def test_create_deal(client):
     assert resp.status_code == 201
     data = resp.json()
     assert data["company"] == "TechCo"
-    assert data["column"] == "novo"
+    assert data["stage"] == "novo"
     assert data["sector"] == "SaaS"
     assert "id" in data
 
@@ -42,7 +42,7 @@ async def test_create_deal_required_fields_only(client):
     assert resp.status_code == 201
     data = resp.json()
     assert data["company"] == "MinimalCo"
-    assert data["column"] == "novo"
+    assert data["stage"] == "novo"
     assert data["sector"] is None
 
 
@@ -83,14 +83,14 @@ async def test_move_deal(client):
         json={"company": "MoveCo"},
     )
     deal_id = create_resp.json()["id"]
-    assert create_resp.json()["column"] == "novo"
+    assert create_resp.json()["stage"] == "novo"
 
     resp = await client.patch(
-        f"/api/deals/{deal_id}/move",
-        json={"column": "conversando", "position": 1},
+        f"/api/deals/{deal_id}",
+        json={"stage": "conversando", "position": 1},
     )
     assert resp.status_code == 200
-    assert resp.json()["column"] == "conversando"
+    assert resp.json()["stage"] == "conversando"
     assert resp.json()["position"] == 1
 
 

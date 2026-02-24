@@ -44,7 +44,7 @@ export class Login {
 
     this.authService.login(this.form.getRawValue()).subscribe({
       next: () => {
-        this.router.navigate(['/portfolio-monitoring']);
+        this.router.navigate(['/portfolio']);
       },
       error: (err) => {
         this.loading.set(false);

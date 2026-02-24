@@ -7,8 +7,8 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
-import { MonitoringSummary, StartupMonitoringItem } from '../../models/portfolio-monitoring.model';
-import { PortfolioMonitoringService } from '../../services/portfolio-monitoring.service';
+import { PortfolioSummary, StartupSummary } from '../../models/portfolio.model';
+import { PortfolioService } from '../../services/portfolio.service';
 import { StartupService } from '../../services/startup.service';
 import { StatusBadge } from '../../components/status-badge/status-badge';
 import { KpiCard } from '../../components/kpi-card/kpi-card';
@@ -19,7 +19,7 @@ import {
 } from '../startups/startup-form-dialog/startup-form-dialog';
 
 @Component({
-  selector: 'app-portfolio-monitoring',
+  selector: 'app-portfolio',
   imports: [
     MatTableModule,
     MatButtonModule,
@@ -31,17 +31,17 @@ import {
     KpiCard,
     HealthBar,
   ],
-  templateUrl: './portfolio-monitoring.html',
-  styleUrl: './portfolio-monitoring.scss',
+  templateUrl: './portfolio.html',
+  styleUrl: './portfolio.scss',
 })
-export class PortfolioMonitoring implements OnInit {
-  private readonly monitoringService = inject(PortfolioMonitoringService);
+export class Portfolio implements OnInit {
+  private readonly monitoringService = inject(PortfolioService);
   private readonly startupService = inject(StartupService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly router = inject(Router);
 
-  readonly summary = signal<MonitoringSummary | null>(null);
+  readonly summary = signal<PortfolioSummary | null>(null);
   readonly loading = signal(false);
 
   readonly displayedColumns = [
@@ -76,7 +76,7 @@ export class PortfolioMonitoring implements OnInit {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
   }
 
-  navigateToStartup(item: StartupMonitoringItem): void {
+  navigateToStartup(item: StartupSummary): void {
     this.router.navigate(['/startup', item.startup.id]);
   }
 

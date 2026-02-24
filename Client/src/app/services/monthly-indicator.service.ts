@@ -14,7 +14,7 @@ export class MonthlyIndicatorService {
   private readonly http = inject(HttpClient);
 
   private baseUrl(startupId: string): string {
-    return `/api/startups/${startupId}/indicators`;
+    return `/api/startups/${startupId}/monthly-indicators`;
   }
 
   list(startupId: string): Observable<MonthlyIndicatorListResponse> {

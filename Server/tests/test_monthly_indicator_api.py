@@ -13,7 +13,7 @@ async def test_list_indicators_empty(client):
     )
     startup_id = startup_resp.json()["id"]
 
-    resp = await client.get(f"/api/startups/{startup_id}/indicators")
+    resp = await client.get(f"/api/startups/{startup_id}/monthly-indicators")
     assert resp.status_code == 200
     data = resp.json()
     assert data["items"] == []
@@ -33,7 +33,7 @@ async def test_create_indicator(client):
     startup_id = startup_resp.json()["id"]
 
     resp = await client.post(
-        f"/api/startups/{startup_id}/indicators",
+        f"/api/startups/{startup_id}/monthly-indicators",
         json={
             "month": 2,
             "year": 2026,
@@ -71,7 +71,7 @@ async def test_create_indicator_required_fields_only(client):
     startup_id = startup_resp.json()["id"]
 
     resp = await client.post(
-        f"/api/startups/{startup_id}/indicators",
+        f"/api/startups/{startup_id}/monthly-indicators",
         json={"month": 1, "year": 2026},
     )
     assert resp.status_code == 201
@@ -82,7 +82,7 @@ async def test_create_indicator_required_fields_only(client):
 
 
 @pytest.mark.asyncio
-async def test_create_indicator_duplicate_month(client):
+async def test_create_indicator_upsert(client):
     startup_resp = await client.post(
         "/api/startups",
         json={
@@ -93,15 +93,21 @@ async def test_create_indicator_duplicate_month(client):
     )
     startup_id = startup_resp.json()["id"]
 
-    await client.post(
-        f"/api/startups/{startup_id}/indicators",
-        json={"month": 2, "year": 2026},
+    resp1 = await client.post(
+        f"/api/startups/{startup_id}/monthly-indicators",
+        json={"month": 2, "year": 2026, "headcount": 5},
     )
-    resp = await client.post(
-        f"/api/startups/{startup_id}/indicators",
-        json={"month": 2, "year": 2026},
+    assert resp1.status_code == 201
+
+    resp2 = await client.post(
+        f"/api/startups/{startup_id}/monthly-indicators",
+        json={"month": 2, "year": 2026, "headcount": 10},
     )
-    assert resp.status_code == 409
+    assert resp2.status_code == 201
+    assert resp2.json()["headcount"] == 10
+
+    list_resp = await client.get(f"/api/startups/{startup_id}/monthly-indicators")
+    assert list_resp.json()["total"] == 1
 
 
 @pytest.mark.asyncio
@@ -117,12 +123,12 @@ async def test_get_indicator(client):
     startup_id = startup_resp.json()["id"]
 
     create_resp = await client.post(
-        f"/api/startups/{startup_id}/indicators",
+        f"/api/startups/{startup_id}/monthly-indicators",
         json={"month": 1, "year": 2025, "headcount": 10},
     )
     indicator_id = create_resp.json()["id"]
 
-    resp = await client.get(f"/api/startups/{startup_id}/indicators/{indicator_id}")
+    resp = await client.get(f"/api/startups/{startup_id}/monthly-indicators/{indicator_id}")
     assert resp.status_code == 200
     assert resp.json()["headcount"] == 10
 
@@ -140,13 +146,13 @@ async def test_update_indicator(client):
     startup_id = startup_resp.json()["id"]
 
     create_resp = await client.post(
-        f"/api/startups/{startup_id}/indicators",
+        f"/api/startups/{startup_id}/monthly-indicators",
         json={"month": 1, "year": 2025, "headcount": 10},
     )
     indicator_id = create_resp.json()["id"]
 
     resp = await client.patch(
-        f"/api/startups/{startup_id}/indicators/{indicator_id}",
+        f"/api/startups/{startup_id}/monthly-indicators/{indicator_id}",
         json={"headcount": 15, "achievements": "Novo produto lancado"},
     )
     assert resp.status_code == 200
@@ -167,20 +173,20 @@ async def test_delete_indicator(client):
     startup_id = startup_resp.json()["id"]
 
     create_resp = await client.post(
-        f"/api/startups/{startup_id}/indicators",
+        f"/api/startups/{startup_id}/monthly-indicators",
         json={"month": 1, "year": 2025},
     )
     indicator_id = create_resp.json()["id"]
 
-    resp = await client.delete(f"/api/startups/{startup_id}/indicators/{indicator_id}")
+    resp = await client.delete(f"/api/startups/{startup_id}/monthly-indicators/{indicator_id}")
     assert resp.status_code == 204
 
-    resp = await client.get(f"/api/startups/{startup_id}/indicators/{indicator_id}")
+    resp = await client.get(f"/api/startups/{startup_id}/monthly-indicators/{indicator_id}")
     assert resp.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_indicator_startup_not_found(client):
     fake_id = "00000000-0000-0000-0000-000000000001"
-    resp = await client.get(f"/api/startups/{fake_id}/indicators")
+    resp = await client.get(f"/api/startups/{fake_id}/monthly-indicators")
     assert resp.status_code == 404

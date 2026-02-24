@@ -17,11 +17,14 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should render sidebar with PortfolioOS title', async () => {
+  it('should render sidebar with logo', async () => {
     const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.app-logo')?.textContent).toContain('PortfolioOS');
+    const logo = compiled.querySelector('.app-logo img') as HTMLImageElement;
+    expect(logo).toBeTruthy();
+    expect(logo.alt).toBe('BRQ Portfolio');
   });
 
   it('should start with sidenav opened', () => {

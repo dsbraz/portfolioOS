@@ -1,4 +1,4 @@
-export enum DealColumn {
+export enum DealStage {
   NEW = 'novo',
   TALKING = 'conversando',
   ANALYZING = 'analisando',
@@ -7,19 +7,19 @@ export enum DealColumn {
   ARCHIVED = 'arquivado',
 }
 
-export const DEAL_COLUMN_CONFIG: Record<
-  DealColumn,
+export const DEAL_STAGE_CONFIG: Record<
+  DealStage,
   { label: string; color: string }
 > = {
-  [DealColumn.NEW]: { label: 'Novo', color: 'var(--app-column-new)' },
-  [DealColumn.TALKING]: { label: 'Conversando', color: 'var(--app-column-talking)' },
-  [DealColumn.ANALYZING]: { label: 'Analisando', color: 'var(--app-column-analyzing)' },
-  [DealColumn.COMMITTEE]: { label: 'Comite', color: 'var(--app-column-committee)' },
-  [DealColumn.INVESTED]: { label: 'Investido', color: 'var(--app-column-invested)' },
-  [DealColumn.ARCHIVED]: { label: 'Arquivado', color: 'var(--app-column-archived)' },
+  [DealStage.NEW]: { label: 'Novo', color: 'var(--app-stage-new)' },
+  [DealStage.TALKING]: { label: 'Conversando', color: 'var(--app-stage-talking)' },
+  [DealStage.ANALYZING]: { label: 'Analisando', color: 'var(--app-stage-analyzing)' },
+  [DealStage.COMMITTEE]: { label: 'Comite', color: 'var(--app-stage-committee)' },
+  [DealStage.INVESTED]: { label: 'Investido', color: 'var(--app-stage-invested)' },
+  [DealStage.ARCHIVED]: { label: 'Arquivado', color: 'var(--app-stage-archived)' },
 };
 
-export const DEAL_STAGE_OPTIONS = [
+export const FUNDING_ROUND_OPTIONS = [
   'Pre-Seed',
   'Seed',
   'Series A',
@@ -31,9 +31,9 @@ export interface Deal {
   id: string;
   company: string;
   sector: string | null;
-  stage: string | null;
+  funding_round: string | null;
   founders: string | null;
-  column: DealColumn;
+  stage: DealStage;
   notes: string | null;
   next_step: string | null;
   internal_owner: string | null;
@@ -50,9 +50,9 @@ export interface DealListResponse {
 export interface DealCreate {
   company: string;
   sector?: string | null;
-  stage?: string | null;
+  funding_round?: string | null;
   founders?: string | null;
-  column?: DealColumn;
+  stage?: DealStage;
   notes?: string | null;
   next_step?: string | null;
   internal_owner?: string | null;
@@ -61,15 +61,11 @@ export interface DealCreate {
 export interface DealUpdate {
   company?: string;
   sector?: string | null;
-  stage?: string | null;
+  funding_round?: string | null;
   founders?: string | null;
-  column?: DealColumn;
+  stage?: DealStage;
+  position?: number;
   notes?: string | null;
   next_step?: string | null;
   internal_owner?: string | null;
-}
-
-export interface DealMoveRequest {
-  column: DealColumn;
-  position: number;
 }

@@ -6,14 +6,12 @@ from app.application.deal.create_deal import CreateDeal
 from app.application.deal.delete_deal import DeleteDeal
 from app.application.deal.get_deal import GetDeal
 from app.application.deal.list_deals import ListDeals
-from app.application.deal.move_deal import MoveDeal
 from app.application.deal.update_deal import UpdateDeal
 from app.controllers.dependencies import deal_builder
 from app.domain.models.deal import Deal
 from app.domain.schemas.deal import (
     DealCreate,
     DealListResponse,
-    DealMoveRequest,
     DealResponse,
     DealUpdate,
 )
@@ -71,23 +69,6 @@ async def update_deal(
         )
     updated = await update_uc.execute(deal, data.model_dump(exclude_unset=True))
     return DealResponse.model_validate(updated)
-
-
-@router.patch("/{deal_id}/move", response_model=DealResponse)
-async def move_deal(
-    deal_id: uuid.UUID,
-    data: DealMoveRequest,
-    get_uc: GetDeal = Depends(deal_builder(GetDeal)),
-    move_uc: MoveDeal = Depends(deal_builder(MoveDeal)),
-):
-    deal = await get_uc.execute(deal_id)
-    if not deal:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Deal com id {deal_id} não encontrado",
-        )
-    moved = await move_uc.execute(deal, data.column, data.position)
-    return DealResponse.model_validate(moved)
 
 
 @router.delete("/{deal_id}", status_code=status.HTTP_204_NO_CONTENT)

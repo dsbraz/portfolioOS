@@ -10,8 +10,8 @@ import { MatChipsModule } from '@angular/material/chips';
 
 import {
   Deal,
-  DealColumn,
-  DEAL_COLUMN_CONFIG,
+  DealStage,
+  DEAL_STAGE_CONFIG,
 } from '../../models/deal.model';
 import { DealService } from '../../services/deal.service';
 import {
@@ -42,13 +42,13 @@ export class Dealflow implements OnInit {
 
   readonly deals = signal<Deal[]>([]);
   readonly loading = signal(false);
-  readonly dealsByColumn = signal<Record<string, Deal[]>>({});
+  readonly dealsByStage = signal<Record<string, Deal[]>>({});
 
-  readonly columns = Object.values(DealColumn);
-  readonly columnConfig = DEAL_COLUMN_CONFIG;
+  readonly stages = Object.values(DealStage);
+  readonly stageConfig = DEAL_STAGE_CONFIG;
 
-  readonly otherColumns = (current: DealColumn): DealColumn[] =>
-    this.columns.filter(c => c !== current);
+  readonly otherStages = (current: DealStage): DealStage[] =>
+    this.stages.filter(s => s !== current);
 
   ngOnInit(): void {
     this.loadDeals();
@@ -59,7 +59,7 @@ export class Dealflow implements OnInit {
     this.dealService.list().subscribe({
       next: (response) => {
         this.deals.set(response.items);
-        this.groupDealsByColumn(response.items);
+        this.groupDealsByStage(response.items);
         this.loading.set(false);
       },
       error: (err) => {
@@ -69,16 +69,16 @@ export class Dealflow implements OnInit {
     });
   }
 
-  private groupDealsByColumn(deals: Deal[]): void {
+  private groupDealsByStage(deals: Deal[]): void {
     const grouped: Record<string, Deal[]> = {};
-    for (const col of this.columns) {
-      grouped[col] = deals.filter(d => d.column === col);
+    for (const stage of this.stages) {
+      grouped[stage] = deals.filter(d => d.stage === stage);
     }
-    this.dealsByColumn.set(grouped);
+    this.dealsByStage.set(grouped);
   }
 
   onDealDrop(event: CdkDragDrop<Deal[]>): void {
-    const targetColumn = event.container.id as DealColumn;
+    const targetStage = event.container.id as DealStage;
     const deal: Deal = event.item.data;
 
     if (event.previousContainer === event.container) {
@@ -92,7 +92,7 @@ export class Dealflow implements OnInit {
       );
     }
 
-    this.dealService.move(deal.id, { column: targetColumn, position: event.currentIndex }).subscribe({
+    this.dealService.move(deal.id, { stage: targetStage, position: event.currentIndex }).subscribe({
       error: (err) => {
         this.snackBar.open(err.error?.detail || 'Erro ao mover deal', 'Fechar', { duration: 3000 });
         this.loadDeals();
@@ -100,10 +100,10 @@ export class Dealflow implements OnInit {
     });
   }
 
-  openCreateDialog(column?: DealColumn): void {
+  openCreateDialog(stage?: DealStage): void {
     const dialogRef = this.dialog.open(DealFormDialog, {
       width: '560px',
-      data: { defaultColumn: column ?? DealColumn.NEW } as DealFormDialogData,
+      data: { defaultStage: stage ?? DealStage.NEW } as DealFormDialogData,
     });
 
     dialogRef.afterClosed().subscribe((result) => {
@@ -138,11 +138,11 @@ export class Dealflow implements OnInit {
     });
   }
 
-  moveDeal(deal: Deal, column: DealColumn): void {
-    this.dealService.move(deal.id, { column, position: 0 }).subscribe({
+  moveDeal(deal: Deal, stage: DealStage): void {
+    this.dealService.move(deal.id, { stage, position: 0 }).subscribe({
       next: () => {
         this.snackBar.open(
-          `Deal movido para "${this.columnConfig[column].label}"`,
+          `Deal movido para "${this.stageConfig[stage].label}"`,
           'Fechar',
           { duration: 3000 },
         );

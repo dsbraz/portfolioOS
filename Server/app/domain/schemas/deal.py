@@ -3,16 +3,16 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.domain.models.deal import DealColumn
+from app.domain.models.deal import DealStage
 from app.domain.schemas.common import PaginatedResponse
 
 
 class DealBase(BaseModel):
     company: str = Field(..., min_length=1, max_length=255)
     sector: str | None = Field(None, max_length=255)
-    stage: str | None = Field(None, max_length=100)
+    funding_round: str | None = Field(None, max_length=100)
     founders: str | None = None
-    column: DealColumn = DealColumn.NEW
+    stage: DealStage = DealStage.NEW
     notes: str | None = None
     next_step: str | None = None
     internal_owner: str | None = Field(None, max_length=255)
@@ -25,17 +25,13 @@ class DealCreate(DealBase):
 class DealUpdate(BaseModel):
     company: str | None = Field(None, min_length=1, max_length=255)
     sector: str | None = Field(None, max_length=255)
-    stage: str | None = Field(None, max_length=100)
+    funding_round: str | None = Field(None, max_length=100)
     founders: str | None = None
-    column: DealColumn | None = None
+    stage: DealStage | None = None
+    position: int | None = None
     notes: str | None = None
     next_step: str | None = None
     internal_owner: str | None = Field(None, max_length=255)
-
-
-class DealMoveRequest(BaseModel):
-    column: DealColumn
-    position: int = 0
 
 
 class DealResponse(DealBase):

@@ -2,15 +2,15 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_generate_token_creates_new(client):
+async def test_create_token(client):
     startup_resp = await client.post(
         "/api/startups",
-        json={"name": "Report Startup", "sector": "tech", "investment_date": "2025-01-01"},
+        json={"name": "Token Startup", "sector": "tech", "investment_date": "2025-01-01"},
     )
     startup_id = startup_resp.json()["id"]
 
     resp = await client.post(
-        f"/api/startups/{startup_id}/report-tokens",
+        f"/api/startups/{startup_id}/monthly-indicator-tokens",
         json={"month": 1, "year": 2025},
     )
     assert resp.status_code == 200
@@ -22,19 +22,19 @@ async def test_generate_token_creates_new(client):
 
 
 @pytest.mark.asyncio
-async def test_generate_token_is_idempotent(client):
+async def test_create_token_is_idempotent(client):
     startup_resp = await client.post(
         "/api/startups",
-        json={"name": "Report Startup", "sector": "tech", "investment_date": "2025-01-01"},
+        json={"name": "Token Startup", "sector": "tech", "investment_date": "2025-01-01"},
     )
     startup_id = startup_resp.json()["id"]
 
     resp1 = await client.post(
-        f"/api/startups/{startup_id}/report-tokens",
+        f"/api/startups/{startup_id}/monthly-indicator-tokens",
         json={"month": 2, "year": 2025},
     )
     resp2 = await client.post(
-        f"/api/startups/{startup_id}/report-tokens",
+        f"/api/startups/{startup_id}/monthly-indicator-tokens",
         json={"month": 2, "year": 2025},
     )
     assert resp1.json()["token"] == resp2.json()["token"]
@@ -44,20 +44,20 @@ async def test_generate_token_is_idempotent(client):
 async def test_list_tokens(client):
     startup_resp = await client.post(
         "/api/startups",
-        json={"name": "Report Startup", "sector": "tech", "investment_date": "2025-01-01"},
+        json={"name": "Token Startup", "sector": "tech", "investment_date": "2025-01-01"},
     )
     startup_id = startup_resp.json()["id"]
 
     await client.post(
-        f"/api/startups/{startup_id}/report-tokens",
+        f"/api/startups/{startup_id}/monthly-indicator-tokens",
         json={"month": 1, "year": 2025},
     )
     await client.post(
-        f"/api/startups/{startup_id}/report-tokens",
+        f"/api/startups/{startup_id}/monthly-indicator-tokens",
         json={"month": 2, "year": 2025},
     )
 
-    resp = await client.get(f"/api/startups/{startup_id}/report-tokens")
+    resp = await client.get(f"/api/startups/{startup_id}/monthly-indicator-tokens")
     assert resp.status_code == 200
     data = resp.json()
     assert data["total"] == 2
@@ -65,7 +65,7 @@ async def test_list_tokens(client):
 
 
 @pytest.mark.asyncio
-async def test_get_form_context_no_existing_indicator(client):
+async def test_public_get_form_no_existing_indicator(client):
     startup_resp = await client.post(
         "/api/startups",
         json={"name": "Acme", "sector": "fintech", "investment_date": "2025-01-01"},
@@ -73,12 +73,12 @@ async def test_get_form_context_no_existing_indicator(client):
     startup_id = startup_resp.json()["id"]
 
     token_resp = await client.post(
-        f"/api/startups/{startup_id}/report-tokens",
+        f"/api/startups/{startup_id}/monthly-indicator-tokens",
         json={"month": 3, "year": 2025},
     )
     token = token_resp.json()["token"]
 
-    resp = await client.get(f"/api/report/{token}")
+    resp = await client.get(f"/api/monthly-indicator/{token}")
     assert resp.status_code == 200
     ctx = resp.json()
     assert ctx["startup_name"] == "Acme"
@@ -88,7 +88,7 @@ async def test_get_form_context_no_existing_indicator(client):
 
 
 @pytest.mark.asyncio
-async def test_submit_report_creates_indicator(client):
+async def test_public_submit_creates_indicator(client):
     startup_resp = await client.post(
         "/api/startups",
         json={"name": "Acme", "sector": "fintech", "investment_date": "2025-01-01"},
@@ -96,13 +96,13 @@ async def test_submit_report_creates_indicator(client):
     startup_id = startup_resp.json()["id"]
 
     token_resp = await client.post(
-        f"/api/startups/{startup_id}/report-tokens",
+        f"/api/startups/{startup_id}/monthly-indicator-tokens",
         json={"month": 4, "year": 2025},
     )
     token = token_resp.json()["token"]
 
     resp = await client.post(
-        f"/api/report/{token}/submit",
+        f"/api/monthly-indicator/{token}",
         json={
             "total_revenue": 100000,
             "cash_balance": 500000,
@@ -114,7 +114,7 @@ async def test_submit_report_creates_indicator(client):
     )
     assert resp.status_code == 204
 
-    indicators_resp = await client.get(f"/api/startups/{startup_id}/indicators")
+    indicators_resp = await client.get(f"/api/startups/{startup_id}/monthly-indicators")
     items = indicators_resp.json()["items"]
     assert len(items) == 1
     assert items[0]["month"] == 4
@@ -122,7 +122,7 @@ async def test_submit_report_creates_indicator(client):
 
 
 @pytest.mark.asyncio
-async def test_submit_report_updates_existing_indicator(client):
+async def test_public_submit_updates_existing_indicator(client):
     startup_resp = await client.post(
         "/api/startups",
         json={"name": "Acme", "sector": "fintech", "investment_date": "2025-01-01"},
@@ -130,39 +130,39 @@ async def test_submit_report_updates_existing_indicator(client):
     startup_id = startup_resp.json()["id"]
 
     await client.post(
-        f"/api/startups/{startup_id}/indicators",
+        f"/api/startups/{startup_id}/monthly-indicators",
         json={"month": 5, "year": 2025, "headcount": 5},
     )
 
     token_resp = await client.post(
-        f"/api/startups/{startup_id}/report-tokens",
+        f"/api/startups/{startup_id}/monthly-indicator-tokens",
         json={"month": 5, "year": 2025},
     )
     token = token_resp.json()["token"]
 
-    ctx_resp = await client.get(f"/api/report/{token}")
+    ctx_resp = await client.get(f"/api/monthly-indicator/{token}")
     assert ctx_resp.json()["existing_indicator"]["headcount"] == 5
 
     resp = await client.post(
-        f"/api/report/{token}/submit",
+        f"/api/monthly-indicator/{token}",
         json={"headcount": 12, "achievements": "Crescimento forte"},
     )
     assert resp.status_code == 204
 
-    indicators_resp = await client.get(f"/api/startups/{startup_id}/indicators")
+    indicators_resp = await client.get(f"/api/startups/{startup_id}/monthly-indicators")
     items = indicators_resp.json()["items"]
     assert len(items) == 1
     assert items[0]["headcount"] == 12
 
 
 @pytest.mark.asyncio
-async def test_invalid_token_returns_404(client):
-    resp = await client.get("/api/report/00000000-0000-0000-0000-000000000001")
+async def test_public_invalid_token_returns_404(client):
+    resp = await client.get("/api/monthly-indicator/00000000-0000-0000-0000-000000000001")
     assert resp.status_code == 404
 
 
 @pytest.mark.asyncio
-async def test_generate_token_future_period_returns_400(client):
+async def test_create_token_future_period_returns_400(client):
     startup_resp = await client.post(
         "/api/startups",
         json={"name": "Acme", "sector": "fintech", "investment_date": "2025-01-01"},
@@ -170,16 +170,16 @@ async def test_generate_token_future_period_returns_400(client):
     startup_id = startup_resp.json()["id"]
 
     resp = await client.post(
-        f"/api/startups/{startup_id}/report-tokens",
+        f"/api/startups/{startup_id}/monthly-indicator-tokens",
         json={"month": 12, "year": 2099},
     )
     assert resp.status_code == 400
 
 
 @pytest.mark.asyncio
-async def test_generate_token_nonexistent_startup_returns_404(client):
+async def test_create_token_nonexistent_startup_returns_404(client):
     resp = await client.post(
-        "/api/startups/00000000-0000-0000-0000-000000000001/report-tokens",
+        "/api/startups/00000000-0000-0000-0000-000000000001/monthly-indicator-tokens",
         json={"month": 1, "year": 2025},
     )
     assert resp.status_code == 404

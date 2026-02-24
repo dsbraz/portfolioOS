@@ -1,6 +1,6 @@
 import { Startup } from './startup.model';
 
-export interface StartupMonitoringItem {
+export interface StartupSummary {
   startup: Startup;
   total_revenue: number | null;
   cash_balance: number | null;
@@ -14,11 +14,11 @@ export interface HealthDistribution {
   critical: number;
 }
 
-export interface MonitoringSummary {
+export interface PortfolioSummary {
   total_startups: number;
-  portfolio_revenue: number;
-  portfolio_health: HealthDistribution;
+  revenue: number;
+  health: HealthDistribution;
   monthly_report_pct: number;
   routines_up_to_date_pct: number;
-  startups: StartupMonitoringItem[];
+  startups: StartupSummary[];
 }

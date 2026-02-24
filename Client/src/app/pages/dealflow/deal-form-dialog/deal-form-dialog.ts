@@ -8,14 +8,14 @@ import { MatButtonModule } from '@angular/material/button';
 
 import {
   Deal,
-  DealColumn,
-  DEAL_COLUMN_CONFIG,
-  DEAL_STAGE_OPTIONS,
+  DealStage,
+  DEAL_STAGE_CONFIG,
+  FUNDING_ROUND_OPTIONS,
 } from '../../../models/deal.model';
 
 export interface DealFormDialogData {
   deal?: Deal;
-  defaultColumn?: DealColumn;
+  defaultStage?: DealStage;
 }
 
 @Component({
@@ -37,16 +37,16 @@ export class DealFormDialog implements OnInit {
   readonly data: DealFormDialogData = inject(MAT_DIALOG_DATA);
 
   readonly isEditMode = !!this.data?.deal;
-  readonly columnOptions = Object.values(DealColumn);
-  readonly columnConfig = DEAL_COLUMN_CONFIG;
-  readonly stageOptions = DEAL_STAGE_OPTIONS;
+  readonly stageOptions = Object.values(DealStage);
+  readonly stageConfig = DEAL_STAGE_CONFIG;
+  readonly fundingRoundOptions = FUNDING_ROUND_OPTIONS;
 
   readonly form = this.fb.group({
     company: ['', [Validators.required, Validators.maxLength(255)]],
     sector: [''],
-    stage: [''],
+    funding_round: [''],
     founders: [''],
-    column: [this.data?.defaultColumn ?? DealColumn.NEW],
+    stage: [this.data?.defaultStage ?? DealStage.NEW],
     notes: [''],
     next_step: [''],
     internal_owner: [''],

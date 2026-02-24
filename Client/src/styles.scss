@@ -22,13 +22,13 @@ html {
   --app-status-warning: #ff9800;
   --app-status-critical: var(--mat-sys-error);
 
-  // App-level kanban column tokens
-  --app-column-new: #90caf9;
-  --app-column-talking: #ce93d8;
-  --app-column-analyzing: #ffcc80;
-  --app-column-committee: #80cbc4;
-  --app-column-invested: #a5d6a7;
-  --app-column-archived: #bdbdbd;
+  // App-level kanban stage tokens
+  --app-stage-new: #90caf9;
+  --app-stage-talking: #ce93d8;
+  --app-stage-analyzing: #ffcc80;
+  --app-stage-committee: #80cbc4;
+  --app-stage-invested: #a5d6a7;
+  --app-stage-archived: #bdbdbd;
 }
 
 body {

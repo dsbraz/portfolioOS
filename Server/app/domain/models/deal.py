@@ -9,7 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.domain.models import Base
 
 
-class DealColumn(str, enum.Enum):
+class DealStage(str, enum.Enum):
     NEW = "novo"
     TALKING = "conversando"
     ANALYZING = "analisando"
@@ -26,12 +26,12 @@ class Deal(Base):
     )
     company: Mapped[str] = mapped_column(String(255), nullable=False)
     sector: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    stage: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    funding_round: Mapped[str | None] = mapped_column(String(100), nullable=True)
     founders: Mapped[str | None] = mapped_column(Text, nullable=True)
-    column: Mapped[DealColumn] = mapped_column(
-        Enum(DealColumn, values_callable=lambda cls: [e.value for e in cls]),
+    stage: Mapped[DealStage] = mapped_column(
+        Enum(DealStage, values_callable=lambda cls: [e.value for e in cls]),
         nullable=False,
-        default=DealColumn.NEW,
+        default=DealStage.NEW,
     )
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     next_step: Mapped[str | None] = mapped_column(Text, nullable=True)

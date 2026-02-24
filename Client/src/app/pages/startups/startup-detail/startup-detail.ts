@@ -25,8 +25,8 @@ import { StartupService } from '../../../services/startup.service';
 import { MonthlyIndicatorService } from '../../../services/monthly-indicator.service';
 import { BoardMeetingService } from '../../../services/board-meeting.service';
 import { ExecutiveService } from '../../../services/executive.service';
-import { ReportTokenService } from '../../../services/report-token.service';
-import { ReportToken } from '../../../models/report-token.model';
+import { MonthlyIndicatorTokenService } from '../../../services/monthly-indicator-token.service';
+import { MonthlyIndicatorToken } from '../../../models/monthly-indicator-token.model';
 import { StatusBadge } from '../../../components/status-badge/status-badge';
 import {
   StartupFormDialog,
@@ -45,9 +45,9 @@ import {
   ExecutiveFormDialogData,
 } from '../executive-form-dialog/executive-form-dialog';
 import {
-  ReportTokenListDialog,
-  ReportTokenListDialogData,
-} from '../report-token-list-dialog/report-token-list-dialog';
+  TokenListDialog,
+  TokenListDialogData,
+} from '../token-list-dialog/token-list-dialog';
 
 @Component({
   selector: 'app-startup-detail',
@@ -81,13 +81,13 @@ export class StartupDetail implements OnInit {
   private readonly indicatorService = inject(MonthlyIndicatorService);
   private readonly meetingService = inject(BoardMeetingService);
   private readonly executiveService = inject(ExecutiveService);
-  private readonly reportTokenService = inject(ReportTokenService);
+  private readonly tokenService = inject(MonthlyIndicatorTokenService);
 
   readonly startup = signal<Startup | null>(null);
   readonly indicators = signal<MonthlyIndicator[]>([]);
   readonly meetings = signal<BoardMeeting[]>([]);
   readonly executives = signal<Executive[]>([]);
-  readonly reportTokens = signal<ReportToken[]>([]);
+  readonly tokens = signal<MonthlyIndicatorToken[]>([]);
   readonly loading = signal(false);
   readonly monthLabels = MONTH_LABELS;
   readonly statusConfig = STARTUP_STATUS_CONFIG;
@@ -121,14 +121,14 @@ export class StartupDetail implements OnInit {
       indicators: this.indicatorService.list(this.startupId),
       meetings: this.meetingService.list(this.startupId),
       executives: this.executiveService.list(this.startupId),
-      reportTokens: this.reportTokenService.listTokens(this.startupId),
+      tokens: this.tokenService.list(this.startupId),
     }).subscribe({
-      next: ({ startup, indicators, meetings, executives, reportTokens }) => {
+      next: ({ startup, indicators, meetings, executives, tokens }) => {
         this.startup.set(startup);
         this.indicators.set(indicators.items);
         this.meetings.set(meetings.items);
         this.executives.set(executives.items);
-        this.reportTokens.set(reportTokens.items);
+        this.tokens.set(tokens.items);
         this.loading.set(false);
       },
       error: (err) => {
@@ -144,7 +144,7 @@ export class StartupDetail implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/portfolio-monitoring']);
+    this.router.navigate(['/portfolio']);
   }
 
   formatCurrency(value: number | null): string {
@@ -410,14 +410,14 @@ export class StartupDetail implements OnInit {
     });
   }
 
-  // Report Tokens
-  generateReportToken(): void {
+  // Tokens
+  generateToken(): void {
     const now = new Date();
     const month = now.getMonth() + 1;
     const year = now.getFullYear();
-    this.reportTokenService.generateToken(this.startupId, month, year).subscribe({
+    this.tokenService.create(this.startupId, month, year).subscribe({
       next: (token) => {
-        const url = `${window.location.origin}/report/${token.token}`;
+        const url = `${window.location.origin}/monthly-indicator/${token.token}`;
         navigator.clipboard.writeText(url).then(() => {
           this.snackBar.open('Link gerado e copiado!', 'Fechar', { duration: 3000 });
         });
@@ -428,9 +428,9 @@ export class StartupDetail implements OnInit {
   }
 
   openTokenListDialog(): void {
-    this.dialog.open(ReportTokenListDialog, {
+    this.dialog.open(TokenListDialog, {
       width: '400px',
-      data: { tokens: this.reportTokens() } as ReportTokenListDialogData,
+      data: { tokens: this.tokens() } as TokenListDialogData,
     });
   }
 }

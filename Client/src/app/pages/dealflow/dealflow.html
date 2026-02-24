@@ -14,33 +14,33 @@
     </div>
 
     <div class="kanban-board">
-    @for (col of columns; track col) {
+    @for (stage of stages; track stage) {
       <div class="kanban-column">
-        <div class="column-header" [style.--_column-color]="columnConfig[col].color">
-          <span class="column-title">{{ columnConfig[col].label }}</span>
-          <span class="column-count">{{ dealsByColumn()[col].length }}</span>
-          <button mat-icon-button class="column-add" (click)="openCreateDialog(col)">
+        <div class="column-header" [style.--_column-color]="stageConfig[stage].color">
+          <span class="column-title">{{ stageConfig[stage].label }}</span>
+          <span class="column-count">{{ dealsByStage()[stage].length }}</span>
+          <button mat-icon-button class="column-add" (click)="openCreateDialog(stage)">
             <mat-icon>add</mat-icon>
           </button>
         </div>
         <div
           class="column-content"
           cdkDropList
-          [id]="col"
-          [cdkDropListData]="dealsByColumn()[col]"
-          [cdkDropListConnectedTo]="columns"
+          [id]="stage"
+          [cdkDropListData]="dealsByStage()[stage]"
+          [cdkDropListConnectedTo]="stages"
           (cdkDropListDropped)="onDealDrop($event)"
         >
-          @for (deal of dealsByColumn()[col]; track deal.id) {
+          @for (deal of dealsByStage()[stage]; track deal.id) {
             <mat-card class="deal-card" cdkDrag [cdkDragData]="deal" (click)="openEditDialog(deal)">
               <mat-card-content>
                 <div class="deal-empresa">{{ deal.company }}</div>
                 @if (deal.sector) {
                   <span class="deal-setor">{{ deal.sector }}</span>
                 }
-                @if (deal.stage) {
+                @if (deal.funding_round) {
                   <mat-chip-set class="deal-chips">
-                    <mat-chip>{{ deal.stage }}</mat-chip>
+                    <mat-chip>{{ deal.funding_round }}</mat-chip>
                   </mat-chip-set>
                 }
                 @if (deal.next_step) {
@@ -65,9 +65,9 @@
                     </button>
                   </mat-menu>
                   <mat-menu #moveMenu="matMenu">
-                    @for (target of otherColumns(deal.column); track target) {
+                    @for (target of otherStages(deal.stage); track target) {
                       <button mat-menu-item (click)="moveDeal(deal, target)">
-                        {{ columnConfig[target].label }}
+                        {{ stageConfig[target].label }}
                       </button>
                     }
                   </mat-menu>
@@ -75,7 +75,7 @@
               </mat-card-content>
             </mat-card>
           }
-          @if (dealsByColumn()[col].length === 0) {
+          @if (dealsByStage()[stage].length === 0) {
             <div class="empty-column">
               <span>Nenhum deal</span>
             </div>

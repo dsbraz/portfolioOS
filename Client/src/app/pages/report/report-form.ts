@@ -9,8 +9,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
-import { ReportTokenService } from '../../services/report-token.service';
-import { ReportFormContext } from '../../models/report-token.model';
+import { MonthlyIndicatorTokenService } from '../../services/monthly-indicator-token.service';
+import { PublicIndicatorForm } from '../../models/monthly-indicator-token.model';
 import { MONTH_LABELS } from '../../models/monthly-indicator.model';
 
 @Component({
@@ -30,11 +30,11 @@ import { MONTH_LABELS } from '../../models/monthly-indicator.model';
 })
 export default class ReportForm implements OnInit {
   private readonly route = inject(ActivatedRoute);
-  private readonly service = inject(ReportTokenService);
+  private readonly service = inject(MonthlyIndicatorTokenService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly fb = inject(FormBuilder);
 
-  readonly context = signal<ReportFormContext | null>(null);
+  readonly context = signal<PublicIndicatorForm | null>(null);
   readonly loading = signal(true);
   readonly submitting = signal(false);
   readonly submitted = signal(false);
@@ -56,7 +56,7 @@ export default class ReportForm implements OnInit {
 
   ngOnInit(): void {
     this.token = this.route.snapshot.paramMap.get('token')!;
-    this.service.getFormContext(this.token).subscribe({
+    this.service.getPublicForm(this.token).subscribe({
       next: (ctx) => {
         this.context.set(ctx);
         if (ctx.existing_indicator) {
@@ -83,7 +83,7 @@ export default class ReportForm implements OnInit {
   onSubmit(): void {
     if (this.form.invalid || this.submitting()) return;
     this.submitting.set(true);
-    this.service.submitReport(this.token, this.form.getRawValue()).subscribe({
+    this.service.submitPublicForm(this.token, this.form.getRawValue()).subscribe({
       next: () => {
         this.submitted.set(true);
         this.submitting.set(false);

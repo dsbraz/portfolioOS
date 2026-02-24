@@ -1,4 +1,5 @@
 import uuid
+from datetime import date, timedelta
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -47,3 +48,20 @@ class BoardMeetingRepository:
     async def delete(self, meeting: BoardMeeting) -> None:
         await self._session.delete(meeting)
         await self._session.flush()
+
+    async def get_startup_ids_with_recent_meetings(
+        self, startup_ids: list[uuid.UUID], cutoff_days: int
+    ) -> set[uuid.UUID]:
+        if not startup_ids:
+            return set()
+
+        cutoff = date.today() - timedelta(days=cutoff_days)
+        result = await self._session.execute(
+            select(BoardMeeting.startup_id)
+            .where(
+                BoardMeeting.startup_id.in_(startup_ids),
+                BoardMeeting.meeting_date >= cutoff,
+            )
+            .distinct()
+        )
+        return set(result.scalars().all())

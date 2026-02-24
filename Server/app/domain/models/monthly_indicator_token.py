@@ -8,12 +8,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.domain.models import Base
 
 
-class ReportToken(Base):
-    __tablename__ = "report_tokens"
+class MonthlyIndicatorToken(Base):
+    __tablename__ = "monthly_indicator_tokens"
     __table_args__ = (
         UniqueConstraint(
             "startup_id", "month", "year",
-            name="uq_report_token_startup_month_year",
+            name="uq_monthly_indicator_token_startup_month_year",
         ),
     )
 
@@ -35,5 +35,5 @@ class ReportToken(Base):
     )
 
     startup: Mapped["Startup"] = relationship(
-        "Startup", back_populates="report_tokens"
+        "Startup", back_populates="monthly_indicator_tokens"
     )

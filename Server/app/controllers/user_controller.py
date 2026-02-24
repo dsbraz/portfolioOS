@@ -3,7 +3,12 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.application.auth.get_user import GetUser
+from app.application.auth.list_users import ListUsers
+from app.application.auth.register_user import RegisterUser
+from app.application.auth.update_user import UpdateUser
 from app.controllers.auth_dependency import get_current_user
+from app.controllers.dependencies import user_builder
 from app.database import get_session
 from app.domain.exceptions import ConflictError
 from app.domain.models.user import User
@@ -15,8 +20,6 @@ from app.domain.schemas.user import (
 )
 from app.infrastructure.bcrypt_password_hasher import BcryptPasswordHasher
 from app.repositories.user_repository import UserRepository
-from app.application.auth.register_user import RegisterUser
-from app.application.auth.update_user import UpdateUser
 
 router = APIRouter(tags=["Users"])
 
@@ -37,10 +40,9 @@ def _get_update_user(
 
 async def _get_user_or_404(
     user_id: uuid.UUID,
-    session: AsyncSession = Depends(get_session),
+    get_uc: GetUser = Depends(user_builder(GetUser)),
 ):
-    repo = UserRepository(session)
-    user = await repo.get_by_id(user_id)
+    user = await get_uc.execute(user_id)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -75,10 +77,9 @@ async def create_user(
     response_model=UserListResponse,
 )
 async def list_users(
-    session: AsyncSession = Depends(get_session),
+    list_uc: ListUsers = Depends(user_builder(ListUsers)),
 ):
-    repo = UserRepository(session)
-    items, total = await repo.get_all()
+    items, total = await list_uc.execute()
     return UserListResponse(
         items=[UserResponse.model_validate(u) for u in items],
         total=total,

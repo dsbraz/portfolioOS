@@ -14,10 +14,10 @@
       </mat-form-field>
 
       <mat-form-field>
-        <mat-label>Estagio</mat-label>
-        <mat-select formControlName="stage">
+        <mat-label>Rodada</mat-label>
+        <mat-select formControlName="funding_round">
           <mat-option value="">Nenhum</mat-option>
-          @for (opt of stageOptions; track opt) {
+          @for (opt of fundingRoundOptions; track opt) {
             <mat-option [value]="opt">{{ opt }}</mat-option>
           }
         </mat-select>
@@ -30,10 +30,10 @@
     </mat-form-field>
 
     <mat-form-field>
-      <mat-label>Coluna</mat-label>
-      <mat-select formControlName="column">
-        @for (col of columnOptions; track col) {
-          <mat-option [value]="col">{{ columnConfig[col].label }}</mat-option>
+      <mat-label>Estagio</mat-label>
+      <mat-select formControlName="stage">
+        @for (s of stageOptions; track s) {
+          <mat-option [value]="s">{{ stageConfig[s].label }}</mat-option>
         }
       </mat-select>
     </mat-form-field>

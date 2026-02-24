@@ -5,7 +5,7 @@ import { authGuard } from './guards/auth.guard';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'portfolio-monitoring',
+    redirectTo: 'portfolio',
     pathMatch: 'full',
   },
   {
@@ -14,9 +14,9 @@ export const routes: Routes = [
     data: { public: true },
   },
   {
-    path: 'portfolio-monitoring',
+    path: 'portfolio',
     loadComponent: () =>
-      import('./pages/portfolio-monitoring/portfolio-monitoring').then((m) => m.PortfolioMonitoring),
+      import('./pages/portfolio/portfolio').then((m) => m.Portfolio),
     canActivate: [authGuard],
   },
   {
@@ -37,7 +37,7 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
-    path: 'report/:token',
+    path: 'monthly-indicator/:token',
     loadComponent: () => import('./pages/report/report-form'),
     data: { public: true },
   },

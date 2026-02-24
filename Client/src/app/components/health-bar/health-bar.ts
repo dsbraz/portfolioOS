@@ -1,7 +1,7 @@
 import { Component, computed, input } from '@angular/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
-import { HealthDistribution } from '../../models/portfolio-monitoring.model';
+import { HealthDistribution } from '../../models/portfolio.model';
 import { STARTUP_STATUS_CONFIG, StartupStatus } from '../../models/startup.model';
 
 @Component({

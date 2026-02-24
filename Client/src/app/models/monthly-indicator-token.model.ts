@@ -1,4 +1,4 @@
-export interface ReportToken {
+export interface MonthlyIndicatorToken {
   id: string;
   token: string;
   startup_id: string;
@@ -7,12 +7,12 @@ export interface ReportToken {
   created_at: string;
 }
 
-export interface ReportTokenListResponse {
-  items: ReportToken[];
+export interface MonthlyIndicatorTokenListResponse {
+  items: MonthlyIndicatorToken[];
   total: number;
 }
 
-export interface ReportFormContext {
+export interface PublicIndicatorForm {
   startup_name: string;
   startup_logo_url: string | null;
   month: number;
@@ -31,7 +31,7 @@ export interface PublicIndicatorData {
   challenges: string | null;
 }
 
-export interface PublicReportSubmit {
+export interface PublicIndicatorSubmit {
   total_revenue: number | null;
   cash_balance: number | null;
   ebitda_burn: number | null;
