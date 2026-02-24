@@ -1,4 +1,8 @@
-<h2 mat-dialog-title>{{ isEditMode ? 'Editar Indicador Mensal' : 'Novo Indicador Mensal' }}</h2>
+@if (isReadonly) {
+  <h2 mat-dialog-title>Indicador Mensal</h2>
+} @else {
+  <h2 mat-dialog-title>{{ isEditMode ? 'Editar Indicador Mensal' : 'Novo Indicador Mensal' }}</h2>
+}
 
 <mat-dialog-content>
   <form [formGroup]="form" class="indicator-form">
@@ -79,8 +83,12 @@
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button mat-button (click)="onCancel()">Cancelar</button>
-  <button mat-flat-button color="primary" (click)="onSubmit()" [disabled]="form.invalid">
-    {{ isEditMode ? 'Salvar' : 'Adicionar' }}
-  </button>
+  @if (isReadonly) {
+    <button mat-button (click)="onCancel()">Fechar</button>
+  } @else {
+    <button mat-button (click)="onCancel()">Cancelar</button>
+    <button mat-flat-button color="primary" (click)="onSubmit()" [disabled]="form.invalid">
+      {{ isEditMode ? 'Salvar' : 'Adicionar' }}
+    </button>
+  }
 </mat-dialog-actions>

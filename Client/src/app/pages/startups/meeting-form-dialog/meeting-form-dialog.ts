@@ -11,6 +11,7 @@ import { BoardMeeting } from '../../../models/board-meeting.model';
 
 export interface MeetingFormDialogData {
   meeting?: BoardMeeting;
+  readonly?: boolean;
 }
 
 @Component({
@@ -33,6 +34,7 @@ export class MeetingFormDialog implements OnInit {
   readonly data: MeetingFormDialogData = inject(MAT_DIALOG_DATA);
 
   readonly isEditMode = !!this.data?.meeting;
+  readonly isReadonly = !!this.data?.readonly;
 
   readonly form = this.fb.group({
     meeting_date: [null as Date | null, Validators.required],
@@ -49,6 +51,9 @@ export class MeetingFormDialog implements OnInit {
         ...m,
         meeting_date: new Date(m.meeting_date + 'T00:00:00'),
       });
+    }
+    if (this.isReadonly) {
+      this.form.disable();
     }
   }
 

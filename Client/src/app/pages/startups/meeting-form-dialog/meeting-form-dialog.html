@@ -1,4 +1,8 @@
-<h2 mat-dialog-title>{{ isEditMode ? 'Editar Reuniao de Conselho' : 'Nova Reuniao de Conselho' }}</h2>
+@if (isReadonly) {
+  <h2 mat-dialog-title>Reuniao de Conselho</h2>
+} @else {
+  <h2 mat-dialog-title>{{ isEditMode ? 'Editar Reuniao de Conselho' : 'Nova Reuniao de Conselho' }}</h2>
+}
 
 <mat-dialog-content>
   <form [formGroup]="form" class="meeting-form">
@@ -35,8 +39,12 @@
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button mat-button (click)="onCancel()">Cancelar</button>
-  <button mat-flat-button color="primary" (click)="onSubmit()" [disabled]="form.invalid">
-    {{ isEditMode ? 'Salvar' : 'Adicionar' }}
-  </button>
+  @if (isReadonly) {
+    <button mat-button (click)="onCancel()">Fechar</button>
+  } @else {
+    <button mat-button (click)="onCancel()">Cancelar</button>
+    <button mat-flat-button color="primary" (click)="onSubmit()" [disabled]="form.invalid">
+      {{ isEditMode ? 'Salvar' : 'Adicionar' }}
+    </button>
+  }
 </mat-dialog-actions>

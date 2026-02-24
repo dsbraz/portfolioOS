@@ -16,6 +16,7 @@ import { MonthlyIndicator, MONTH_LABELS } from '../../../models/monthly-indicato
 
 export interface IndicatorFormDialogData {
   indicator?: MonthlyIndicator;
+  readonly?: boolean;
 }
 
 @Component({
@@ -37,6 +38,7 @@ export class IndicatorFormDialog implements OnInit {
   readonly data: IndicatorFormDialogData = inject(MAT_DIALOG_DATA);
 
   readonly isEditMode = !!this.data?.indicator;
+  readonly isReadonly = !!this.data?.readonly;
   readonly monthOptions = Array.from({ length: 12 }, (_, i) => i + 1);
   readonly monthLabels = MONTH_LABELS;
   readonly currentYear = new Date().getFullYear();
@@ -69,6 +71,9 @@ export class IndicatorFormDialog implements OnInit {
   ngOnInit(): void {
     if (this.data?.indicator) {
       this.form.patchValue(this.data.indicator);
+    }
+    if (this.isReadonly) {
+      this.form.disable();
     }
   }
 

@@ -158,7 +158,7 @@
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef></th>
             <td mat-cell *matCellDef="let ind">
-              <button mat-icon-button [matMenuTriggerFor]="indMenu">
+              <button mat-icon-button [matMenuTriggerFor]="indMenu" (click)="$event.stopPropagation()">
                 <mat-icon>more_vert</mat-icon>
               </button>
               <mat-menu #indMenu="matMenu">
@@ -172,7 +172,7 @@
             </td>
           </ng-container>
           <tr mat-header-row *matHeaderRowDef="indicatorColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: indicatorColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: indicatorColumns" class="clickable-row" (click)="openViewIndicator(row)"></tr>
         </table>
       }
     </mat-expansion-panel>
@@ -201,7 +201,7 @@
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef></th>
             <td mat-cell *matCellDef="let m">
-              <button mat-icon-button [matMenuTriggerFor]="meetMenu">
+              <button mat-icon-button [matMenuTriggerFor]="meetMenu" (click)="$event.stopPropagation()">
                 <mat-icon>more_vert</mat-icon>
               </button>
               <mat-menu #meetMenu="matMenu">
@@ -215,7 +215,7 @@
             </td>
           </ng-container>
           <tr mat-header-row *matHeaderRowDef="meetingColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: meetingColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: meetingColumns" class="clickable-row" (click)="openViewMeeting(row)"></tr>
         </table>
       }
     </mat-expansion-panel>
@@ -248,7 +248,7 @@
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef></th>
             <td mat-cell *matCellDef="let e">
-              <button mat-icon-button [matMenuTriggerFor]="execMenu">
+              <button mat-icon-button [matMenuTriggerFor]="execMenu" (click)="$event.stopPropagation()">
                 <mat-icon>more_vert</mat-icon>
               </button>
               <mat-menu #execMenu="matMenu">
@@ -262,7 +262,7 @@
             </td>
           </ng-container>
           <tr mat-header-row *matHeaderRowDef="executiveColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: executiveColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: executiveColumns" class="clickable-row" (click)="openViewExecutive(row)"></tr>
         </table>
       }
     </mat-expansion-panel>

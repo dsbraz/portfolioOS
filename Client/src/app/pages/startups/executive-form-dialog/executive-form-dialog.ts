@@ -9,6 +9,7 @@ import { Executive } from '../../../models/executive.model';
 
 export interface ExecutiveFormDialogData {
   executive?: Executive;
+  readonly?: boolean;
 }
 
 @Component({
@@ -29,6 +30,7 @@ export class ExecutiveFormDialog implements OnInit {
   readonly data: ExecutiveFormDialogData = inject(MAT_DIALOG_DATA);
 
   readonly isEditMode = !!this.data?.executive;
+  readonly isReadonly = !!this.data?.readonly;
 
   readonly form = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(255)]],
@@ -41,6 +43,9 @@ export class ExecutiveFormDialog implements OnInit {
   ngOnInit(): void {
     if (this.data?.executive) {
       this.form.patchValue(this.data.executive);
+    }
+    if (this.isReadonly) {
+      this.form.disable();
     }
   }
 

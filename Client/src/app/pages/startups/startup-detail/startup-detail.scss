@@ -195,6 +195,14 @@
 
 .section-table {
   width: 100%;
+
+  .clickable-row {
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--mat-sys-surface-container-low);
+    }
+  }
 }
 
 .truncate-cell {
