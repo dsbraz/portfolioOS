@@ -63,7 +63,7 @@ portfolio/
 │       │   ├── startups/              # Detalhe + formularios (indicadores, reunioes, executivos, tokens)
 │       │   ├── dealflow/              # Board kanban de deals
 │       │   ├── users/                 # Gestao de usuarios
-│       │   └── report/                # Formulario publico de relatorio
+│       │   └── report/                # Formulario publico de indicadores mensais
 │       ├── services/       # Comunicacao HTTP com a API
 │       └── models/         # Interfaces TypeScript
 │
@@ -72,7 +72,7 @@ portfolio/
 │   │   ├── controllers/    # Rotas HTTP (camada de apresentacao)
 │   │   ├── application/    # Use cases (camada de aplicacao)
 │   │   ├── domain/
-│   │   │   ├── models/     # Entidades SQLAlchemy
+│   │   │   ├── models/     # Entidades SQLAlchemy (startup, deal, monthly_indicator, monthly_indicator_token, ...)
 │   │   │   ├── schemas/    # Schemas Pydantic (request/response)
 │   │   │   ├── exceptions.py # Excecoes de dominio
 │   │   │   └── validators.py # Validadores compartilhados
@@ -80,6 +80,9 @@ portfolio/
 │   │   └── repositories/   # Acesso a dados
 │   ├── alembic/            # Migrations do banco
 │   └── tests/              # Testes automatizados (pytest)
+│       ├── integration/    # Testes de API (rotas end-to-end)
+│       ├── unit/           # Testes unitarios (use cases, validators)
+│       └── architecture/   # Fitness functions (boundaries entre camadas)
 │
 ├── CLAUDE.md               # Convencoes e principios de engenharia
 ├── AGENTS.md               # Instrucoes para agentes AI
@@ -114,10 +117,10 @@ Rotas protegidas por auth guard; requests autenticados via interceptor JWT.
 
 ```
 Startup
-├── Monthly Indicator   (1:N, indicadores financeiros mensais)
-├── Board Meeting       (1:N, atas de reunioes de conselho)
-├── Executive           (1:N, membros da equipe executiva)
-└── Report Token        (1:N, tokens para coleta publica de indicadores)
+├── Monthly Indicator        (1:N, indicadores financeiros mensais)
+├── Monthly Indicator Token  (1:N, tokens para coleta publica de indicadores)
+├── Board Meeting            (1:N, atas de reunioes de conselho)
+└── Executive                (1:N, membros da equipe executiva)
 
 Deal                    (entidade independente, pipeline de novos negocios)
 User                    (entidade independente, usuarios do sistema)
@@ -139,7 +142,7 @@ Registro de reunioes de conselho: data, participantes, resumo, pontos de atencao
 
 Membro do time executivo de uma startup: nome, cargo, contato, LinkedIn.
 
-### Report Token
+### Monthly Indicator Token
 
 Token unico (UUID) vinculado a uma startup + mes + ano. Permite que a startup preencha seus indicadores mensais via formulario publico, sem autenticacao.
 
@@ -155,7 +158,7 @@ Usuario do sistema com autenticacao via JWT. Campos: username, email, senha (has
 
 Base: `http://localhost:8000/api`
 
-Rotas publicas: `/health`, `/health/ready`, `/auth/login`, `/report/{token}`, `/report/{token}/submit`.
+Rotas publicas: `/health`, `/health/ready`, `/auth/login`, `/monthly-indicator/{token}` (GET e POST).
 Demais rotas exigem JWT bearer token.
 
 | Metodo | Rota | Descricao |
@@ -166,18 +169,18 @@ Demais rotas exigem JWT bearer token.
 | GET | `/portfolio` | Resumo do portfolio (KPIs) |
 | GET/POST | `/startups` | Listar / criar startups |
 | GET/PATCH/DELETE | `/startups/{id}` | Detalhe / atualizar / remover startup |
-| GET/POST | `/startups/{id}/indicators` | Indicadores mensais |
-| GET/PATCH/DELETE | `/startups/{id}/indicators/{iid}` | Operacoes em indicador |
+| GET/POST | `/startups/{id}/monthly-indicators` | Indicadores mensais |
+| GET/PATCH/DELETE | `/startups/{id}/monthly-indicators/{iid}` | Operacoes em indicador |
 | GET/POST | `/startups/{id}/meetings` | Reunioes de conselho |
 | GET/PATCH/DELETE | `/startups/{id}/meetings/{mid}` | Operacoes em reuniao |
 | GET/POST | `/startups/{id}/executives` | Executivos |
 | GET/PATCH/DELETE | `/startups/{id}/executives/{eid}` | Operacoes em executivo |
-| POST/GET | `/startups/{id}/report-tokens` | Gerar / listar tokens de relatorio |
+| POST/GET | `/startups/{id}/monthly-indicator-tokens` | Gerar / listar tokens de indicadores |
 | GET/POST | `/deals` | Listar / criar deals |
 | GET/PATCH/DELETE | `/deals/{id}` | Operacoes em deal |
 | PATCH | `/deals/{id}/move` | Mover deal entre colunas |
-| GET | `/report/{token}` | Obter contexto do formulario publico |
-| POST | `/report/{token}/submit` | Enviar relatorio publico |
+| GET | `/monthly-indicator/{token}` | Obter contexto do formulario publico |
+| POST | `/monthly-indicator/{token}` | Enviar indicadores via formulario publico |
 | POST | `/users` | Criar usuario |
 | GET | `/users` | Listar usuarios |
 | PATCH | `/users/{id}` | Atualizar usuario |

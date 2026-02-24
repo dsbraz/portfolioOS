@@ -28,7 +28,9 @@ Backend flow (required): `controllers -> application -> domain -> repos`.
 - `pages`/route components (Presentation layer): compose screens and user interactions.
 - `components` (UI layer): reusable visual building blocks with minimal business logic.
 - `services` (Application/data-access layer): API communication, orchestration, and state transitions used by pages/components.
-- `models`/`types` (Domain contract layer): explicit interfaces/types shared across features to avoid ad-hoc payloads.
+- `models` (Domain contract layer): explicit interfaces/types shared across features to avoid ad-hoc payloads.
+- `guards` (Auth layer): route protection (e.g. `auth.guard.ts`).
+- `interceptors` (HTTP layer): cross-cutting HTTP concerns (e.g. `auth.interceptor.ts` for JWT injection).
 
 ### Layering Rules
 - In backend, follow the chain strictly: `controllers -> application -> domain -> repos`.
@@ -75,7 +77,7 @@ Backend flow (required): `controllers -> application -> domain -> repos`.
 - Prefer small, focused controllers/use cases and explicit names like `health_controller.py`, `register_user.py`.
 
 ## Theming & Color Conventions
-- The app uses Angular Material 3 with `mat.theme()` (`primary: azure`, `tertiary: blue`, light mode).
+- The app uses Angular Material 3 with `mat.theme()` (`primary: violet`, `tertiary: orange`). Color scheme is set to `light dark` (defers to user system preference).
 - All colors must be defined as CSS custom properties (design tokens). Two categories:
   - **M3 system tokens** (`--mat-sys-*`): use for standard UI roles (surface, text, containers, outline, elevation).
   - **App-level tokens** (`--app-*`): defined in `Client/src/styles.scss` for domain-specific colors (status indicators, kanban columns) that M3 doesn't cover natively.
@@ -88,7 +90,10 @@ Backend flow (required): `controllers -> application -> domain -> repos`.
 
 ## Testing Guidelines
 - Frontend tests live beside source as `*.spec.ts` and should be run with `docker compose exec client npx ng test`.
-- Backend tests should be added under `Server/tests/` using `test_*.py` naming.
+- Backend tests live under `Server/tests/` using `test_*.py` naming, organized by type:
+  - `integration/`: API-level tests (routes end-to-end with test database).
+  - `unit/`: isolated use-case and domain logic tests (mocked dependencies).
+  - `architecture/`: fitness functions that enforce layer boundaries.
 - Add tests for new behavior and regressions; prioritize route-level tests for API endpoints and critical UI flows.
 - Follow TDD by default:
   1. Write a failing test that describes expected behavior.
