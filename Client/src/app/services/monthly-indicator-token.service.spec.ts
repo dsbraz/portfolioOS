@@ -27,12 +27,12 @@ describe('MonthlyIndicatorTokenService', () => {
       year: 2025,
       created_at: '',
     };
-    service.create('sid', 1, 2025).subscribe((res) => {
+    service.create('sid').subscribe((res) => {
       expect(res.token).toBe('tok-uuid');
     });
     const req = httpMock.expectOne('/api/startups/sid/monthly-indicator-tokens');
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ month: 1, year: 2025 });
+    expect(req.request.body).toEqual({});
     req.flush(mockToken);
   });
 

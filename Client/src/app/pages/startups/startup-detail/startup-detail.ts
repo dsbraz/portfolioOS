@@ -267,6 +267,13 @@ export class StartupDetail implements OnInit {
   }
 
   // Indicators
+  openViewIndicator(indicator: MonthlyIndicator): void {
+    this.dialog.open(IndicatorFormDialog, {
+      width: '560px',
+      data: { indicator, readonly: true } as IndicatorFormDialogData,
+    });
+  }
+
   openCreateIndicator(): void {
     const dialogRef = this.dialog.open(IndicatorFormDialog, {
       width: '560px',
@@ -315,6 +322,13 @@ export class StartupDetail implements OnInit {
   }
 
   // Meetings
+  openViewMeeting(meeting: BoardMeeting): void {
+    this.dialog.open(MeetingFormDialog, {
+      width: '560px',
+      data: { meeting, readonly: true } as MeetingFormDialogData,
+    });
+  }
+
   openCreateMeeting(): void {
     const dialogRef = this.dialog.open(MeetingFormDialog, {
       width: '560px',
@@ -363,6 +377,13 @@ export class StartupDetail implements OnInit {
   }
 
   // Executives
+  openViewExecutive(executive: Executive): void {
+    this.dialog.open(ExecutiveFormDialog, {
+      width: '480px',
+      data: { executive, readonly: true } as ExecutiveFormDialogData,
+    });
+  }
+
   openCreateExecutive(): void {
     const dialogRef = this.dialog.open(ExecutiveFormDialog, {
       width: '480px',
@@ -412,10 +433,7 @@ export class StartupDetail implements OnInit {
 
   // Tokens
   generateToken(): void {
-    const now = new Date();
-    const month = now.getMonth() + 1;
-    const year = now.getFullYear();
-    this.tokenService.create(this.startupId, month, year).subscribe({
+    this.tokenService.create(this.startupId).subscribe({
       next: (token) => {
         const url = `${window.location.origin}/monthly-indicator/${token.token}`;
         navigator.clipboard.writeText(url).then(() => {

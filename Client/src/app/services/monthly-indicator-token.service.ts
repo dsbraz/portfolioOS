@@ -13,10 +13,10 @@ import {
 export class MonthlyIndicatorTokenService {
   private readonly http = inject(HttpClient);
 
-  create(startupId: string, month: number, year: number): Observable<MonthlyIndicatorToken> {
+  create(startupId: string): Observable<MonthlyIndicatorToken> {
     return this.http.post<MonthlyIndicatorToken>(
       `/api/startups/${startupId}/monthly-indicator-tokens`,
-      { month, year },
+      {},
     );
   }
 
