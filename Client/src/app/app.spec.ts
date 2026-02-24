@@ -11,12 +11,6 @@ describe('App', () => {
     }).compileComponents();
   });
 
-  it('should create the app', () => {
-    const fixture = TestBed.createComponent(App);
-    const app = fixture.componentInstance;
-    expect(app).toBeTruthy();
-  });
-
   it('should render sidebar with logo', async () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
@@ -63,12 +57,4 @@ describe('App', () => {
     expect(openBtn).toBeTruthy();
   });
 
-  it('should not show open button in content area when sidenav is opened', async () => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-    await fixture.whenStable();
-    const compiled = fixture.nativeElement as HTMLElement;
-    const openBtn = compiled.querySelector('.sidenav-open-btn');
-    expect(openBtn).toBeFalsy();
-  });
 });

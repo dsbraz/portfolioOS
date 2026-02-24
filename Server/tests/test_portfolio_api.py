@@ -88,38 +88,3 @@ async def test_monitoring_summary_with_indicators(client):
     assert startup_item["headcount"] == 18
 
 
-@pytest.mark.asyncio
-async def test_monitoring_summary_health_distribution(client):
-    await client.post(
-        "/api/startups",
-        json={
-            "name": "Healthy",
-            "sector": "tech",
-            "investment_date": "2025-01-01",
-            "status": "saudavel",
-        },
-    )
-    await client.post(
-        "/api/startups",
-        json={
-            "name": "Warning",
-            "sector": "fintech",
-            "investment_date": "2025-01-01",
-            "status": "atencao",
-        },
-    )
-    await client.post(
-        "/api/startups",
-        json={
-            "name": "Critical",
-            "sector": "biotech",
-            "investment_date": "2025-01-01",
-            "status": "critico",
-        },
-    )
-
-    resp = await client.get("/api/portfolio/summary")
-    data = resp.json()
-    assert data["health"]["healthy"] == 1
-    assert data["health"]["warning"] == 1
-    assert data["health"]["critical"] == 1

@@ -24,11 +24,6 @@ describe('IndicatorFormDialog', () => {
     fixture.detectChanges();
   });
 
-  it('should create in add mode', () => {
-    expect(component).toBeTruthy();
-    expect(component.isEditMode).toBe(false);
-  });
-
   it('should have default month and year', () => {
     const now = new Date();
     expect(component.form.value.month).toBe(now.getMonth() + 1);
@@ -38,7 +33,9 @@ describe('IndicatorFormDialog', () => {
   it('should close dialog on submit with form data', () => {
     component.form.patchValue({ month: 2, year: 2026, headcount: 10 });
     component.onSubmit();
-    expect(dialogRefSpy.close).toHaveBeenCalled();
+    expect(dialogRefSpy.close).toHaveBeenCalledWith(
+      expect.objectContaining({ month: 2, year: 2026, headcount: 10 }),
+    );
   });
 
   it('should close dialog without data on cancel', () => {

@@ -55,9 +55,11 @@ describe('StartupService', () => {
   });
 
   it('should update a startup', () => {
-    service.update('123', { status: StartupStatus.CRITICAL }).subscribe();
+    const payload = { status: StartupStatus.CRITICAL };
+    service.update('123', payload).subscribe();
     const req = httpMock.expectOne('/api/startups/123');
     expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual(payload);
     req.flush({});
   });
 

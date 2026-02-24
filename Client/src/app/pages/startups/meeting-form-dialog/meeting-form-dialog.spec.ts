@@ -24,15 +24,27 @@ describe('MeetingFormDialog', () => {
     fixture.detectChanges();
   });
 
-  it('should create in add mode', () => {
-    expect(component).toBeTruthy();
-    expect(component.isEditMode).toBe(false);
-  });
-
   it('should not submit when form is invalid', () => {
     dialogRefSpy.close.mockClear();
     component.onSubmit();
     expect(dialogRefSpy.close).not.toHaveBeenCalled();
+  });
+
+  it('should submit with valid data', () => {
+    dialogRefSpy.close.mockClear();
+    component.form.patchValue({
+      meeting_date: new Date('2026-02-15'),
+      participants: 'Joao, Maria',
+      summary: 'Reuniao mensal',
+    });
+    component.onSubmit();
+    expect(dialogRefSpy.close).toHaveBeenCalledWith(
+      expect.objectContaining({
+        meeting_date: '2026-02-15',
+        participants: 'Joao, Maria',
+        summary: 'Reuniao mensal',
+      }),
+    );
   });
 
   it('should close dialog on cancel', () => {

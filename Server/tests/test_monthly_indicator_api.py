@@ -2,17 +2,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_list_indicators_empty(client):
-    startup_resp = await client.post(
-        "/api/startups",
-        json={
-            "name": "Test Startup",
-            "sector": "tech",
-            "investment_date": "2026-01-15",
-        },
-    )
-    startup_id = startup_resp.json()["id"]
-
+async def test_list_indicators_empty(client, startup_id):
     resp = await client.get(f"/api/startups/{startup_id}/monthly-indicators")
     assert resp.status_code == 200
     data = resp.json()
@@ -21,17 +11,7 @@ async def test_list_indicators_empty(client):
 
 
 @pytest.mark.asyncio
-async def test_create_indicator(client):
-    startup_resp = await client.post(
-        "/api/startups",
-        json={
-            "name": "Test Startup",
-            "sector": "tech",
-            "investment_date": "2026-01-15",
-        },
-    )
-    startup_id = startup_resp.json()["id"]
-
+async def test_create_indicator(client, startup_id):
     resp = await client.post(
         f"/api/startups/{startup_id}/monthly-indicators",
         json={
@@ -59,17 +39,7 @@ async def test_create_indicator(client):
 
 
 @pytest.mark.asyncio
-async def test_create_indicator_required_fields_only(client):
-    startup_resp = await client.post(
-        "/api/startups",
-        json={
-            "name": "Test Startup",
-            "sector": "tech",
-            "investment_date": "2026-01-15",
-        },
-    )
-    startup_id = startup_resp.json()["id"]
-
+async def test_create_indicator_required_fields_only(client, startup_id):
     resp = await client.post(
         f"/api/startups/{startup_id}/monthly-indicators",
         json={"month": 1, "year": 2026},
@@ -82,17 +52,7 @@ async def test_create_indicator_required_fields_only(client):
 
 
 @pytest.mark.asyncio
-async def test_create_indicator_upsert(client):
-    startup_resp = await client.post(
-        "/api/startups",
-        json={
-            "name": "Test Startup",
-            "sector": "tech",
-            "investment_date": "2026-01-15",
-        },
-    )
-    startup_id = startup_resp.json()["id"]
-
+async def test_create_indicator_upsert(client, startup_id):
     resp1 = await client.post(
         f"/api/startups/{startup_id}/monthly-indicators",
         json={"month": 2, "year": 2026, "headcount": 5},
@@ -111,17 +71,7 @@ async def test_create_indicator_upsert(client):
 
 
 @pytest.mark.asyncio
-async def test_get_indicator(client):
-    startup_resp = await client.post(
-        "/api/startups",
-        json={
-            "name": "Test Startup",
-            "sector": "tech",
-            "investment_date": "2026-01-15",
-        },
-    )
-    startup_id = startup_resp.json()["id"]
-
+async def test_get_indicator(client, startup_id):
     create_resp = await client.post(
         f"/api/startups/{startup_id}/monthly-indicators",
         json={"month": 1, "year": 2025, "headcount": 10},
@@ -134,17 +84,7 @@ async def test_get_indicator(client):
 
 
 @pytest.mark.asyncio
-async def test_update_indicator(client):
-    startup_resp = await client.post(
-        "/api/startups",
-        json={
-            "name": "Test Startup",
-            "sector": "tech",
-            "investment_date": "2026-01-15",
-        },
-    )
-    startup_id = startup_resp.json()["id"]
-
+async def test_update_indicator(client, startup_id):
     create_resp = await client.post(
         f"/api/startups/{startup_id}/monthly-indicators",
         json={"month": 1, "year": 2025, "headcount": 10},
@@ -161,17 +101,7 @@ async def test_update_indicator(client):
 
 
 @pytest.mark.asyncio
-async def test_delete_indicator(client):
-    startup_resp = await client.post(
-        "/api/startups",
-        json={
-            "name": "Test Startup",
-            "sector": "tech",
-            "investment_date": "2026-01-15",
-        },
-    )
-    startup_id = startup_resp.json()["id"]
-
+async def test_delete_indicator(client, startup_id):
     create_resp = await client.post(
         f"/api/startups/{startup_id}/monthly-indicators",
         json={"month": 1, "year": 2025},

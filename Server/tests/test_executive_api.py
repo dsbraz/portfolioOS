@@ -2,17 +2,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_list_executives_empty(client):
-    startup_resp = await client.post(
-        "/api/startups",
-        json={
-            "name": "Test Startup",
-            "sector": "tech",
-            "investment_date": "2026-01-15",
-        },
-    )
-    startup_id = startup_resp.json()["id"]
-
+async def test_list_executives_empty(client, startup_id):
     resp = await client.get(f"/api/startups/{startup_id}/executives")
     assert resp.status_code == 200
     data = resp.json()
@@ -21,17 +11,7 @@ async def test_list_executives_empty(client):
 
 
 @pytest.mark.asyncio
-async def test_create_executive(client):
-    startup_resp = await client.post(
-        "/api/startups",
-        json={
-            "name": "Test Startup",
-            "sector": "tech",
-            "investment_date": "2026-01-15",
-        },
-    )
-    startup_id = startup_resp.json()["id"]
-
+async def test_create_executive(client, startup_id):
     resp = await client.post(
         f"/api/startups/{startup_id}/executives",
         json={
@@ -52,17 +32,7 @@ async def test_create_executive(client):
 
 
 @pytest.mark.asyncio
-async def test_create_executive_required_fields_only(client):
-    startup_resp = await client.post(
-        "/api/startups",
-        json={
-            "name": "Test Startup",
-            "sector": "tech",
-            "investment_date": "2026-01-15",
-        },
-    )
-    startup_id = startup_resp.json()["id"]
-
+async def test_create_executive_required_fields_only(client, startup_id):
     resp = await client.post(
         f"/api/startups/{startup_id}/executives",
         json={"name": "Joao Santos"},
@@ -75,17 +45,7 @@ async def test_create_executive_required_fields_only(client):
 
 
 @pytest.mark.asyncio
-async def test_get_executive(client):
-    startup_resp = await client.post(
-        "/api/startups",
-        json={
-            "name": "Test Startup",
-            "sector": "tech",
-            "investment_date": "2026-01-15",
-        },
-    )
-    startup_id = startup_resp.json()["id"]
-
+async def test_get_executive(client, startup_id):
     create_resp = await client.post(
         f"/api/startups/{startup_id}/executives",
         json={"name": "Ana Costa", "role": "CTO"},
@@ -99,17 +59,7 @@ async def test_get_executive(client):
 
 
 @pytest.mark.asyncio
-async def test_update_executive(client):
-    startup_resp = await client.post(
-        "/api/startups",
-        json={
-            "name": "Test Startup",
-            "sector": "tech",
-            "investment_date": "2026-01-15",
-        },
-    )
-    startup_id = startup_resp.json()["id"]
-
+async def test_update_executive(client, startup_id):
     create_resp = await client.post(
         f"/api/startups/{startup_id}/executives",
         json={"name": "Pedro Lima", "role": "CFO"},
@@ -127,17 +77,7 @@ async def test_update_executive(client):
 
 
 @pytest.mark.asyncio
-async def test_delete_executive(client):
-    startup_resp = await client.post(
-        "/api/startups",
-        json={
-            "name": "Test Startup",
-            "sector": "tech",
-            "investment_date": "2026-01-15",
-        },
-    )
-    startup_id = startup_resp.json()["id"]
-
+async def test_delete_executive(client, startup_id):
     create_resp = await client.post(
         f"/api/startups/{startup_id}/executives",
         json={"name": "Carlos Souza"},

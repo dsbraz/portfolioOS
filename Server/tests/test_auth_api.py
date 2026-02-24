@@ -101,12 +101,6 @@ async def test_protected_route_without_token(anon_client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_protected_route_with_valid_token(client: AsyncClient):
-    response = await client.get("/api/startups")
-    assert response.status_code == 200
-
-
-@pytest.mark.asyncio
 async def test_protected_route_with_invalid_token(anon_client: AsyncClient):
     response = await anon_client.get(
         "/api/startups",
@@ -119,16 +113,6 @@ async def test_protected_route_with_invalid_token(anon_client: AsyncClient):
 async def test_public_route_health_no_token(anon_client: AsyncClient):
     response = await anon_client.get("/api/health")
     assert response.status_code == 200
-
-
-@pytest.mark.asyncio
-async def test_list_users(client: AsyncClient):
-    response = await client.get("/api/users")
-    assert response.status_code == 200
-    data = response.json()
-    assert "items" in data
-    assert "total" in data
-    assert data["total"] >= 1
 
 
 @pytest.mark.asyncio

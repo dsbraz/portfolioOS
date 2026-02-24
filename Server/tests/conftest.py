@@ -97,3 +97,16 @@ async def anon_client(session: AsyncSession) -> AsyncGenerator[AsyncClient, None
     ) as ac:
         yield ac
     app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture
+async def startup_id(client: AsyncClient) -> str:
+    resp = await client.post(
+        "/api/startups",
+        json={
+            "name": "Test Startup",
+            "sector": "tech",
+            "investment_date": "2026-01-15",
+        },
+    )
+    return resp.json()["id"]

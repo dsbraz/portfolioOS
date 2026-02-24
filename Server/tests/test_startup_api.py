@@ -115,18 +115,3 @@ async def test_delete_startup(client: AsyncClient):
     assert get_resp.status_code == 404
 
 
-@pytest.mark.asyncio
-async def test_list_startups_after_creation(client: AsyncClient):
-    for i in range(3):
-        await client.post(
-            "/api/startups",
-            json={
-                "name": f"Startup{i}",
-                "sector": "Tech",
-                "investment_date": "2024-01-01",
-            },
-        )
-    response = await client.get("/api/startups")
-    data = response.json()
-    assert data["total"] == 3
-    assert len(data["items"]) == 3

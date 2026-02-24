@@ -2,17 +2,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_list_meetings_empty(client):
-    startup_resp = await client.post(
-        "/api/startups",
-        json={
-            "name": "Test Startup",
-            "sector": "tech",
-            "investment_date": "2026-01-15",
-        },
-    )
-    startup_id = startup_resp.json()["id"]
-
+async def test_list_meetings_empty(client, startup_id):
     resp = await client.get(f"/api/startups/{startup_id}/board-meetings")
     assert resp.status_code == 200
     data = resp.json()
@@ -21,17 +11,7 @@ async def test_list_meetings_empty(client):
 
 
 @pytest.mark.asyncio
-async def test_create_meeting(client):
-    startup_resp = await client.post(
-        "/api/startups",
-        json={
-            "name": "Test Startup",
-            "sector": "tech",
-            "investment_date": "2026-01-15",
-        },
-    )
-    startup_id = startup_resp.json()["id"]
-
+async def test_create_meeting(client, startup_id):
     resp = await client.post(
         f"/api/startups/{startup_id}/board-meetings",
         json={
@@ -52,17 +32,7 @@ async def test_create_meeting(client):
 
 
 @pytest.mark.asyncio
-async def test_create_meeting_required_fields_only(client):
-    startup_resp = await client.post(
-        "/api/startups",
-        json={
-            "name": "Test Startup",
-            "sector": "tech",
-            "investment_date": "2026-01-15",
-        },
-    )
-    startup_id = startup_resp.json()["id"]
-
+async def test_create_meeting_required_fields_only(client, startup_id):
     resp = await client.post(
         f"/api/startups/{startup_id}/board-meetings",
         json={"meeting_date": "2026-03-01"},
@@ -74,17 +44,7 @@ async def test_create_meeting_required_fields_only(client):
 
 
 @pytest.mark.asyncio
-async def test_get_meeting(client):
-    startup_resp = await client.post(
-        "/api/startups",
-        json={
-            "name": "Test Startup",
-            "sector": "tech",
-            "investment_date": "2026-01-15",
-        },
-    )
-    startup_id = startup_resp.json()["id"]
-
+async def test_get_meeting(client, startup_id):
     create_resp = await client.post(
         f"/api/startups/{startup_id}/board-meetings",
         json={"meeting_date": "2026-02-15", "summary": "Reuniao mensal"},
@@ -97,17 +57,7 @@ async def test_get_meeting(client):
 
 
 @pytest.mark.asyncio
-async def test_update_meeting(client):
-    startup_resp = await client.post(
-        "/api/startups",
-        json={
-            "name": "Test Startup",
-            "sector": "tech",
-            "investment_date": "2026-01-15",
-        },
-    )
-    startup_id = startup_resp.json()["id"]
-
+async def test_update_meeting(client, startup_id):
     create_resp = await client.post(
         f"/api/startups/{startup_id}/board-meetings",
         json={"meeting_date": "2026-02-20", "summary": "Original"},
@@ -124,17 +74,7 @@ async def test_update_meeting(client):
 
 
 @pytest.mark.asyncio
-async def test_delete_meeting(client):
-    startup_resp = await client.post(
-        "/api/startups",
-        json={
-            "name": "Test Startup",
-            "sector": "tech",
-            "investment_date": "2026-01-15",
-        },
-    )
-    startup_id = startup_resp.json()["id"]
-
+async def test_delete_meeting(client, startup_id):
     create_resp = await client.post(
         f"/api/startups/{startup_id}/board-meetings",
         json={"meeting_date": "2026-02-25"},

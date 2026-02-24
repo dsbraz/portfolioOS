@@ -24,11 +24,6 @@ describe('ExecutiveFormDialog', () => {
     fixture.detectChanges();
   });
 
-  it('should create in add mode', () => {
-    expect(component).toBeTruthy();
-    expect(component.isEditMode).toBe(false);
-  });
-
   it('should not submit when name is empty', () => {
     dialogRefSpy.close.mockClear();
     component.onSubmit();
@@ -39,6 +34,8 @@ describe('ExecutiveFormDialog', () => {
     dialogRefSpy.close.mockClear();
     component.form.patchValue({ name: 'Joao Silva', role: 'CEO' });
     component.onSubmit();
-    expect(dialogRefSpy.close).toHaveBeenCalled();
+    expect(dialogRefSpy.close).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Joao Silva', role: 'CEO' }),
+    );
   });
 });
