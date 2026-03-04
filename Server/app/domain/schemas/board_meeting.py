@@ -17,6 +17,7 @@ class BoardMeetingBase(BaseModel):
 class BoardMeetingCreate(BoardMeetingBase):
     pass
 
+
 class BoardMeetingUpdate(BaseModel):
     meeting_date: date | None = None
     participants: str | None = None

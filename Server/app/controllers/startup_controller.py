@@ -44,9 +44,7 @@ async def get_startup(
     return StartupResponse.model_validate(startup)
 
 
-@router.post(
-    "", response_model=StartupResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("", response_model=StartupResponse, status_code=status.HTTP_201_CREATED)
 async def create_startup(
     data: StartupCreate,
     use_case: CreateStartup = Depends(startup_builder(CreateStartup)),

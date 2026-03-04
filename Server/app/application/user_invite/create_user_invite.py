@@ -24,9 +24,7 @@ class CreateUserInvite:
             raise ConflictError(f"Email '{email}' ja esta em uso")
 
         now = datetime.now(UTC)
-        active_invite = await self._invite_repository.get_active_by_email(
-            email, now
-        )
+        active_invite = await self._invite_repository.get_active_by_email(email, now)
         if active_invite:
             await self._invite_repository.revoke(active_invite, now)
 

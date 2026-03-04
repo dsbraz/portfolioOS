@@ -1,11 +1,17 @@
+from __future__ import annotations
+
 import uuid
 from datetime import date, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Date, DateTime, ForeignKey, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.domain.models import Base
+
+if TYPE_CHECKING:
+    from app.domain.models.startup import Startup
 
 
 class BoardMeeting(Base):
@@ -31,4 +37,6 @@ class BoardMeeting(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    startup: Mapped["Startup"] = relationship("Startup", back_populates="board_meetings")
+    startup: Mapped["Startup"] = relationship(
+        "Startup", back_populates="board_meetings"
+    )

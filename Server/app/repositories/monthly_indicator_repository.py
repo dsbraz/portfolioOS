@@ -84,9 +84,7 @@ class MonthlyIndicatorRepository:
         self, token: uuid.UUID
     ) -> MonthlyIndicatorToken | None:
         result = await self._session.execute(
-            select(MonthlyIndicatorToken).where(
-                MonthlyIndicatorToken.token == token
-            )
+            select(MonthlyIndicatorToken).where(MonthlyIndicatorToken.token == token)
         )
         return result.scalar_one_or_none()
 
@@ -122,9 +120,7 @@ class MonthlyIndicatorRepository:
         )
         return list(result.scalars().all()), total
 
-    async def create_token(
-        self, token: MonthlyIndicatorToken
-    ) -> MonthlyIndicatorToken:
+    async def create_token(self, token: MonthlyIndicatorToken) -> MonthlyIndicatorToken:
         self._session.add(token)
         await self._session.flush()
         await self._session.refresh(token)

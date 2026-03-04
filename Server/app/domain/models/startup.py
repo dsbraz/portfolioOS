@@ -1,12 +1,21 @@
+from __future__ import annotations
+
 import enum
 import uuid
 from datetime import date, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Date, DateTime, Enum, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.domain.models import Base
+
+if TYPE_CHECKING:
+    from app.domain.models.board_meeting import BoardMeeting
+    from app.domain.models.executive import Executive
+    from app.domain.models.monthly_indicator import MonthlyIndicator
+    from app.domain.models.monthly_indicator_token import MonthlyIndicatorToken
 
 
 class StartupStatus(str, enum.Enum):

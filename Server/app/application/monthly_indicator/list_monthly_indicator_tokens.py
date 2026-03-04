@@ -5,9 +5,7 @@ from app.repositories.monthly_indicator_repository import MonthlyIndicatorReposi
 
 
 class ListMonthlyIndicatorTokens:
-    def __init__(
-        self, repository: MonthlyIndicatorRepository
-    ) -> None:
+    def __init__(self, repository: MonthlyIndicatorRepository) -> None:
         self._repository = repository
 
     async def execute(

@@ -42,9 +42,7 @@ class ConsumeUserInvite:
 
         validate_username_no_spaces(username)
 
-        existing_username = await self._user_repository.get_by_username(
-            username
-        )
+        existing_username = await self._user_repository.get_by_username(username)
         if existing_username:
             raise ConflictError(f"Username '{username}' ja esta em uso")
 

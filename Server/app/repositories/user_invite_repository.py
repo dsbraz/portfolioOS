@@ -28,9 +28,7 @@ class UserInviteRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_active_by_email(
-        self, email: str, now: datetime
-    ) -> UserInvite | None:
+    async def get_active_by_email(self, email: str, now: datetime) -> UserInvite | None:
         result = await self._session.execute(
             select(UserInvite).where(
                 UserInvite.email == email,
@@ -48,9 +46,7 @@ class UserInviteRepository:
         invite.used_at = now
         return await self.update(invite)
 
-    async def get_all_active(
-        self, now: datetime
-    ) -> tuple[list[UserInvite], int]:
+    async def get_all_active(self, now: datetime) -> tuple[list[UserInvite], int]:
         count_result = await self._session.execute(
             select(func.count())
             .select_from(UserInvite)

@@ -31,9 +31,7 @@ async def list_executives(
     )
 
 
-@router.post(
-    "", response_model=ExecutiveResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("", response_model=ExecutiveResponse, status_code=status.HTTP_201_CREATED)
 async def create_executive(
     data: ExecutiveCreate,
     startup_id: uuid.UUID = Depends(verify_startup_exists),

@@ -14,9 +14,7 @@ class RegisterUser:
         self._repository = repository
         self._hasher = password_hasher
 
-    async def execute(
-        self, username: str, email: str, password: str
-    ) -> User:
+    async def execute(self, username: str, email: str, password: str) -> User:
         validate_username_no_spaces(username)
 
         existing = await self._repository.get_by_username(username)

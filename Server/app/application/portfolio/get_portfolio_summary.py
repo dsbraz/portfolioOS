@@ -52,10 +52,8 @@ class GetPortfolioSummary:
         previous_month, previous_year = self._get_previous_period(
             selected_month, selected_year
         )
-        indicators_by_period = (
-            await self._indicator_repo.get_by_startups_and_period(
-                startup_ids, selected_month, selected_year
-            )
+        indicators_by_period = await self._indicator_repo.get_by_startups_and_period(
+            startup_ids, selected_month, selected_year
         )
         previous_indicators_by_period = (
             await self._indicator_repo.get_by_startups_and_period(
@@ -83,15 +81,11 @@ class GetPortfolioSummary:
                 previous_total_revenue += ind.total_revenue
 
         revenue_variation_pct, revenue_variation_direction = (
-            self._calculate_revenue_variation(
-                total_revenue, previous_total_revenue
-            )
+            self._calculate_revenue_variation(total_revenue, previous_total_revenue)
         )
 
         startups_with_report = sum(
-            1
-            for sid in startup_ids
-            if indicators_by_period.get(sid)
+            1 for sid in startup_ids if indicators_by_period.get(sid)
         )
         report_pct = (startups_with_report / total) * 100
 
@@ -140,9 +134,7 @@ class GetPortfolioSummary:
             startups=monitoring_items,
         )
 
-    def _resolve_period(
-        self, month: int | None, year: int | None
-    ) -> tuple[int, int]:
+    def _resolve_period(self, month: int | None, year: int | None) -> tuple[int, int]:
         if month is None and year is None:
             today = date.today()
             return today.month, today.year

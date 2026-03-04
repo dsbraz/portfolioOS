@@ -6,9 +6,7 @@ from app.repositories.monthly_indicator_repository import MonthlyIndicatorReposi
 
 
 class CreateMonthlyIndicatorToken:
-    def __init__(
-        self, repository: MonthlyIndicatorRepository
-    ) -> None:
+    def __init__(self, repository: MonthlyIndicatorRepository) -> None:
         self._repository = repository
 
     async def execute(
@@ -22,7 +20,5 @@ class CreateMonthlyIndicatorToken:
         if existing:
             return existing
 
-        token = MonthlyIndicatorToken(
-            startup_id=startup_id, month=month, year=year
-        )
+        token = MonthlyIndicatorToken(startup_id=startup_id, month=month, year=year)
         return await self._repository.create_token(token)

@@ -22,9 +22,7 @@ class DealRepository:
         return list(result.scalars().all()), total
 
     async def get_by_id(self, deal_id: uuid.UUID) -> Deal | None:
-        result = await self._session.execute(
-            select(Deal).where(Deal.id == deal_id)
-        )
+        result = await self._session.execute(select(Deal).where(Deal.id == deal_id))
         return result.scalar_one_or_none()
 
     async def create(self, deal: Deal) -> Deal:

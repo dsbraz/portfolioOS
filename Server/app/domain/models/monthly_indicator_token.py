@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, SmallInteger, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID
@@ -7,12 +10,17 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.domain.models import Base
 
+if TYPE_CHECKING:
+    from app.domain.models.startup import Startup
+
 
 class MonthlyIndicatorToken(Base):
     __tablename__ = "monthly_indicator_tokens"
     __table_args__ = (
         UniqueConstraint(
-            "startup_id", "month", "year",
+            "startup_id",
+            "month",
+            "year",
             name="uq_monthly_indicator_token_startup_month_year",
         ),
     )

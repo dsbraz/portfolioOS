@@ -11,9 +11,7 @@ class JwtTokenGenerator:
         self._expire_minutes = expire_minutes
 
     def create_token(self, user: User) -> str:
-        expire = datetime.now(timezone.utc) + timedelta(
-            minutes=self._expire_minutes
-        )
+        expire = datetime.now(timezone.utc) + timedelta(minutes=self._expire_minutes)
         payload = {
             "sub": str(user.id),
             "exp": expire,

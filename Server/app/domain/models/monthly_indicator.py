@@ -1,18 +1,35 @@
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, SmallInteger, Text, UniqueConstraint, func
+from sqlalchemy import (
+    DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    SmallInteger,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.domain.models import Base
 
+if TYPE_CHECKING:
+    from app.domain.models.startup import Startup
+
 
 class MonthlyIndicator(Base):
     __tablename__ = "monthly_indicators"
     __table_args__ = (
-        UniqueConstraint("startup_id", "month", "year", name="uq_indicator_startup_month_year"),
+        UniqueConstraint(
+            "startup_id", "month", "year", name="uq_indicator_startup_month_year"
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -26,8 +43,12 @@ class MonthlyIndicator(Base):
     month: Mapped[int] = mapped_column(SmallInteger, nullable=False)
     year: Mapped[int] = mapped_column(SmallInteger, nullable=False)
     total_revenue: Mapped[Decimal | None] = mapped_column(Numeric(15, 2), nullable=True)
-    recurring_revenue_pct: Mapped[Decimal | None] = mapped_column(Numeric(7, 2), nullable=True)
-    gross_margin_pct: Mapped[Decimal | None] = mapped_column(Numeric(7, 2), nullable=True)
+    recurring_revenue_pct: Mapped[Decimal | None] = mapped_column(
+        Numeric(7, 2), nullable=True
+    )
+    gross_margin_pct: Mapped[Decimal | None] = mapped_column(
+        Numeric(7, 2), nullable=True
+    )
     cash_balance: Mapped[Decimal | None] = mapped_column(Numeric(15, 2), nullable=True)
     headcount: Mapped[int | None] = mapped_column(Integer, nullable=True)
     ebitda_burn: Mapped[Decimal | None] = mapped_column(Numeric(15, 2), nullable=True)
@@ -41,4 +62,6 @@ class MonthlyIndicator(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    startup: Mapped["Startup"] = relationship("Startup", back_populates="monthly_indicators")
+    startup: Mapped["Startup"] = relationship(
+        "Startup", back_populates="monthly_indicators"
+    )

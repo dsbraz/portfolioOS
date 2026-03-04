@@ -50,9 +50,7 @@ async def create_user_invite(
     response_model=UserInviteListResponse,
 )
 async def list_user_invites(
-    list_use_case: ListUserInvites = Depends(
-        user_invite_builder(ListUserInvites)
-    ),
+    list_use_case: ListUserInvites = Depends(user_invite_builder(ListUserInvites)),
 ):
     items, total = await list_use_case.execute()
     return UserInviteListResponse(
@@ -67,9 +65,7 @@ async def list_user_invites(
 )
 async def get_user_invite(
     token: uuid.UUID,
-    get_use_case: GetUserInvite = Depends(
-        user_invite_builder(GetUserInvite)
-    ),
+    get_use_case: GetUserInvite = Depends(user_invite_builder(GetUserInvite)),
 ):
     invite = await get_use_case.execute(token)
     if not invite:

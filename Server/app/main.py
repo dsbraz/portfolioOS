@@ -11,8 +11,12 @@ from app.controllers.deal_controller import router as deal_router
 from app.controllers.executive_controller import router as executive_router
 from app.controllers.health_controller import router as health_router
 from app.controllers.board_meeting_controller import router as board_meeting_router
-from app.controllers.monthly_indicator_controller import public_router as monthly_indicator_public_router
-from app.controllers.monthly_indicator_controller import router as monthly_indicator_router
+from app.controllers.monthly_indicator_controller import (
+    public_router as monthly_indicator_public_router,
+)
+from app.controllers.monthly_indicator_controller import (
+    router as monthly_indicator_router,
+)
 from app.controllers.portfolio_controller import router as portfolio_router
 from app.controllers.startup_controller import router as startup_router
 from app.controllers.user_controller import router as user_router

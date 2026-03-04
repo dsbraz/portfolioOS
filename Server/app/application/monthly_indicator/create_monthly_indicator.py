@@ -6,14 +6,10 @@ from app.repositories.monthly_indicator_repository import (
 
 
 class CreateMonthlyIndicator:
-    def __init__(
-        self, repository: MonthlyIndicatorRepository
-    ) -> None:
+    def __init__(self, repository: MonthlyIndicatorRepository) -> None:
         self._repository = repository
 
-    async def execute(
-        self, indicator: MonthlyIndicator
-    ) -> MonthlyIndicator:
+    async def execute(self, indicator: MonthlyIndicator) -> MonthlyIndicator:
         validate_period_not_future(indicator.month, indicator.year)
 
         existing = await self._repository.get_by_startup_and_period(
@@ -21,9 +17,15 @@ class CreateMonthlyIndicator:
         )
         if existing:
             fields = {
-                "total_revenue", "recurring_revenue_pct", "gross_margin_pct",
-                "cash_balance", "headcount", "ebitda_burn",
-                "achievements", "challenges", "comments",
+                "total_revenue",
+                "recurring_revenue_pct",
+                "gross_margin_pct",
+                "cash_balance",
+                "headcount",
+                "ebitda_burn",
+                "achievements",
+                "challenges",
+                "comments",
             }
             for field in fields:
                 value = getattr(indicator, field)

@@ -17,6 +17,7 @@ class ExecutiveBase(BaseModel):
 class ExecutiveCreate(ExecutiveBase):
     pass
 
+
 class ExecutiveUpdate(BaseModel):
     name: str | None = Field(None, min_length=1, max_length=255)
     role: str | None = Field(None, max_length=255)

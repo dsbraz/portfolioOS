@@ -16,7 +16,9 @@ from app.domain.schemas.board_meeting import (
     BoardMeetingUpdate,
 )
 
-router = APIRouter(prefix="/startups/{startup_id}/board-meetings", tags=["Board Meetings"])
+router = APIRouter(
+    prefix="/startups/{startup_id}/board-meetings", tags=["Board Meetings"]
+)
 
 
 @router.get("", response_model=BoardMeetingListResponse)

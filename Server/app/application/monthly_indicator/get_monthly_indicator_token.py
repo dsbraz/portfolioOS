@@ -5,12 +5,8 @@ from app.repositories.monthly_indicator_repository import MonthlyIndicatorReposi
 
 
 class GetMonthlyIndicatorToken:
-    def __init__(
-        self, repository: MonthlyIndicatorRepository
-    ) -> None:
+    def __init__(self, repository: MonthlyIndicatorRepository) -> None:
         self._repository = repository
 
-    async def execute(
-        self, token: uuid.UUID
-    ) -> MonthlyIndicatorToken | None:
+    async def execute(self, token: uuid.UUID) -> MonthlyIndicatorToken | None:
         return await self._repository.get_token_by_value(token)

@@ -61,9 +61,7 @@ async def create_user(
     register: RegisterUser = Depends(_get_register),
 ):
     try:
-        user = await register.execute(
-            data.username, data.email, data.password
-        )
+        user = await register.execute(data.username, data.email, data.password)
     except ConflictError as e:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
