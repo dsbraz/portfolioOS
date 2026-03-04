@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from app.application.auth.register_user import RegisterUser
+from app.application.user.register_user import RegisterUser
 from app.domain.exceptions import ConflictError
 
 

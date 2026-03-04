@@ -8,6 +8,12 @@ import { MatTableModule } from '@angular/material/table';
 
 import { UserResponse } from '../../models/auth.model';
 import { AuthService } from '../../services/auth.service';
+import { UserInviteService } from '../../services/user-invite.service';
+import { UserInviteDialog } from './user-invite-dialog/user-invite-dialog';
+import {
+  UserInviteListDialog,
+  UserInviteListDialogData,
+} from './user-invite-list-dialog/user-invite-list-dialog';
 import { UserFormDialog, UserFormDialogData } from './user-form-dialog/user-form-dialog';
 
 @Component({
@@ -25,6 +31,7 @@ import { UserFormDialog, UserFormDialogData } from './user-form-dialog/user-form
 })
 export class Users implements OnInit {
   private readonly authService = inject(AuthService);
+  private readonly userInviteService = inject(UserInviteService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
 
@@ -73,6 +80,28 @@ export class Users implements OnInit {
       if (result) {
         this.loadUsers();
       }
+    });
+  }
+
+  openInviteDialog(): void {
+    this.dialog.open(UserInviteDialog, {
+      width: '480px',
+    });
+  }
+
+  openInviteListDialog(): void {
+    this.userInviteService.listActiveInvites().subscribe({
+      next: (data) => {
+        this.dialog.open(UserInviteListDialog, {
+          width: '640px',
+          data: { invites: data.items } as UserInviteListDialogData,
+        });
+      },
+      error: (err) => {
+        this.snackBar.open(err.error?.detail || 'Erro ao carregar convites ativos', 'Fechar', {
+          duration: 3000,
+        });
+      },
     });
   }
 

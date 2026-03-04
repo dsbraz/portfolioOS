@@ -1,0 +1,52 @@
+.invite-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px 16px;
+  background: var(--mat-sys-surface);
+}
+
+.invite-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.invite-card {
+  width: 100%;
+  max-width: 460px;
+}
+
+.invite-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+mat-form-field,
+button {
+  width: 100%;
+}
+
+.error-icon {
+  color: var(--mat-sys-error);
+  width: 48px;
+  height: 48px;
+  font-size: 48px;
+}
+
+.error-text,
+.success-text {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.success-icon {
+  color: var(--app-status-healthy);
+  width: 64px;
+  height: 64px;
+  font-size: 64px;
+}

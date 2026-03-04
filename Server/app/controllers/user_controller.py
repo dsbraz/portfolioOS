@@ -3,10 +3,10 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.application.auth.get_user import GetUser
-from app.application.auth.list_users import ListUsers
-from app.application.auth.register_user import RegisterUser
-from app.application.auth.update_user import UpdateUser
+from app.application.user.get_user import GetUser
+from app.application.user.list_users import ListUsers
+from app.application.user.register_user import RegisterUser
+from app.application.user.update_user import UpdateUser
 from app.controllers.auth_dependency import get_current_user
 from app.controllers.dependencies import user_builder
 from app.database import get_session

@@ -37,6 +37,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'user-invites/:token',
+    loadComponent: () => import('./pages/user-invites/user-invite-register'),
+    data: { public: true },
+  },
+  {
     path: 'monthly-indicator/:token',
     loadComponent: () => import('./pages/report/report-form'),
     data: { public: true },

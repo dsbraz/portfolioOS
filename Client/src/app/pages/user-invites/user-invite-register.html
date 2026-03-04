@@ -1,0 +1,66 @@
+<div class="invite-page">
+  @if (loading()) {
+    <div class="invite-center">
+      <mat-spinner diameter="48" />
+    </div>
+  } @else if (error()) {
+    <div class="invite-center">
+      <mat-icon class="error-icon">error_outline</mat-icon>
+      <p class="error-text">{{ error() }}</p>
+    </div>
+  } @else if (submitted()) {
+    <div class="invite-center">
+      <mat-icon class="success-icon">check_circle</mat-icon>
+      <h2>Cadastro concluído com sucesso!</h2>
+      <p class="success-text">Você será redirecionado para a tela de login.</p>
+    </div>
+  } @else if (context(); as ctx) {
+    <mat-card class="invite-card">
+      <mat-card-header>
+        <mat-card-title>Convite de acesso</mat-card-title>
+        <mat-card-subtitle>
+          Complete seu cadastro para entrar na plataforma
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="form" class="invite-form" (ngSubmit)="onSubmit()">
+          <mat-form-field appearance="outline">
+            <mat-label>Email</mat-label>
+            <input matInput formControlName="email" type="email" autocomplete="email" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Usuário</mat-label>
+            <input matInput formControlName="username" autocomplete="username" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Senha</mat-label>
+            <input
+              matInput
+              type="password"
+              formControlName="password"
+              autocomplete="new-password" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Confirmar senha</mat-label>
+            <input
+              matInput
+              type="password"
+              formControlName="confirmPassword"
+              autocomplete="new-password" />
+          </mat-form-field>
+
+          <button mat-flat-button color="primary" type="submit" [disabled]="!canSubmit() || submitting()">
+            @if (submitting()) {
+              Cadastrando...
+            } @else {
+              Concluir cadastro
+            }
+          </button>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

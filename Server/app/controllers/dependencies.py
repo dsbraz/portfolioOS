@@ -6,11 +6,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.startup.get_startup import GetStartup
 from app.database import get_session
+from app.infrastructure.bcrypt_password_hasher import BcryptPasswordHasher
 from app.repositories.board_meeting_repository import BoardMeetingRepository
 from app.repositories.deal_repository import DealRepository
 from app.repositories.executive_repository import ExecutiveRepository
 from app.repositories.monthly_indicator_repository import MonthlyIndicatorRepository
 from app.repositories.startup_repository import StartupRepository
+from app.repositories.user_invite_repository import UserInviteRepository
 from app.repositories.user_repository import UserRepository
 
 T = TypeVar("T")
@@ -56,6 +58,35 @@ public_form_builder = _multi_builder(
     StartupRepository, MonthlyIndicatorRepository
 )
 user_builder = _use_case_builder(UserRepository)
+user_invite_builder = _use_case_builder(UserInviteRepository)
+
+
+def _get_password_hasher() -> BcryptPasswordHasher:
+    return BcryptPasswordHasher()
+
+
+def user_invite_create_builder(uc_class: type[T]) -> Callable[..., T]:
+    def factory(session: AsyncSession = Depends(get_session)):  # noqa: ANN202
+        return uc_class(
+            UserInviteRepository(session),
+            UserRepository(session),
+        )
+
+    return factory
+
+
+def user_invite_consume_builder(uc_class: type[T]) -> Callable[..., T]:
+    def factory(
+        session: AsyncSession = Depends(get_session),
+        hasher: BcryptPasswordHasher = Depends(_get_password_hasher),
+    ):  # noqa: ANN202
+        return uc_class(
+            UserInviteRepository(session),
+            UserRepository(session),
+            hasher,
+        )
+
+    return factory
 
 
 async def verify_startup_exists(

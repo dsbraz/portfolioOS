@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from app.application.auth.update_user import UpdateUser
+from app.application.user.update_user import UpdateUser
 from app.domain.exceptions import ConflictError
 
 
