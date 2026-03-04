@@ -55,7 +55,9 @@ async def test_empty_portfolio(use_case, startup_repo, indicator_repo, meeting_r
 
 
 @pytest.mark.asyncio
-async def test_health_distribution(use_case, startup_repo, indicator_repo, meeting_repo):
+async def test_health_distribution(
+    use_case, startup_repo, indicator_repo, meeting_repo
+):
     startups = [
         _make_startup(StartupStatus.HEALTHY),
         _make_startup(StartupStatus.HEALTHY),
@@ -75,13 +77,29 @@ async def test_health_distribution(use_case, startup_repo, indicator_repo, meeti
 
 
 @pytest.mark.asyncio
-async def test_revenue_aggregation(use_case, startup_repo, indicator_repo, meeting_repo):
+async def test_revenue_aggregation(
+    use_case, startup_repo, indicator_repo, meeting_repo
+):
     s1 = _make_startup()
     s2 = _make_startup()
     startup_repo.get_all.return_value = ([s1, s2], 2)
 
-    ind1 = MagicMock(total_revenue=Decimal("100000"), cash_balance=None, ebitda_burn=None, headcount=None, month=1, year=2026)
-    ind2 = MagicMock(total_revenue=Decimal("50000"), cash_balance=None, ebitda_burn=None, headcount=None, month=1, year=2026)
+    ind1 = MagicMock(
+        total_revenue=Decimal("100000"),
+        cash_balance=None,
+        ebitda_burn=None,
+        headcount=None,
+        month=1,
+        year=2026,
+    )
+    ind2 = MagicMock(
+        total_revenue=Decimal("50000"),
+        cash_balance=None,
+        ebitda_burn=None,
+        headcount=None,
+        month=1,
+        year=2026,
+    )
     indicator_repo.get_by_startups_and_period.side_effect = [
         {s1.id: ind1, s2.id: ind2},
         {},

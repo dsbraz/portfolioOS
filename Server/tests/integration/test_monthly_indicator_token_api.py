@@ -143,7 +143,9 @@ async def test_public_submit_updates_existing_indicator(client, startup_id):
 
 @pytest.mark.asyncio
 async def test_public_invalid_token_returns_404(client):
-    resp = await client.get("/api/monthly-indicator/00000000-0000-0000-0000-000000000001")
+    resp = await client.get(
+        "/api/monthly-indicator/00000000-0000-0000-0000-000000000001"
+    )
     assert resp.status_code == 404
 
 

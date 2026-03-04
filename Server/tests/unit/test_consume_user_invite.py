@@ -49,9 +49,7 @@ def _active_invite(email: str = "invitee@example.com") -> MagicMock:
 
 
 @pytest.mark.asyncio
-async def test_consumes_invite_and_creates_user(
-    use_case, invite_repo, user_repo
-):
+async def test_consumes_invite_and_creates_user(use_case, invite_repo, user_repo):
     invite_repo.get_by_token.return_value = _active_invite()
 
     result = await use_case.execute(
@@ -76,9 +74,7 @@ async def test_returns_none_when_invite_not_found(use_case, invite_repo):
 
 
 @pytest.mark.asyncio
-async def test_raises_conflict_when_username_exists(
-    use_case, invite_repo, user_repo
-):
+async def test_raises_conflict_when_username_exists(use_case, invite_repo, user_repo):
     invite_repo.get_by_token.return_value = _active_invite()
     user_repo.get_by_username.return_value = MagicMock()
 
@@ -89,12 +85,8 @@ async def test_raises_conflict_when_username_exists(
 
 
 @pytest.mark.asyncio
-async def test_raises_value_error_when_email_mismatch(
-    use_case, invite_repo
-):
-    invite_repo.get_by_token.return_value = _active_invite(
-        email="expected@example.com"
-    )
+async def test_raises_value_error_when_email_mismatch(use_case, invite_repo):
+    invite_repo.get_by_token.return_value = _active_invite(email="expected@example.com")
 
     with pytest.raises(ValueError, match="Email"):
         await use_case.execute(
@@ -103,9 +95,7 @@ async def test_raises_value_error_when_email_mismatch(
 
 
 @pytest.mark.asyncio
-async def test_raises_value_error_when_username_has_spaces(
-    use_case, invite_repo
-):
+async def test_raises_value_error_when_username_has_spaces(use_case, invite_repo):
     invite_repo.get_by_token.return_value = _active_invite()
 
     with pytest.raises(ValueError, match="Username"):

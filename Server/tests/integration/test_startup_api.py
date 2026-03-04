@@ -113,5 +113,3 @@ async def test_delete_startup(client: AsyncClient):
 
     get_resp = await client.get(f"/api/startups/{startup_id}")
     assert get_resp.status_code == 404
-
-

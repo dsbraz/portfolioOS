@@ -29,9 +29,7 @@ async def test_creates_new_token(use_case, repo):
     assert result.startup_id == startup_id
     assert result.month == 2
     assert result.year == 2026
-    repo.get_token_by_startup_and_period.assert_awaited_once_with(
-        startup_id, 2, 2026
-    )
+    repo.get_token_by_startup_and_period.assert_awaited_once_with(startup_id, 2, 2026)
     repo.create_token.assert_awaited_once()
 
 

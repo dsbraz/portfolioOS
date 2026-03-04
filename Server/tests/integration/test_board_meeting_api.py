@@ -81,7 +81,9 @@ async def test_delete_meeting(client, startup_id):
     )
     meeting_id = create_resp.json()["id"]
 
-    resp = await client.delete(f"/api/startups/{startup_id}/board-meetings/{meeting_id}")
+    resp = await client.delete(
+        f"/api/startups/{startup_id}/board-meetings/{meeting_id}"
+    )
     assert resp.status_code == 204
 
     resp = await client.get(f"/api/startups/{startup_id}/board-meetings/{meeting_id}")

@@ -54,9 +54,7 @@ async def test_raises_conflict_when_email_already_exists(use_case, user_repo):
 
 
 @pytest.mark.asyncio
-async def test_revokes_previous_active_invite(
-    use_case, invite_repo
-):
+async def test_revokes_previous_active_invite(use_case, invite_repo):
     active = MagicMock()
     invite_repo.get_active_by_email.return_value = active
 

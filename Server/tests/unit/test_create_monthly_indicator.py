@@ -40,11 +40,18 @@ async def test_upserts_existing_indicator(use_case, repo):
     repo.get_by_startup_and_period.return_value = existing
 
     indicator = MagicMock(
-        month=1, year=2025, startup_id="abc",
-        headcount=10, total_revenue=50000,
-        recurring_revenue_pct=None, gross_margin_pct=None,
-        cash_balance=None, ebitda_burn=None,
-        achievements=None, challenges=None, comments=None,
+        month=1,
+        year=2025,
+        startup_id="abc",
+        headcount=10,
+        total_revenue=50000,
+        recurring_revenue_pct=None,
+        gross_margin_pct=None,
+        cash_balance=None,
+        ebitda_burn=None,
+        achievements=None,
+        challenges=None,
+        comments=None,
     )
 
     with patch(

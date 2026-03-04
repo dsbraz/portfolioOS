@@ -78,7 +78,9 @@ async def test_get_indicator(client, startup_id):
     )
     indicator_id = create_resp.json()["id"]
 
-    resp = await client.get(f"/api/startups/{startup_id}/monthly-indicators/{indicator_id}")
+    resp = await client.get(
+        f"/api/startups/{startup_id}/monthly-indicators/{indicator_id}"
+    )
     assert resp.status_code == 200
     assert resp.json()["headcount"] == 10
 
@@ -108,10 +110,14 @@ async def test_delete_indicator(client, startup_id):
     )
     indicator_id = create_resp.json()["id"]
 
-    resp = await client.delete(f"/api/startups/{startup_id}/monthly-indicators/{indicator_id}")
+    resp = await client.delete(
+        f"/api/startups/{startup_id}/monthly-indicators/{indicator_id}"
+    )
     assert resp.status_code == 204
 
-    resp = await client.get(f"/api/startups/{startup_id}/monthly-indicators/{indicator_id}")
+    resp = await client.get(
+        f"/api/startups/{startup_id}/monthly-indicators/{indicator_id}"
+    )
     assert resp.status_code == 404
 
 

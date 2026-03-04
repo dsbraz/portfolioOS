@@ -32,9 +32,8 @@ def test_application_must_not_import_fastapi():
         for f, m in _collect_imports(APP_ROOT / "application")
         if m.startswith("fastapi")
     ]
-    assert violations == [], (
-        "Application layer must not import fastapi:\n"
-        + "\n".join(f"  {f}: {m}" for f, m in violations)
+    assert violations == [], "Application layer must not import fastapi:\n" + "\n".join(
+        f"  {f}: {m}" for f, m in violations
     )
 
 
@@ -44,9 +43,8 @@ def test_application_must_not_import_schemas():
         for f, m in _collect_imports(APP_ROOT / "application")
         if m.startswith("app.domain.schemas")
     ]
-    assert violations == [], (
-        "Application layer must not import schemas:\n"
-        + "\n".join(f"  {f}: {m}" for f, m in violations)
+    assert violations == [], "Application layer must not import schemas:\n" + "\n".join(
+        f"  {f}: {m}" for f, m in violations
     )
 
 
@@ -54,10 +52,18 @@ def test_application_must_not_import_schemas():
 
 
 def test_domain_must_not_import_upper_layers():
-    forbidden = ("app.controllers", "app.application", "app.repositories", "app.infrastructure")
+    forbidden = (
+        "app.controllers",
+        "app.application",
+        "app.repositories",
+        "app.infrastructure",
+    )
     imports = _collect_imports(APP_ROOT / "domain" / "models")
 
-    for extra in (APP_ROOT / "domain" / "validators.py", APP_ROOT / "domain" / "exceptions.py"):
+    for extra in (
+        APP_ROOT / "domain" / "validators.py",
+        APP_ROOT / "domain" / "exceptions.py",
+    ):
         if extra.exists():
             tree = ast.parse(extra.read_text(), filename=str(extra))
             rel = str(extra.relative_to(APP_ROOT.parent))
@@ -69,9 +75,7 @@ def test_domain_must_not_import_upper_layers():
                     imports.append((rel, node.module))
 
     violations = [
-        (f, m)
-        for f, m in imports
-        if any(m.startswith(fb) for fb in forbidden)
+        (f, m) for f, m in imports if any(m.startswith(fb) for fb in forbidden)
     ]
     assert violations == [], (
         "Domain layer must not import from upper layers:\n"

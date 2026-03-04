@@ -189,9 +189,7 @@ async def test_update_user(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_login_is_case_insensitive(
-    anon_client: AsyncClient, client: AsyncClient
-):
+async def test_login_is_case_insensitive(anon_client: AsyncClient, client: AsyncClient):
     create_resp = await client.post(
         "/api/users",
         json={
