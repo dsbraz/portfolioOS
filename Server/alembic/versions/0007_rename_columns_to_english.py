@@ -5,6 +5,7 @@ Revises: 0006
 Create Date: 2026-02-18
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -77,16 +78,24 @@ def upgrade() -> None:
     _rename_columns("executives", EXECUTIVES_RENAMES)
     _rename_columns("deals", DEALS_RENAMES)
 
-    op.drop_constraint("uq_indicator_startup_month_year", "monthly_indicators", type_="unique")
+    op.drop_constraint(
+        "uq_indicator_startup_month_year", "monthly_indicators", type_="unique"
+    )
     op.create_unique_constraint(
-        "uq_indicator_startup_month_year", "monthly_indicators", ["startup_id", "month", "year"]
+        "uq_indicator_startup_month_year",
+        "monthly_indicators",
+        ["startup_id", "month", "year"],
     )
 
 
 def downgrade() -> None:
-    op.drop_constraint("uq_indicator_startup_month_year", "monthly_indicators", type_="unique")
+    op.drop_constraint(
+        "uq_indicator_startup_month_year", "monthly_indicators", type_="unique"
+    )
     op.create_unique_constraint(
-        "uq_indicator_startup_month_year", "monthly_indicators", ["startup_id", "mes", "ano"]
+        "uq_indicator_startup_month_year",
+        "monthly_indicators",
+        ["startup_id", "mes", "ano"],
     )
 
     _revert_columns("deals", DEALS_RENAMES)

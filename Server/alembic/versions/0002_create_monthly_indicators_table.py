@@ -5,6 +5,7 @@ Revises: 0001
 Create Date: 2026-02-17
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -54,7 +55,9 @@ def upgrade() -> None:
             server_default=sa.func.now(),
             nullable=False,
         ),
-        sa.UniqueConstraint("startup_id", "mes", "ano", name="uq_indicator_startup_month_year"),
+        sa.UniqueConstraint(
+            "startup_id", "mes", "ano", name="uq_indicator_startup_month_year"
+        ),
     )
 
 

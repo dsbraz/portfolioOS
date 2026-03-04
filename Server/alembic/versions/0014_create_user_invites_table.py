@@ -44,9 +44,7 @@ def upgrade() -> None:
             nullable=False,
         ),
     )
-    op.create_index(
-        "ix_user_invites_email", "user_invites", ["email"], unique=False
-    )
+    op.create_index("ix_user_invites_email", "user_invites", ["email"], unique=False)
 
 
 def downgrade() -> None:
