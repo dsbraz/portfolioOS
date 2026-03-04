@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Integer, cast, func, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.models.monthly_indicator import MonthlyIndicator
@@ -34,17 +34,6 @@ class MonthlyIndicatorRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_latest_by_startup(
-        self, startup_id: uuid.UUID
-    ) -> MonthlyIndicator | None:
-        result = await self._session.execute(
-            select(MonthlyIndicator)
-            .where(MonthlyIndicator.startup_id == startup_id)
-            .order_by(MonthlyIndicator.year.desc(), MonthlyIndicator.month.desc())
-            .limit(1)
-        )
-        return result.scalar_one_or_none()
-
     async def get_by_startup_and_period(
         self, startup_id: uuid.UUID, month: int, year: int
     ) -> MonthlyIndicator | None:
@@ -72,34 +61,17 @@ class MonthlyIndicatorRepository:
         await self._session.delete(indicator)
         await self._session.flush()
 
-    async def get_latest_by_startups(
-        self, startup_ids: list[uuid.UUID]
+    async def get_by_startups_and_period(
+        self, startup_ids: list[uuid.UUID], month: int, year: int
     ) -> dict[uuid.UUID, MonthlyIndicator]:
         if not startup_ids:
             return {}
 
-        latest_subq = (
-            select(
-                MonthlyIndicator.startup_id,
-                func.max(
-                    cast(MonthlyIndicator.year, Integer) * 100
-                    + cast(MonthlyIndicator.month, Integer)
-                ).label("max_period"),
-            )
-            .where(MonthlyIndicator.startup_id.in_(startup_ids))
-            .group_by(MonthlyIndicator.startup_id)
-            .subquery()
-        )
-
         result = await self._session.execute(
-            select(MonthlyIndicator).join(
-                latest_subq,
-                (MonthlyIndicator.startup_id == latest_subq.c.startup_id)
-                & (
-                    cast(MonthlyIndicator.year, Integer) * 100
-                    + cast(MonthlyIndicator.month, Integer)
-                    == latest_subq.c.max_period
-                ),
+            select(MonthlyIndicator).where(
+                MonthlyIndicator.startup_id.in_(startup_ids),
+                MonthlyIndicator.month == month,
+                MonthlyIndicator.year == year,
             )
         )
         indicators = list(result.scalars().all())

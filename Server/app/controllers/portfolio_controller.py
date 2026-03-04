@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.application.portfolio.get_portfolio_summary import GetPortfolioSummary
 from app.controllers.dependencies import portfolio_builder
@@ -14,12 +14,22 @@ router = APIRouter(prefix="/portfolio", tags=["Portfolio"])
 
 @router.get("/summary", response_model=PortfolioSummary)
 async def get_portfolio_summary(
+    month: int | None = Query(None, ge=1, le=12),
+    year: int | None = Query(None, ge=1),
     use_case: GetPortfolioSummary = Depends(portfolio_builder(GetPortfolioSummary)),
 ):
-    summary = await use_case.execute()
+    try:
+        summary = await use_case.execute(month=month, year=year)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
     return PortfolioSummary(
         total_startups=summary.total_startups,
         revenue=summary.revenue,
+        revenue_variation_pct=summary.revenue_variation_pct,
+        revenue_variation_direction=summary.revenue_variation_direction,
         health=HealthDistribution(
             healthy=summary.health.healthy,
             warning=summary.health.warning,

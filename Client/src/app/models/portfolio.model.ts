@@ -14,9 +14,13 @@ export interface HealthDistribution {
   critical: number;
 }
 
+export type RevenueVariationDirection = 'up' | 'down' | 'neutral';
+
 export interface PortfolioSummary {
   total_startups: number;
   revenue: number;
+  revenue_variation_pct: number | null;
+  revenue_variation_direction: RevenueVariationDirection;
   health: HealthDistribution;
   monthly_report_pct: number;
   routines_up_to_date_pct: number;

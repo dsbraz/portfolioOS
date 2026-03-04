@@ -26,6 +26,21 @@
   font-size: 14px;
 }
 
+.period-navigation {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.period-label {
+  min-width: 72px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--mat-sys-on-surface);
+}
+
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

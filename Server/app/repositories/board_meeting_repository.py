@@ -50,12 +50,15 @@ class BoardMeetingRepository:
         await self._session.flush()
 
     async def get_startup_ids_with_recent_meetings(
-        self, startup_ids: list[uuid.UUID], cutoff_days: int
+        self,
+        startup_ids: list[uuid.UUID],
+        cutoff_days: int,
+        reference_date: date,
     ) -> set[uuid.UUID]:
         if not startup_ids:
             return set()
 
-        cutoff = date.today() - timedelta(days=cutoff_days)
+        cutoff = reference_date - timedelta(days=cutoff_days)
         result = await self._session.execute(
             select(BoardMeeting.startup_id)
             .where(

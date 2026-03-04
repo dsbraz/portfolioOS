@@ -1,13 +1,18 @@
 <mat-card class="kpi-card">
   <mat-card-content>
-    <div class="kpi-icon-wrapper">
+    <div class="kpi-icon-wrapper" [class.kpi-icon-positive]="tone() === 'positive'" [class.kpi-icon-negative]="tone() === 'negative'" [class.kpi-icon-neutral]="tone() === 'neutral'">
       <mat-icon>{{ icon() }}</mat-icon>
     </div>
     <div class="kpi-info">
       <span class="kpi-label">{{ label() }}</span>
       <span class="kpi-value">{{ value() }}</span>
       @if (subtitle()) {
-        <span class="kpi-subtitle">{{ subtitle() }}</span>
+        <span class="kpi-subtitle" [class.kpi-subtitle-positive]="tone() === 'positive'" [class.kpi-subtitle-negative]="tone() === 'negative'" [class.kpi-subtitle-neutral]="tone() === 'neutral'">
+          @if (supportingIcon()) {
+            <mat-icon class="kpi-subtitle-icon">{{ supportingIcon() }}</mat-icon>
+          }
+          {{ subtitle() }}
+        </span>
       }
     </div>
   </mat-card-content>

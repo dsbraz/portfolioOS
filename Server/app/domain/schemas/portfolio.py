@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -22,6 +23,8 @@ class HealthDistribution(BaseModel):
 class PortfolioSummary(BaseModel):
     total_startups: int
     revenue: Decimal
+    revenue_variation_pct: float | None
+    revenue_variation_direction: Literal["up", "down", "neutral"]
     health: HealthDistribution
     monthly_report_pct: float
     routines_up_to_date_pct: float

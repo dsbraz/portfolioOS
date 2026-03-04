@@ -4,8 +4,23 @@
       <div>
         <h1 class="page-title">Monitoramento</h1>
         <p class="page-subtitle">
-          {{ summary()?.total_startups ?? 0 }} startup(s) monitoradas
+          {{ summaryByPeriod()?.total_startups ?? 0 }} startup(s) monitoradas
         </p>
+        <div class="period-navigation">
+          <button mat-icon-button type="button" aria-label="Mes anterior" (click)="goToPreviousMonth()">
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+          <span class="period-label">{{ selectedPeriodLabel() }}</span>
+          <button
+            mat-icon-button
+            type="button"
+            aria-label="Proximo mes"
+            (click)="goToNextMonth()"
+            [disabled]="isCurrentMonthSelected()"
+          >
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
       </div>
       <button mat-fab extended color="primary" (click)="openCreateDialog()">
         <mat-icon>add</mat-icon>
@@ -14,13 +29,14 @@
     </div>
   </div>
 
-  @if (summary(); as s) {
+  @if (summaryByPeriod(); as s) {
     <div class="kpi-grid">
       <app-kpi-card
-        icon="trending_up"
+        [icon]="revenueTrendIcon()"
         label="Receita Total"
         [value]="formatCurrency(s.revenue)"
-        subtitle="Soma do ultimo indicador"
+        [subtitle]="revenueVariationLabel()"
+        [tone]="revenueCardTone()"
       />
       <div class="kpi-health-card">
         <mat-card class="kpi-card">
@@ -40,7 +56,7 @@
         icon="description"
         label="Report Mensal"
         [value]="s.monthly_report_pct + '%'"
-        subtitle="Startups com indicador no mes"
+        subtitle="Startups com indicador no mes selecionado"
       />
       <app-kpi-card
         class="kpi-routines"
