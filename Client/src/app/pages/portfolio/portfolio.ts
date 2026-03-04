@@ -48,11 +48,12 @@ export class Portfolio implements OnInit {
   private readonly snackBar = inject(MatSnackBar);
   private readonly router = inject(Router);
   private readonly today = new Date();
+  private readonly defaultPeriod = this.getPreviousPeriod(this.today.getMonth() + 1, this.today.getFullYear());
 
   readonly summaryByPeriod = signal<PortfolioSummary | null>(null);
   readonly loading = signal(false);
-  readonly selectedMonth = signal(this.today.getMonth() + 1);
-  readonly selectedYear = signal(this.today.getFullYear());
+  readonly selectedMonth = signal(this.defaultPeriod.month);
+  readonly selectedYear = signal(this.defaultPeriod.year);
   readonly monthLabels = MONTH_LABELS;
 
   readonly displayedColumns = [
@@ -178,7 +179,7 @@ export class Portfolio implements OnInit {
     monthParam: string | null,
     yearParam: string | null,
   ): { month: number; year: number } {
-    const fallback = { month: this.today.getMonth() + 1, year: this.today.getFullYear() };
+    const fallback = this.defaultPeriod;
     if (!monthParam || !yearParam) return fallback;
 
     const month = Number(monthParam);
@@ -207,5 +208,10 @@ export class Portfolio implements OnInit {
       queryParams: { month, year },
       replaceUrl,
     });
+  }
+
+  private getPreviousPeriod(month: number, year: number): { month: number; year: number } {
+    if (month === 1) return { month: 12, year: year - 1 };
+    return { month: month - 1, year };
   }
 }

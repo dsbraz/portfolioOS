@@ -73,6 +73,23 @@ describe('Portfolio', () => {
     expect(component.selectedYear()).toBe(2026);
   });
 
+  it('should default to previous month when query params are missing', () => {
+    routerSpy.navigate.mockClear();
+    const now = new Date();
+    const expected = now.getMonth() === 0
+      ? { month: 12, year: now.getFullYear() - 1 }
+      : { month: now.getMonth(), year: now.getFullYear() };
+
+    queryParamMap$.next(convertToParamMap({}));
+    fixture.detectChanges();
+
+    expect(routerSpy.navigate).toHaveBeenCalledWith([], {
+      relativeTo: TestBed.inject(ActivatedRoute),
+      queryParams: expected,
+      replaceUrl: true,
+    });
+  });
+
   it('should navigate to previous month in same year', () => {
     routerSpy.navigate.mockClear();
     component.selectedMonth.set(3);
