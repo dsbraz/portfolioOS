@@ -1,5 +1,6 @@
 from app.domain.exceptions import ConflictError
 from app.domain.models.user import User
+from app.domain.validators import validate_username_no_spaces
 from app.infrastructure.bcrypt_password_hasher import BcryptPasswordHasher
 from app.repositories.user_repository import UserRepository
 
@@ -16,6 +17,8 @@ class RegisterUser:
     async def execute(
         self, username: str, email: str, password: str
     ) -> User:
+        validate_username_no_spaces(username)
+
         existing = await self._repository.get_by_username(username)
         if existing:
             raise ConflictError(f"Username '{username}' ja esta em uso")

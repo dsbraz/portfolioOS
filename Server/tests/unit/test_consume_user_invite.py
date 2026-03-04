@@ -100,3 +100,15 @@ async def test_raises_value_error_when_email_mismatch(
         await use_case.execute(
             uuid.uuid4(), "other@example.com", "newuser", "password123"
         )
+
+
+@pytest.mark.asyncio
+async def test_raises_value_error_when_username_has_spaces(
+    use_case, invite_repo
+):
+    invite_repo.get_by_token.return_value = _active_invite()
+
+    with pytest.raises(ValueError, match="Username"):
+        await use_case.execute(
+            uuid.uuid4(), "invitee@example.com", "new user", "password123"
+        )

@@ -15,6 +15,8 @@ export interface UserFormDialogData {
   user?: UserResponse;
 }
 
+const USERNAME_NO_SPACES_PATTERN = /^\S+$/;
+
 @Component({
   selector: 'app-user-form-dialog',
   imports: [
@@ -40,7 +42,7 @@ export class UserFormDialog implements OnInit {
   readonly isEditMode = !!this.data?.user;
 
   readonly form = this.fb.nonNullable.group({
-    username: ['', [Validators.required, Validators.maxLength(150)]],
+    username: ['', [Validators.required, Validators.maxLength(150), Validators.pattern(USERNAME_NO_SPACES_PATTERN)]],
     email: ['', [Validators.required, Validators.email]],
     password: ['', this.isEditMode ? [Validators.minLength(8)] : [Validators.required, Validators.minLength(8)]],
     is_active: [true],

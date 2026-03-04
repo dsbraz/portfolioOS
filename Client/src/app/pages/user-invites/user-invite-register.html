@@ -32,6 +32,11 @@
           <mat-form-field appearance="outline">
             <mat-label>Usuário</mat-label>
             <input matInput formControlName="username" autocomplete="username" />
+            @if (form.controls.username.hasError('required')) {
+              <mat-error>Usuário é obrigatório</mat-error>
+            } @else if (form.controls.username.hasError('pattern')) {
+              <mat-error>Usuário não pode conter espaços</mat-error>
+            }
           </mat-form-field>
 
           <mat-form-field appearance="outline">

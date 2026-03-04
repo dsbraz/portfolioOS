@@ -51,6 +51,18 @@ describe('UserFormDialog', () => {
       expect(dialogRefSpy.close).not.toHaveBeenCalled();
     });
 
+    it('should invalidate username with spaces', () => {
+      component.form.setValue({
+        username: 'invalid user',
+        email: 'test@example.com',
+        password: 'password123',
+        is_active: true,
+      });
+
+      expect(component.form.controls.username.hasError('pattern')).toBe(true);
+      expect(component.form.invalid).toBe(true);
+    });
+
     it('should submit and close on success', () => {
       dialogRefSpy.close.mockClear();
       component.form.setValue({

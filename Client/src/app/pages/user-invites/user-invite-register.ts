@@ -12,6 +12,8 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { PublicUserInviteContext } from '../../models/user-invite.model';
 import { UserInviteService } from '../../services/user-invite.service';
 
+const USERNAME_NO_SPACES_PATTERN = /^\S+$/;
+
 @Component({
   selector: 'app-user-invite-register',
   imports: [
@@ -44,7 +46,7 @@ export default class UserInviteRegister implements OnInit {
 
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
-    username: ['', [Validators.required, Validators.maxLength(150)]],
+    username: ['', [Validators.required, Validators.maxLength(150), Validators.pattern(USERNAME_NO_SPACES_PATTERN)]],
     password: ['', [Validators.required, Validators.minLength(8)]],
     confirmPassword: ['', [Validators.required, Validators.minLength(8)]],
   });
@@ -114,6 +116,7 @@ export default class UserInviteRegister implements OnInit {
       email.length > 0 &&
       this.form.controls.email.valid &&
       username.length > 0 &&
+      this.form.controls.username.valid &&
       password.length >= 8 &&
       confirmPassword.length >= 8 &&
       password === confirmPassword

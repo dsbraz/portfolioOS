@@ -101,3 +101,22 @@ async def test_skips_uniqueness_check_when_unchanged(use_case, repo):
 
     repo.get_by_username.assert_not_awaited()
     repo.get_by_email.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_raises_value_error_when_username_has_spaces(use_case):
+    user = _make_user()
+
+    with pytest.raises(ValueError, match="Username"):
+        await use_case.execute(user, {"username": "with space"})
+
+
+@pytest.mark.asyncio
+async def test_allows_case_only_update_for_same_user(use_case, repo):
+    user = _make_user(username="Original")
+    repo.get_by_username.return_value = user
+
+    result = await use_case.execute(user, {"username": "original"})
+
+    assert result is user
+    repo.update.assert_awaited_once()

@@ -3,6 +3,7 @@ from datetime import UTC, datetime
 
 from app.domain.exceptions import ConflictError
 from app.domain.models.user import User
+from app.domain.validators import validate_username_no_spaces
 from app.infrastructure.bcrypt_password_hasher import BcryptPasswordHasher
 from app.repositories.user_invite_repository import UserInviteRepository
 from app.repositories.user_repository import UserRepository
@@ -38,6 +39,8 @@ class ConsumeUserInvite:
 
         if invite.email.strip().lower() != email.strip().lower():
             raise ValueError("Email do convite invalido")
+
+        validate_username_no_spaces(username)
 
         existing_username = await self._user_repository.get_by_username(
             username

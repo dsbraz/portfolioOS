@@ -69,6 +69,11 @@ async def create_user(
             status_code=status.HTTP_409_CONFLICT,
             detail=str(e),
         )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
     return UserResponse.model_validate(user)
 
 

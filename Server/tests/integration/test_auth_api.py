@@ -65,6 +65,31 @@ async def test_register_duplicate_username(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_register_duplicate_username_case_insensitive(
+    client: AsyncClient,
+):
+    resp1 = await client.post(
+        "/api/users",
+        json={
+            "username": "CaseUser",
+            "email": "case1@example.com",
+            "password": "password123",
+        },
+    )
+    assert resp1.status_code == 201
+
+    resp2 = await client.post(
+        "/api/users",
+        json={
+            "username": "caseuser",
+            "email": "case2@example.com",
+            "password": "password123",
+        },
+    )
+    assert resp2.status_code == 409
+
+
+@pytest.mark.asyncio
 async def test_register_duplicate_email(client: AsyncClient):
     payload1 = {
         "username": "emailuser1",
@@ -92,6 +117,20 @@ async def test_register_short_password(client: AsyncClient):
     }
     response = await client.post("/api/users", json=payload)
     assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_register_rejects_username_with_space(client: AsyncClient):
+    response = await client.post(
+        "/api/users",
+        json={
+            "username": "invalid user",
+            "email": "space@example.com",
+            "password": "password123",
+        },
+    )
+    assert response.status_code == 400
+    assert "Username" in response.json()["detail"]
 
 
 @pytest.mark.asyncio
@@ -147,6 +186,27 @@ async def test_update_user(client: AsyncClient):
     data = update_resp.json()
     assert data["username"] == "edited"
     assert data["email"] == "edited@example.com"
+
+
+@pytest.mark.asyncio
+async def test_login_is_case_insensitive(
+    anon_client: AsyncClient, client: AsyncClient
+):
+    create_resp = await client.post(
+        "/api/users",
+        json={
+            "username": "CaseLogin",
+            "email": "caselogin@example.com",
+            "password": "password123",
+        },
+    )
+    assert create_resp.status_code == 201
+
+    login_resp = await anon_client.post(
+        "/api/auth/login",
+        json={"username": "caselogin", "password": "password123"},
+    )
+    assert login_resp.status_code == 200
 
 
 @pytest.mark.asyncio

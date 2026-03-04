@@ -3,7 +3,10 @@ from unittest.mock import patch
 
 import pytest
 
-from app.domain.validators import validate_period_not_future
+from app.domain.validators import (
+    validate_period_not_future,
+    validate_username_no_spaces,
+)
 
 
 def test_current_month_is_valid():
@@ -29,3 +32,12 @@ def test_future_year_raises():
 
 def test_december_of_past_year_is_valid():
     validate_period_not_future(12, 2024)
+
+
+def test_username_without_space_is_valid():
+    validate_username_no_spaces("valid_username")
+
+
+def test_username_with_space_raises():
+    with pytest.raises(ValueError, match="Username"):
+        validate_username_no_spaces("invalid user")

@@ -52,3 +52,9 @@ async def test_raises_conflict_on_duplicate_email(use_case, repo):
 
     with pytest.raises(ConflictError, match="Email"):
         await use_case.execute("newuser", "existing@example.com", "password123")
+
+
+@pytest.mark.asyncio
+async def test_raises_value_error_when_username_has_spaces(use_case):
+    with pytest.raises(ValueError, match="Username"):
+        await use_case.execute("new user", "new@example.com", "password123")

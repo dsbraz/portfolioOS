@@ -213,3 +213,58 @@ async def test_consume_invite_with_wrong_email_returns_400(
         },
     )
     assert response.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_consume_invite_rejects_username_with_space(
+    client: AsyncClient,
+    anon_client: AsyncClient,
+):
+    create_invite = await client.post(
+        "/api/user-invites",
+        json={"email": "spaceusername@example.com"},
+    )
+    token = create_invite.json()["token"]
+
+    response = await anon_client.post(
+        f"/api/user-invites/{token}",
+        json={
+            "email": "spaceusername@example.com",
+            "username": "invalid user",
+            "password": "password123",
+        },
+    )
+    assert response.status_code == 400
+    assert "Username" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_consume_invite_rejects_case_insensitive_duplicate_username(
+    client: AsyncClient,
+    anon_client: AsyncClient,
+):
+    create_user = await client.post(
+        "/api/users",
+        json={
+            "username": "ExistingUser",
+            "email": "existing-user@example.com",
+            "password": "password123",
+        },
+    )
+    assert create_user.status_code == 201
+
+    create_invite = await client.post(
+        "/api/user-invites",
+        json={"email": "newinvite@example.com"},
+    )
+    token = create_invite.json()["token"]
+
+    response = await anon_client.post(
+        f"/api/user-invites/{token}",
+        json={
+            "email": "newinvite@example.com",
+            "username": "existinguser",
+            "password": "password123",
+        },
+    )
+    assert response.status_code == 409
