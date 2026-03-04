@@ -5,12 +5,18 @@ from app.domain.models.monthly_indicator_token import MonthlyIndicatorToken
 from app.repositories.monthly_indicator_repository import MonthlyIndicatorRepository
 
 
-def _previous_month() -> tuple[int, int]:
-    """Return (month, year) for the month before today."""
+def _token_reference_period() -> tuple[int, int]:
+    """Return (month, year) based on token rollover day (10th)."""
     today = date.today()
-    if today.month == 1:
-        return 12, today.year - 1
-    return today.month - 1, today.year
+    months_back = 1 if today.day >= 10 else 2
+    target_month = today.month - months_back
+    target_year = today.year
+
+    while target_month <= 0:
+        target_month += 12
+        target_year -= 1
+
+    return target_month, target_year
 
 
 class CreateMonthlyIndicatorToken:
@@ -22,7 +28,7 @@ class CreateMonthlyIndicatorToken:
     async def execute(
         self, startup_id: uuid.UUID
     ) -> MonthlyIndicatorToken:
-        month, year = _previous_month()
+        month, year = _token_reference_period()
 
         existing = await self._repository.get_token_by_startup_and_period(
             startup_id, month, year

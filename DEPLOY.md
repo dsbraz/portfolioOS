@@ -128,6 +128,7 @@ Edite o `.env.production` com seus valores:
 | `CLOUD_SQL_CONNECTION` | Nome da conexão Cloud SQL | `my-project:us-central1:portfolioos-db` |
 | `DATABASE_URL` | URL PostgreSQL com Unix socket | Ver abaixo |
 | `SECRET_KEY` | Chave secreta da aplicação (min 32 chars) | Gerar com `openssl rand -hex 32` |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Validade do JWT de acesso (em minutos) | `60` |
 
 **Formato da DATABASE_URL** (Unix socket do Cloud SQL):
 
