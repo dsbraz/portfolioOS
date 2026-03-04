@@ -7,6 +7,11 @@ export interface MonthlyIndicatorToken {
   created_at: string;
 }
 
+export interface MonthlyIndicatorTokenCreate {
+  month: number;
+  year: number;
+}
+
 export interface MonthlyIndicatorTokenListResponse {
   items: MonthlyIndicatorToken[];
   total: number;

@@ -1,0 +1,32 @@
+<h2 mat-dialog-title>Gerar link de indicador</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="token-form">
+    <div class="form-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Mes</mat-label>
+        <mat-select formControlName="month">
+          @for (m of monthOptions; track m) {
+            <mat-option [value]="m">{{ monthLabels[m] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Ano</mat-label>
+        <input matInput type="number" formControlName="year" />
+      </mat-form-field>
+    </div>
+
+    @if (form.hasError('futurePeriod')) {
+      <mat-error class="period-error">Periodo nao pode ser no futuro.</mat-error>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancelar</button>
+  <button mat-flat-button color="primary" (click)="onSubmit()" [disabled]="form.invalid">
+    Gerar e copiar
+  </button>
+</mat-dialog-actions>

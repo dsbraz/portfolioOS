@@ -3,20 +3,25 @@ from datetime import date
 import pytest
 
 
-def _previous_month() -> tuple[int, int]:
-    """Mirror the production logic for expected month/year."""
+def _current_period() -> tuple[int, int]:
     today = date.today()
-    if today.month == 1:
-        return 12, today.year - 1
-    return today.month - 1, today.year
+    return today.month, today.year
+
+
+def _future_period() -> tuple[int, int]:
+    today = date.today()
+    if today.month == 12:
+        return 1, today.year + 1
+    return today.month + 1, today.year
 
 
 @pytest.mark.asyncio
 async def test_create_token(client, startup_id):
-    expected_month, expected_year = _previous_month()
+    expected_month, expected_year = _current_period()
 
     resp = await client.post(
         f"/api/startups/{startup_id}/monthly-indicator-tokens",
+        json={"month": expected_month, "year": expected_year},
     )
     assert resp.status_code == 200
     data = resp.json()
@@ -28,19 +33,26 @@ async def test_create_token(client, startup_id):
 
 @pytest.mark.asyncio
 async def test_create_token_is_idempotent(client, startup_id):
+    month, year = _current_period()
+
     resp1 = await client.post(
         f"/api/startups/{startup_id}/monthly-indicator-tokens",
+        json={"month": month, "year": year},
     )
     resp2 = await client.post(
         f"/api/startups/{startup_id}/monthly-indicator-tokens",
+        json={"month": month, "year": year},
     )
     assert resp1.json()["token"] == resp2.json()["token"]
 
 
 @pytest.mark.asyncio
 async def test_list_tokens(client, startup_id):
+    month, year = _current_period()
+
     await client.post(
         f"/api/startups/{startup_id}/monthly-indicator-tokens",
+        json={"month": month, "year": year},
     )
 
     resp = await client.get(f"/api/startups/{startup_id}/monthly-indicator-tokens")
@@ -52,10 +64,11 @@ async def test_list_tokens(client, startup_id):
 
 @pytest.mark.asyncio
 async def test_public_get_form_no_existing_indicator(client, startup_id):
-    expected_month, expected_year = _previous_month()
+    expected_month, expected_year = _current_period()
 
     token_resp = await client.post(
         f"/api/startups/{startup_id}/monthly-indicator-tokens",
+        json={"month": expected_month, "year": expected_year},
     )
     token = token_resp.json()["token"]
 
@@ -70,10 +83,11 @@ async def test_public_get_form_no_existing_indicator(client, startup_id):
 
 @pytest.mark.asyncio
 async def test_public_submit_creates_indicator(client, startup_id):
-    expected_month, expected_year = _previous_month()
+    expected_month, expected_year = _current_period()
 
     token_resp = await client.post(
         f"/api/startups/{startup_id}/monthly-indicator-tokens",
+        json={"month": expected_month, "year": expected_year},
     )
     token = token_resp.json()["token"]
 
@@ -99,7 +113,7 @@ async def test_public_submit_creates_indicator(client, startup_id):
 
 @pytest.mark.asyncio
 async def test_public_submit_updates_existing_indicator(client, startup_id):
-    expected_month, expected_year = _previous_month()
+    expected_month, expected_year = _current_period()
 
     await client.post(
         f"/api/startups/{startup_id}/monthly-indicators",
@@ -108,6 +122,7 @@ async def test_public_submit_updates_existing_indicator(client, startup_id):
 
     token_resp = await client.post(
         f"/api/startups/{startup_id}/monthly-indicator-tokens",
+        json={"month": expected_month, "year": expected_year},
     )
     token = token_resp.json()["token"]
 
@@ -134,7 +149,29 @@ async def test_public_invalid_token_returns_404(client):
 
 @pytest.mark.asyncio
 async def test_create_token_nonexistent_startup_returns_404(client):
+    month, year = _current_period()
+
     resp = await client.post(
         "/api/startups/00000000-0000-0000-0000-000000000001/monthly-indicator-tokens",
+        json={"month": month, "year": year},
     )
     assert resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_create_token_without_body_returns_422(client, startup_id):
+    resp = await client.post(
+        f"/api/startups/{startup_id}/monthly-indicator-tokens",
+    )
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_token_future_period_returns_400(client, startup_id):
+    month, year = _future_period()
+
+    resp = await client.post(
+        f"/api/startups/{startup_id}/monthly-indicator-tokens",
+        json={"month": month, "year": year},
+    )
+    assert resp.status_code == 400

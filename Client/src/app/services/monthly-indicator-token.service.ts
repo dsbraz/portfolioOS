@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import {
+  MonthlyIndicatorTokenCreate,
   MonthlyIndicatorToken,
   MonthlyIndicatorTokenListResponse,
   PublicIndicatorForm,
@@ -13,10 +14,10 @@ import {
 export class MonthlyIndicatorTokenService {
   private readonly http = inject(HttpClient);
 
-  create(startupId: string): Observable<MonthlyIndicatorToken> {
+  create(startupId: string, data: MonthlyIndicatorTokenCreate): Observable<MonthlyIndicatorToken> {
     return this.http.post<MonthlyIndicatorToken>(
       `/api/startups/${startupId}/monthly-indicator-tokens`,
-      {},
+      data,
     );
   }
 

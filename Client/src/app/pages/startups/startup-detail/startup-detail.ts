@@ -48,6 +48,10 @@ import {
   TokenListDialog,
   TokenListDialogData,
 } from '../token-list-dialog/token-list-dialog';
+import {
+  TokenGenerateDialog,
+  TokenGenerateDialogData,
+} from '../token-generate-dialog/token-generate-dialog';
 
 @Component({
   selector: 'app-startup-detail',
@@ -433,16 +437,34 @@ export class StartupDetail implements OnInit {
 
   // Tokens
   generateToken(): void {
-    this.tokenService.create(this.startupId).subscribe({
-      next: (token) => {
-        const url = `${window.location.origin}/monthly-indicator/${token.token}`;
-        navigator.clipboard.writeText(url).then(() => {
-          this.snackBar.open('Link gerado e copiado!', 'Fechar', { duration: 3000 });
-        });
-        this.loadAll();
-      },
-      error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao gerar link', 'Fechar', { duration: 3000 }),
+    const defaultPeriod = this.getPreviousMonthPeriod();
+    const dialogRef = this.dialog.open(TokenGenerateDialog, {
+      width: '420px',
+      data: defaultPeriod as TokenGenerateDialogData,
     });
+
+    dialogRef.afterClosed().subscribe((period) => {
+      if (!period) return;
+
+      this.tokenService.create(this.startupId, period).subscribe({
+        next: (token) => {
+          const url = `${window.location.origin}/monthly-indicator/${token.token}`;
+          navigator.clipboard.writeText(url).then(() => {
+            this.snackBar.open('Link gerado e copiado!', 'Fechar', { duration: 3000 });
+          });
+          this.loadAll();
+        },
+        error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao gerar link', 'Fechar', { duration: 3000 }),
+      });
+    });
+  }
+
+  private getPreviousMonthPeriod(): { month: number; year: number } {
+    const today = new Date();
+    if (today.getMonth() === 0) {
+      return { month: 12, year: today.getFullYear() - 1 };
+    }
+    return { month: today.getMonth(), year: today.getFullYear() };
   }
 
   openTokenListDialog(): void {

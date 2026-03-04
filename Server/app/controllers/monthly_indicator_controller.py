@@ -37,6 +37,7 @@ from app.domain.schemas.monthly_indicator import (
     MonthlyIndicatorCreate,
     MonthlyIndicatorListResponse,
     MonthlyIndicatorResponse,
+    MonthlyIndicatorTokenCreate,
     MonthlyIndicatorTokenListResponse,
     MonthlyIndicatorTokenResponse,
     MonthlyIndicatorUpdate,
@@ -250,12 +251,19 @@ async def delete_indicator(
     status_code=status.HTTP_200_OK,
 )
 async def create_monthly_indicator_token(
+    data: MonthlyIndicatorTokenCreate,
     startup_id: uuid.UUID = Depends(verify_startup_exists),
     create: CreateMonthlyIndicatorToken = Depends(
         monthly_indicator_builder(CreateMonthlyIndicatorToken)
     ),
 ):
-    token = await create.execute(startup_id)
+    try:
+        token = await create.execute(startup_id, data.month, data.year)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
     return MonthlyIndicatorTokenResponse.model_validate(token)
 
 
