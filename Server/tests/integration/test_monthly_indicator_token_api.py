@@ -3,23 +3,17 @@ from datetime import date
 import pytest
 
 
-def _token_reference_period() -> tuple[int, int]:
-    """Mirror production rollover logic for expected token period."""
+def _previous_month() -> tuple[int, int]:
+    """Mirror the production logic for expected month/year."""
     today = date.today()
-    months_back = 1 if today.day >= 10 else 2
-    target_month = today.month - months_back
-    target_year = today.year
-
-    while target_month <= 0:
-        target_month += 12
-        target_year -= 1
-
-    return target_month, target_year
+    if today.month == 1:
+        return 12, today.year - 1
+    return today.month - 1, today.year
 
 
 @pytest.mark.asyncio
 async def test_create_token(client, startup_id):
-    expected_month, expected_year = _token_reference_period()
+    expected_month, expected_year = _previous_month()
 
     resp = await client.post(
         f"/api/startups/{startup_id}/monthly-indicator-tokens",
@@ -58,7 +52,7 @@ async def test_list_tokens(client, startup_id):
 
 @pytest.mark.asyncio
 async def test_public_get_form_no_existing_indicator(client, startup_id):
-    expected_month, expected_year = _token_reference_period()
+    expected_month, expected_year = _previous_month()
 
     token_resp = await client.post(
         f"/api/startups/{startup_id}/monthly-indicator-tokens",
@@ -76,7 +70,7 @@ async def test_public_get_form_no_existing_indicator(client, startup_id):
 
 @pytest.mark.asyncio
 async def test_public_submit_creates_indicator(client, startup_id):
-    expected_month, expected_year = _token_reference_period()
+    expected_month, expected_year = _previous_month()
 
     token_resp = await client.post(
         f"/api/startups/{startup_id}/monthly-indicator-tokens",
@@ -105,7 +99,7 @@ async def test_public_submit_creates_indicator(client, startup_id):
 
 @pytest.mark.asyncio
 async def test_public_submit_updates_existing_indicator(client, startup_id):
-    expected_month, expected_year = _token_reference_period()
+    expected_month, expected_year = _previous_month()
 
     await client.post(
         f"/api/startups/{startup_id}/monthly-indicators",

@@ -33,7 +33,7 @@ def _use_case_builder(repo_class: type) -> Callable:
     return _builder
 
 
-def _multi_builder(*repo_classes: type) -> Callable:
+def _multi_repo_use_case_builder(*repo_classes: type) -> Callable:
     """Use case factory for multi-repo use cases."""
 
     def _builder(uc_class: type[T]) -> Callable[..., T]:
@@ -46,47 +46,49 @@ def _multi_builder(*repo_classes: type) -> Callable:
     return _builder
 
 
+def _multi_repo_use_case_with_hasher_builder(
+    *repo_classes: type,
+) -> Callable:
+    """Use case factory for multi-repo use cases with password hasher."""
+
+    def _builder(uc_class: type[T]) -> Callable[..., T]:
+        def factory(
+            session: AsyncSession = Depends(get_session),
+            hasher: BcryptPasswordHasher = Depends(_get_password_hasher),
+        ):  # noqa: ANN202
+            repos = [cls(session) for cls in repo_classes]
+            return uc_class(*repos, hasher)
+
+        return factory
+
+    return _builder
+
+
 startup_builder = _use_case_builder(StartupRepository)
 deal_builder = _use_case_builder(DealRepository)
 board_meeting_builder = _use_case_builder(BoardMeetingRepository)
 executive_builder = _use_case_builder(ExecutiveRepository)
 monthly_indicator_builder = _use_case_builder(MonthlyIndicatorRepository)
-portfolio_builder = _multi_builder(
+portfolio_builder = _multi_repo_use_case_builder(
     StartupRepository, MonthlyIndicatorRepository, BoardMeetingRepository
 )
-public_form_builder = _multi_builder(
+public_form_builder = _multi_repo_use_case_builder(
     StartupRepository, MonthlyIndicatorRepository
 )
 user_builder = _use_case_builder(UserRepository)
 user_invite_builder = _use_case_builder(UserInviteRepository)
+user_invite_create_builder = _multi_repo_use_case_builder(
+    UserInviteRepository, UserRepository
+)
 
 
 def _get_password_hasher() -> BcryptPasswordHasher:
     return BcryptPasswordHasher()
 
 
-def user_invite_create_builder(uc_class: type[T]) -> Callable[..., T]:
-    def factory(session: AsyncSession = Depends(get_session)):  # noqa: ANN202
-        return uc_class(
-            UserInviteRepository(session),
-            UserRepository(session),
-        )
-
-    return factory
-
-
-def user_invite_consume_builder(uc_class: type[T]) -> Callable[..., T]:
-    def factory(
-        session: AsyncSession = Depends(get_session),
-        hasher: BcryptPasswordHasher = Depends(_get_password_hasher),
-    ):  # noqa: ANN202
-        return uc_class(
-            UserInviteRepository(session),
-            UserRepository(session),
-            hasher,
-        )
-
-    return factory
+user_invite_consume_builder = _multi_repo_use_case_with_hasher_builder(
+    UserInviteRepository, UserRepository
+)
 
 
 async def verify_startup_exists(

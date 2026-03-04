@@ -6,40 +6,24 @@ import pytest
 
 from app.application.monthly_indicator.create_monthly_indicator_token import (
     CreateMonthlyIndicatorToken,
-    _token_reference_period,
+    _previous_month,
 )
 
 
-def test_reference_period_before_rollover_uses_two_months_back():
+def test_previous_month_regular():
     with patch(
         "app.application.monthly_indicator.create_monthly_indicator_token.date"
     ) as mock_date:
-        mock_date.today.return_value = date(2026, 3, 9)
-        assert _token_reference_period() == (1, 2026)
+        mock_date.today.return_value = date(2026, 3, 15)
+        assert _previous_month() == (2, 2026)
 
 
-def test_reference_period_on_rollover_uses_previous_month():
-    with patch(
-        "app.application.monthly_indicator.create_monthly_indicator_token.date"
-    ) as mock_date:
-        mock_date.today.return_value = date(2026, 3, 10)
-        assert _token_reference_period() == (2, 2026)
-
-
-def test_reference_period_before_rollover_handles_january_wrap():
-    with patch(
-        "app.application.monthly_indicator.create_monthly_indicator_token.date"
-    ) as mock_date:
-        mock_date.today.return_value = date(2026, 1, 9)
-        assert _token_reference_period() == (11, 2025)
-
-
-def test_reference_period_on_rollover_handles_january_wrap():
+def test_previous_month_january_wraps_to_december():
     with patch(
         "app.application.monthly_indicator.create_monthly_indicator_token.date"
     ) as mock_date:
         mock_date.today.return_value = date(2026, 1, 10)
-        assert _token_reference_period() == (12, 2025)
+        assert _previous_month() == (12, 2025)
 
 
 @pytest.fixture
