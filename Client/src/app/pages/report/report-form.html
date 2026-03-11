@@ -46,37 +46,97 @@
             <div class="form-row">
               <mat-form-field appearance="outline">
                 <mat-label>Receita do mes (R$)</mat-label>
-                <input matInput type="number" formControlName="total_revenue" />
+                <input
+                  matInput
+                  type="number"
+                  step="0.01"
+                  formControlName="total_revenue"
+                />
+                @if (form.controls.total_revenue.hasError('min') || form.controls.total_revenue.hasError('max')) {
+                  <mat-error>Valor fora do limite permitido</mat-error>
+                }
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Receita Recorrente (%)</mat-label>
-                <input matInput type="number" formControlName="recurring_revenue_pct" />
+                <input
+                  matInput
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  formControlName="recurring_revenue_pct"
+                />
+                @if (form.controls.recurring_revenue_pct.hasError('min')) {
+                  <mat-error>Valor nao pode ser negativo</mat-error>
+                }
+                @if (form.controls.recurring_revenue_pct.hasError('max')) {
+                  <mat-error>Valor fora do limite permitido</mat-error>
+                }
               </mat-form-field>
             </div>
 
             <div class="form-row">
               <mat-form-field appearance="outline">
                 <mat-label>Margem Bruta (%)</mat-label>
-                <input matInput type="number" formControlName="gross_margin_pct" />
+                <input
+                  matInput
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  formControlName="gross_margin_pct"
+                />
+                @if (form.controls.gross_margin_pct.hasError('min')) {
+                  <mat-error>Valor nao pode ser negativo</mat-error>
+                }
+                @if (form.controls.gross_margin_pct.hasError('max')) {
+                  <mat-error>Valor fora do limite permitido</mat-error>
+                }
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Saldo em caixa (R$)</mat-label>
-                <input matInput type="number" formControlName="cash_balance" />
+                <input
+                  matInput
+                  type="number"
+                  step="0.01"
+                  formControlName="cash_balance"
+                />
+                @if (form.controls.cash_balance.hasError('min') || form.controls.cash_balance.hasError('max')) {
+                  <mat-error>Valor fora do limite permitido</mat-error>
+                }
               </mat-form-field>
             </div>
 
             <div class="form-row">
               <mat-form-field appearance="outline">
                 <mat-label>Headcount</mat-label>
-                <input matInput type="number" formControlName="headcount" />
+                <input
+                  matInput
+                  type="number"
+                  min="0"
+                  step="1"
+                  formControlName="headcount"
+                />
+                @if (form.controls.headcount.hasError('min')) {
+                  <mat-error>Valor nao pode ser negativo</mat-error>
+                }
+                @if (form.controls.headcount.hasError('integer')) {
+                  <mat-error>Informe um numero inteiro</mat-error>
+                }
               </mat-form-field>
 
               <mat-form-field appearance="outline">
                 <mat-label>Burn / EBITDA (R$)</mat-label>
-                <input matInput type="number" formControlName="ebitda_burn" />
+                <input
+                  matInput
+                  type="number"
+                  step="0.01"
+                  formControlName="ebitda_burn"
+                />
                 <mat-hint>Negativo para burn, positivo para EBITDA</mat-hint>
+                @if (form.controls.ebitda_burn.hasError('min') || form.controls.ebitda_burn.hasError('max')) {
+                  <mat-error>Valor fora do limite permitido</mat-error>
+                }
               </mat-form-field>
             </div>
 
@@ -106,7 +166,7 @@
               <button
                 mat-flat-button
                 (click)="onSubmit()"
-                [disabled]="submitting()"
+                [disabled]="submitting() || form.invalid"
               >
                 @if (submitting()) {
                   <mat-spinner diameter="20" />

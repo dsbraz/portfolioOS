@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -12,6 +12,16 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MonthlyIndicatorTokenService } from '../../services/monthly-indicator-token.service';
 import { PublicIndicatorForm } from '../../models/monthly-indicator-token.model';
 import { MONTH_LABELS } from '../../models/monthly-indicator.model';
+
+const MAX_MONEY = 9_999_999_999_999.99;
+const MIN_MONEY = -9_999_999_999_999.99;
+const MAX_PCT = 99_999.99;
+
+function integerValidator(control: AbstractControl): ValidationErrors | null {
+  const value = control.value;
+  if (value === null || value === undefined || value === '') return null;
+  return Number.isInteger(Number(value)) ? null : { integer: true };
+}
 
 @Component({
   selector: 'app-report-form',
@@ -44,12 +54,12 @@ export default class ReportForm implements OnInit {
   private token = '';
 
   readonly form = this.fb.group({
-    total_revenue: [null as number | null],
-    cash_balance: [null as number | null],
-    ebitda_burn: [null as number | null],
-    recurring_revenue_pct: [null as number | null],
-    gross_margin_pct: [null as number | null],
-    headcount: [null as number | null],
+    total_revenue: [null as number | null, [Validators.min(MIN_MONEY), Validators.max(MAX_MONEY)]],
+    cash_balance: [null as number | null, [Validators.min(MIN_MONEY), Validators.max(MAX_MONEY)]],
+    ebitda_burn: [null as number | null, [Validators.min(MIN_MONEY), Validators.max(MAX_MONEY)]],
+    recurring_revenue_pct: [null as number | null, [Validators.min(0), Validators.max(MAX_PCT)]],
+    gross_margin_pct: [null as number | null, [Validators.min(0), Validators.max(MAX_PCT)]],
+    headcount: [null as number | null, [Validators.min(0), integerValidator]],
     achievements: [''],
     challenges: [''],
   });
@@ -89,11 +99,15 @@ export default class ReportForm implements OnInit {
         this.submitting.set(false);
       },
       error: (err) => {
-        this.snackBar.open(
-          err.error?.detail || 'Erro ao enviar relatorio. Tente novamente.',
-          'Fechar',
-          { duration: 5000 },
-        );
+        let message: string;
+        if (typeof err.error?.detail === 'string') {
+          message = err.error.detail;
+        } else if (err.status === 422) {
+          message = 'Dados invalidos. Verifique os campos e tente novamente.';
+        } else {
+          message = 'Erro ao enviar relatorio. Tente novamente.';
+        }
+        this.snackBar.open(message, 'Fechar', { duration: 5000 });
         this.submitting.set(false);
       },
     });

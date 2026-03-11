@@ -120,7 +120,13 @@ async def public_create_monthly_indicator(
         year=indicator_token.year,
         **data.model_dump(),
     )
-    await create.execute(indicator)
+    try:
+        await create.execute(indicator)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
 
 
 # --- Protected routes: indicators ---
