@@ -145,8 +145,8 @@
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
 }
 
 .summary-item {
@@ -158,16 +158,16 @@
 }
 
 .summary-label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--mat-sys-on-surface-variant);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
   margin-bottom: 4px;
 }
 
 .summary-value {
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 600;
 }
 
@@ -225,7 +225,7 @@
   }
 
   .summary-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
   }
 }

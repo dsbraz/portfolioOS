@@ -147,6 +147,13 @@ export class StartupDetail implements OnInit {
     return list.length > 0 ? list[0] : null;
   }
 
+  get totalParticipation(): number | null {
+    const s = this.startup();
+    if (!s?.equity_stake) return null;
+    const revenue = this.latestIndicator?.total_revenue ?? 0;
+    return revenue * (Number(s.equity_stake) / 100);
+  }
+
   goBack(): void {
     this.router.navigate(['/portfolio']);
   }
@@ -268,6 +275,19 @@ export class StartupDetail implements OnInit {
         this.cancelEditing();
       }
     }, 200);
+  }
+
+  deleteStartup(): void {
+    const s = this.startup();
+    if (!s) return;
+    if (!confirm(`Excluir a startup "${s.name}"? Esta ação não pode ser desfeita.`)) return;
+    this.startupService.delete(this.startupId).subscribe({
+      next: () => {
+        this.snackBar.open('Startup excluída', 'Fechar', { duration: 3000 });
+        this.router.navigate(['/portfolio']);
+      },
+      error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao excluir startup', 'Fechar', { duration: 3000 }),
+    });
   }
 
   // Indicators

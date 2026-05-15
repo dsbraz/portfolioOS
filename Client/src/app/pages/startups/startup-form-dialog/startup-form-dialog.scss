@@ -10,6 +10,19 @@ mat-form-field {
   width: 100%;
 }
 
+.form-row {
+  display: flex;
+  gap: 12px;
+
+  mat-form-field {
+    flex: 1;
+  }
+
+  .field-stake {
+    flex: 0 0 180px;
+  }
+}
+
 @media (max-width: 600px) {
   .startup-form {
     min-width: unset;

@@ -102,6 +102,18 @@ export class Portfolio implements OnInit {
     this.router.navigate(['/startup', item.startup.id]);
   }
 
+  totalParticipation(): number | null {
+    const summary = this.summaryByPeriod();
+    if (!summary) return null;
+    const total = summary.startups.reduce((acc, item) => {
+      if (item.total_revenue != null && item.startup.equity_stake != null) {
+        return acc + item.total_revenue * (item.startup.equity_stake / 100);
+      }
+      return acc;
+    }, 0);
+    return total;
+  }
+
   revenueVariationLabel(): string {
     const summary = this.summaryByPeriod();
     if (!summary || summary.revenue_variation_pct === null) return 'Sem base';

@@ -45,6 +45,7 @@ export class StartupFormDialog implements OnInit {
     status: [StartupStatus.HEALTHY, Validators.required],
     sector: ['', [Validators.required, Validators.maxLength(255)]],
     investment_date: [null as Date | null, Validators.required],
+    equity_stake: [null as number | null, [Validators.min(0), Validators.max(100)]],
     notes: [''],
   });
 

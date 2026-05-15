@@ -48,6 +48,16 @@
   margin-bottom: 24px;
 }
 
+.kpi-stacked {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  app-kpi-card {
+    flex: 1;
+  }
+}
+
 .kpi-health-card {
   .kpi-card {
     height: 100%;
@@ -55,9 +65,12 @@
 
   mat-card-content {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
+    justify-content: center;
     gap: 16px;
     padding: 20px !important;
+    height: 100%;
+    box-sizing: border-box;
   }
 
   .kpi-icon-wrapper {
@@ -184,6 +197,10 @@
 @media (max-width: 1024px) {
   .kpi-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .kpi-stacked {
+    flex-direction: row;
   }
 }
 

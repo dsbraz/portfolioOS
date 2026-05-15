@@ -1,5 +1,6 @@
 import uuid
 from datetime import date, datetime
+from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -14,6 +15,7 @@ class StartupBase(BaseModel):
     status: StartupStatus = StartupStatus.HEALTHY
     sector: str = Field(..., min_length=1, max_length=255)
     investment_date: date
+    equity_stake: Decimal | None = Field(None, ge=0, le=100)
     notes: str | None = None
 
 
@@ -28,6 +30,7 @@ class StartupUpdate(BaseModel):
     status: StartupStatus | None = None
     sector: str | None = Field(None, min_length=1, max_length=255)
     investment_date: date | None = None
+    equity_stake: Decimal | None = Field(None, ge=0, le=100)
     notes: str | None = None
 
 

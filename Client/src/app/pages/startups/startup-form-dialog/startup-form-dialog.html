@@ -37,15 +37,25 @@
       }
     </mat-form-field>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Data do Investimento</mat-label>
-      <input matInput [matDatepicker]="picker" formControlName="investment_date" />
-      <mat-datepicker-toggle matIconSuffix [for]="picker" />
-      <mat-datepicker #picker />
-      @if (form.controls.investment_date.hasError('required')) {
-        <mat-error>Data e obrigatoria</mat-error>
-      }
-    </mat-form-field>
+    <div class="form-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Data do Investimento</mat-label>
+        <input matInput [matDatepicker]="picker" formControlName="investment_date" />
+        <mat-datepicker-toggle matIconSuffix [for]="picker" />
+        <mat-datepicker #picker />
+        @if (form.controls.investment_date.hasError('required')) {
+          <mat-error>Data e obrigatoria</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="field-stake">
+        <mat-label>% de Participacao</mat-label>
+        <input matInput type="number" formControlName="equity_stake" placeholder="0,00" min="0" max="100" step="0.01" />
+        @if (form.controls.equity_stake.hasError('min') || form.controls.equity_stake.hasError('max')) {
+          <mat-error>Entre 0 e 100</mat-error>
+        }
+      </mat-form-field>
+    </div>
 
     <mat-form-field appearance="outline">
       <mat-label>Observacao</mat-label>

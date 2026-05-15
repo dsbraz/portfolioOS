@@ -88,6 +88,10 @@
         <mat-icon>edit</mat-icon>
         Editar
       </button>
+      <button mat-stroked-button color="warn" (click)="deleteStartup()">
+        <mat-icon>delete</mat-icon>
+        Excluir
+      </button>
     </div>
 
     <!-- Resumo Atual -->
@@ -100,6 +104,10 @@
           <div class="summary-item">
             <span class="summary-label">Receita Total</span>
             <span class="summary-value">{{ formatCurrency(latestIndicator?.total_revenue ?? 0) }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Total da Participacao</span>
+            <span class="summary-value">{{ totalParticipation != null ? formatCurrency(totalParticipation) : '-' }}</span>
           </div>
           <div class="summary-item">
             <span class="summary-label">Saldo em Caixa</span>

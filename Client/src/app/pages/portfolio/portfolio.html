@@ -38,6 +38,13 @@
         [subtitle]="revenueVariationLabel()"
         [tone]="revenueCardTone()"
       />
+      <app-kpi-card
+        class="kpi-participation"
+        icon="percent"
+        label="Total da Participacao"
+        [value]="formatCurrency(totalParticipation())"
+        subtitle="Soma da participacao no mes"
+      />
       <div class="kpi-health-card">
         <mat-card class="kpi-card">
           <mat-card-content>
@@ -51,20 +58,22 @@
           </mat-card-content>
         </mat-card>
       </div>
-      <app-kpi-card
-        class="kpi-report"
-        icon="description"
-        label="Report Mensal"
-        [value]="s.monthly_report_pct + '%'"
-        subtitle="Startups com indicador no mes selecionado"
-      />
-      <app-kpi-card
-        class="kpi-routines"
-        icon="groups"
-        label="Rotinas em Dia"
-        [value]="s.routines_up_to_date_pct + '%'"
-        subtitle="Conselho nos ultimos 90 dias"
-      />
+      <div class="kpi-stacked">
+        <app-kpi-card
+          class="kpi-report compact"
+          icon="description"
+          label="Report Mensal"
+          [value]="s.monthly_report_pct + '%'"
+          subtitle="Startups com indicador no mes selecionado"
+        />
+        <app-kpi-card
+          class="kpi-routines compact"
+          icon="groups"
+          label="Rotinas em Dia"
+          [value]="s.routines_up_to_date_pct + '%'"
+          subtitle="Conselho nos ultimos 90 dias"
+        />
+      </div>
     </div>
 
     @if (s.startups.length === 0) {

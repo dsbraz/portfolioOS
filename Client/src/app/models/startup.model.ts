@@ -12,6 +12,7 @@ export interface Startup {
   status: StartupStatus;
   sector: string;
   investment_date: string;
+  equity_stake: number | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -29,6 +30,7 @@ export interface StartupCreate {
   status?: StartupStatus;
   sector: string;
   investment_date: string;
+  equity_stake?: number | null;
   notes?: string | null;
 }
 
@@ -39,6 +41,7 @@ export interface StartupUpdate {
   status?: StartupStatus;
   sector?: string;
   investment_date?: string;
+  equity_stake?: number | null;
   notes?: string | null;
 }
 
