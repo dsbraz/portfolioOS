@@ -46,6 +46,8 @@ async def test_monitoring_summary_with_startups(client):
     assert data["health"]["healthy"] == 1
     assert data["health"]["warning"] == 1
     assert len(data["startups"]) == 2
+    # No indicators => accumulated revenue is null (absent from the SUM result)
+    assert all(item["accumulated_revenue_ytd"] is None for item in data["startups"])
 
 
 @pytest.mark.asyncio
@@ -92,6 +94,47 @@ async def test_monitoring_summary_with_indicators(client):
     startup_item = data["startups"][0]
     assert float(startup_item["total_revenue"]) == 120000
     assert startup_item["headcount"] == 18
+    # Accumulated revenue YTD up to the selected month (Jan + Feb)
+    assert float(startup_item["accumulated_revenue_ytd"]) == 220000
+
+
+@pytest.mark.asyncio
+async def test_accumulated_revenue_ytd_only_sums_year_up_to_month(client):
+    startup_resp = await client.post(
+        "/api/startups",
+        json={
+            "name": "Startup YTD",
+            "sector": "saas",
+            "investment_date": "2024-01-01",
+        },
+    )
+    startup_id = startup_resp.json()["id"]
+
+    # Previous year — must be ignored
+    await client.post(
+        f"/api/startups/{startup_id}/monthly-indicators",
+        json={"month": 12, "year": 2025, "total_revenue": 999999},
+    )
+    # Current year, within range
+    await client.post(
+        f"/api/startups/{startup_id}/monthly-indicators",
+        json={"month": 1, "year": 2026, "total_revenue": 30000},
+    )
+    await client.post(
+        f"/api/startups/{startup_id}/monthly-indicators",
+        json={"month": 3, "year": 2026, "total_revenue": 70000},
+    )
+    # Current year, after the selected month — must be ignored
+    await client.post(
+        f"/api/startups/{startup_id}/monthly-indicators",
+        json={"month": 5, "year": 2026, "total_revenue": 500000},
+    )
+
+    resp = await client.get("/api/portfolio/summary?month=3&year=2026")
+    assert resp.status_code == 200
+    startup_item = resp.json()["startups"][0]
+    # Only Jan + Mar of 2026 counted (30000 + 70000)
+    assert float(startup_item["accumulated_revenue_ytd"]) == 100000
 
 
 @pytest.mark.asyncio

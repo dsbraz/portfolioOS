@@ -19,6 +19,7 @@ class StartupSummary:
     cash_balance: Decimal | None = None
     ebitda_burn: Decimal | None = None
     headcount: int | None = None
+    accumulated_revenue_ytd: Decimal | None = None
 
 
 @dataclass(frozen=True)

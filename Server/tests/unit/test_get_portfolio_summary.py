@@ -16,7 +16,9 @@ def startup_repo():
 
 @pytest.fixture
 def indicator_repo():
-    return AsyncMock()
+    repo = AsyncMock()
+    repo.get_accumulated_revenue_by_startups.return_value = {}
+    return repo
 
 
 @pytest.fixture
@@ -116,6 +118,39 @@ async def test_revenue_aggregation(
     meeting_repo.get_startup_ids_with_recent_meetings.assert_awaited_once_with(
         [s1.id, s2.id], 90, date(2026, 1, 31)
     )
+
+
+@pytest.mark.asyncio
+async def test_accumulated_revenue_ytd_is_exposed_per_startup(
+    use_case, startup_repo, indicator_repo, meeting_repo
+):
+    s1 = _make_startup()
+    s2 = _make_startup()
+    startup_repo.get_all.return_value = ([s1, s2], 2)
+
+    ind1 = MagicMock(
+        total_revenue=Decimal("50000"),
+        cash_balance=None,
+        ebitda_burn=None,
+        headcount=None,
+    )
+    indicator_repo.get_by_startups_and_period.side_effect = [
+        {s1.id: ind1},
+        {},
+    ]
+    indicator_repo.get_accumulated_revenue_by_startups.return_value = {
+        s1.id: Decimal("200000")
+    }
+    meeting_repo.get_startup_ids_with_recent_meetings.return_value = set()
+
+    result = await use_case.execute(month=4, year=2026)
+
+    indicator_repo.get_accumulated_revenue_by_startups.assert_awaited_once_with(
+        [s1.id, s2.id], 4, 2026
+    )
+    by_id = {item.startup.id: item for item in result.startups}
+    assert by_id[s1.id].accumulated_revenue_ytd == Decimal("200000")
+    assert by_id[s2.id].accumulated_revenue_ytd is None
 
 
 @pytest.mark.asyncio

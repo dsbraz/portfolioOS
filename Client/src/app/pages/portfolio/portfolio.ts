@@ -14,6 +14,7 @@ import {
 } from '../../models/portfolio.model';
 import { KpiCardTone } from '../../components/kpi-card/kpi-card';
 import { MONTH_LABELS } from '../../models/monthly-indicator.model';
+import { participationValue } from '../../models/participation';
 import { PortfolioService } from '../../services/portfolio.service';
 import { StartupService } from '../../services/startup.service';
 import { StatusBadge } from '../../components/status-badge/status-badge';
@@ -105,13 +106,15 @@ export class Portfolio implements OnInit {
   totalParticipation(): number | null {
     const summary = this.summaryByPeriod();
     if (!summary) return null;
-    const total = summary.startups.reduce((acc, item) => {
-      if (item.total_revenue != null && item.startup.equity_stake != null) {
-        return acc + item.total_revenue * (item.startup.equity_stake / 100);
-      }
-      return acc;
+    const months = this.selectedMonth();
+    return summary.startups.reduce((acc, item) => {
+      const value = participationValue(
+        item.accumulated_revenue_ytd,
+        months,
+        item.startup.equity_stake,
+      );
+      return acc + (value ?? 0);
     }, 0);
-    return total;
   }
 
   revenueVariationLabel(): string {

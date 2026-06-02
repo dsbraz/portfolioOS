@@ -19,6 +19,7 @@ import { forkJoin } from 'rxjs';
 
 import { Startup, StartupStatus, STARTUP_STATUS_CONFIG } from '../../../models/startup.model';
 import { MonthlyIndicator, MONTH_LABELS } from '../../../models/monthly-indicator.model';
+import { participationValue } from '../../../models/participation';
 import { BoardMeeting } from '../../../models/board-meeting.model';
 import { Executive } from '../../../models/executive.model';
 import { StartupService } from '../../../services/startup.service';
@@ -149,9 +150,15 @@ export class StartupDetail implements OnInit {
 
   get totalParticipation(): number | null {
     const s = this.startup();
-    if (!s?.equity_stake) return null;
-    const revenue = this.latestIndicator?.total_revenue ?? 0;
-    return revenue * (Number(s.equity_stake) / 100);
+    const ref = this.latestIndicator;
+    if (!s || !ref) return null;
+
+    // Reference period = latest reported indicator (same as the Resumo Atual card).
+    // Accumulate that year's revenue up to the reference month, then annualize over it.
+    const accumulated = this.indicators()
+      .filter((i) => i.year === ref.year && i.month <= ref.month)
+      .reduce((acc, i) => acc + Number(i.total_revenue ?? 0), 0);
+    return participationValue(accumulated, ref.month, s.equity_stake);
   }
 
   goBack(): void {

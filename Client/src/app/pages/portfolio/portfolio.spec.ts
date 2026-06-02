@@ -149,6 +149,33 @@ describe('Portfolio', () => {
     expect(component.revenueVariationLabel()).toContain('+25.0%');
   });
 
+  it('should compute total participation as the annualized revenue multiple across startups', () => {
+    const startups = [
+      {
+        startup: { id: 'a', name: 'Alpha', status: 'saudavel', equity_stake: 5 },
+        total_revenue: 50000,
+        cash_balance: null,
+        ebitda_burn: null,
+        headcount: null,
+        accumulated_revenue_ytd: 200000,
+      },
+      {
+        startup: { id: 'b', name: 'Beta', status: 'atencao', equity_stake: null },
+        total_revenue: 10000,
+        cash_balance: null,
+        ebitda_burn: null,
+        headcount: null,
+        accumulated_revenue_ytd: 80000,
+      },
+    ];
+    portfolioServiceSpy.getSummary.mockReturnValue(of({ ...summaryMock, startups } as any));
+    queryParamMap$.next(convertToParamMap({ month: '2', year: '2026' }));
+    fixture.detectChanges();
+
+    // selectedMonth = 2 => (200000 / 2) * 12 * 5 * 0.05 = 300000; startup b has no equity => 0
+    expect(component.totalParticipation()).toBe(300000);
+  });
+
   it('should return "Sem base" label when there is no previous-month base', () => {
     portfolioServiceSpy.getSummary.mockReturnValue(
       of({

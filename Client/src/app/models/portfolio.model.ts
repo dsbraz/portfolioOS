@@ -6,6 +6,7 @@ export interface StartupSummary {
   cash_balance: number | null;
   ebitda_burn: number | null;
   headcount: number | null;
+  accumulated_revenue_ytd: number | null;
 }
 
 export interface HealthDistribution {

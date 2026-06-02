@@ -1,4 +1,5 @@
 import uuid
+from decimal import Decimal
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -77,6 +78,27 @@ class MonthlyIndicatorRepository:
         indicators = list(result.scalars().all())
 
         return {ind.startup_id: ind for ind in indicators}
+
+    async def get_accumulated_revenue_by_startups(
+        self, startup_ids: list[uuid.UUID], month: int, year: int
+    ) -> dict[uuid.UUID, Decimal]:
+        if not startup_ids:
+            return {}
+
+        result = await self._session.execute(
+            select(
+                MonthlyIndicator.startup_id,
+                func.sum(MonthlyIndicator.total_revenue),
+            )
+            .where(
+                MonthlyIndicator.startup_id.in_(startup_ids),
+                MonthlyIndicator.year == year,
+                MonthlyIndicator.month <= month,
+            )
+            .group_by(MonthlyIndicator.startup_id)
+        )
+
+        return {row[0]: row[1] for row in result.all() if row[1] is not None}
 
     # --- Token methods ---
 

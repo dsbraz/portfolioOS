@@ -60,6 +60,11 @@ class GetPortfolioSummary:
                 startup_ids, previous_month, previous_year
             )
         )
+        accumulated_revenue_by_startup = (
+            await self._indicator_repo.get_accumulated_revenue_by_startups(
+                startup_ids, selected_month, selected_year
+            )
+        )
 
         healthy = warning = critical = 0
         for s in startups:
@@ -118,6 +123,7 @@ class GetPortfolioSummary:
                     cash_balance=ind.cash_balance if ind else None,
                     ebitda_burn=ind.ebitda_burn if ind else None,
                     headcount=ind.headcount if ind else None,
+                    accumulated_revenue_ytd=accumulated_revenue_by_startup.get(s.id),
                 )
             )
 
