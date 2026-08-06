@@ -18,9 +18,12 @@ export interface DealFormDialogData {
   defaultStage?: DealStage;
 }
 
+import { DialogHeader } from '../../../components/dialog-header/dialog-header';
+
 @Component({
   selector: 'app-deal-form-dialog',
   imports: [
+    DialogHeader,
     ReactiveFormsModule,
     MatDialogModule,
     MatFormFieldModule,

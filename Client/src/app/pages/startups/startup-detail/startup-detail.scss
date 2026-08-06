@@ -1,63 +1,95 @@
+// Detalhe da startup — composed like the Monitoramento dashboard: small
+// `page-head`, shared `app-kpi-card` row, and tables inside a `table-shell`.
+
 .detail-page {
-  max-width: 1200px;
+  max-width: var(--content-max);
   margin: 0 auto;
-  padding: 32px 24px;
+  padding: var(--content-padding);
 }
 
-.detail-header {
+// ---------- Page head ----------
+.page-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: var(--space-sm);
+  margin-bottom: var(--panel-gap);
+}
+
+.header-logo,
+.header-logo-fallback {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-md);
+  flex: none;
 }
 
 .header-logo {
-  width: 44px;
-  height: 44px;
-  border-radius: 8px;
   object-fit: contain;
-  background-color: var(--mat-sys-surface-variant);
-  flex-shrink: 0;
+  background-color: var(--color-hover);
 }
 
+// Neutral, not accent-tinted: an avatar is chrome, and the brand keeps its
+// accents scarce so that what IS accented reads as meaningful.
 .header-logo-fallback {
-  width: 44px;
-  height: 44px;
-  font-size: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
-  background-color: var(--mat-sys-tertiary-container);
-  color: var(--mat-sys-on-tertiary-container);
-  flex-shrink: 0;
+  font-size: var(--icon-lg);
+  background-color: var(--color-hover);
+  color: var(--color-text-muted);
 }
 
-.header-info {
+.page-head-text {
   display: flex;
   flex-direction: column;
+  gap: var(--space-2xs);
+  min-width: 0;
 }
 
 .header-name-row {
   display: flex;
   align-items: baseline;
-  gap: 10px;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
 }
 
-.startup-name {
-  font-size: 24px;
-  font-weight: 500;
+// The pill is a BOX, not a run of text: baseline alignment lines up its inner
+// label with the title's baseline and drops the box below the optical centre.
+// It centres on the title's line instead, while the site link — which IS text —
+// keeps its baseline.
+app-status-badge {
+  align-self: center;
+}
+
+.page-head-title {
   margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-heading-md);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
 }
 
+.page-head-sub {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2xs);
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--fs-body-sm);
+}
+
+// Links carry the FUNCTIONAL accent (purple), not the primary ink (black).
 .header-site-link {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  font-size: 13px;
-  color: var(--mat-sys-primary);
+  gap: var(--space-2xs);
+  font-size: var(--fs-body-sm);
+  font-weight: var(--fw-medium);
+  color: var(--color-accent);
   text-decoration: none;
-  font-weight: 500;
   white-space: nowrap;
 
   &:hover {
@@ -66,166 +98,323 @@
 }
 
 .header-site-icon {
-  font-size: 14px;
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
+  font-size: 0.875rem;
 }
 
-.startup-meta {
-  font-size: 13px;
-  color: var(--mat-sys-on-surface-variant);
+.page-head-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-xs);
+  margin-inline-start: auto;
 }
 
-.editable {
-  cursor: pointer;
-  border-radius: 4px;
-  padding: 0 4px;
-  margin: 0 -4px;
-  transition: background-color 0.15s;
-
-  &:hover {
-    background-color: var(--mat-sys-surface-variant);
-  }
+.danger-btn {
+  --mdc-outlined-button-label-text-color: var(--color-danger);
+  color: var(--color-danger);
 }
 
-.inline-edit {
-  border: 1px solid var(--mat-sys-primary);
-  border-radius: 4px;
-  background: transparent;
-  color: inherit;
-  font-family: inherit;
-  outline: none;
-  padding: 2px 4px;
-}
-
-.inline-edit-name {
-  font-size: 24px;
-  font-weight: 500;
-  width: 300px;
-}
-
-.inline-edit-meta {
-  font-size: 13px;
-  width: 120px;
-}
-
-.date-hidden-input {
-  position: absolute;
-  width: 0;
-  height: 0;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.status-trigger {
-  cursor: pointer;
-}
-
-.header-spacer,
-.section-spacer {
-  flex: 1;
-}
-
-.section-card {
-  margin-bottom: 16px;
-
-  mat-card-header {
-    display: flex;
-    align-items: center;
-    padding: 16px 16px 0;
-  }
-
-  mat-card-content {
-    padding: 16px;
-  }
-}
-
-.summary-grid {
+// ---------- KPIs ----------
+.kpi-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 16px;
+  // Intrínseca, não por breakpoint: `repeat(N, minmax(0, 1fr))` obrigava N
+  // colunas e deixava cada uma encolher ABAIXO do conteúdo — daí o número
+  // cortado pela borda do card. Aqui o piso de 13.5rem é medido, não estimado:
+  // é a largura em que o valor mais largo cabe no menor tamanho de fonte. Quando
+  // não couberem N lado a lado, a grade quebra a linha em vez de espremer.
+  grid-template-columns: repeat(auto-fit, minmax(13.5rem, 1fr));
+  gap: var(--tile-gap);
+  // A margem segue em --panel-gap de propósito: é ela que separa a faixa da
+  // região seguinte, e o contraste com o gap interno é o que agrupa os tiles.
+  margin-bottom: var(--panel-gap);
 }
 
-.summary-item {
+// ---------- Sections ----------
+// The tablist is NAVIGATION, so it lives on the page background, outside the
+// content surface. Wrapping it in the same bordered box as the table made the
+// whole thing read as one grid — tabs looking like a header row of the
+// spreadsheet below. What switches is the PANEL; the tabs are chrome above it.
+// A barra alterna entre EMPILHADA e EM LINHA conforme o espaço disponível, não
+// conforme a viewport. Aqui as duas coisas não são a mesma: com a sidebar
+// acoplada, uma viewport de 1470px deixa 1158px de largura útil. Uma media
+// query precisaria embutir esse desconto de 312px — e erraria sempre que o
+// estado da sidebar mudasse. A container query mede o que de fato existe.
+//
+// O rail acompanha o modo. Uma tentativa anterior de quebrar a linha foi
+// revertida porque o rail morava fixo na barra: ao quebrar, a borda descia para
+// baixo do botão e riscava uma linha solta sob ele. Empilhado, o rail é a régua
+// das ABAS; em linha, é a borda da BARRA, e aí atravessa até a largura do painel.
+.detail-page {
+  container: detail / inline-size;
+}
+
+.sections-bar {
   display: flex;
   flex-direction: column;
-  background: var(--mat-sys-surface-container-low);
-  padding: 16px;
-  border-radius: 12px;
+  align-items: stretch;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
 }
 
-.summary-label {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--mat-sys-on-surface-variant);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  margin-bottom: 4px;
+.section-action {
+  flex: none;
+  // Largura natural: esticar a ação na largura toda daria a ela um peso de
+  // submit de formulário, que não é o que ela é.
+  align-self: flex-start;
 }
 
-.summary-value {
-  font-size: 17px;
-  font-weight: 600;
+// As abas rolam em vez de encolher até cortar o rótulo no meio da palavra —
+// que era exatamente o sintoma no mobile.
+.section-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-lg);
+  min-height: 2.75rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--color-border);
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-.summary-period {
-  font-size: 12px;
-  color: var(--mat-sys-on-surface-variant);
-  margin-top: 12px;
-  margin-bottom: 0;
-}
-
-.section-panel {
-  margin-bottom: 16px;
-
-  mat-panel-title {
-    font-size: 16px;
-    font-weight: 500;
+// 47rem = os 734px que abas e ação ocupam lado a lado, com folga para o
+// contador crescer. Medido, não estimado.
+@container detail (min-width: 47rem) {
+  .sections-bar {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-md);
+    border-bottom: 1px solid var(--color-border);
   }
 
-  mat-expansion-panel-header {
-    button {
-      margin-left: auto;
-    }
+  .section-tabs {
+    border-bottom: 0;
+  }
+
+  // Flush against the border the action read as part of the tab strip. The
+  // bottom margin is what gives it its own footing.
+  .section-action {
+    align-self: auto;
+    margin-bottom: var(--space-sm);
+  }
+}
+
+// The underline sits on the shared rail of `.sections-bar`, so the active tab
+// reads as connected to the panel it controls.
+.section-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-family: var(--font-display);
+  font-size: var(--fs-body-md);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+  transition:
+    color var(--transition-fast),
+    border-color var(--transition-fast);
+
+  &:hover {
+    color: var(--color-text);
+  }
+
+  &.is-active {
+    color: var(--color-text);
+    border-bottom-color: var(--color-accent);
+  }
+
+  // Anel PARA DENTRO. O strip rola na horizontal, e `overflow-x: auto` faz o
+  // `overflow-y` virar `auto` junto — o container passa a recortar nos quatro
+  // lados. Como as abas usam `align-items: stretch` e encostam nas bordas, um
+  // anel para fora era cortado em cima e embaixo em TODAS elas, e nas laterais
+  // da primeira e da última. Chegar na aba pelo teclado não mostrava onde
+  // estava, que é o mesmo que não ter foco visível.
+  &:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: -2px;
+    border-radius: var(--radius-sm);
+  }
+}
+
+// A count is data, not decoration: Inter, and set in a quiet chip so it never
+// reads as a column heading beside the label.
+.section-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  padding: 0 var(--space-2xs);
+  border-radius: var(--radius-full);
+  background-color: var(--color-hover);
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: var(--fs-body-xs);
+  font-weight: var(--fw-medium);
+  line-height: 1.4;
+}
+
+.section-tab.is-active .section-tab-count {
+  color: var(--color-text);
+}
+
+// The panel is the content surface — this is what carries the card chrome.
+.section-panel {
+  background-color: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+
+  // `[hidden]` é regra do user-agent, de especificidade mínima: qualquer
+  // `display` declarado aqui a venceria e os três painéis apareceriam
+  // empilhados. Explicitar mantém o atributo com poder de decisão.
+  &[hidden] {
+    display: none;
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: -2px;
+  }
+}
+
+.table-shell {
+  width: 100%;
+  overflow-x: auto;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: -2px;
   }
 }
 
 .section-table {
   width: 100%;
+  background: transparent;
+
+  th,
+  td {
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: 1px solid var(--color-border);
+    text-align: start;
+    white-space: nowrap;
+  }
+
+  // Header is Inter, small and semibold -- NOT mono, NOT uppercase. A table
+  // header is information, so it belongs to the body face.
+  th.mat-mdc-header-cell {
+    background-color: var(--color-surface);
+    color: var(--color-text-muted);
+    font-family: var(--font-body);
+    font-size: var(--fs-body-xs);
+    font-weight: var(--fw-semibold);
+    text-transform: none;
+  }
+
+  td.mat-mdc-cell {
+    color: var(--color-text);
+    font-family: var(--font-body);
+    font-size: var(--fs-body-sm);
+  }
+
+  // Numeric columns: right-aligned, tabular figures, mono -- fixed-width digits
+  // are what make amounts of different lengths line up as a column.
+  .is-num {
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+  }
+
+  td.is-num {
+    font-family: var(--font-mono);
+    font-size: var(--fs-body-xs);
+  }
+
+  tr.mat-mdc-row {
+    height: var(--table-row-h);
+    transition: background-color var(--transition-fast);
+
+    &:nth-child(even) {
+      background-color: var(--color-surface);
+    }
+  }
 
   .clickable-row {
     cursor: pointer;
 
     &:hover {
-      background-color: var(--mat-sys-surface-container-low);
+      background-color: var(--color-hover) !important;
     }
   }
 }
 
 .truncate-cell {
-  max-width: 300px;
+  max-width: 18rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+// An empty state carries its own action: it is the one moment the user most
+// needs it, and a toolbar button at the far corner is the furthest thing from
+// where they are looking.
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-2xl) var(--space-lg);
+}
+
 .empty-text {
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--color-text-muted);
   text-align: center;
-  padding: 24px 0;
   margin: 0;
 }
 
 @media (max-width: 768px) {
-  .detail-page {
-    padding: 16px;
+  .page-head-actions {
+    margin-inline-start: 0;
   }
+}
 
-  .summary-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
+@media (prefers-reduced-motion: reduce) {
+  .editable,
+  .status-trigger,
+  .section-table tr.mat-mdc-row {
+    transition: none;
   }
+}
+
+// Destructive item in the overflow menu — the only place the danger tone shows
+// up in the header, so it never competes with the routine actions.
+.menu-item-danger {
+  color: var(--color-danger);
+
+  .mat-icon {
+    color: var(--color-danger);
+  }
+}
+
+// Identity is one group: avatar + name + state. Separating it from the back
+// button and the actions is what stops the header reading as a single
+// undifferentiated row of four things.
+.page-head-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
 }

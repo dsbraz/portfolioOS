@@ -1,31 +1,11 @@
 .deal-form {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  min-width: 400px;
+  min-width: min(25rem, 100%);
   padding-top: 8px;
 }
 
-.form-row {
-  display: flex;
-  gap: 16px;
-
-  mat-form-field {
-    flex: 1;
-  }
-}
-
-mat-form-field {
+.field {
   width: 100%;
 }
 
-@media (max-width: 600px) {
-  .deal-form {
-    min-width: unset;
-  }
-
-  .form-row {
-    flex-direction: column;
-    gap: 4px;
-  }
-}

@@ -1,14 +1,9 @@
 .invite-form {
-  min-width: 360px;
+  min-width: min(22.5rem, 100%);
   padding-top: 8px;
 }
 
-mat-form-field {
+.field {
   width: 100%;
 }
 
-@media (max-width: 600px) {
-  .invite-form {
-    min-width: 0;
-  }
-}

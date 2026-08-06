@@ -1,8 +1,16 @@
+// Dealflow — mesmo registro das outras telas: `page-head` pequeno, painéis com
+// filete de 1px e canto de 8px, sem sombra.
+//
+// As colunas NÃO são coloridas. Cada uma com sua cor é o "arco-íris de cores por
+// seção" que a marca proíbe: cor deve carregar significado, e aqui a ordem das
+// colunas já é o significado. O kanban de referência do px-operations também
+// não colore coluna.
+
 .dealflow-page {
-  padding: 32px 24px;
-  height: 100%;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  padding: var(--content-padding);
   box-sizing: border-box;
 }
 
@@ -11,198 +19,258 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  width: fit-content;
-  max-width: 100%;
+  width: 100%;
+  max-width: var(--content-max);
   margin-inline: auto;
 }
 
-.page-header {
-  margin-bottom: 24px;
+// ---------- Page head ----------
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-md);
+  margin-bottom: var(--panel-gap);
   flex-shrink: 0;
 }
 
-.header-content {
+.page-head-text {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  min-width: 0;
 }
 
-.page-title {
-  font-size: 28px;
-  font-weight: 500;
+.page-head-title {
   margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-heading-md);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
 }
 
-.page-subtitle {
-  color: var(--mat-sys-on-surface-variant);
-  margin: 4px 0 0;
-  font-size: 14px;
+.page-head-sub {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--fs-body-sm);
 }
 
-.kanban-board {
+.page-head-actions {
   display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-inline-start: auto;
+}
 
-  gap: 16px;
+// ---------- Quadro ----------
+.kanban-board {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(15rem, 1fr);
+  align-items: stretch;
+  gap: var(--space-sm);
   flex: 1;
+  min-height: 0;
   overflow-x: auto;
-  padding-bottom: 16px;
+  padding-bottom: var(--space-xs);
 }
 
 .kanban-column {
-  min-width: 280px;
-  max-width: 320px;
-  flex: 1;
   display: flex;
   flex-direction: column;
-  background: var(--mat-sys-surface-container-low);
-  border-radius: 12px;
+  min-width: 15rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 
+// A altura vem do botão, não do texto: o alvo padrão de 40px do Material ao
+// lado de um rótulo de 18px empurrava o cabeçalho para 65px. Com 28px (ainda
+// acima dos 24px da WCAG 2.5.8) e padding menor, fica nos ~44px da referência.
 .column-header {
   display: flex;
   align-items: center;
-  padding: 12px 16px;
-  border-top: 3px solid var(--_column-color);
-  gap: 8px;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm) var(--space-xs) var(--space-md);
+  background-color: var(--color-surface-2);
+  border-bottom: 1px solid var(--color-border);
 }
 
+// Inter, pequeno e semibold — NÃO caixa alta. O rótulo de coluna é informação,
+// não eyebrow decorativo.
 .column-title {
-  font-weight: 500;
-  font-size: 14px;
+  margin: 0;
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--fs-body-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-normal);
+  text-transform: none;
 }
 
+// Contagem em mono: é número, e a largura fixa dos dígitos mantém o cabeçalho
+// estável quando o valor muda.
 .column-count {
-  background: var(--mat-sys-surface-variant);
-  color: var(--mat-sys-on-surface-variant);
-  border-radius: 12px;
-  padding: 2px 8px;
-  font-size: 12px;
-  font-weight: 500;
+  padding: 1px var(--space-xs);
+  border-radius: var(--radius-full);
+  background-color: var(--color-hover);
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--fs-decoration-sm);
+  line-height: var(--lh-base);
 }
 
 .column-add {
+  --mdc-icon-button-state-layer-size: 1.75rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
   margin-left: auto;
-  width: 28px !important;
-  height: 28px !important;
+  flex: none;
+  color: var(--color-text-muted);
 
-  mat-icon {
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
+  .mat-icon {
+    width: 1.125rem;
+    height: 1.125rem;
+    font-size: 1.125rem;
   }
 }
 
 .column-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 8px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-sm);
+  flex: 1;
+  min-height: 12rem;
+  padding: var(--space-sm);
+  overflow-y: auto;
 }
 
+// ---------- Card ----------
 .deal-card {
-  background: var(--mat-sys-surface-bright);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  padding: var(--space-md);
+  background-color: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: none;
   cursor: pointer;
-  transition: box-shadow 0.2s;
+  transition: border-color var(--transition-fast);
 
+  // Sem elevação e sem deslocar no hover: o card é um painel, não um objeto
+  // flutuante. A borda escurecendo já é a afordância.
   &:hover {
-    box-shadow: var(--mat-sys-level2);
+    border-color: var(--color-gray-500);
   }
 
   mat-card-content {
-    padding: 12px !important;
-    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+    padding: 0 !important;
   }
 }
 
 .deal-empresa {
-  font-weight: 500;
-  font-size: 14px;
-  margin-bottom: 4px;
+  font-family: var(--font-body);
+  font-size: var(--fs-body-sm);
+  font-weight: var(--fw-medium);
+  color: var(--color-text);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
+// Block para a tag abaixo começar a própria linha.
 .deal-setor {
-  font-size: 12px;
-  color: var(--mat-sys-on-surface-variant);
+  display: block;
+  font-size: var(--fs-body-xs);
+  color: var(--color-text-muted);
 }
 
-.deal-chips {
-  margin-top: 8px;
-
-  mat-chip {
-    font-size: 11px;
-  }
+// A rodada é um descritor, não uma ação — por isso tag, não chip.
+.deal-round {
+  margin-top: var(--space-2xs);
 }
 
 .deal-next-step {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-top: 8px;
-  font-size: 12px;
-  color: var(--mat-sys-on-surface-variant);
+  gap: var(--space-2xs);
+  margin-top: var(--space-2xs);
+  font-size: var(--fs-body-xs);
+  color: var(--color-text-muted);
 
+  // Herda a tinta do texto ao lado, sem cor própria. O laranja da marca media
+  // 2,77:1 aqui: um ícone de 14px é texto pequeno para todos os efeitos, e o
+  // contrato de acentos reserva o laranja para preenchimento, nunca para traço
+  // fino em fundo claro. A seta é decorativa (`aria-hidden`) e o texto ao lado
+  // carrega o significado — ela não precisa de destaque, precisa de legibilidade.
   mat-icon {
-    font-size: 14px;
-    width: 14px;
-    height: 14px;
-    color: var(--mat-sys-tertiary);
+    flex: none;
+    width: 0.875rem;
+    height: 0.875rem;
+    font-size: 0.875rem;
   }
 }
 
+// Nome e ações na MESMA linha flex. Posicionar o botão em absolute exigia
+// calibrar offsets contra o padding e a altura de linha do título — número
+// mágico que quebra assim que a tipografia muda. No flex o alinhamento é
+// consequência, não ajuste.
+.deal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xs);
+}
+
+// Só o GLIFO precisa cair na linha do padding; a caixa do botão pode passar
+// dela. A margem negativa é exatamente o recuo do ícone dentro do botão, então
+// o alvo de toque continua inteiro.
 .deal-actions {
-  position: absolute;
-  top: 4px;
-  right: 4px;
+  --_btn-size: 2rem;
+  --_icon-size: var(--icon-md);
+
+  flex: none;
+  margin-right: calc((var(--_btn-size) - var(--_icon-size)) / -2);
 }
 
 .deal-menu-btn {
-  width: 28px !important;
-  height: 28px !important;
-  opacity: 0;
-  transition: opacity 0.2s;
+  // Pelo token, não por width/height: sem isso o state layer (o círculo de
+  // hover) continua nos 40px padrão e transborda a caixa do botão.
+  --mdc-icon-button-state-layer-size: var(--_btn-size);
 
-  mat-icon {
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
+  // Centralização explícita: ao redimensionar o botão, o Material deixa de
+  // centrar o glifo sozinho e ele fica ~2px acima do centro da caixa.
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: var(--_btn-size);
+  height: var(--_btn-size);
+  padding: 0;
+  color: var(--color-text-muted);
+
+  .mat-icon {
+    width: var(--_icon-size);
+    height: var(--_icon-size);
+    font-size: var(--_icon-size);
   }
-}
-
-.deal-card:hover .deal-menu-btn {
-  opacity: 1;
-}
-
-// Drag-and-drop styles (scoped — preview/placeholder globals are in styles.scss)
-.deal-card.cdk-drag-animating {
-  transition: transform 200ms ease-out;
-}
-
-.column-content.cdk-drop-list-dragging .deal-card:not(.cdk-drag-placeholder) {
-  transition: transform 200ms ease-out;
 }
 
 .empty-column {
+  padding: var(--space-lg) 0;
   text-align: center;
-  padding: 24px 8px;
-  color: var(--mat-sys-on-surface-variant);
-  font-size: 13px;
+  color: var(--color-text-muted);
+  font-size: var(--fs-body-xs);
 }
 
-@media (max-width: 768px) {
-  .dealflow-page {
-    padding: 16px;
-  }
-
-  .header-content {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-
-  .kanban-column {
-    min-width: 260px;
+@media (prefers-reduced-motion: reduce) {
+  .deal-card {
+    transition: none;
   }
 }

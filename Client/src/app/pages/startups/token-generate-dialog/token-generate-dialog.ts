@@ -20,9 +20,12 @@ export interface TokenGenerateDialogData {
   year: number;
 }
 
+import { DialogHeader } from '../../../components/dialog-header/dialog-header';
+
 @Component({
   selector: 'app-token-generate-dialog',
   imports: [
+    DialogHeader,
     ReactiveFormsModule,
     MatDialogModule,
     MatFormFieldModule,

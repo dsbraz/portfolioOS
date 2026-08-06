@@ -1,12 +1,14 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSortModule } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 
 import { UserResponse } from '../../models/auth.model';
+import { SortState, applySort } from '../../models/sorting';
 import { AuthService } from '../../services/auth.service';
 import { UserInviteService } from '../../services/user-invite.service';
 import { UserInviteDialog } from './user-invite-dialog/user-invite-dialog';
@@ -24,6 +26,7 @@ import { UserFormDialog, UserFormDialogData } from './user-form-dialog/user-form
     MatDialogModule,
     MatIconModule,
     MatSnackBarModule,
+    MatSortModule,
     MatTableModule,
   ],
   templateUrl: './users.html',
@@ -38,6 +41,19 @@ export class Users implements OnInit {
   readonly users = signal<UserResponse[]>([]);
   readonly loading = signal(false);
   readonly displayedColumns = ['username', 'email', 'is_active', 'created_at', 'actions'];
+
+  readonly sort = signal<SortState>({ active: '', direction: '' });
+
+  readonly sortedUsers = computed(() =>
+    applySort(this.users(), this.sort(), {
+      username: (user) => user.username,
+      email: (user) => user.email,
+      // Booleano vira número para ter ordem: ascendente traz Inativo primeiro.
+      is_active: (user) => (user.is_active ? 1 : 0),
+      // Timestamp ISO ordena corretamente como texto.
+      created_at: (user) => user.created_at,
+    }),
+  );
 
   ngOnInit(): void {
     this.loadUsers();

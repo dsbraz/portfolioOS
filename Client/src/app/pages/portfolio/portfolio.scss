@@ -1,221 +1,282 @@
+// Monitoramento — composed after the px-operations redesign dashboard
+// (`BrqPageHeader`, `BrqKpiBar`, `BrqTableShell`).
+//
+// The header is deliberately SMALL: a 40px display title reads like a marketing
+// page, a ~20px title reads like the dense internal tool this is. No eyebrow —
+// the dashboard in the original design goes straight from title to subtitle,
+// and naming the section here only repeats the sidebar.
+
 .monitoring-page {
-  max-width: 1200px;
+  max-width: var(--content-max);
   margin: 0 auto;
-  padding: 32px 24px;
+  padding: var(--content-padding);
 }
 
-.page-header {
-  margin-bottom: 24px;
-}
-
-.header-content {
+// ---------- Page head ----------
+.page-head {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-md);
+  margin-bottom: var(--panel-gap);
 }
 
-.page-title {
-  font-size: 28px;
-  font-weight: 500;
+.page-head-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  min-width: 0;
+}
+
+.page-head-title {
   margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-heading-md);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
 }
 
-.page-subtitle {
-  color: var(--mat-sys-on-surface-variant);
-  margin: 4px 0 0;
-  font-size: 14px;
+.page-head-sub {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--fs-body-sm);
+}
+
+.page-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-inline-start: auto;
 }
 
 .period-navigation {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  margin-top: 8px;
+  gap: var(--space-2xs);
 }
 
 .period-label {
-  min-width: 72px;
+  min-width: 4.5rem;
   text-align: center;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--mat-sys-on-surface);
+  font-size: var(--fs-body-sm);
+  font-weight: var(--fw-medium);
+  color: var(--color-text);
 }
 
+// ---------- KPIs ----------
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
+  // Intrínseca, não por breakpoint: `repeat(N, minmax(0, 1fr))` obrigava N
+  // colunas e deixava cada uma encolher ABAIXO do conteúdo — daí o número
+  // cortado pela borda do card. Aqui o piso de 13.5rem é medido, não estimado:
+  // é a largura em que o valor mais largo cabe no menor tamanho de fonte. Quando
+  // não couberem N lado a lado, a grade quebra a linha em vez de espremer.
+  grid-template-columns: repeat(auto-fit, minmax(13.5rem, 1fr));
+  gap: var(--tile-gap);
+  // A margem segue em --panel-gap de propósito: é ela que separa a faixa da
+  // região seguinte, e o contraste com o gap interno é o que agrupa os tiles.
+  margin-bottom: var(--panel-gap);
 }
 
-.kpi-stacked {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-
-  app-kpi-card {
-    flex: 1;
-  }
+// The health distribution is a panel of its own rather than a KPI tile: it
+// carries a bar plus a legend, so it needs the full width to stay readable.
+.health-panel {
+  padding: var(--space-lg);
+  margin-bottom: var(--panel-gap);
+  background-color: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
 }
 
-.kpi-health-card {
-  .kpi-card {
-    height: 100%;
-  }
-
-  mat-card-content {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    padding: 20px !important;
-    height: 100%;
-    box-sizing: border-box;
-  }
-
-  .kpi-icon-wrapper {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    background: var(--mat-sys-tertiary-container);
-    color: var(--mat-sys-on-tertiary-container);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-
-    mat-icon {
-      font-size: 24px;
-      width: 24px;
-      height: 24px;
-    }
-  }
-
-  .kpi-info {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .kpi-label {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--mat-sys-on-surface-variant);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 4px;
-  }
+.health-panel-label {
+  margin: 0 0 var(--space-sm);
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: var(--fs-body-xs);
+  font-weight: var(--fw-medium);
 }
 
-.kpi-report .kpi-icon-wrapper {
-  background: var(--mat-sys-secondary-container);
-  color: var(--mat-sys-on-secondary-container);
-}
+// ---------- Table ----------
+.table-shell {
+  width: 100%;
+  overflow-x: auto;
+  background-color: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
 
-.kpi-routines .kpi-icon-wrapper {
-  background: var(--mat-sys-tertiary-container);
-  color: var(--mat-sys-on-tertiary-container);
-}
-
-.table-card {
-  overflow: hidden;
+  &:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: -2px;
+  }
 }
 
 .monitoring-table {
   width: 100%;
+  min-width: 58rem;
+  background: transparent;
+
+  th,
+  td {
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: 1px solid var(--color-border);
+    text-align: start;
+    white-space: nowrap;
+  }
+
+  // Header is Inter, small and semibold -- NOT mono, NOT uppercase. A table
+  // header is information, so it belongs to the body face.
+  thead th,
+  th.mat-mdc-header-cell {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background-color: var(--color-surface);
+    color: var(--color-text-muted);
+    font-family: var(--font-body);
+    font-size: var(--fs-body-xs);
+    font-weight: var(--fw-semibold);
+    letter-spacing: var(--ls-normal);
+    text-transform: none;
+  }
+
+  td.mat-mdc-cell {
+    color: var(--color-text);
+    font-family: var(--font-body);
+    font-size: var(--fs-body-sm);
+  }
+
+  // Numeric columns: right-aligned, tabular figures, mono. This is the one
+  // place mono earns its way into a table -- fixed-width digits are what make
+  // amounts of different lengths line up as a column instead of ragged text.
+  // The HEADER stays Inter; mono on a table header is the classic error.
+  .is-num {
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+  }
+
+  td.is-num {
+    font-family: var(--font-mono);
+    font-size: var(--fs-body-xs);
+    letter-spacing: var(--ls-normal);
+  }
+
+  tr.mat-mdc-row {
+    height: var(--table-row-h);
+    background-color: transparent;
+    transition: background-color var(--transition-fast);
+
+    &:nth-child(even) {
+      background-color: var(--color-surface);
+    }
+  }
 }
 
 .startup-cell {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-sm);
 }
 
 .startup-logo {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-sm);
   object-fit: contain;
-  background-color: var(--mat-sys-surface-variant);
+  background-color: var(--color-hover);
   flex-shrink: 0;
 }
 
+// Neutral, not accent-tinted: an avatar is chrome, and the brand keeps its
+// accents scarce so that what IS accented reads as meaningful.
 .startup-logo-fallback {
-  width: 32px;
-  height: 32px;
-  font-size: 18px;
+  width: 2rem;
+  height: 2rem;
+  font-size: var(--fs-body-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
-  background-color: var(--mat-sys-tertiary-container);
-  color: var(--mat-sys-on-tertiary-container);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-hover);
+  color: var(--color-text-muted);
   flex-shrink: 0;
 }
 
 .startup-name {
-  font-weight: 500;
+  font-weight: var(--fw-medium);
+  color: var(--color-text);
 }
 
 .startup-setor {
-  font-size: 12px;
-  color: var(--mat-sys-on-surface-variant);
+  font-size: var(--fs-body-xs);
+  color: var(--color-text-muted);
 }
 
 .clickable-row {
   cursor: pointer;
 
   &:hover {
-    background: var(--mat-sys-surface-variant);
+    background-color: var(--color-hover) !important;
   }
 }
 
+// ---------- Empty state ----------
 .empty-state {
   text-align: center;
-  padding: 64px 24px;
+  padding: var(--space-3xl) var(--space-lg);
+  background-color: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: none;
 
   .empty-icon {
-    font-size: 64px;
-    width: 64px;
-    height: 64px;
-    color: var(--mat-sys-tertiary);
-    margin-bottom: 16px;
+    font-size: var(--fs-decoration-3xl);
+    width: var(--fs-decoration-3xl);
+    height: var(--fs-decoration-3xl);
+    color: var(--color-gray-500);
+    margin-bottom: var(--space-md);
   }
 
   h2 {
-    margin: 0 0 8px;
-    font-weight: 500;
+    margin: 0 0 var(--space-xs);
+    font-family: var(--font-display);
+    font-size: var(--fs-heading-md);
+    font-weight: var(--fw-medium);
   }
 
   p {
-    color: var(--mat-sys-on-surface-variant);
+    color: var(--color-text-muted);
     margin: 0;
   }
 }
 
-@media (max-width: 1024px) {
-  .kpi-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .kpi-stacked {
-    flex-direction: row;
+@media (max-width: 768px) {
+  .page-head-actions {
+    margin-inline-start: 0;
   }
 }
 
-@media (max-width: 768px) {
-  .monitoring-page {
-    padding: 16px;
+@media (prefers-reduced-motion: reduce) {
+  .monitoring-table tr.mat-mdc-row {
+    transition: none;
   }
+}
 
-  .header-content {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
+// Célula de status: julgamento em cima, fato do período embaixo. Mesma
+// densidade de duas linhas que a coluna "Startup" já usa (nome + setor).
+.status-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2xs);
+}
 
-  .kpi-grid {
-    grid-template-columns: 1fr;
-  }
+// Discreta de propósito: é uma nota de contexto, não um segundo estado. Quem
+// escaneia a tabela procura o pill; esta linha responde depois que o olho parou.
+.status-note {
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: var(--fs-body-xs);
+  white-space: nowrap;
 }

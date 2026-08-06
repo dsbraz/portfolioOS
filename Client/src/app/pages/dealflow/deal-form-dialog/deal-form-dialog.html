@@ -1,62 +1,78 @@
-<h2 mat-dialog-title>{{ isEditMode ? 'Editar Deal' : 'Novo Deal' }}</h2>
+<app-dialog-header [title]="isEditMode ? 'Editar Deal' : 'Novo Deal'" />
 
 <mat-dialog-content>
   <form [formGroup]="form" class="deal-form">
-    <mat-form-field>
-      <mat-label>Empresa</mat-label>
-      <input matInput formControlName="company" />
-    </mat-form-field>
+    <div class="field">
+      <label class="field-label" id="l-314e-company" for="f-314e-company">Empresa</label>
+      <mat-form-field>
+  <input id="f-314e-company" matInput formControlName="company" />
+      </mat-form-field>
+    </div>
 
     <div class="form-row">
-      <mat-form-field>
-        <mat-label>Setor</mat-label>
-        <input matInput formControlName="sector" />
-      </mat-form-field>
+      <div class="field">
+        <label class="field-label" id="l-314e-sector" for="f-314e-sector">Setor</label>
+        <mat-form-field>
+  <input id="f-314e-sector" matInput formControlName="sector" />
+        </mat-form-field>
+      </div>
 
+      <div class="field">
+        <label class="field-label" id="l-314e-funding_round" for="f-314e-funding_round">Rodada</label>
+        <mat-form-field>
+  <mat-select aria-label="Rodada" formControlName="funding_round">
+            <mat-option value="">Nenhum</mat-option>
+            @for (opt of fundingRoundOptions; track opt) {
+              <mat-option [value]="opt">{{ opt }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label" id="l-314e-founders" for="f-314e-founders">Fundadores</label>
       <mat-form-field>
-        <mat-label>Rodada</mat-label>
-        <mat-select formControlName="funding_round">
-          <mat-option value="">Nenhum</mat-option>
-          @for (opt of fundingRoundOptions; track opt) {
-            <mat-option [value]="opt">{{ opt }}</mat-option>
+  <textarea id="f-314e-founders" matInput formControlName="founders" rows="2"></textarea>
+      </mat-form-field>
+    </div>
+
+    <div class="field">
+      <label class="field-label" id="l-314e-stage" for="f-314e-stage">Estagio</label>
+      <mat-form-field>
+  <mat-select aria-label="Estagio" formControlName="stage">
+          @for (s of stageOptions; track s) {
+            <mat-option [value]="s">{{ stageConfig[s].label }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
     </div>
 
-    <mat-form-field>
-      <mat-label>Fundadores</mat-label>
-      <textarea matInput formControlName="founders" rows="2"></textarea>
-    </mat-form-field>
+    <div class="field">
+      <label class="field-label" id="l-314e-internal_owner" for="f-314e-internal_owner">Responsavel Interno</label>
+      <mat-form-field>
+  <input id="f-314e-internal_owner" matInput formControlName="internal_owner" />
+      </mat-form-field>
+    </div>
 
-    <mat-form-field>
-      <mat-label>Estagio</mat-label>
-      <mat-select formControlName="stage">
-        @for (s of stageOptions; track s) {
-          <mat-option [value]="s">{{ stageConfig[s].label }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
+    <div class="field">
+      <label class="field-label" id="l-314e-next_step" for="f-314e-next_step">Próximo Passo</label>
+      <mat-form-field>
+  <textarea id="f-314e-next_step" matInput formControlName="next_step" rows="2"></textarea>
+      </mat-form-field>
+    </div>
 
-    <mat-form-field>
-      <mat-label>Responsavel Interno</mat-label>
-      <input matInput formControlName="internal_owner" />
-    </mat-form-field>
-
-    <mat-form-field>
-      <mat-label>Proximo Passo</mat-label>
-      <textarea matInput formControlName="next_step" rows="2"></textarea>
-    </mat-form-field>
-
-    <mat-form-field>
-      <mat-label>Notas</mat-label>
-      <textarea matInput formControlName="notes" rows="3"></textarea>
-    </mat-form-field>
+    <div class="field">
+      <label class="field-label" id="l-314e-notes" for="f-314e-notes">Notas</label>
+      <mat-form-field>
+  <textarea id="f-314e-notes" matInput formControlName="notes" rows="3"></textarea>
+      </mat-form-field>
+    </div>
   </form>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button mat-button (click)="onCancel()">Cancelar</button>
+  <button mat-stroked-button (click)="onCancel()">Cancelar</button>
   <button mat-flat-button color="primary" (click)="onSubmit()" [disabled]="form.invalid">
     {{ isEditMode ? 'Salvar' : 'Criar' }}
   </button>

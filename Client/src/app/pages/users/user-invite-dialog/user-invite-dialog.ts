@@ -8,9 +8,12 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { UserInviteService } from '../../../services/user-invite.service';
 
+import { DialogHeader } from '../../../components/dialog-header/dialog-header';
+
 @Component({
   selector: 'app-user-invite-dialog',
   imports: [
+    DialogHeader,
     ReactiveFormsModule,
     MatButtonModule,
     MatDialogModule,
