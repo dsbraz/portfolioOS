@@ -23,9 +23,9 @@ export class HealthBar {
     const t = this.total();
     if (t === 0) return [];
     return [
-      { label: 'Saudavel', count: d.healthy, pct: (d.healthy / t) * 100, color: STARTUP_STATUS_CONFIG[StartupStatus.HEALTHY].color },
-      { label: 'Atencao', count: d.warning, pct: (d.warning / t) * 100, color: STARTUP_STATUS_CONFIG[StartupStatus.WARNING].color },
-      { label: 'Critico', count: d.critical, pct: (d.critical / t) * 100, color: STARTUP_STATUS_CONFIG[StartupStatus.CRITICAL].color },
+      { label: 'Saudável', count: d.healthy, pct: (d.healthy / t) * 100, color: STARTUP_STATUS_CONFIG[StartupStatus.HEALTHY].color },
+      { label: 'Atenção', count: d.warning, pct: (d.warning / t) * 100, color: STARTUP_STATUS_CONFIG[StartupStatus.WARNING].color },
+      { label: 'Crítico', count: d.critical, pct: (d.critical / t) * 100, color: STARTUP_STATUS_CONFIG[StartupStatus.CRITICAL].color },
     ].filter(s => s.count > 0);
   });
 }

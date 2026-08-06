@@ -4,6 +4,17 @@ export enum StartupStatus {
   CRITICAL = 'critico',
 }
 
+/**
+ * Gravidade do status, para ordenação. O status é ORDINAL, não alfabético:
+ * ordenar por rótulo daria "Atenção, Crítico, Saudável", que não é ordem
+ * nenhuma. Crescente traz o mais saudável primeiro.
+ */
+export const STARTUP_STATUS_SEVERITY: Record<StartupStatus, number> = {
+  [StartupStatus.HEALTHY]: 0,
+  [StartupStatus.WARNING]: 1,
+  [StartupStatus.CRITICAL]: 2,
+};
+
 export interface Startup {
   id: string;
   name: string;
@@ -45,23 +56,30 @@ export interface StartupUpdate {
   notes?: string | null;
 }
 
+/** Status tone. Drives the `.pill--*` class, which pairs the text color with
+ *  its matching tint so the contrast ratio holds in both themes. */
+export type StatusTone = 'good' | 'warn' | 'danger';
+
 export const STARTUP_STATUS_CONFIG: Record<
   StartupStatus,
-  { label: string; color: string; icon: string }
+  { label: string; color: string; icon: string; tone: StatusTone }
 > = {
   [StartupStatus.HEALTHY]: {
-    label: 'Saudavel',
+    label: 'Saudável',
     color: 'var(--app-status-healthy)',
     icon: 'check_circle',
+    tone: 'good',
   },
   [StartupStatus.WARNING]: {
-    label: 'Atencao',
+    label: 'Atenção',
     color: 'var(--app-status-warning)',
     icon: 'warning',
+    tone: 'warn',
   },
   [StartupStatus.CRITICAL]: {
-    label: 'Critico',
+    label: 'Crítico',
     color: 'var(--app-status-critical)',
     icon: 'error',
+    tone: 'danger',
   },
 };

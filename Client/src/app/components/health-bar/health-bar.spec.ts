@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { HealthBar } from './health-bar';
 import { HealthDistribution } from '../../models/portfolio.model';
+import { STARTUP_STATUS_CONFIG, StartupStatus } from '../../models/startup.model';
 
 @Component({
   imports: [HealthBar],
@@ -51,6 +52,11 @@ describe('HealthBar', () => {
     const component = fixture.debugElement.children[0].componentInstance as HealthBar;
     const segments = component.segments();
     expect(segments.length).toBe(2);
-    expect(segments.map((s) => s.label)).toEqual(['Saudavel', 'Critico']);
+    // Read the labels from the config rather than repeating the strings, so a
+    // copy change never shows up as a false test failure.
+    expect(segments.map((s) => s.label)).toEqual([
+      STARTUP_STATUS_CONFIG[StartupStatus.HEALTHY].label,
+      STARTUP_STATUS_CONFIG[StartupStatus.CRITICAL].label,
+    ]);
   });
 });
