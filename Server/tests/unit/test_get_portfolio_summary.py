@@ -18,6 +18,7 @@ def startup_repo():
 def indicator_repo():
     repo = AsyncMock()
     repo.get_accumulated_revenue_by_startups.return_value = {}
+    repo.get_last_reported_period_by_startups.return_value = {}
     return repo
 
 
@@ -219,3 +220,53 @@ async def test_should_raise_when_period_is_in_the_future(use_case):
 
     with pytest.raises(ValueError, match="nao pode ser no futuro"):
         await use_case.execute(month=month, year=year)
+
+
+@pytest.mark.asyncio
+async def test_exposes_last_reported_period_per_startup(
+    use_case, startup_repo, indicator_repo, meeting_repo
+):
+    """O ultimo reporte permite distinguir 'nao reportou este mes' de 'zerou'."""
+    reported = _make_startup()
+    stale = _make_startup()
+    never = _make_startup()
+    startup_repo.get_all.return_value = ([reported, stale, never], 3)
+
+    indicator = MagicMock()
+    indicator.total_revenue = Decimal("100")
+    indicator.cash_balance = None
+    indicator.ebitda_burn = None
+    indicator.headcount = None
+    indicator_repo.get_by_startups_and_period.return_value = {reported.id: indicator}
+    indicator_repo.get_last_reported_period_by_startups.return_value = {
+        reported.id: (2026, 7),
+        stale.id: (2026, 4),
+    }
+    meeting_repo.get_startup_ids_with_recent_meetings.return_value = set()
+
+    result = await use_case.execute(7, 2026)
+
+    by_id = {item.startup.id: item for item in result.startups}
+    assert (by_id[reported.id].last_reported_year, by_id[reported.id].last_reported_month) == (2026, 7)
+    assert (by_id[stale.id].last_reported_year, by_id[stale.id].last_reported_month) == (2026, 4)
+    assert by_id[never.id].last_reported_year is None
+    assert by_id[never.id].last_reported_month is None
+
+
+@pytest.mark.asyncio
+async def test_last_reported_period_is_bounded_by_the_selected_period(
+    use_case, startup_repo, indicator_repo, meeting_repo
+):
+    """Olhando Fev, um reporte de Jul nao existe ainda — o repositorio recebe o
+    periodo consultado justamente para nao devolver o futuro."""
+    startup = _make_startup()
+    startup_repo.get_all.return_value = ([startup], 1)
+    indicator_repo.get_by_startups_and_period.return_value = {}
+    indicator_repo.get_last_reported_period_by_startups.return_value = {}
+    meeting_repo.get_startup_ids_with_recent_meetings.return_value = set()
+
+    await use_case.execute(2, 2026)
+
+    indicator_repo.get_last_reported_period_by_startups.assert_awaited_once()
+    args = indicator_repo.get_last_reported_period_by_startups.await_args
+    assert args.args[1:] == (2, 2026) or args.kwargs.get("month") == 2

@@ -20,6 +20,10 @@ class StartupSummary:
     ebitda_burn: Decimal | None = None
     headcount: int | None = None
     accumulated_revenue_ytd: Decimal | None = None
+    # Ultimo periodo reportado ate o periodo consultado. Sem isso, uma linha
+    # vazia nao distingue "nao reportou este mes" de "reportou zero".
+    last_reported_month: int | None = None
+    last_reported_year: int | None = None
 
 
 @dataclass(frozen=True)

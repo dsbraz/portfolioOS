@@ -1,11 +1,27 @@
 import uuid
 from decimal import Decimal
 
-from sqlalchemy import func, select
+from sqlalchemy import Integer, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.models.monthly_indicator import MonthlyIndicator
 from app.domain.models.monthly_indicator_token import MonthlyIndicatorToken
+
+
+def period_expression():
+    """`ano * 100 + mes` como inteiro comparavel e ordenavel (202607).
+
+    Dispensa comparar dois campos e evita o classico de Dez/2025 vencer
+    Jan/2026 por ter mes maior.
+
+    Os DOIS casts sao necessarios, nao decorativos: `year` e `month` sao
+    SMALLINT, e o tipo da soma segue o ultimo operando. Convertendo so o `year`,
+    o literal da comparacao ainda saia como int16 -- 202607 estoura o limite de
+    32767 e o asyncpg recusa o parametro em runtime.
+    """
+    return cast(MonthlyIndicator.year, Integer) * 100 + cast(
+        MonthlyIndicator.month, Integer
+    )
 
 
 class MonthlyIndicatorRepository:
@@ -78,6 +94,37 @@ class MonthlyIndicatorRepository:
         indicators = list(result.scalars().all())
 
         return {ind.startup_id: ind for ind in indicators}
+
+    async def get_last_reported_period_by_startups(
+        self, startup_ids: list[uuid.UUID], month: int, year: int
+    ) -> dict[uuid.UUID, tuple[int, int]]:
+        """Ultimo periodo reportado por startup, ATE o periodo consultado.
+
+        O limite superior importa: olhando Fev/2026, um reporte de Jul/2026 e
+        futuro em relacao ao recorte da tela, e exibi-lo diria que a startup
+        reportou algo que, naquele contexto, ainda nao aconteceu.
+
+        Retorna `(ano, mes)`; startups sem nenhum reporte ficam fora do dict.
+        """
+        if not startup_ids:
+            return {}
+
+        period = period_expression()
+
+        result = await self._session.execute(
+            select(MonthlyIndicator.startup_id, func.max(period))
+            .where(
+                MonthlyIndicator.startup_id.in_(startup_ids),
+                period <= year * 100 + month,
+            )
+            .group_by(MonthlyIndicator.startup_id)
+        )
+
+        return {
+            row[0]: (row[1] // 100, row[1] % 100)
+            for row in result.all()
+            if row[1] is not None
+        }
 
     async def get_accumulated_revenue_by_startups(
         self, startup_ids: list[uuid.UUID], month: int, year: int
