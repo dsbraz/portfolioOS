@@ -1,9 +1,15 @@
+// A página pública é uma coluna: cabeçalho de marca no topo, formulário
+// centrado abaixo. Sem card em volta — as seções já se separam por filete.
 .report-page {
   min-height: 100vh;
-  background: var(--mat-sys-surface);
-  display: flex;
-  justify-content: center;
-  padding: 40px 16px;
+  background-color: var(--color-bg);
+}
+
+.report-container {
+  max-width: 48rem;
+  margin-inline: auto;
+  padding-inline: var(--content-padding);
+  padding-bottom: var(--space-3xl);
 }
 
 .report-center {
@@ -11,105 +17,39 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: var(--space-md);
   min-height: 200px;
 }
 
 .error-icon {
-  font-size: 48px;
-  width: 48px;
-  height: 48px;
-  color: var(--mat-sys-error);
+  font-size: var(--fs-decoration-xl);
+  width: var(--fs-decoration-xl);
+  height: var(--fs-decoration-xl);
+  color: var(--color-danger);
 }
 
 .error-text {
-  color: var(--mat-sys-on-surface-variant);
-  font-size: 16px;
+  color: var(--color-text-muted);
+  font-size: var(--fs-body-md);
 }
 
 .success-icon {
-  font-size: 64px;
-  width: 64px;
-  height: 64px;
-  color: var(--app-status-healthy);
+  font-size: var(--fs-decoration-3xl);
+  width: var(--fs-decoration-3xl);
+  height: var(--fs-decoration-3xl);
+  color: var(--color-good);
 }
 
 .success-text {
-  color: var(--mat-sys-on-surface-variant);
-}
-
-.report-container {
-  width: 100%;
-  max-width: 600px;
-}
-
-.report-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.report-logo {
-  width: 56px;
-  height: 56px;
-  border-radius: 10px;
-  object-fit: contain;
-  background: var(--mat-sys-surface-variant);
-  flex-shrink: 0;
-}
-
-.report-logo-fallback {
-  width: 56px;
-  height: 56px;
-  font-size: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  background: var(--mat-sys-surface-variant);
-  color: var(--mat-sys-on-surface-variant);
-  flex-shrink: 0;
-}
-
-.report-title {
-  font-size: 22px;
-  font-weight: 600;
-  margin: 0 0 4px;
-  color: var(--mat-sys-on-surface);
-}
-
-.report-subtitle {
-  font-size: 14px;
-  color: var(--mat-sys-on-surface-variant);
-  margin: 0;
+  color: var(--color-text-muted);
 }
 
 .report-form {
   display: flex;
   flex-direction: column;
-  gap: 4px;
 }
 
-.section-title {
-  margin: 12px 0 8px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: var(--mat-sys-on-surface-variant);
-  letter-spacing: 0.5px;
-}
-
-.form-row {
-  display: flex;
-  gap: 16px;
-
-  mat-form-field {
-    flex: 1;
-  }
-}
-
-mat-form-field {
+.field {
   width: 100%;
 
   --mat-form-field-subscript-text-size: 11px;
@@ -117,21 +57,42 @@ mat-form-field {
 
 .form-actions {
   display: flex;
-  justify-content: stretch;
-  margin-top: 8px;
-
-  button {
-    width: 100%;
-  }
+  justify-content: flex-end;
+  padding-block: var(--space-xl);
 }
 
 @media (max-width: 600px) {
-  .report-page {
-    padding: 24px 12px;
+  .report-container {
+    padding-inline: var(--space-md);
   }
 
   .form-row {
-    flex-direction: column;
-    gap: 4px;
-  }
+  // Intrinsecamente responsivo: as colunas colapsam quando não cabem, sem
+  // breakpoint. `auto-fit` + `minmax` deixa o container decidir — media query
+  // aqui só adivinharia a largura que o grid já sabe.
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+}
+
+.report-logo,
+.report-logo-fallback {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-md);
+  flex: none;
+}
+
+.report-logo {
+  object-fit: contain;
+  background-color: var(--color-hover);
+}
+
+.report-logo-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--icon-lg);
+  background-color: var(--color-hover);
+  color: var(--color-text-muted);
 }

@@ -1,183 +1,226 @@
 <div class="report-page">
+    <header class="public-top">
+      <div class="public-top-inner">
+        <img class="public-logo-on-light" src="logo-light.svg" alt="BRQ Portfolio" />
+        <img class="public-logo-on-dark" src="logo-dark.svg" alt="" aria-hidden="true" />
+      </div>
+    </header>
+
   @if (loading()) {
-    <div class="report-center">
-      <mat-spinner diameter="48" />
+    <div class="status-page">
+      <mat-spinner diameter="40" aria-label="Carregando" />
     </div>
   } @else if (error()) {
-    <div class="report-center">
-      <mat-icon class="error-icon">error_outline</mat-icon>
-      <p class="error-text">{{ error() }}</p>
+    <div class="status-page">
+      <div class="status-panel" role="alert">
+        <span class="status-panel-icon status-panel-icon--danger">
+          <mat-icon aria-hidden="true">error_outline</mat-icon>
+        </span>
+        <h1 class="status-panel-title">Não foi possível abrir o formulário</h1>
+        <p class="status-panel-text">{{ error() }}</p>
+      </div>
     </div>
   } @else if (submitted()) {
-    <div class="report-center">
-      <mat-icon class="success-icon">check_circle</mat-icon>
-      <h2>Relatorio enviado com sucesso!</h2>
-      <p class="success-text">
-        Obrigado por preencher o relatorio de
-        {{ monthLabels[context()!.month] }}/{{ context()!.year }}.
-      </p>
+    <div class="status-page">
+      <div class="status-panel" role="status">
+        <span class="status-panel-icon status-panel-icon--good">
+          <mat-icon aria-hidden="true">check_circle</mat-icon>
+        </span>
+        <h1 class="status-panel-title">Relatório enviado</h1>
+        <p class="status-panel-text">
+          Obrigado por preencher o relatório de
+          {{ monthLabels[context()!.month] }}/{{ context()!.year }}. Pode fechar esta página.
+        </p>
+      </div>
     </div>
   } @else if (context(); as ctx) {
     <div class="report-container">
-      <div class="report-header">
+      <div class="form-intro">
         @if (ctx.startup_logo_url) {
-          <img
-            [src]="ctx.startup_logo_url"
-            [alt]="ctx.startup_name + ' logo'"
-            class="report-logo"
-          />
+          <img [src]="ctx.startup_logo_url" [alt]="ctx.startup_name + ' logo'" class="report-logo" />
         } @else {
-          <mat-icon class="report-logo-fallback">business</mat-icon>
+          <mat-icon class="report-logo-fallback" aria-hidden="true">business</mat-icon>
         }
         <div>
-          <h1 class="report-title">Relatorio Mensal</h1>
-          <p class="report-subtitle">
+          <h1 class="form-intro-title">Relatório mensal</h1>
+          <p class="form-intro-meta">
             {{ ctx.startup_name }} &middot;
             {{ monthLabels[ctx.month] }}/{{ ctx.year }}
           </p>
         </div>
       </div>
 
-      <mat-card class="report-card">
-        <mat-card-content>
-          <form [formGroup]="form" class="report-form">
-            <h3 class="section-title">Indicadores Financeiros</h3>
+      <form [formGroup]="form" class="report-form" (ngSubmit)="onSubmit()">
+        <fieldset class="q" aria-labelledby="sec-indicadores" aria-describedby="hint-indicadores">
+          <div class="q-head">
+            <span class="q-num" aria-hidden="true">01</span>
+            <h2 class="q-title" id="sec-indicadores">Indicadores financeiros</h2>
+            <p class="q-hint" id="hint-indicadores">Os números fechados do mês. Deixe em branco o que ainda não tiver.</p>
+          </div>
 
             <div class="form-row">
-              <mat-form-field appearance="outline">
-                <mat-label>Receita do mes (R$)</mat-label>
-                <input
-                  matInput
-                  type="number"
-                  step="0.01"
-                  formControlName="total_revenue"
-                />
-                @if (form.controls.total_revenue.hasError('min') || form.controls.total_revenue.hasError('max')) {
-                  <mat-error>Valor fora do limite permitido</mat-error>
-                }
+              <div class="field">
+                <label class="field-label" id="l-aeaa-total_revenue" for="f-aeaa-total_revenue">Receita do mês</label>
+                <mat-form-field appearance="outline">
+  <input id="f-aeaa-total_revenue"
+                    matInput
+                    type="text" inputmode="decimal" appCurrencyInput
+                    step="0.01"
+                    formControlName="total_revenue"
+                  />
+                  @if (form.controls.total_revenue.hasError('min') || form.controls.total_revenue.hasError('max')) {
+                    <mat-error>Valor fora do limite permitido</mat-error>
+                  }
+                                <span matTextPrefix class="field-affix">R$&nbsp;</span>
               </mat-form-field>
+              </div>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Receita Recorrente (%)</mat-label>
-                <input
-                  matInput
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  formControlName="recurring_revenue_pct"
-                />
-                @if (form.controls.recurring_revenue_pct.hasError('min')) {
-                  <mat-error>Valor nao pode ser negativo</mat-error>
-                }
-                @if (form.controls.recurring_revenue_pct.hasError('max')) {
-                  <mat-error>Valor fora do limite permitido</mat-error>
-                }
+              <div class="field">
+                <label class="field-label" id="l-aeaa-recurring_revenue_pct" for="f-aeaa-recurring_revenue_pct">Percentual de receita recorrente</label>
+                <mat-form-field appearance="outline">
+  <input id="f-aeaa-recurring_revenue_pct"
+                    matInput
+                    type="number" (wheel)="$event.target.blur()"
+                    min="0"
+                    step="0.01"
+                    formControlName="recurring_revenue_pct"
+                  />
+                  @if (form.controls.recurring_revenue_pct.hasError('min')) {
+                    <mat-error>Valor nao pode ser negativo</mat-error>
+                  }
+                  @if (form.controls.recurring_revenue_pct.hasError('max')) {
+                    <mat-error>Valor fora do limite permitido</mat-error>
+                  }
+                                <span matTextSuffix class="field-affix">%</span>
               </mat-form-field>
-            </div>
-
-            <div class="form-row">
-              <mat-form-field appearance="outline">
-                <mat-label>Margem Bruta (%)</mat-label>
-                <input
-                  matInput
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  formControlName="gross_margin_pct"
-                />
-                @if (form.controls.gross_margin_pct.hasError('min')) {
-                  <mat-error>Valor nao pode ser negativo</mat-error>
-                }
-                @if (form.controls.gross_margin_pct.hasError('max')) {
-                  <mat-error>Valor fora do limite permitido</mat-error>
-                }
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>Saldo em caixa (R$)</mat-label>
-                <input
-                  matInput
-                  type="number"
-                  step="0.01"
-                  formControlName="cash_balance"
-                />
-                @if (form.controls.cash_balance.hasError('min') || form.controls.cash_balance.hasError('max')) {
-                  <mat-error>Valor fora do limite permitido</mat-error>
-                }
-              </mat-form-field>
+              </div>
             </div>
 
             <div class="form-row">
-              <mat-form-field appearance="outline">
-                <mat-label>Headcount</mat-label>
-                <input
-                  matInput
-                  type="number"
-                  min="0"
-                  step="1"
-                  formControlName="headcount"
-                />
-                @if (form.controls.headcount.hasError('min')) {
-                  <mat-error>Valor nao pode ser negativo</mat-error>
-                }
-                @if (form.controls.headcount.hasError('integer')) {
-                  <mat-error>Informe um numero inteiro</mat-error>
-                }
+              <div class="field">
+                <label class="field-label" id="l-aeaa-gross_margin_pct" for="f-aeaa-gross_margin_pct">Margem bruta</label>
+                <mat-form-field appearance="outline">
+  <input id="f-aeaa-gross_margin_pct"
+                    matInput
+                    type="number" (wheel)="$event.target.blur()"
+                    min="0"
+                    step="0.01"
+                    formControlName="gross_margin_pct"
+                  />
+                  @if (form.controls.gross_margin_pct.hasError('min')) {
+                    <mat-error>Valor nao pode ser negativo</mat-error>
+                  }
+                  @if (form.controls.gross_margin_pct.hasError('max')) {
+                    <mat-error>Valor fora do limite permitido</mat-error>
+                  }
+                                <span matTextSuffix class="field-affix">%</span>
               </mat-form-field>
+              </div>
 
+              <div class="field">
+                <label class="field-label" id="l-aeaa-cash_balance" for="f-aeaa-cash_balance">Saldo em caixa</label>
+                <mat-form-field appearance="outline">
+  <input id="f-aeaa-cash_balance"
+                    matInput
+                    type="text" inputmode="decimal" appCurrencyInput
+                    step="0.01"
+                    formControlName="cash_balance"
+                  />
+                  @if (form.controls.cash_balance.hasError('min') || form.controls.cash_balance.hasError('max')) {
+                    <mat-error>Valor fora do limite permitido</mat-error>
+                  }
+                                <span matTextPrefix class="field-affix">R$&nbsp;</span>
+              </mat-form-field>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="field">
+                <label class="field-label" id="l-aeaa-headcount" for="f-aeaa-headcount">Headcount</label>
+                <mat-form-field appearance="outline">
+  <input id="f-aeaa-headcount"
+                    matInput
+                    type="number" (wheel)="$event.target.blur()"
+                    min="0"
+                    step="1"
+                    formControlName="headcount"
+                  />
+                  @if (form.controls.headcount.hasError('min')) {
+                    <mat-error>Valor nao pode ser negativo</mat-error>
+                  }
+                  @if (form.controls.headcount.hasError('integer')) {
+                    <mat-error>Informe um numero inteiro</mat-error>
+                  }
+                </mat-form-field>
+              </div>
+
+              <div class="field">
+                <label class="field-label" id="l-aeaa-ebitda_burn" for="f-aeaa-ebitda_burn">Burn / EBITDA</label>
+                <mat-form-field appearance="outline">
+  <input id="f-aeaa-ebitda_burn"
+                    matInput
+                    type="text" inputmode="decimal" appCurrencyInput
+                    step="0.01"
+                    formControlName="ebitda_burn"
+                  />
+                  <mat-hint>Negativo para burn, positivo para EBITDA</mat-hint>
+                  @if (form.controls.ebitda_burn.hasError('min') || form.controls.ebitda_burn.hasError('max')) {
+                    <mat-error>Valor fora do limite permitido</mat-error>
+                  }
+                                <span matTextPrefix class="field-affix">R$&nbsp;</span>
+              </mat-form-field>
+              </div>
+            </div>
+
+        </fieldset>
+
+        <fieldset class="q" aria-labelledby="sec-comentarios" aria-describedby="hint-comentarios">
+          <div class="q-head">
+            <span class="q-num" aria-hidden="true">02</span>
+            <h2 class="q-title" id="sec-comentarios">Contexto do mês</h2>
+            <p class="q-hint" id="hint-comentarios">É o que mais ajuda o fundo a agir. Pode escrever à vontade.</p>
+          </div>
+
+            <div class="field">
+              <label class="field-label" id="l-aeaa-achievements" for="f-aeaa-achievements">Destaques do mês</label>
               <mat-form-field appearance="outline">
-                <mat-label>Burn / EBITDA (R$)</mat-label>
-                <input
+  <textarea id="f-aeaa-achievements"
                   matInput
-                  type="number"
-                  step="0.01"
-                  formControlName="ebitda_burn"
-                />
-                <mat-hint>Negativo para burn, positivo para EBITDA</mat-hint>
-                @if (form.controls.ebitda_burn.hasError('min') || form.controls.ebitda_burn.hasError('max')) {
-                  <mat-error>Valor fora do limite permitido</mat-error>
-                }
+                  formControlName="achievements"
+                  rows="4"
+                  placeholder="Principais conquistas, marcos atingidos, resultados relevantes..."
+                ></textarea>
               </mat-form-field>
             </div>
 
-            <h3 class="section-title">Comentarios</h3>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Destaques do mes</mat-label>
-              <textarea
-                matInput
-                formControlName="achievements"
-                rows="4"
-                placeholder="Principais conquistas, marcos atingidos, resultados relevantes..."
-              ></textarea>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Proximos passos e necessidades</mat-label>
-              <textarea
-                matInput
-                formControlName="challenges"
-                rows="4"
-                placeholder="Planos para o proximo mes, desafios, apoio necessario do fundo..."
-              ></textarea>
-            </mat-form-field>
-
-            <div class="form-actions">
-              <button
-                mat-flat-button
-                (click)="onSubmit()"
-                [disabled]="submitting() || form.invalid"
-              >
-                @if (submitting()) {
-                  <mat-spinner diameter="20" />
-                } @else {
-                  Enviar Relatorio
-                }
-              </button>
+            <div class="field">
+              <label class="field-label" id="l-aeaa-challenges" for="f-aeaa-challenges">Próximos passos e necessidades</label>
+              <mat-form-field appearance="outline">
+  <textarea id="f-aeaa-challenges"
+                  matInput
+                  formControlName="challenges"
+                  rows="4"
+                  placeholder="Planos para o próximo mês, desafios, apoio necessário do fundo..."
+                ></textarea>
+              </mat-form-field>
             </div>
-          </form>
-        </mat-card-content>
-      </mat-card>
+
+        </fieldset>
+
+        <div class="form-actions">
+          <button
+            mat-flat-button
+            type="submit"
+            [disabled]="submitting()"
+          >
+            @if (submitting()) {
+              <mat-spinner diameter="20" />
+            } @else {
+              Enviar relatório
+            }
+          </button>
+        </div>
+      </form>
     </div>
   }
 </div>
