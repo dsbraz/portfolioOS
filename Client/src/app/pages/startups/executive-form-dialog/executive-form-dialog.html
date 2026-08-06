@@ -1,46 +1,60 @@
 @if (isReadonly) {
-  <h2 mat-dialog-title>Executivo</h2>
+  <app-dialog-header title="Executivo" />
 } @else {
-  <h2 mat-dialog-title>{{ isEditMode ? 'Editar Executivo' : 'Novo Executivo' }}</h2>
+  <app-dialog-header [title]="isEditMode ? 'Editar Executivo' : 'Novo Executivo'" />
 }
 
 <mat-dialog-content>
+  @if (isReadonly) {
+    <app-read-view [sections]="readSections" />
+  } @else {
   <form [formGroup]="form" class="executive-form">
-    <mat-form-field appearance="outline">
-      <mat-label>Nome</mat-label>
-      <input matInput formControlName="name" />
-      @if (form.controls.name.hasError('required')) {
-        <mat-error>Nome e obrigatorio</mat-error>
-      }
-    </mat-form-field>
+    <div class="field">
+      <label class="field-label" id="l-886c-name" for="f-886c-name">Nome<span class="field-required" aria-hidden="true">*</span></label>
+      <mat-form-field appearance="outline">
+  <input id="f-886c-name" matInput formControlName="name" />
+        @if (form.controls.name.hasError('required')) {
+          <mat-error>Nome é obrigatório</mat-error>
+        }
+      </mat-form-field>
+    </div>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Cargo</mat-label>
-      <input matInput formControlName="role" />
-    </mat-form-field>
+    <div class="field">
+      <label class="field-label" id="l-886c-role" for="f-886c-role">Cargo</label>
+      <mat-form-field appearance="outline">
+  <input id="f-886c-role" matInput formControlName="role" />
+      </mat-form-field>
+    </div>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Email</mat-label>
-      <input matInput formControlName="email" type="email" />
-    </mat-form-field>
+    <div class="field">
+      <label class="field-label" id="l-886c-email" for="f-886c-email">Email</label>
+      <mat-form-field appearance="outline">
+  <input id="f-886c-email" matInput formControlName="email" type="email" />
+      </mat-form-field>
+    </div>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Telefone</mat-label>
-      <input matInput formControlName="phone" />
-    </mat-form-field>
+    <div class="field">
+      <label class="field-label" id="l-886c-phone" for="f-886c-phone">Telefone</label>
+      <mat-form-field appearance="outline">
+  <input id="f-886c-phone" matInput formControlName="phone" />
+      </mat-form-field>
+    </div>
 
-    <mat-form-field appearance="outline">
-      <mat-label>LinkedIn</mat-label>
-      <input matInput formControlName="linkedin" placeholder="https://linkedin.com/in/..." />
-    </mat-form-field>
+    <div class="field">
+      <label class="field-label" id="l-886c-linkedin" for="f-886c-linkedin">LinkedIn</label>
+      <mat-form-field appearance="outline">
+  <input id="f-886c-linkedin" matInput formControlName="linkedin" placeholder="https://linkedin.com/in/..." />
+      </mat-form-field>
+    </div>
   </form>
+  }
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
   @if (isReadonly) {
-    <button mat-button (click)="onCancel()">Fechar</button>
+    <button mat-stroked-button (click)="onCancel()">Fechar</button>
   } @else {
-    <button mat-button (click)="onCancel()">Cancelar</button>
+    <button mat-stroked-button (click)="onCancel()">Cancelar</button>
     <button mat-flat-button color="primary" (click)="onSubmit()" [disabled]="form.invalid">
       {{ isEditMode ? 'Salvar' : 'Adicionar' }}
     </button>

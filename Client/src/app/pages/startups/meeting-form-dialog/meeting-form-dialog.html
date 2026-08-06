@@ -1,48 +1,62 @@
 @if (isReadonly) {
-  <h2 mat-dialog-title>Reuniao de Conselho</h2>
+  <app-dialog-header title="Reunião de Conselho" />
 } @else {
-  <h2 mat-dialog-title>{{ isEditMode ? 'Editar Reuniao de Conselho' : 'Nova Reuniao de Conselho' }}</h2>
+  <app-dialog-header [title]="isEditMode ? 'Editar Reunião de Conselho' : 'Nova Reunião de Conselho'" />
 }
 
 <mat-dialog-content>
+  @if (isReadonly) {
+    <app-read-view [sections]="readSections" />
+  } @else {
   <form [formGroup]="form" class="meeting-form">
-    <mat-form-field appearance="outline">
-      <mat-label>Data</mat-label>
-      <input matInput [matDatepicker]="picker" formControlName="meeting_date" />
-      <mat-datepicker-toggle matIconSuffix [for]="picker" />
-      <mat-datepicker #picker />
-      @if (form.controls.meeting_date.hasError('required')) {
-        <mat-error>Data e obrigatoria</mat-error>
-      }
-    </mat-form-field>
+    <div class="field">
+      <label class="field-label" id="l-2482-meeting_date" for="f-2482-meeting_date">Data<span class="field-required" aria-hidden="true">*</span></label>
+      <mat-form-field appearance="outline">
+  <input id="f-2482-meeting_date" matInput [matDatepicker]="picker" formControlName="meeting_date" />
+        <mat-datepicker-toggle matIconSuffix [for]="picker" />
+        <mat-datepicker #picker />
+        @if (form.controls.meeting_date.hasError('required')) {
+          <mat-error>Data é obrigatória</mat-error>
+        }
+      </mat-form-field>
+    </div>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Participantes</mat-label>
-      <textarea matInput formControlName="participants" rows="3"></textarea>
-    </mat-form-field>
+    <div class="field">
+      <label class="field-label" id="l-2482-participants" for="f-2482-participants">Participantes</label>
+      <mat-form-field appearance="outline">
+  <textarea id="f-2482-participants" matInput formControlName="participants" rows="3"></textarea>
+      </mat-form-field>
+    </div>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Resumo</mat-label>
-      <textarea matInput formControlName="summary" rows="3"></textarea>
-    </mat-form-field>
+    <div class="field">
+      <label class="field-label" id="l-2482-summary" for="f-2482-summary">Resumo</label>
+      <mat-form-field appearance="outline">
+  <textarea id="f-2482-summary" matInput formControlName="summary" rows="3"></textarea>
+      </mat-form-field>
+    </div>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Pontos de Atencao</mat-label>
-      <textarea matInput formControlName="attention_points" rows="3"></textarea>
-    </mat-form-field>
+    <div class="field">
+      <label class="field-label" id="l-2482-attention_points" for="f-2482-attention_points">Pontos de Atenção</label>
+      <mat-form-field appearance="outline">
+  <textarea id="f-2482-attention_points" matInput formControlName="attention_points" rows="3"></textarea>
+      </mat-form-field>
+    </div>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Proximos Passos</mat-label>
-      <textarea matInput formControlName="next_steps" rows="3"></textarea>
-    </mat-form-field>
+    <div class="field">
+      <label class="field-label" id="l-2482-next_steps" for="f-2482-next_steps">Próximos passos</label>
+      <mat-form-field appearance="outline">
+  <textarea id="f-2482-next_steps" matInput formControlName="next_steps" rows="3"></textarea>
+      </mat-form-field>
+    </div>
   </form>
+  }
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
   @if (isReadonly) {
-    <button mat-button (click)="onCancel()">Fechar</button>
+    <button mat-stroked-button (click)="onCancel()">Fechar</button>
   } @else {
-    <button mat-button (click)="onCancel()">Cancelar</button>
+    <button mat-stroked-button (click)="onCancel()">Cancelar</button>
     <button mat-flat-button color="primary" (click)="onSubmit()" [disabled]="form.invalid">
       {{ isEditMode ? 'Salvar' : 'Adicionar' }}
     </button>

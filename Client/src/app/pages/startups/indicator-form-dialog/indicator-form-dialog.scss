@@ -1,40 +1,17 @@
 .indicator-form {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  min-width: 500px;
-  padding-top: 8px;
+  min-width: min(31.25rem, 100%);
+  padding-top: var(--space-xs);
 }
 
-.form-row {
-  display: flex;
-  gap: 16px;
-
-  mat-form-field {
-    flex: 1;
-  }
-}
-
+// A tipografia vem do `.section-title` global; aqui só o ritmo, que é do
+// contexto: um respiro maior acima para descolar do grupo anterior.
 .section-title {
-  margin: 8px 0 4px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: var(--mat-sys-on-surface-variant);
-  letter-spacing: 0.5px;
+  margin-block: var(--space-xs) var(--space-2xs);
 }
 
-mat-form-field {
+.field {
   width: 100%;
 }
 
-@media (max-width: 600px) {
-  .indicator-form {
-    min-width: unset;
-  }
-
-  .form-row {
-    flex-direction: column;
-    gap: 4px;
-  }
-}
