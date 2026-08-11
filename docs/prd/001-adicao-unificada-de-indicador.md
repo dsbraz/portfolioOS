@@ -5,7 +5,7 @@
 - **Audiência:** Daniel Braz e Mauricio Bueno
 - **Revisores:** Daniel Braz
 - **Última atualização:** 2026-08-11
-- **Relacionados:** [RFC-001 — Adição unificada de indicador](../rfc/001-adicao-unificada-de-indicador.md) · [PRD-002 — IA na plataforma](002-ia-na-plataforma.md) (níveis 2 e 3 da progressão de automação) · PR do redesign BRQ ([#1](https://github.com/dsbraz/portfolioOS/pull/1))
+- **Relacionados:** [RFC-001 — Adição unificada de indicador](../rfc/001-adicao-unificada-de-indicador.md) · [PRD-002 — IA na plataforma](002-ia-na-plataforma.md) (nível 2 da progressão de automação; o nível 3 é o futuro PRD-003) · PR do redesign BRQ ([#1](https://github.com/dsbraz/portfolioOS/pull/1))
 
 ## 1. Resumo
 

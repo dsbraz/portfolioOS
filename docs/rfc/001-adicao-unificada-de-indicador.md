@@ -274,8 +274,8 @@ sobre rotas que já existem e permanecem inalteradas:
 | `POST /api/startups/{id}/monthly-indicators` | modo "preencher agora" |
 | `PATCH /api/startups/{id}/monthly-indicators/{iid}` | edição (com anotação) |
 | `POST /api/startups/{id}/monthly-indicator-tokens` | modo "gerar link" (idempotente por período) |
-| `GET /api/public/monthly-indicator/{token}` | contexto público — sem `comments` |
-| `POST /api/public/monthly-indicator/{token}` | envio público — sem `comments` |
+| `GET /api/monthly-indicator/{token}` | contexto público — sem `comments` |
+| `POST /api/monthly-indicator/{token}` | envio público — sem `comments` |
 
 O envio por WhatsApp não aparece na tabela porque não é uma rota: `wa.me` é
 destino externo, e o telefone do destinatário vem dos executivos já carregados
