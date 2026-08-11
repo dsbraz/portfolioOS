@@ -14,9 +14,15 @@ export interface MeetingFormDialogData {
   readonly?: boolean;
 }
 
+import { DialogHeader } from '../../../components/dialog-header/dialog-header';
+import { ReadSection, ReadView } from '../../../components/read-view/read-view';
+import { formatIsoDate } from '../../../models/formatters';
+
 @Component({
   selector: 'app-meeting-form-dialog',
   imports: [
+    DialogHeader,
+    ReadView,
     ReactiveFormsModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -44,6 +50,28 @@ export class MeetingFormDialog implements OnInit {
     next_steps: [''],
   });
 
+  /** Ver [[ReadView]]: o modo leitura deixou de ser um formulário desabilitado. */
+  readonly readSections: ReadSection[] = this.buildReadSections();
+
+  /** A reunião não tem grupos no modo de edição, então também não tem aqui. */
+  private buildReadSections(): ReadSection[] {
+    const m = this.data?.meeting;
+    if (!m) return [];
+
+    return [
+      {
+        items: [
+          { label: 'Data', value: formatIsoDate(m.meeting_date) },
+          // Texto em branco é ausência: um textarea nunca preenchido chega vazio.
+          { label: 'Participantes', value: m.participants || null, kind: 'long' },
+          { label: 'Resumo', value: m.summary || null, kind: 'long' },
+          { label: 'Pontos de atenção', value: m.attention_points || null, kind: 'long' },
+          { label: 'Próximos passos', value: m.next_steps || null, kind: 'long' },
+        ],
+      },
+    ];
+  }
+
   ngOnInit(): void {
     if (this.data?.meeting) {
       const m = this.data.meeting;
@@ -51,9 +79,6 @@ export class MeetingFormDialog implements OnInit {
         ...m,
         meeting_date: new Date(m.meeting_date + 'T00:00:00'),
       });
-    }
-    if (this.isReadonly) {
-      this.form.disable();
     }
   }
 

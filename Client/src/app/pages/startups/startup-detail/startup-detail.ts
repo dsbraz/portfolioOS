@@ -1,4 +1,4 @@
-import { Component, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, computed, inject, OnInit, signal, viewChild, viewChildren } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -11,6 +11,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSortModule } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatMenuModule } from '@angular/material/menu';
@@ -19,6 +21,8 @@ import { forkJoin } from 'rxjs';
 
 import { Startup, StartupStatus, STARTUP_STATUS_CONFIG } from '../../../models/startup.model';
 import { MonthlyIndicator, MONTH_LABELS } from '../../../models/monthly-indicator.model';
+import { formatCurrencyBRL } from '../../../models/formatters';
+import { SortState, applySort } from '../../../models/sorting';
 import { participationValue } from '../../../models/participation';
 import { BoardMeeting } from '../../../models/board-meeting.model';
 import { Executive } from '../../../models/executive.model';
@@ -54,9 +58,12 @@ import {
   TokenGenerateDialogData,
 } from '../token-generate-dialog/token-generate-dialog';
 
+import { KpiCard } from '../../../components/kpi-card/kpi-card';
+
 @Component({
   selector: 'app-startup-detail',
   imports: [
+    KpiCard,
     DatePipe,
     FormsModule,
     MatButtonModule,
@@ -68,6 +75,8 @@ import {
     MatInputModule,
     MatNativeDateModule,
     MatSnackBarModule,
+    MatProgressSpinnerModule,
+    MatSortModule,
     MatTableModule,
     MatExpansionModule,
     MatMenuModule,
@@ -96,23 +105,86 @@ export class StartupDetail implements OnInit {
   readonly loading = signal(false);
   readonly monthLabels = MONTH_LABELS;
   readonly statusConfig = STARTUP_STATUS_CONFIG;
-  readonly statusOptions = Object.entries(STARTUP_STATUS_CONFIG).map(
-    ([value, cfg]) => ({ value: value as StartupStatus, ...cfg })
-  );
 
   private startupId = '';
 
-  readonly editingField = signal<'name' | 'sector' | 'date' | null>(null);
-  editValue = '';
-  editDateValue: Date | null = null;
+  readonly tabButtons = viewChildren<ElementRef<HTMLButtonElement>>('tabBtn');
 
-  readonly nameInput = viewChild<ElementRef<HTMLInputElement>>('nameInput');
-  readonly sectorInput = viewChild<ElementRef<HTMLInputElement>>('sectorInput');
-  readonly datePicker = viewChild<MatDatepicker<Date>>('picker');
+  /** Seções da página. A ordem define a navegação por setas do tablist. */
+  readonly sections = [
+    { id: 'indicadores' as const, label: 'Indicadores Mensais' },
+    { id: 'reunioes' as const, label: 'Reuniões de Conselho' },
+    { id: 'executivos' as const, label: 'Executivos' },
+  ];
+  readonly activeSection = signal<'indicadores' | 'reunioes' | 'executivos'>('indicadores');
+
+  selectSection(id: 'indicadores' | 'reunioes' | 'executivos'): void {
+    this.activeSection.set(id);
+  }
+
+  countFor(id: 'indicadores' | 'reunioes' | 'executivos'): number {
+    if (id === 'indicadores') return this.indicators().length;
+    if (id === 'reunioes') return this.meetings().length;
+    return this.executives().length;
+  }
+
+  /**
+   * Arrow-key navigation for the tablist (WAI-ARIA APG). Tab moves OUT of the
+   * tablist; moving BETWEEN tabs is the arrow keys' job, which is why the
+   * inactive tabs carry `tabindex="-1"` (roving tabindex).
+   */
+  onTabKeydown(event: KeyboardEvent, index: number): void {
+    const last = this.sections.length - 1;
+    let next: number | null = null;
+
+    if (event.key === 'ArrowRight') next = index === last ? 0 : index + 1;
+    else if (event.key === 'ArrowLeft') next = index === 0 ? last : index - 1;
+    else if (event.key === 'Home') next = 0;
+    else if (event.key === 'End') next = last;
+    if (next === null) return;
+
+    event.preventDefault();
+    this.selectSection(this.sections[next].id);
+    this.tabButtons()[next]?.nativeElement.focus();
+  }
 
   readonly indicatorColumns = ['period', 'total_revenue', 'cash_balance', 'ebitda_burn', 'headcount', 'actions'];
   readonly meetingColumns = ['meeting_date', 'summary', 'actions'];
   readonly executiveColumns = ['name', 'role', 'email', 'actions'];
+
+  readonly indicatorSort = signal<SortState>({ active: '', direction: '' });
+  readonly meetingSort = signal<SortState>({ active: '', direction: '' });
+  readonly executiveSort = signal<SortState>({ active: '', direction: '' });
+
+  /**
+   * "Período" mostra `Jul/2026`, mas ordena por ano e mês. Comparar o texto
+   * poria Ago antes de Jul, e 2025 no meio de 2026.
+   */
+  readonly sortedIndicators = computed(() =>
+    applySort(this.indicators(), this.indicatorSort(), {
+      period: (i) => i.year * 100 + i.month,
+      total_revenue: (i) => i.total_revenue,
+      cash_balance: (i) => i.cash_balance,
+      ebitda_burn: (i) => i.ebitda_burn,
+      headcount: (i) => i.headcount,
+    }),
+  );
+
+  readonly sortedMeetings = computed(() =>
+    applySort(this.meetings(), this.meetingSort(), {
+      // Data ISO (`YYYY-MM-DD`) já ordena corretamente como texto.
+      meeting_date: (m) => m.meeting_date,
+      summary: (m) => m.summary,
+    }),
+  );
+
+  readonly sortedExecutives = computed(() =>
+    applySort(this.executives(), this.executiveSort(), {
+      name: (e) => e.name,
+      role: (e) => e.role,
+      email: (e) => e.email,
+    }),
+  );
 
   ngOnInit(): void {
     this.startupId = this.route.snapshot.paramMap.get('id')!;
@@ -161,13 +233,8 @@ export class StartupDetail implements OnInit {
     return participationValue(accumulated, ref.month, s.equity_stake);
   }
 
-  goBack(): void {
-    this.router.navigate(['/portfolio']);
-  }
-
   formatCurrency(value: number | null): string {
-    if (value == null) return '-';
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+    return formatCurrencyBRL(value) ?? '-';
   }
 
   extractDomain(url: string): string {
@@ -197,91 +264,6 @@ export class StartupDetail implements OnInit {
         });
       }
     });
-  }
-
-  onStatusChange(newStatus: StartupStatus): void {
-    this.startupService.update(this.startupId, { status: newStatus }).subscribe({
-      next: () => {
-        this.snackBar.open('Status atualizado', 'Fechar', { duration: 3000 });
-        this.loadAll();
-      },
-      error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao atualizar status', 'Fechar', { duration: 3000 }),
-    });
-  }
-
-  startEditing(field: 'name' | 'sector'): void {
-    const s = this.startup();
-    if (!s) return;
-    this.editValue = s[field];
-    this.editingField.set(field);
-    setTimeout(() => {
-      const inputRef = field === 'name' ? this.nameInput() : this.sectorInput();
-      inputRef?.nativeElement.focus();
-      inputRef?.nativeElement.select();
-    });
-  }
-
-  openDatePicker(): void {
-    const s = this.startup();
-    if (!s) return;
-    this.editDateValue = new Date(s.investment_date + 'T00:00:00');
-    this.editingField.set('date');
-    setTimeout(() => this.datePicker()?.open());
-  }
-
-  cancelEditing(): void {
-    this.editingField.set(null);
-  }
-
-  saveField(field: 'name' | 'sector'): void {
-    const trimmed = this.editValue.trim();
-    const s = this.startup();
-    if (!trimmed || !s || trimmed === s[field]) {
-      this.cancelEditing();
-      return;
-    }
-    this.editingField.set(null);
-    this.startupService.update(this.startupId, { [field]: trimmed }).subscribe({
-      next: () => {
-        this.snackBar.open('Startup atualizada', 'Fechar', { duration: 3000 });
-        this.loadAll();
-      },
-      error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao atualizar startup', 'Fechar', { duration: 3000 }),
-    });
-  }
-
-  onDateChange(date: Date | null): void {
-    if (!date) return;
-    const s = this.startup();
-    const iso = date.toISOString().split('T')[0];
-    if (!s || iso === s.investment_date) {
-      this.cancelEditing();
-      return;
-    }
-    this.editingField.set(null);
-    this.startupService.update(this.startupId, { investment_date: iso }).subscribe({
-      next: () => {
-        this.snackBar.open('Startup atualizada', 'Fechar', { duration: 3000 });
-        this.loadAll();
-      },
-      error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao atualizar startup', 'Fechar', { duration: 3000 }),
-    });
-  }
-
-  onFieldKeydown(event: KeyboardEvent, field: 'name' | 'sector'): void {
-    if (event.key === 'Enter') {
-      this.saveField(field);
-    } else if (event.key === 'Escape') {
-      this.cancelEditing();
-    }
-  }
-
-  onDatePickerClosed(): void {
-    setTimeout(() => {
-      if (this.editingField() === 'date') {
-        this.cancelEditing();
-      }
-    }, 200);
   }
 
   deleteStartup(): void {

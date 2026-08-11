@@ -1,0 +1,22 @@
+@for (section of sections(); track section.title ?? $index) {
+  <div class="read-section">
+    @if (section.title) {
+      <h3 class="section-title read-section-title">{{ section.title }}</h3>
+    }
+    <dl class="read-list">
+      @for (item of section.items; track item.label) {
+        <div class="read-item" [class.read-item--long]="item.kind === 'long'">
+          <dt class="read-label">{{ item.label }}</dt>
+          @if (item.value !== null) {
+            <dd class="read-value" [class.read-value--num]="item.kind === 'num'">{{ item.value }}</dd>
+          } @else {
+            <dd class="read-value read-value--empty">
+              <span aria-hidden="true">&mdash;</span>
+              <span class="visually-hidden">Não informado</span>
+            </dd>
+          }
+        </div>
+      }
+    </dl>
+  </div>
+}

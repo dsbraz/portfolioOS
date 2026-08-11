@@ -1,74 +1,254 @@
+// App shell — ported from `BrqAppShell` / `BrqNavigationList` in the
+// px-operations redesign (PR #5).
+//
+// The nav uses plain anchors and buttons rather than `mat-list-item`: Material's
+// list is built for 48px touch rows, and this sidebar is deliberately dense
+// (13px label, 8/12px padding, 18px icon). Fighting those defaults costs more
+// than owning the ~40 lines outright.
+//
+// The sidebar is EDITORIAL: the active item is strong ink over a NEUTRAL fill
+// with the purple accent carried ONLY by the icon. No tinted pill, and no left
+// rail — the accent stays scarce so it still means something.
+//
+// The chrome follows the theme (light sidebar in light mode, dark in dark),
+// because `--color-sidebar-*` are aliases of the surface/ink tokens.
+
 .app-container {
   height: 100vh;
+  background-color: var(--color-bg);
 }
 
 .app-sidenav {
-  width: 220px;
-  background: var(--mat-sys-surface-container-high);
-  border-right: 1px solid var(--mat-sys-outline-variant);
-  display: flex;
-  flex-direction: column;
+  width: var(--sidebar-width);
+  background-color: var(--color-sidebar-bg);
+  border-right: 1px solid var(--color-sidebar-border);
+  color: var(--color-sidebar-ink);
 
-  --mat-list-list-item-label-text-color: var(--mat-sys-on-surface-variant);
-  --mat-list-list-item-leading-icon-color: var(--mat-sys-on-surface-variant);
-  --mat-list-list-item-hover-label-text-color: var(--mat-sys-on-surface);
-  --mat-list-list-item-hover-leading-icon-color: var(--mat-sys-on-surface);
-  --mat-list-list-item-hover-state-layer-color: var(--mat-sys-on-surface);
-  --mat-list-list-item-focus-label-text-color: var(--mat-sys-on-surface);
-  --mat-list-list-item-focus-state-layer-color: var(--mat-sys-on-surface);
+  // `mat-drawer` takes its shape from the M3 corner scale, which the bridge
+  // points at `--radius-md` — so the drawer inherited an 8px rounding on its
+  // outer edge. The sidebar is app chrome, not a card: it meets the viewport
+  // edge, separated by a hairline and never by a corner.
+  border-radius: 0;
 }
 
+// `mat-sidenav` wraps projected content in `.mat-drawer-inner-container`, which
+// is `display: block` and lives in Material's own template — out of reach of
+// this component's encapsulated styles. So the column lives on a wrapper we
+// own instead of reaching in with `::ng-deep`. Without a flex context here,
+// `margin-top: auto` on the footer does nothing and it sits under the nav.
+.sidenav-inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  min-height: 100%;
+  padding-block: var(--space-lg);
+  box-sizing: border-box;
+}
+
+// ---------- Brand ----------
 .sidenav-header {
-  padding: 24px 16px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--space-sm);
+  padding-inline: var(--space-lg);
 }
 
-.sidenav-toggle {
-  color: var(--mat-sys-on-surface-variant);
-  flex-shrink: 0;
-}
-
+// Two crafted assets rather than one filtered asset -- the dark logo has its own
+// tones (#fff / #b1b1b1), which `invert()` would only approximate.
+//
+// Swapped by CSS, not by `<picture media>`: a `<source media>` can only read
+// `prefers-color-scheme`, so it would desync from the tokens the moment an
+// explicit theme toggle exists. Both follow the same signal here.
 .app-logo {
   display: flex;
   align-items: center;
+  min-width: 0;
+  color: var(--color-sidebar-ink);
 
   img {
-    height: 28px;
+    height: 1.5rem;
     width: auto;
   }
 }
 
-mat-nav-list {
-  padding-top: 0;
+.app-logo-on-dark {
+  display: none;
+}
 
-  a {
-    border-radius: 8px;
-    margin: 4px 8px;
+@mixin logo-dark {
+  .app-logo-on-light {
+    display: none;
+  }
 
-    &.active-link {
-      --mat-list-list-item-label-text-color: var(--mat-sys-on-secondary-container);
-      --mat-list-list-item-leading-icon-color: var(--mat-sys-on-secondary-container);
-      background: var(--mat-sys-secondary-container);
+  .app-logo-on-dark {
+    display: block;
+  }
+}
+
+:host-context(:root[data-theme='dark']) {
+  @include logo-dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :host-context(:root:not([data-theme='light'])) {
+    @include logo-dark;
+  }
+}
+
+.sidenav-toggle {
+  color: var(--color-sidebar-ink-muted);
+  flex-shrink: 0;
+}
+
+// ---------- Navigation ----------
+// "Seções" is the nav's accessible name only. It is not rendered: a visible
+// label would spend vertical space on something the structure already conveys.
+.side-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding-inline: var(--space-sm);
+}
+
+.side-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.side-nav-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding-block: var(--space-xs);
+  padding-inline: var(--space-sm);
+  border-radius: var(--radius-md);
+  color: var(--color-sidebar-ink-muted);
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  line-height: var(--lh-base);
+  text-decoration: none;
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+
+  &:hover {
+    background-color: var(--color-sidebar-hover);
+    color: var(--color-sidebar-ink);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-sidebar-accent);
+    outline-offset: -2px;
+  }
+
+  // Active state keys off `aria-current`, so the styling cannot drift from
+  // what assistive tech is told.
+  &[aria-current='page'] {
+    background-color: var(--color-sidebar-active-bg);
+    color: var(--color-sidebar-ink);
+    font-weight: var(--fw-medium);
+
+    .side-nav-icon {
+      color: var(--color-sidebar-accent);
     }
   }
 }
 
+.side-nav-icon {
+  flex: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  font-size: 1.125rem;
+  line-height: 1;
+}
+
+// ---------- Footer ----------
+.sidenav-footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  margin-top: auto;
+  padding-top: var(--space-md);
+  padding-inline: var(--space-sm);
+  border-top: 1px solid var(--color-sidebar-border);
+}
+
+// Real buttons, not `<a>` without href -- an anchor with no href is not
+// keyboard focusable, and a static audit that scans `a[href]` never sees it.
+.side-foot-btn {
+  appearance: none;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-align: start;
+  font: inherit;
+  font-size: 0.8125rem;
+}
+
+// ---------- Content ----------
 .app-content {
-  background: var(--mat-sys-surface);
+  background-color: var(--color-bg);
   position: relative;
 }
 
+main {
+  outline: none;
+}
+
+// Com a gaveta fechada, esta barra é o ÚNICO caminho de volta para a navegação.
+// Em fluxo normal ela rolava para fora da tela junto com o conteúdo: bastava
+// descer um pouco para o app ficar sem nenhuma forma de navegar. No mobile, onde
+// a gaveta nasce fechada, isso valia para todas as páginas. Sticky não é enfeite
+// aqui, é o que mantém a navegação alcançável.
+//
+// Também ganhou a identidade: um ícone solto num vão vazio não se lê como barra,
+// e com a gaveta fechada o logo não aparece em nenhum outro lugar.
 .sidenav-open-bar {
-  padding: 8px 16px;
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-md);
+  background-color: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .sidenav-open-btn {
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--color-text-muted);
 }
 
-.sidenav-footer {
-  margin-top: auto;
-  border-top: 1px solid var(--mat-sys-outline-variant);
+// Keyboard-only escape hatch past the nav. Hidden until focused.
+.skip-link {
+  position: fixed;
+  top: var(--space-md);
+  left: var(--space-md);
+  z-index: var(--z-modal);
+  padding: var(--space-xs) var(--space-md);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  color: var(--color-text);
+  text-decoration: none;
+  transform: translateY(-200%);
+  transition: transform var(--transition-fast);
+
+  &:focus {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .side-nav-link,
+  .skip-link {
+    transition: none;
+  }
 }

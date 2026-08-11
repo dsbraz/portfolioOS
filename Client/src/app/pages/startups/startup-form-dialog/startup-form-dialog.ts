@@ -14,9 +14,12 @@ export interface StartupFormDialogData {
   startup?: Startup;
 }
 
+import { DialogHeader } from '../../../components/dialog-header/dialog-header';
+
 @Component({
   selector: 'app-startup-form-dialog',
   imports: [
+    DialogHeader,
     ReactiveFormsModule,
     MatDialogModule,
     MatFormFieldModule,

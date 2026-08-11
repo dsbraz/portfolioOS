@@ -1,25 +1,29 @@
 <div class="dealflow-page">
   <div class="dealflow-content">
-    <div class="page-header">
-      <div class="header-content">
-        <div>
-          <h1 class="page-title">Dealflow</h1>
-          <p class="page-subtitle">Pipeline de oportunidades</p>
-        </div>
-        <button mat-fab extended color="primary" (click)="openCreateDialog()">
+    <header class="page-head">
+      <div class="page-head-text">
+        <h1 class="page-head-title">Dealflow</h1>
+        <p class="page-head-sub">Pipeline de oportunidades</p>
+      </div>
+      <div class="page-head-actions">
+        <button mat-flat-button (click)="openCreateDialog()">
           <mat-icon>add</mat-icon>
           Novo Deal
         </button>
       </div>
-    </div>
+    </header>
 
     <div class="kanban-board">
     @for (stage of stages; track stage) {
       <div class="kanban-column">
-        <div class="column-header" [style.--_column-color]="stageConfig[stage].color">
-          <span class="column-title">{{ stageConfig[stage].label }}</span>
+        <div class="column-header">
+          <h2 class="column-title">{{ stageConfig[stage].label }}</h2>
           <span class="column-count">{{ dealsByStage()[stage].length }}</span>
-          <button mat-icon-button class="column-add" (click)="openCreateDialog(stage)">
+          <button
+            mat-icon-button
+            class="column-add"
+            [attr.aria-label]="'Adicionar deal em ' + stageConfig[stage].label"
+            (click)="openCreateDialog(stage)">
             <mat-icon>add</mat-icon>
           </button>
         </div>
@@ -34,23 +38,11 @@
           @for (deal of dealsByStage()[stage]; track deal.id) {
             <mat-card class="deal-card" cdkDrag [cdkDragData]="deal" (click)="openEditDialog(deal)">
               <mat-card-content>
-                <div class="deal-empresa">{{ deal.company }}</div>
-                @if (deal.sector) {
-                  <span class="deal-setor">{{ deal.sector }}</span>
-                }
-                @if (deal.funding_round) {
-                  <mat-chip-set class="deal-chips">
-                    <mat-chip>{{ deal.funding_round }}</mat-chip>
-                  </mat-chip-set>
-                }
-                @if (deal.next_step) {
-                  <div class="deal-next-step">
-                    <mat-icon>arrow_forward</mat-icon>
-                    <span>{{ deal.next_step }}</span>
-                  </div>
-                }
+                <div class="deal-head">
+                  <span class="deal-empresa">{{ deal.company }}</span>
                 <div class="deal-actions" (click)="$event.stopPropagation()">
-                  <button mat-icon-button [matMenuTriggerFor]="dealMenu" class="deal-menu-btn">
+                  <button mat-icon-button [matMenuTriggerFor]="dealMenu" class="deal-menu-btn"
+                    [attr.aria-label]="'Ações de ' + deal.company">
                     <mat-icon>more_horiz</mat-icon>
                   </button>
                   <mat-menu #dealMenu="matMenu">
@@ -60,8 +52,8 @@
                     <button mat-menu-item [matMenuTriggerFor]="moveMenu">
                       <mat-icon>swap_horiz</mat-icon> Mover para...
                     </button>
-                    <button mat-menu-item (click)="deleteDeal(deal)">
-                      <mat-icon color="warn">delete</mat-icon> Excluir
+                    <button mat-menu-item class="menu-item-danger" (click)="deleteDeal(deal)">
+                      <mat-icon>delete</mat-icon> Excluir
                     </button>
                   </mat-menu>
                   <mat-menu #moveMenu="matMenu">
@@ -71,7 +63,20 @@
                       </button>
                     }
                   </mat-menu>
+                  </div>
                 </div>
+                @if (deal.sector) {
+                  <span class="deal-setor">{{ deal.sector }}</span>
+                }
+                @if (deal.funding_round) {
+                  <span class="tag tag--sm deal-round">{{ deal.funding_round }}</span>
+                }
+                @if (deal.next_step) {
+                  <div class="deal-next-step">
+                    <mat-icon>arrow_forward</mat-icon>
+                    <span>{{ deal.next_step }}</span>
+                  </div>
+                }
               </mat-card-content>
             </mat-card>
           }

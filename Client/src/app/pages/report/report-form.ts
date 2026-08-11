@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, ElementRef } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -23,9 +23,12 @@ function integerValidator(control: AbstractControl): ValidationErrors | null {
   return Number.isInteger(Number(value)) ? null : { integer: true };
 }
 
+import { CurrencyInput } from '../../directives/currency-input';
+
 @Component({
   selector: 'app-report-form',
   imports: [
+    CurrencyInput,
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
@@ -39,6 +42,7 @@ function integerValidator(control: AbstractControl): ValidationErrors | null {
   styleUrl: './report-form.scss',
 })
 export default class ReportForm implements OnInit {
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly route = inject(ActivatedRoute);
   private readonly service = inject(MonthlyIndicatorTokenService);
   private readonly snackBar = inject(MatSnackBar);
@@ -90,8 +94,26 @@ export default class ReportForm implements OnInit {
     });
   }
 
+  private focusFirstInvalid(): void {
+    const alvo = this.host.nativeElement.querySelector<HTMLElement>(
+      '.ng-invalid[formControlName], .mat-mdc-form-field.mat-form-field-invalid input, .mat-mdc-form-field.mat-form-field-invalid textarea',
+    );
+    alvo?.focus();
+    alvo?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+
   onSubmit(): void {
-    if (this.form.invalid || this.submitting()) return;
+    if (this.submitting()) return;
+
+    // Botão desabilitado enquanto inválido não diz ao usuário o QUE está
+    // errado — ele só não funciona. Com campos opcionais e validação de faixa,
+    // um valor fora do limite travava o envio sem apontar o campo. Agora o
+    // envio revela os erros e leva o foco para o primeiro deles.
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this.focusFirstInvalid();
+      return;
+    }
     this.submitting.set(true);
     this.service.submitPublicForm(this.token, this.form.getRawValue()).subscribe({
       next: () => {
@@ -103,9 +125,9 @@ export default class ReportForm implements OnInit {
         if (typeof err.error?.detail === 'string') {
           message = err.error.detail;
         } else if (err.status === 422) {
-          message = 'Dados invalidos. Verifique os campos e tente novamente.';
+          message = 'Dados inválidos. Verifique os campos e tente novamente.';
         } else {
-          message = 'Erro ao enviar relatorio. Tente novamente.';
+          message = 'Erro ao enviar relatório. Tente novamente.';
         }
         this.snackBar.open(message, 'Fechar', { duration: 5000 });
         this.submitting.set(false);

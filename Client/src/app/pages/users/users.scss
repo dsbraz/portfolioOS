@@ -1,127 +1,181 @@
+// Usuários — mesma composição das outras telas: `page-head` pequeno, tabela
+// dentro de um `table-shell` com filete de 1px e canto de 8px.
+
 .users-page {
-  max-width: 1200px;
+  max-width: var(--content-max);
   margin: 0 auto;
-  padding: 32px 24px;
+  padding: var(--content-padding);
 }
 
-.page-header {
-  margin-bottom: 24px;
-}
-
-.header-content {
+// ---------- Page head ----------
+.page-head {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-md);
+  margin-bottom: var(--panel-gap);
 }
 
-.header-actions {
+.page-head-text {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  min-width: 0;
 }
 
-.page-title {
-  font-size: 28px;
-  font-weight: 500;
+.page-head-title {
   margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-heading-md);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
 }
 
-.page-subtitle {
-  color: var(--mat-sys-on-surface-variant);
-  margin: 4px 0 0;
-  font-size: 14px;
+.page-head-sub {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--fs-body-sm);
 }
 
-.table-card {
-  overflow: hidden;
+.page-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-inline-start: auto;
 }
 
-table {
+// ---------- Tabela ----------
+.table-shell {
   width: 100%;
+  overflow-x: auto;
+  background-color: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+
+  &:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: -2px;
+  }
+}
+
+.users-table {
+  width: 100%;
+  background: transparent;
+
+  th,
+  td {
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: 1px solid var(--color-border);
+    text-align: start;
+    white-space: nowrap;
+  }
+
+  // Header é Inter, pequeno e semibold — NÃO caixa alta. Cabeçalho de tabela é
+  // informação, então pertence à face de corpo.
+  th.mat-mdc-header-cell {
+    background-color: var(--color-surface);
+    color: var(--color-text-muted);
+    font-family: var(--font-body);
+    font-size: var(--fs-body-xs);
+    font-weight: var(--fw-semibold);
+    text-transform: none;
+  }
+
+  td.mat-mdc-cell {
+    color: var(--color-text);
+    font-family: var(--font-body);
+    font-size: var(--fs-body-sm);
+  }
+
+  // Data é número: tabular para as colunas alinharem entre linhas.
+  .is-num {
+    font-variant-numeric: tabular-nums;
+  }
+
+  tr.mat-mdc-row {
+    height: var(--table-row-h);
+
+    &:nth-child(even) {
+      background-color: var(--color-surface);
+    }
+  }
 }
 
 .user-cell {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-sm);
 }
 
 .user-avatar {
-  font-size: 32px;
-  width: 32px;
-  height: 32px;
-  color: var(--mat-sys-on-surface-variant);
+  width: 2rem;
+  height: 2rem;
+  font-size: 2rem;
+  color: var(--color-text-muted);
 }
 
 .user-name {
-  font-weight: 500;
+  font-weight: var(--fw-medium);
 }
 
-.status-chip {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 16px;
-  font-size: 12px;
-  font-weight: 500;
-
-  &.active {
-    background: color-mix(in srgb, var(--app-status-healthy) 16%, transparent);
-    color: var(--app-status-healthy);
-  }
-
-  &.inactive {
-    background: color-mix(in srgb, var(--mat-sys-error) 16%, transparent);
-    color: var(--mat-sys-error);
-  }
-}
-
+// A ação de editar era `opacity: 0` até o hover. Isso a deixava invisível ao
+// receber foco por teclado e inalcançável em touch, onde hover não existe — e
+// é a única forma de editar um usuário. Agora está sempre visível, apenas
+// discreta, escurecendo na linha sob o cursor.
 .row-edit-btn {
-  opacity: 0;
-  transition: opacity 0.2s;
+  color: var(--color-text-muted);
+  transition: color var(--transition-fast);
 }
 
-tr:hover .row-edit-btn {
-  opacity: 1;
+tr:hover .row-edit-btn,
+.row-edit-btn:focus-visible {
+  color: var(--color-text);
 }
 
+// ---------- Estado vazio ----------
+// Carrega a própria ação: é o momento em que ela é mais necessária.
 .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-3xl) var(--space-lg);
+  background-color: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
   text-align: center;
-  padding: 64px 24px;
 
   .empty-icon {
-    font-size: 64px;
-    width: 64px;
-    height: 64px;
-    color: var(--mat-sys-tertiary);
-    margin-bottom: 16px;
+    width: var(--fs-decoration-3xl);
+    height: var(--fs-decoration-3xl);
+    font-size: var(--fs-decoration-3xl);
+    color: var(--color-gray-500);
   }
 
   h2 {
-    margin: 0 0 8px;
-    font-weight: 500;
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-heading-md);
+    font-weight: var(--fw-medium);
   }
 
   p {
-    color: var(--mat-sys-on-surface-variant);
-    margin: 0;
+    margin: 0 0 var(--space-xs);
+    color: var(--color-text-muted);
+    font-size: var(--fs-body-sm);
   }
 }
 
 @media (max-width: 768px) {
-  .users-page {
-    padding: 16px;
+  .page-head-actions {
+    margin-inline-start: 0;
   }
+}
 
-  .header-content {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-
-  .header-actions {
-    width: 100%;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
+@media (prefers-reduced-motion: reduce) {
+  .row-edit-btn {
+    transition: none;
   }
 }

@@ -13,6 +13,8 @@ class StartupSummary(BaseModel):
     ebitda_burn: Decimal | None = None
     headcount: int | None = None
     accumulated_revenue_ytd: Decimal | None = None
+    last_reported_month: int | None = None
+    last_reported_year: int | None = None
 
 
 class HealthDistribution(BaseModel):

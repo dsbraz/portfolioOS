@@ -1,71 +1,96 @@
 <div class="invite-page">
+    <header class="public-top">
+      <div class="public-top-inner">
+        <img class="public-logo-on-light" src="logo-light.svg" alt="BRQ Portfolio" />
+        <img class="public-logo-on-dark" src="logo-dark.svg" alt="" aria-hidden="true" />
+      </div>
+    </header>
+
   @if (loading()) {
-    <div class="invite-center">
-      <mat-spinner diameter="48" />
+    <div class="status-page">
+      <mat-spinner diameter="40" aria-label="Carregando" />
     </div>
   } @else if (error()) {
-    <div class="invite-center">
-      <mat-icon class="error-icon">error_outline</mat-icon>
-      <p class="error-text">{{ error() }}</p>
+    <div class="status-page">
+      <div class="status-panel" role="alert">
+        <span class="status-panel-icon status-panel-icon--danger">
+          <mat-icon aria-hidden="true">error_outline</mat-icon>
+        </span>
+        <h1 class="status-panel-title">Convite indisponível</h1>
+        <p class="status-panel-text">{{ error() }}</p>
+      </div>
     </div>
   } @else if (submitted()) {
-    <div class="invite-center">
-      <mat-icon class="success-icon">check_circle</mat-icon>
-      <h2>Cadastro concluído com sucesso!</h2>
-      <p class="success-text">Você será redirecionado para a tela de login.</p>
+    <div class="status-page">
+      <div class="status-panel" role="status">
+        <span class="status-panel-icon status-panel-icon--good">
+          <mat-icon aria-hidden="true">check_circle</mat-icon>
+        </span>
+        <h1 class="status-panel-title">Cadastro concluído</h1>
+        <p class="status-panel-text">Você será redirecionado para a tela de login.</p>
+      </div>
     </div>
   } @else if (context(); as ctx) {
-    <mat-card class="invite-card">
-      <mat-card-header>
-        <mat-card-title>Convite de acesso</mat-card-title>
-        <mat-card-subtitle>
-          Complete seu cadastro para entrar na plataforma
-        </mat-card-subtitle>
-      </mat-card-header>
-      <mat-card-content>
-        <form [formGroup]="form" class="invite-form" (ngSubmit)="onSubmit()">
-          <mat-form-field appearance="outline">
-            <mat-label>Email</mat-label>
-            <input matInput formControlName="email" type="email" autocomplete="email" />
-          </mat-form-field>
+    <div class="invite-container">
+      <div class="form-intro">
+        <div>
+          <h1 class="form-intro-title">Convite de acesso</h1>
+          <p class="form-intro-meta">Complete seu cadastro para entrar na plataforma.</p>
+        </div>
+      </div>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Usuário</mat-label>
-            <input matInput formControlName="username" autocomplete="username" />
-            @if (form.controls.username.hasError('required')) {
-              <mat-error>Usuário é obrigatório</mat-error>
-            } @else if (form.controls.username.hasError('pattern')) {
-              <mat-error>Usuário não pode conter espaços</mat-error>
-            }
-          </mat-form-field>
+      <form [formGroup]="form" class="invite-form" (ngSubmit)="onSubmit()">
+          <div class="field">
+            <label class="field-label" id="l-d9c3-email" for="f-d9c3-email">Email</label>
+            <mat-form-field appearance="outline">
+  <input id="f-d9c3-email" matInput formControlName="email" type="email" autocomplete="email" />
+            </mat-form-field>
+          </div>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Senha</mat-label>
-            <input
-              matInput
-              type="password"
-              formControlName="password"
-              autocomplete="new-password" />
-          </mat-form-field>
+          <div class="field">
+            <label class="field-label" id="l-d9c3-username" for="f-d9c3-username">Usuário<span class="field-required" aria-hidden="true">*</span></label>
+            <mat-form-field appearance="outline">
+  <input id="f-d9c3-username" matInput formControlName="username" autocomplete="username" />
+              @if (form.controls.username.hasError('required')) {
+                <mat-error>Usuário é obrigatório</mat-error>
+              } @else if (form.controls.username.hasError('pattern')) {
+                <mat-error>Usuário não pode conter espaços</mat-error>
+              }
+            </mat-form-field>
+          </div>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Confirmar senha</mat-label>
-            <input
-              matInput
-              type="password"
-              formControlName="confirmPassword"
-              autocomplete="new-password" />
-          </mat-form-field>
+          <div class="field">
+            <label class="field-label" id="l-d9c3-password" for="f-d9c3-password">Senha</label>
+            <mat-form-field appearance="outline">
+  <input id="f-d9c3-password"
+                matInput
+                type="password"
+                formControlName="password"
+                autocomplete="new-password" />
+            </mat-form-field>
+          </div>
 
-          <button mat-flat-button color="primary" type="submit" [disabled]="!canSubmit() || submitting()">
+          <div class="field">
+            <label class="field-label" id="l-d9c3-confirmPassword" for="f-d9c3-confirmPassword">Confirmar senha</label>
+            <mat-form-field appearance="outline">
+  <input id="f-d9c3-confirmPassword"
+                matInput
+                type="password"
+                formControlName="confirmPassword"
+                autocomplete="new-password" />
+            </mat-form-field>
+          </div>
+
+        <div class="form-actions">
+          <button mat-flat-button type="submit" [disabled]="!canSubmit() || submitting()">
             @if (submitting()) {
               Cadastrando...
             } @else {
               Concluir cadastro
             }
           </button>
-        </form>
-      </mat-card-content>
-    </mat-card>
+        </div>
+      </form>
+    </div>
   }
 </div>

@@ -1,24 +1,26 @@
-<h2 mat-dialog-title>Gerar Convite</h2>
+<app-dialog-header title="Gerar Convite" />
 <mat-dialog-content>
   <form [formGroup]="form" id="invite-form" (ngSubmit)="onSubmit()" class="invite-form">
-    <mat-form-field appearance="outline">
-      <mat-label>Email do convidado</mat-label>
-      <input
-        matInput
-        formControlName="email"
-        type="email"
-        autocomplete="email"
-        placeholder="nome@empresa.com" />
-      @if (form.controls.email.hasError('required')) {
-        <mat-error>Informe o email</mat-error>
-      } @else if (form.controls.email.hasError('email')) {
-        <mat-error>Informe um email válido</mat-error>
-      }
-    </mat-form-field>
+    <div class="field">
+      <label class="field-label" id="l-99af-email" for="f-99af-email">Email do convidado<span class="field-required" aria-hidden="true">*</span></label>
+      <mat-form-field appearance="outline">
+  <input id="f-99af-email"
+          matInput
+          formControlName="email"
+          type="email"
+          autocomplete="email"
+          placeholder="nome@empresa.com" />
+        @if (form.controls.email.hasError('required')) {
+          <mat-error>Informe o email</mat-error>
+        } @else if (form.controls.email.hasError('email')) {
+          <mat-error>Informe um email válido</mat-error>
+        }
+      </mat-form-field>
+    </div>
   </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button mat-button mat-dialog-close [disabled]="loading()">Cancelar</button>
+  <button mat-stroked-button mat-dialog-close [disabled]="loading()">Cancelar</button>
   <button
     mat-flat-button
     color="primary"

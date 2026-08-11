@@ -1,80 +1,69 @@
-<div class="monitoring-page">
-  <div class="page-header">
-    <div class="header-content">
-      <div>
-        <h1 class="page-title">Monitoramento</h1>
-        <p class="page-subtitle">
-          {{ summaryByPeriod()?.total_startups ?? 0 }} startup(s) monitoradas
-        </p>
-        <div class="period-navigation">
-          <button mat-icon-button type="button" aria-label="Mes anterior" (click)="goToPreviousMonth()">
-            <mat-icon>chevron_left</mat-icon>
-          </button>
-          <span class="period-label">{{ selectedPeriodLabel() }}</span>
-          <button
-            mat-icon-button
-            type="button"
-            aria-label="Proximo mes"
-            (click)="goToNextMonth()"
-            [disabled]="isCurrentMonthSelected()"
-          >
-            <mat-icon>chevron_right</mat-icon>
-          </button>
-        </div>
+<div class="monitoring-page" [attr.aria-busy]="loading() ? 'true' : null">
+  <header class="page-head">
+    <div class="page-head-text">
+      <h1 class="page-head-title">Monitoramento</h1>
+      <p class="page-head-sub">
+        {{ summaryByPeriod()?.total_startups ?? 0 }} startup(s) monitoradas
+      </p>
+    </div>
+    <div class="page-head-actions">
+      <div class="period-navigation">
+        <button mat-icon-button type="button" aria-label="Mês anterior" (click)="goToPreviousMonth()">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        <span class="period-label">{{ selectedPeriodLabel() }}</span>
+        <button
+          mat-icon-button
+          type="button"
+          aria-label="Próximo mês"
+          (click)="goToNextMonth()"
+          [disabled]="isCurrentMonthSelected()"
+        >
+          <mat-icon>chevron_right</mat-icon>
+        </button>
       </div>
-      <button mat-fab extended color="primary" (click)="openCreateDialog()">
+      <button mat-flat-button (click)="openCreateDialog()">
         <mat-icon>add</mat-icon>
         Nova Startup
       </button>
     </div>
-  </div>
+  </header>
 
-  @if (summaryByPeriod(); as s) {
-    <div class="kpi-grid">
+  @if (loading()) {
+    <div class="page-status" role="status">
+      <mat-spinner diameter="24" aria-hidden="true" />
+      <span>Carregando monitoramento…</span>
+    </div>
+  } @else if (summaryByPeriod(); as s) {
+    <section class="kpi-grid" aria-label="Indicadores do período">
       <app-kpi-card
-        [icon]="revenueTrendIcon()"
         label="Receita Total"
         [value]="formatCurrency(s.revenue)"
         [subtitle]="revenueVariationLabel()"
         [tone]="revenueCardTone()"
+        [supportingIcon]="revenueTrendIcon()"
       />
       <app-kpi-card
-        class="kpi-participation"
-        icon="percent"
-        label="Total da Participacao"
+        label="Total da Participação"
         [value]="formatCurrency(totalParticipation())"
         subtitle="Valuation estimado (receita anualizada x5)"
       />
-      <div class="kpi-health-card">
-        <mat-card class="kpi-card">
-          <mat-card-content>
-            <div class="kpi-icon-wrapper">
-              <mat-icon>monitor_heart</mat-icon>
-            </div>
-            <div class="kpi-info">
-              <span class="kpi-label">Saúde Geral</span>
-              <app-health-bar [distribution]="s.health" />
-            </div>
-          </mat-card-content>
-        </mat-card>
-      </div>
-      <div class="kpi-stacked">
-        <app-kpi-card
-          class="kpi-report compact"
-          icon="description"
-          label="Report Mensal"
-          [value]="s.monthly_report_pct + '%'"
-          subtitle="Startups com indicador no mes selecionado"
-        />
-        <app-kpi-card
-          class="kpi-routines compact"
-          icon="groups"
-          label="Rotinas em Dia"
-          [value]="s.routines_up_to_date_pct + '%'"
-          subtitle="Conselho nos ultimos 90 dias"
-        />
-      </div>
-    </div>
+      <app-kpi-card
+        label="Report Mensal"
+        [value]="s.monthly_report_pct + '%'"
+        subtitle="Startups com indicador no mês"
+      />
+      <app-kpi-card
+        label="Rotinas em Dia"
+        [value]="s.routines_up_to_date_pct + '%'"
+        subtitle="Conselho nos últimos 90 dias"
+      />
+    </section>
+
+    <section class="health-panel" aria-label="Saúde geral do portfólio">
+      <p class="health-panel-label">Saúde Geral</p>
+      <app-health-bar [distribution]="s.health" />
+    </section>
 
     @if (s.startups.length === 0) {
       <mat-card class="empty-state">
@@ -85,10 +74,18 @@
         </mat-card-content>
       </mat-card>
     } @else {
-      <mat-card class="table-card">
-        <table mat-table [dataSource]="s.startups" class="monitoring-table">
+      <div
+        class="table-shell"
+        tabindex="0"
+        role="region"
+        aria-label="Tabela de startups monitoradas (rolável)">
+        <table mat-table [dataSource]="sortedStartups()" class="monitoring-table"
+               matSort (matSortChange)="sort.set($event)">
+          <caption class="visually-hidden">
+            Startups monitoradas no período, com status, receita, caixa, EBITDA/burn e headcount.
+          </caption>
           <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef>Startup</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="name" scope="col">Startup</th>
             <td mat-cell *matCellDef="let item">
               <div class="startup-cell">
                 @if (item.startup.logo_url) {
@@ -105,36 +102,45 @@
           </ng-container>
 
           <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="status" scope="col">Status</th>
+            <!-- Duas dimensões, e a ausência NÃO substitui a avaliação: uma
+                 startup crítica que não reportou é mais preocupante, não menos.
+                 O pill segue sendo o julgamento do fundo; a linha de baixo é o
+                 fato operacional do período, e só aparece quando há o que dizer. -->
             <td mat-cell *matCellDef="let item">
-              <app-status-badge [status]="item.startup.status" />
+              <div class="status-cell">
+                <app-status-badge [status]="item.startup.status" />
+                @if (reportLabel(item); as label) {
+                  <span class="status-note">{{ label }}</span>
+                }
+              </div>
             </td>
           </ng-container>
 
           <ng-container matColumnDef="total_revenue">
-            <th mat-header-cell *matHeaderCellDef>Receita</th>
-            <td mat-cell *matCellDef="let item">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="total_revenue" arrowPosition="before" scope="col" class="is-num">Receita</th>
+            <td mat-cell *matCellDef="let item" class="is-num">
               {{ formatCurrency(item.total_revenue) }}
             </td>
           </ng-container>
 
           <ng-container matColumnDef="cash_balance">
-            <th mat-header-cell *matHeaderCellDef>Caixa</th>
-            <td mat-cell *matCellDef="let item">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="cash_balance" arrowPosition="before" scope="col" class="is-num">Caixa</th>
+            <td mat-cell *matCellDef="let item" class="is-num">
               {{ formatCurrency(item.cash_balance) }}
             </td>
           </ng-container>
 
           <ng-container matColumnDef="ebitda_burn">
-            <th mat-header-cell *matHeaderCellDef>EBITDA/Burn</th>
-            <td mat-cell *matCellDef="let item">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="ebitda_burn" arrowPosition="before" scope="col" class="is-num">EBITDA/Burn</th>
+            <td mat-cell *matCellDef="let item" class="is-num">
               {{ formatCurrency(item.ebitda_burn) }}
             </td>
           </ng-container>
 
           <ng-container matColumnDef="headcount">
-            <th mat-header-cell *matHeaderCellDef>Headcount</th>
-            <td mat-cell *matCellDef="let item">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header="headcount" arrowPosition="before" scope="col" class="is-num">Headcount</th>
+            <td mat-cell *matCellDef="let item" class="is-num">
               {{ item.headcount ?? '-' }}
             </td>
           </ng-container>
@@ -147,7 +153,11 @@
             (click)="navigateToStartup(row)"
           ></tr>
         </table>
-      </mat-card>
+      </div>
     }
+  } @else {
+    <div class="page-status" role="status">
+      <span>Não foi possível carregar o monitoramento deste período.</span>
+    </div>
   }
 </div>

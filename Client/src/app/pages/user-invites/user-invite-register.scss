@@ -1,52 +1,61 @@
-.invite-page {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 24px 16px;
-  background: var(--mat-sys-surface);
-}
-
-.invite-center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  text-align: center;
-}
-
-.invite-card {
-  width: 100%;
-  max-width: 460px;
+.invite-container {
+  max-width: 30rem;
+  margin-inline: auto;
+  padding-inline: var(--content-padding);
+  padding-bottom: var(--space-3xl);
 }
 
 .invite-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: 8px;
+  padding-block: var(--space-xl);
 }
 
-mat-form-field,
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+// Coluna simples: cabeçalho de marca no topo, formulário abaixo. A
+// centralização anterior transformava header e conteúdo em itens flex lado a
+// lado assim que a página deixou de ser um card único.
+.invite-page {
+  min-height: 100vh;
+  background-color: var(--color-bg);
+}
+
+// Estados (carregando, erro, sucesso) continuam centrados na viewport.
+.invite-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  min-height: 100vh;
+  padding: var(--space-lg);
+  text-align: center;
+}
+
+.field,
 button {
   width: 100%;
 }
 
 .error-icon {
-  color: var(--mat-sys-error);
-  width: 48px;
-  height: 48px;
+  color: var(--color-danger);
+  width: var(--fs-decoration-xl);
+  height: var(--fs-decoration-xl);
   font-size: 48px;
 }
 
 .error-text,
 .success-text {
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--color-text-muted);
 }
 
 .success-icon {
   color: var(--app-status-healthy);
-  width: 64px;
-  height: 64px;
+  width: var(--fs-decoration-3xl);
+  height: var(--fs-decoration-3xl);
   font-size: 64px;
 }

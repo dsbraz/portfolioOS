@@ -1,70 +1,1358 @@
-
-// Include theming for Angular Material with `mat.theme()`.
-// This Sass mixin will define CSS variables that are used for styling Angular Material
-// components according to the Material 3 design spec.
-// Learn more about theming and how to use it for your application's
-// custom components at https://material.angular.dev/guide/theming
+// =============================================================
+// BRQ design system for portfolioOS
+//
+// Layer order (do not reorder):
+//   1. `mat.theme()`      — emits the Material 3 `--mat-sys-*` tokens.
+//   2. BRQ tokens         — the brand source of truth (`--color-*`, `--font-*`, ...).
+//   3. M3 bridge          — remaps `--mat-sys-*` onto the BRQ tokens.
+//
+// Accent contract:
+//   * PURPLE #7f2ec9 is the FUNCTIONAL accent — links, focus, active nav,
+//     chart series 1. It is the only accent that clears AA for text (6.7:1
+//     on white). It is NEVER a button fill.
+//   * ORANGE #ee7c38 is the BRAND accent — highlights, big numbers, fills on
+//     dark bands. Never small text on light surfaces (2.8:1 fails AA).
+//   * The primary button is BLACK, inverting to white on dark surfaces.
+// =============================================================
 @use '@angular/material' as mat;
+@use './theme-colors' as brq;
+
+// Aspekta is the display face and ships locally (see `public/fonts/`).
+// Inter and Geist Mono come from Google Fonts (linked in `index.html`).
+@font-face {
+  font-family: 'Aspekta';
+  src: url('/fonts/Aspekta-450.ttf') format('truetype');
+  font-weight: 450;
+  font-style: normal;
+  font-display: swap;
+}
 
 html {
   height: 100%;
+
   @include mat.theme((
     color: (
-      primary: mat.$violet-palette,
-      tertiary: mat.$orange-palette,
+      primary: brq.$primary-palette,
+      tertiary: brq.$tertiary-palette,
     ),
-    typography: Roboto,
+    typography: (
+      // Aspekta drives display/headline/title levels, Inter everything else.
+      // This mirrors the brand rule: Aspekta for headings, Inter for any text
+      // that carries information.
+      brand-family: 'Aspekta, Inter, system-ui, sans-serif',
+      plain-family: 'Inter, system-ui, -apple-system, "Segoe UI", sans-serif',
+      regular-weight: 400,
+      medium-weight: 500,
+      bold-weight: 700,
+    ),
     density: 0,
   ));
+}
 
-  // App-level semantic status tokens (complement the M3 system)
-  --app-status-healthy: #4caf50;
-  --app-status-warning: #ff9800;
-  --app-status-critical: var(--mat-sys-error);
+// =============================================================
+// BRQ TOKENS
+// Ported from the audited `foundation.css` of the px-operations redesign
+// (PR #5), which is the same brand system with the accessibility fixes
+// already applied. Keep the two in sync when either moves.
+// =============================================================
+:root {
+  // ---------- Brand primaries ----------
+  --color-black: #121212;
+  --color-white: #ffffff;
 
-  // App-level kanban stage tokens
-  --app-stage-new: #90caf9;
-  --app-stage-talking: #ce93d8;
-  --app-stage-analyzing: #ffcc80;
-  --app-stage-committee: #80cbc4;
-  --app-stage-invested: #a5d6a7;
-  --app-stage-archived: #bdbdbd;
+  // Secondary accents. Contrast on WHITE (WCAG):
+  //   purple 6.7:1  -> OK as text/link (AA normal)
+  //   blue   3.72:1 -> large text / UI / borders only (>= 3)
+  //   orange 2.77:1 -> fill or decoration only, or on dark
+  //   green  2.17:1 -> fill or decoration only, or on dark
+  // For legible TEXT always use purple (or black).
+  --color-purple: #7f2ec9;
+  --color-orange: #ee7c38;
+  --color-blue: #5a85cb;
+  --color-green: #5bc397;
+  --color-gray: #626262; // 6.1:1 on white -> OK as secondary text
+
+  // ---------- Gray scale ----------
+  --color-gray-500: #8d8d8d; // 3.32:1 -> UI/borders/large text, not body copy
+  --color-gray-300: #b8b8b8; // borders / dividers
+  --color-gray-100: #cecece; // subtle borders / surfaces
+  --color-gray-75: #ececec; // subtle surface CARRYING text (bubbles, highlights)
+  --color-gray-50: #fafafa; // background surface
+
+  // ---------- Semantic aliases ----------
+  --color-bg: var(--color-white);
+  --color-surface: var(--color-gray-50); // cards, panels
+  --color-surface-2: var(--color-white); // surface on top of surface
+  --color-text: var(--color-black);
+  --color-text-muted: var(--color-gray);
+  --color-border: var(--color-gray-100);
+  --color-primary: var(--color-black);
+  // Frosted glass for sticky bars. Literal rgba on purpose: `color-mix`
+  // resolves to `color(srgb ...)`, which fools the a11y audit on surfaces
+  // that carry text.
+  --color-glass: rgba(255, 255, 255, 0.85);
+  // SOLID highlight for hover/active on surfaces CARRYING text (nav, lists).
+  // Solid on purpose: a translucent overlay makes the audit read the backdrop
+  // as dark because it ignores alpha.
+  --color-hover: #f1f1f1;
+
+  // FUNCTIONAL accent (interactive / legible) = purple
+  --color-accent: var(--color-purple);
+  --color-focus: var(--color-purple);
+  // BRAND accent (highlight / energy, non-text) = orange
+  --color-brand-accent: var(--color-orange);
+
+  // Elevated purple for DARK surfaces. #7f2ec9 only reaches 2.8:1 on #121212,
+  // below the 3:1 that WCAG 1.4.11 requires of an indicator. Same family and
+  // already validated: this is the purple the chart palette uses when dark.
+  --color-accent-on-dark: #a94fd6;
+
+  // ---------- App chrome: the sidebar FOLLOWS THE THEME ----------
+  // Like Linear/Shopify/Clerk: light sidebar in light mode, dark in dark mode,
+  // never pinned. These are aliases of the surface/ink tokens, so they invert
+  // on their own when the dark block below redefines the base.
+  --color-sidebar-bg: var(--color-surface);
+  --color-sidebar-ink: var(--color-text);
+  --color-sidebar-ink-muted: var(--color-text-muted);
+  --color-sidebar-hover: var(--color-hover);
+  --color-sidebar-border: var(--color-border);
+  --color-sidebar-accent: var(--color-accent); // active item icon/accent
+  --color-sidebar-active-bg: var(--color-gray-75); // neutral gray, never purple
+
+  // Derived hovers (`color-mix`, no magic values)
+  --color-primary-hover: color-mix(in srgb, var(--color-black), var(--color-white) 12%);
+  --color-secondary-hover: color-mix(in srgb, var(--color-gray-50), var(--color-black) 6%);
+  --color-tertiary-hover: color-mix(in srgb, var(--color-gray-50), var(--color-black) 4%);
+  --color-accent-hover: color-mix(in srgb, var(--color-purple), var(--color-black) 12%);
+
+  // ---------- Status ----------
+  // Reserved for state, never for chart series. Always paired with an icon or
+  // label, never color alone. Text tones clear AA on light; the `*-bg` values
+  // are soft tints for pills.
+  --color-good: #16714a; // success
+  --color-warn: #8a5310; // attention
+  --color-danger: #c62828; // critical -- the only semantic red
+  --color-info: var(--color-purple);
+  // SOLID tints (precomputed). A surface CARRYING text must not use
+  // `color-mix`: it resolves to `color(srgb ...)` and fools the a11y audit.
+  // Solid text on top of these tints clears 4.5:1 (AA).
+  --color-good-bg: #e4f2ec;
+  --color-warn-bg: #f3ece0;
+  --color-danger-bg: #f9eaea;
+  --color-info-bg: #f2eafa;
+
+  // ---------- Charts ----------
+  // Validated palettes (CVD + contrast). Categorical: assign IN ORDER, never
+  // cycle. A 6th series becomes "other". Target surface is a light card.
+  --chart-1: #7f2ec9; // purple (primary series = functional accent)
+  --chart-2: #5a85cb; // blue
+  --chart-3: #2e9e6e; // green (darkened for surface contrast)
+  --chart-4: #d9631e; // orange (darkened for surface contrast)
+  --chart-5: #c0398a; // magenta
+  --chart-other: var(--color-gray-500);
+  --chart-grid: color-mix(in srgb, var(--color-black) 8%, transparent);
+  --chart-axis: var(--color-gray-500);
+  --chart-ink: var(--color-text);
+
+  // Sequential (magnitude) -- single hue, light to dark
+  --seq-1: #efe7f7;
+  --seq-2: #cdb0ea;
+  --seq-3: #a670dd;
+  --seq-4: #7f2ec9;
+  --seq-5: #4f1c7c;
+
+  // Diverging (polarity) -- orange <-> neutral <-> blue
+  --div-neg-2: #d9631e;
+  --div-neg-1: #e8a97e;
+  --div-mid: #ececec;
+  --div-pos-1: #9fb8e0;
+  --div-pos-2: #5a85cb;
+
+  // ---------- Typography ----------
+  // Aspekta (display) - Inter (body) - Geist Mono (decoration).
+  --font-display: 'Aspekta', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-heading: var(--font-display);
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', 'Menlo', 'Consolas', monospace;
+
+  --fw-regular: 400; // Inter body
+  --fw-medium: 450; // Aspekta
+  --fw-semibold: 600; // Geist Mono decoration
+  --fw-bold: 700;
+
+  --lh-tight: 1.1;
+  --lh-snug: 1.15;
+  --lh-base: 1.25;
+  --lh-loose: 1.4;
+
+  --ls-tighter: -1px;
+  --ls-tight: -0.5px;
+  --ls-normal: 0;
+  --ls-wide: 5px;
+  --ls-label: 0.05em;
+
+  // Display/heading levels are fluid; body/decoration are fixed.
+  --fs-display-xxl: clamp(2.5rem, 1.4rem + 5vw, 5rem);
+  --fs-display-xl: clamp(2.25rem, 1.4rem + 3.6vw, 4rem);
+  --fs-display-lg: clamp(2rem, 1.4rem + 2.5vw, 3rem);
+
+  --fs-heading-xxl: clamp(1.875rem, 1.4rem + 1.9vw, 2.5rem);
+  --fs-heading-xl: clamp(1.625rem, 1.35rem + 1.2vw, 2rem);
+  --fs-heading-lg: clamp(1.375rem, 1.25rem + 0.55vw, 1.5rem);
+  --fs-heading-md: clamp(1.125rem, 1.05rem + 0.35vw, 1.25rem);
+
+  --fs-body-xl: 1.5rem;
+  --fs-body-lg: 1.125rem;
+  --fs-body-md: 1rem;
+  --fs-body-sm: 0.875rem;
+  --fs-body-xs: 0.75rem;
+
+  --fs-decoration-4xl: 4.5rem;
+  --fs-decoration-3xl: 4rem;
+  --fs-decoration-2xl: 3rem;
+  --fs-decoration-xl: 2.5rem;
+  --fs-decoration-lg: 1.5rem;
+  --fs-decoration-md: 1rem;
+  --fs-decoration-sm: 0.875rem;
+  --fs-decoration-xs: 0.75rem;
+
+  // ---------- Spacing (4px scale) ----------
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+  --space-4xl: 6rem;
+
+  // ---------- App shell ----------
+  --sidebar-width: 15.5rem; // 248px
+  --topbar-height: 3.75rem; // 60px
+  --content-max: 88rem;
+  --content-padding: clamp(1rem, 0.5rem + 2vw, 2rem);
+  --panel-gap: clamp(1rem, 0.6rem + 1.2vw, 1.5rem);
+  // Espaço DENTRO de um conjunto de tiles (a faixa de KPIs). Precisa ser menor
+  // que o padding do próprio card (--space-lg) e menor que --panel-gap: é a
+  // diferença entre os dois que faz os tiles lerem como um grupo, e o grupo se
+  // destacar da região seguinte. Igualá-los apaga a hierarquia.
+  --tile-gap: var(--space-sm);
+  --table-row-h: 3rem;
+  --chart-h: 16rem;
+  --fs-stat: 1.625rem; // 26px -- KPI hero number at dashboard density
+  --control-h: 2.25rem; // 36px -- single height for small button, select, search
+  --form-gap: var(--space-2xs); // ritmo vertical entre campos (o subscript soma)
+
+  // ---------- Borders / shadows / motion / layers ----------
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-media: 12px;
+  --radius-full: 9999px;
+
+  --shadow-sm: 0 1px 2px rgba(18, 18, 18, 0.06);
+  --shadow-md: 0 4px 12px rgba(18, 18, 18, 0.08);
+  --shadow-lg: 0 12px 32px rgba(18, 18, 18, 0.12);
+  --shadow-panel: 0 24px 40px -20px rgba(18, 18, 18, 0.16);
+
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+  --ease-out-back: cubic-bezier(0.34, 1.28, 0.64, 1);
+  --dur-reveal: 600ms;
+
+  --icon-sm: 1rem;
+  --icon-md: 1.25rem;
+  --icon-lg: 1.5rem;
+
+  --z-header: 100;
+  --z-overlay: 200;
+  --z-modal: 300;
+  --z-tooltip: 400;
+}
+
+// =============================================================
+// DARK THEME
+// Surfaces and ink invert. The dark CHART palette is a validated
+// REASSIGNMENT: purple and blue collide under CVD on dark, so the categorical
+// order changes to purple, green, orange, blue, magenta.
+//
+// Applied both by explicit opt-in (`[data-theme="dark"]`) and by system
+// preference, which is what `color-scheme: light dark` on `body` already
+// promises the user.
+// =============================================================
+@mixin brq-dark-tokens {
+  --color-bg: #141416;
+  --color-surface: #1a1a1c; // dark card/panel (chart surface)
+  --color-surface-2: #202024;
+  --color-text: var(--color-white);
+  --color-text-muted: var(--color-gray-300);
+  --color-border: #2a2a2e;
+  --color-glass: rgba(20, 20, 22, 0.85);
+  --color-hover: #232327;
+
+  // Button/chip hover must LIGHTEN a dark surface. In light mode these tokens
+  // are a light gray mixed from gray-50; without redefining them the secondary
+  // button turned light gray on hover and its light text disappeared.
+  --color-secondary-hover: color-mix(in srgb, var(--color-surface-2), var(--color-white) 8%);
+  --color-tertiary-hover: color-mix(in srgb, var(--color-surface-2), var(--color-white) 6%);
+
+  // The sidebar bg/ink/border/hover already follow the aliases above. Only the
+  // accent rail and active background need dark-specific values.
+  --color-sidebar-accent: var(--color-accent-on-dark); // >= 3:1 on dark
+  --color-sidebar-active-bg: #2a2a2e; // neutral dark gray
+  --color-focus: var(--color-accent-on-dark);
+
+  // The primary ink drives links, so it has to invert with the text -- otherwise
+  // every link renders #121212 on a dark surface (1.08:1). The hover also flips
+  // direction: it lightens from white instead of darkening.
+  --color-primary: var(--color-white);
+  --color-primary-hover: color-mix(in srgb, var(--color-white), var(--color-black) 12%);
+
+  // Sombra sobre superfície ESCURA precisa de preto puro e mais opacidade: o
+  // par claro (#121212 a 8%) é invisível sobre #141416, e aí um overlay passa a
+  // depender só do filete para se separar do fundo.
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.32);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55);
+  --shadow-panel: 0 24px 40px -20px rgba(0, 0, 0, 0.6);
+
+  --color-good: #4fc78a;
+  --color-warn: #e0a24a;
+  --color-danger: #ef6b6b;
+  --color-info: #b98ce6;
+  // SOLID tints for dark surfaces; light text on top clears 4.5:1.
+  --color-good-bg: #243930;
+  --color-warn-bg: #3e3224;
+  --color-danger-bg: #3f2829; // one RGB step off #40292a to reach 4.5:1
+  --color-info-bg: #372f40;
+
+  // Categorical palette for dark surfaces -- reassigned order (CVD-safe)
+  --chart-1: #a94fd6; // purple
+  --chart-2: #2ea877; // green
+  --chart-3: #d67435; // orange
+  --chart-4: #3f93d9; // blue
+  --chart-5: #d95fa0; // magenta
+  --chart-other: var(--color-gray-300);
+  --chart-grid: color-mix(in srgb, var(--color-white) 10%, transparent);
+  --chart-axis: var(--color-gray-300);
+  --chart-ink: var(--color-white);
+
+  --seq-1: #2a1f38;
+  --seq-2: #4f2f78;
+  --seq-3: #7f2ec9;
+  --seq-4: #a670dd;
+  --seq-5: #d9c2f2;
+}
+
+:root[data-theme='dark'] {
+  @include brq-dark-tokens;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    @include brq-dark-tokens;
+  }
+}
+
+// =============================================================
+// M3 BRIDGE
+// Angular Material components read `--mat-sys-*`. Remap the ones the brand has
+// an opinion about onto the BRQ tokens so Material inherits the brand instead
+// of its generated defaults. Everything not listed keeps the M3 value derived
+// from the BRQ seed palettes in `_theme-colors.scss`.
+// =============================================================
+:root {
+  // ---------- Surfaces and ink ----------
+  --mat-sys-surface: var(--color-bg);
+  --mat-sys-surface-dim: var(--color-surface);
+  --mat-sys-surface-bright: var(--color-bg);
+  --mat-sys-surface-container-lowest: var(--color-bg);
+  --mat-sys-surface-container-low: var(--color-surface);
+  --mat-sys-surface-container: var(--color-surface);
+  --mat-sys-surface-container-high: var(--color-surface);
+  // `--color-hover`, not `--color-gray-75`: the raw gray scale never inverts, so
+  // aliasing a Material surface to it leaves a light fill under light text in
+  // dark mode. Only the semantic tokens flip with the theme.
+  --mat-sys-surface-container-highest: var(--color-hover);
+  --mat-sys-surface-variant: var(--color-surface);
+  --mat-sys-background: var(--color-bg);
+  --mat-sys-on-surface: var(--color-text);
+  --mat-sys-on-surface-variant: var(--color-text-muted);
+  --mat-sys-on-background: var(--color-text);
+  --mat-sys-outline: var(--color-gray-500);
+  --mat-sys-outline-variant: var(--color-border);
+  --mat-sys-inverse-surface: var(--color-text);
+  --mat-sys-inverse-on-surface: var(--color-bg);
+
+  // ---------- Primary = BLACK ----------
+  // Rule 2 of the brand: the primary button is black, never purple. Mapping
+  // `--mat-sys-primary` here is what makes every `mat-flat-button`,
+  // `mat-fab` and filled control land on brand without touching templates.
+  --mat-sys-primary: var(--color-primary);
+  --mat-sys-on-primary: var(--color-bg);
+  // The brand has no "primary container". Since primary is black, the container
+  // role becomes a neutral raised surface -- which is what the FAB and tonal
+  // buttons land on. It has to invert with the theme.
+  --mat-sys-primary-container: var(--color-hover);
+  --mat-sys-on-primary-container: var(--color-text);
+  --mat-sys-inverse-primary: var(--color-bg);
+
+  // ---------- Purple stays the FUNCTIONAL accent ----------
+  // Secondary carries the interactive accent: selected states, active nav,
+  // links. This is where purple belongs -- not on button fills.
+  --mat-sys-secondary: var(--color-accent);
+  --mat-sys-on-secondary: var(--color-white);
+  --mat-sys-secondary-container: var(--color-info-bg);
+  --mat-sys-on-secondary-container: var(--color-info);
+
+  // ---------- Orange is the BRAND accent (non-text) ----------
+  --mat-sys-tertiary: var(--color-brand-accent);
+  --mat-sys-on-tertiary: var(--color-black);
+  --mat-sys-tertiary-container: var(--color-warn-bg);
+  --mat-sys-on-tertiary-container: var(--color-warn);
+
+  // ---------- Status ----------
+  --mat-sys-error: var(--color-danger);
+  --mat-sys-on-error: var(--color-white);
+  --mat-sys-error-container: var(--color-danger-bg);
+  --mat-sys-on-error-container: var(--color-danger);
+
+  // ---------- Corners: sober, not "generic SaaS" ----------
+  // Rule 4: cards sit at 8px, not 16-24px. Full rounding is reserved for
+  // buttons, chips and search fields.
+  --mat-sys-corner-none: 0;
+  --mat-sys-corner-extra-small: var(--radius-sm);
+  --mat-sys-corner-small: var(--radius-sm);
+  --mat-sys-corner-medium: var(--radius-md);
+  --mat-sys-corner-large: var(--radius-md);
+  --mat-sys-corner-extra-large: var(--radius-lg);
+  --mat-sys-corner-full: var(--radius-full);
+
+  // ---------- Elevation ----------
+  --mat-sys-level0: none;
+  --mat-sys-level1: var(--shadow-sm);
+  --mat-sys-level2: var(--shadow-md);
+  --mat-sys-level3: var(--shadow-lg);
+  --mat-sys-level4: var(--shadow-lg);
+  --mat-sys-level5: var(--shadow-panel);
+}
+
+// =============================================================
+// APP-LEVEL TOKENS
+// Domain colors the M3 system does not cover natively.
+// =============================================================
+:root {
+  // Health status -- reuses the reserved status tones, so a pill is never
+  // color alone and always clears AA against its tint.
+  --app-status-healthy: var(--color-good);
+  --app-status-warning: var(--color-warn);
+  --app-status-critical: var(--color-danger);
+
+  // Kanban stages are CATEGORICAL labels, not status. They take the validated
+  // categorical palette in order and never cycle; the terminal "archived"
+  // stage takes the reserved "other" gray.
+  --app-stage-new: var(--chart-1);
+  --app-stage-talking: var(--chart-2);
+  --app-stage-analyzing: var(--chart-3);
+  --app-stage-committee: var(--chart-4);
+  --app-stage-invested: var(--chart-5);
+  --app-stage-archived: var(--chart-other);
+}
+
+// =============================================================
+// BASE
+// =============================================================
+
+// The whole token system sizes in padding + width and assumes border-box: a
+// `width: 100%` element with `padding-inline` otherwise overflows its parent by
+// exactly that padding. Browsers already default form controls to border-box,
+// which is why buttons looked right while anchors did not.
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+// Default for the no-JS case: defer to the system. Once the bootstrap script in
+// `index.html` runs it stamps an explicit `color-scheme` on the root, and
+// `ThemeService` keeps it in step with `[data-theme]` from then on.
+:root {
+  color-scheme: light dark;
 }
 
 body {
-  // Default the application to a light color theme. This can be changed to
-  // `dark` to enable the dark color theme, or to `light dark` to defer to the
-  // user's system settings.
-  color-scheme: light dark;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--fs-body-md);
+  font-weight: var(--fw-regular);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 
-  // Set a default background, font and text colors for the application using
-  // Angular Material's system-level CSS variables. Learn more about these
-  // variables at https://material.angular.dev/guide/system-variables
-  background-color: var(--mat-sys-surface);
-  color: var(--mat-sys-on-surface);
-  font: var(--mat-sys-body-medium);
-
-  // Reset the user agent margin.
   margin: 0;
   height: 100%;
 }
+
+// Headings take the display face across the app.
+h1,
+h2,
+h3,
+h4,
+h5 {
+  font-family: var(--font-display);
+  font-weight: var(--fw-medium);
+}
+
+// Available to screen readers, removed from the visual flow. Used for table
+// captions and any label that the layout already conveys visually.
+// Cabeçalho ordenável. O `mat-sort-header` transforma o `th` em botão e envolve
+// o rótulo num flex — o que quebra o `text-align: end` das colunas numéricas,
+// porque o alinhamento passa a ser do container, não do texto.
+.mat-sort-header {
+  --mat-sort-arrow-color: var(--color-text-muted);
+
+  .mat-sort-header-container {
+    // A área de clique é o rótulo inteiro, e ela precisa de um foco visível
+    // próprio: o `th` não recebe outline por ser célula de tabela.
+    border-bottom: 0;
+
+    // O container é quem carrega `role="button"` e `tabindex="0"` — o alvo real
+    // é ele, não a célula. Na altura natural do texto ficava em 20px, abaixo dos
+    // 24px mínimos da WCAG 2.5.8.
+    //
+    // É `min-height` e não `height: 100%`: porcentagem não resolve dentro de uma
+    // célula de tabela, que não tem altura definida. 2rem dá folga sobre o
+    // mínimo e cabe no espaço que já era padding do `th`, sem mexer na linha.
+    min-height: 2rem;
+  }
+
+  &:hover .mat-sort-header-arrow {
+    color: var(--color-text);
+  }
+
+}
+
+// Numérica: o rótulo encosta à direita, alinhado com os números que ele
+// encabeça. A seta vem ANTES dele, senão ela se planta na borda e empurra o
+// texto para dentro.
+.is-num.mat-sort-header .mat-sort-header-container {
+  justify-content: flex-end;
+
+  // `arrowPosition="before"` põe o container em `row-reverse`, e num eixo
+  // invertido `flex-end` aponta para a ESQUERDA. Quem encosta o conteúdo na
+  // direita visual aqui é `flex-start`.
+  &.mat-sort-header-position-before {
+    justify-content: flex-start;
+  }
+}
+
+// Eyebrow de seção: agrupa campos dentro de um formulário ou pares dentro de
+// uma vista de leitura ("QUANTITATIVOS", "QUALITATIVOS").
+//
+// É global porque ler e editar precisam apresentar os MESMOS grupos com a mesma
+// aparência — quando cada lado tinha sua própria cópia, era só questão de tempo
+// até divergirem.
+//
+// Em Inter, não em Geist Mono. O sistema lista eyebrow como papel do mono, mas
+// ali o mono rotula DADO (tag, número grande); aqui é cabeçalho de estrutura, e
+// mono num cabeçalho é o erro clássico que o guia descreve.
+//
+// Só tipografia: o ritmo vertical é do contexto, porque a distância que separa
+// um grupo do anterior depende de como aquele container empilha.
+.section-title {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: var(--fs-body-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+}
+
+// Estado de carregamento das telas internas.
+//
+// Sem ele a página renderizava NADA enquanto os dados não chegavam, e um main
+// vazio é indistinguível de "não há dados" — tanto para quem lê a tela quanto
+// para um agente que raspe o DOM cedo demais. O `aria-busy` fica no container
+// da página, que sempre existe: uma região viva criada junto com o conteúdo
+// costuma não ser anunciada.
+.page-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-3xl) var(--space-lg);
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: var(--fs-body-sm);
+  text-align: center;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// Visible focus (WCAG 2.2 Focus Appearance) -- keyboard only.
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+// Dentro de um container que ROLA, o anel para fora é recortado — e um foco
+// recortado é um foco que não se vê. `overflow-x: auto` ainda faz o `overflow-y`
+// virar `auto` junto, então o corte acontece nos quatro lados, não só nas
+// laterais. Nestes escopos o anel desenha para dentro.
+//
+// Vale para os focáveis reais de cada um: o `.mat-sort-header-container` (que é
+// quem carrega `role="button"`, não o `th`) e os botões de ação das linhas.
+.table-shell :focus-visible,
+.section-tabs :focus-visible {
+  outline-offset: -2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+// =============================================================
+// FOCUS AND SELECTION
+// Material drives the focused outline, the floating label and the checked state
+// of form controls from `--mat-sys-primary`. Since the bridge points primary at
+// the black/white ink, those states would lose their accent -- and focus is one
+// of the few places the brand explicitly reserves for purple.
+//
+// `--color-focus` already raises itself to `--color-accent-on-dark` in dark mode,
+// so the indicator keeps the 3:1 that WCAG 1.4.11 requires.
+// =============================================================
+// =============================================================
+// FORM FIELDS — the brand's `--boxed` field
+//
+// Label sits ABOVE the control as static text; the control is a plain box:
+// `--color-surface-2` fill, hairline border, 8px corner, 14px text, purple
+// border on focus.
+//
+// The `<mat-label>` is deliberately gone. It is what forces Material's notched
+// outline and reserves vertical room inside the box, which is why the field
+// could not come down to `--control-h`. Dropping it keeps `mat-select`,
+// `matDatepicker` and `mat-error` working while the label moves outside.
+//
+// Association is explicit since Material no longer owns the label: `for`/`id`
+// on inputs and textareas, `aria-labelledby` on `mat-select` (its combobox is a
+// div, which `for` cannot target).
+// =============================================================
+.field {
+  display: grid;
+  gap: var(--space-2xs);
+}
+
+.field-label {
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--fs-body-xs);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-base);
+}
+
+// Unidade mora no CAMPO, não no rótulo: o rótulo diz o que o dado É, a unidade
+// diz em que ele é medido. Fica em tinta secundária para não competir com o
+// valor digitado.
+.field-affix {
+  color: var(--color-text-muted);
+  font-size: var(--fs-body-sm);
+  white-space: nowrap;
+}
+
+// Valor e unidade precisam ficar ADJACENTES. Com prefixo (R$) o número segue à
+// esquerda, logo depois dele. Com sufixo (%) o número vai para a direita, senão
+// sobra um vão entre o valor e a unidade — "72 ......... %" não lê como um
+// número percentual. Por isso o alinhamento difere: cada um encosta no seu
+// afixo. Tabular para os dígitos não dançarem enquanto se digita.
+.mat-mdc-form-field:has(.field-affix) input {
+  font-variant-numeric: tabular-nums;
+}
+
+.mat-mdc-form-field:has([matTextSuffix].field-affix) input {
+  text-align: end;
+}
+
+// O spin button nativo não pertence ao sistema: ele desenha um controle que a
+// marca não tem, encosta no sufixo — "▲▼ %" divide a leitura da unidade — e é a
+// porta pela qual a roda do mouse altera um valor sem intenção. Escondê-lo aqui
+// vale para os dois formulários de indicador de uma vez; a digitação e as setas
+// do teclado, que é como o número realmente é informado, seguem intactas.
+input[type='number'] {
+  appearance: textfield;
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    margin: 0;
+    appearance: none;
+  }
+}
+
+.field-required {
+  margin-inline-start: 2px;
+  color: var(--color-danger);
+}
+
+.mat-mdc-form-field {
+  // Inside a form field, "primary" IS the functional accent: it drives the
+  // focused outline, the floating label and the caret. Redefining the variable
+  // in this scope beats trying to out-specify Material — its component styles
+  // are injected at runtime AFTER this stylesheet, so an equal-specificity rule
+  // of ours always loses, while a custom property resolves from the nearest
+  // ancestor that declares it regardless of cascade order.
+  --mat-sys-primary: var(--color-focus);
+
+  // Shape and fill
+  --mat-sys-corner-extra-small: var(--radius-md);
+  --mdc-outlined-text-field-outline-color: var(--color-border);
+  --mdc-outlined-text-field-hover-outline-color: var(--color-gray-500);
+  --mdc-outlined-text-field-input-text-color: var(--color-text);
+  --mdc-outlined-text-field-label-text-color: var(--color-text-muted);
+  --mdc-outlined-text-field-error-outline-color: var(--color-danger);
+  --mdc-outlined-text-field-error-label-text-color: var(--color-danger);
+
+  // With no label inside the box, the control finally sits at the brand's
+  // single control height. Note the switch: WITH a floating label the outlined
+  // field is sized by padding + line-box; WITHOUT one it honours
+  // `container-height`.
+  --mat-form-field-container-height: var(--control-h);
+  --mat-form-field-container-vertical-padding: var(--space-xs);
+
+  width: 100%;
+
+  .mat-mdc-text-field-wrapper {
+    background-color: var(--color-surface-2);
+    border-radius: var(--radius-md);
+  }
+
+  input.mat-mdc-input-element,
+  textarea.mat-mdc-input-element,
+  .mat-mdc-select-value {
+    font-family: var(--font-body);
+    font-size: var(--fs-body-sm);
+    color: var(--color-text);
+  }
+
+  .mat-mdc-form-field-error {
+    font-family: var(--font-body);
+    font-size: var(--fs-body-xs);
+    color: var(--color-danger);
+  }
+
+  .mat-mdc-form-field-hint {
+    font-family: var(--font-body);
+    font-size: var(--fs-body-xs);
+    color: var(--color-text-muted);
+  }
+}
+
+// A textarea sizes itself from its `rows`; forcing the container height here
+// detaches the floating label from the outline notch, leaving it struck through
+// by the top border. Material already handles this case — leave it alone.
+
+.mat-mdc-checkbox,
+.mat-mdc-radio-button,
+.mat-mdc-slide-toggle {
+  --mdc-checkbox-selected-icon-color: var(--color-accent);
+  --mdc-checkbox-selected-focus-icon-color: var(--color-accent);
+  --mdc-checkbox-selected-hover-icon-color: var(--color-accent);
+  --mdc-checkbox-selected-pressed-icon-color: var(--color-accent);
+  --mdc-radio-selected-icon-color: var(--color-accent);
+  --mdc-radio-selected-focus-icon-color: var(--color-accent);
+  --mdc-radio-selected-hover-icon-color: var(--color-accent);
+  --mdc-switch-selected-handle-color: var(--color-accent);
+  --mdc-switch-selected-track-color: color-mix(in srgb, var(--color-accent) 45%, transparent);
+}
+
+// =============================================================
+// PRIMARY ACTION
+// M3 fills a FAB from `primary-container`, which lands it on a neutral raised
+// surface. The brand disagrees: the page's primary action is the BLACK button,
+// inverting to white on dark. Point the FAB at `primary` so the rule holds for
+// the extended FABs the pages use as their main call to action.
+// =============================================================
+.mat-mdc-fab,
+.mat-mdc-extended-fab {
+  --mat-fab-container-color: var(--color-primary);
+  --mat-fab-foreground-color: var(--color-bg);
+  --mat-fab-state-layer-color: var(--color-bg);
+  --mat-fab-extended-container-shape: var(--radius-full);
+  --mat-fab-container-elevation-shadow: none;
+  --mat-fab-hover-container-elevation-shadow: var(--shadow-md);
+
+  .mat-icon {
+    color: var(--color-bg);
+  }
+}
+
+// =============================================================
+// DIALOG
+// Ported from `BrqDialog` in the px-operations redesign. Material's M3 dialog
+// arrives as a 16px-cornered, borderless, shadowless sheet -- the corner comes
+// from `corner-extra-large`, which the bridge points at `--radius-lg`. A dialog
+// is a raised PANEL: 8px corner, hairline border, real shadow.
+// =============================================================
+.mat-mdc-dialog-container {
+  // The surface reads `--mat-sys-corner-extra-large` directly; the MDC
+  // component token has no effect here. Same shape as the sidenav leak: the
+  // brand keeps panels at 8px, so the dialog is re-pointed in its own scope.
+  --mat-sys-corner-extra-large: var(--radius-md);
+  --mdc-dialog-container-color: var(--color-surface-2);
+
+  .mat-mdc-dialog-surface {
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-lg);
+  }
+
+  // The header owns the top padding, so the content starts flush against it.
+  // Set through the tokens rather than the `padding` shorthand: a dialog with
+  // actions is matched by a LATER Material rule
+  // (`.mat-mdc-dialog-container-with-actions .mat-mdc-dialog-content`) that wins
+  // at equal specificity, and it reads its own token.
+  --mat-dialog-content-padding: 0 var(--space-lg) var(--space-lg);
+  --mat-dialog-with-actions-content-padding: 0 var(--space-lg) var(--space-lg);
+
+  .mat-mdc-dialog-content {
+    color: var(--color-text);
+    font-family: var(--font-body);
+    font-size: var(--fs-body-md);
+    max-height: 70vh;
+  }
+
+  // The footer is separated by a rule and right-aligned, so the primary action
+  // always lands in the same place.
+  .mat-mdc-dialog-actions {
+    justify-content: flex-end;
+    gap: var(--space-sm);
+    padding: var(--space-md) var(--space-lg);
+    border-top: 1px solid var(--color-border);
+    min-height: auto;
+  }
+}
+
+// Scrim: the brand's black at 50%, not Material's neutral 32%.
+.cdk-overlay-dark-backdrop {
+  background-color: color-mix(in srgb, var(--color-black) 50%, transparent);
+}
+
+// =============================================================
+// OVERLAYS — menu, select, datepicker, tooltip, snackbar
+//
+// O CDK monta overlay em `<body>`, fora de `<app-root>`, então nenhuma regra
+// escopada em container do app os alcança — foi por isso que escaparam do
+// redesign. Aqui eles recebem o mesmo tratamento de painel do resto: superfície
+// `--color-surface-2`, filete de 1px, canto de 8px e a sombra do nosso token.
+//
+// A sombra do Material é uma elevação MDC de TRÊS camadas escrita direto no
+// componente, que ignora `--mat-sys-level*`. Por isso a ponte de elevação não
+// bastou e o valor precisa ser sobrescrito aqui.
+// =============================================================
+.cdk-overlay-pane {
+  .mat-mdc-menu-panel {
+    padding-block: var(--space-2xs);
+  }
+
+  .mat-mdc-menu-panel,
+  .mat-mdc-select-panel,
+  .mat-datepicker-content {
+    background-color: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+  }
+
+  // O token de fonte do item de menu vem vazio do Material, e sem ele o item
+  // cai no default do navegador (Arial). Definido explicitamente.
+  .mat-mdc-menu-item {
+    --mat-menu-item-label-text-font: var(--font-body);
+    --mat-menu-item-label-text-size: var(--fs-body-sm);
+    --mat-menu-item-label-text-color: var(--color-text);
+
+    font-family: var(--font-body);
+    font-size: var(--fs-body-sm);
+    color: var(--color-text);
+    min-height: var(--control-h);
+
+    .mat-icon {
+      color: var(--color-text-muted);
+      width: var(--icon-md);
+      height: var(--icon-md);
+      font-size: var(--icon-md);
+    }
+
+    &:hover:not(:disabled) {
+      background-color: var(--color-hover);
+    }
+  }
+
+  // Ação destrutiva: separada por um filete para não ser clicada por engano,
+  // e no único vermelho semântico. Nunca só pela cor — o rótulo diz "Excluir".
+  .menu-item-danger {
+    margin-top: var(--space-2xs);
+    padding-top: var(--space-2xs);
+    border-top: 1px solid var(--color-border);
+    color: var(--color-danger);
+
+    .mat-icon {
+      color: var(--color-danger);
+    }
+  }
+
+  .mat-mdc-option {
+    font-family: var(--font-body);
+    font-size: var(--fs-body-sm);
+    color: var(--color-text);
+    min-height: var(--control-h);
+
+    &:hover:not(.mdc-list-item--disabled) {
+      background-color: var(--color-hover);
+    }
+
+    // Selecionado usa o acento FUNCIONAL, que é o papel do roxo.
+    &.mdc-list-item--selected {
+      background-color: var(--color-info-bg);
+      color: var(--color-info);
+    }
+  }
+}
+
+// Enquanto o painel está aberto, o GATILHO fica marcado. Sem isso a referência
+// se perde — num quadro onde todo card tem o mesmo "⋯", nada indica qual deles
+// abriu o menu. O estado vem de `aria-expanded`, então o visual não pode
+// divergir do que a tecnologia assistiva recebe.
+.mat-mdc-menu-trigger[aria-expanded='true'] {
+  background-color: var(--color-hover);
+  color: var(--color-text);
+
+  .mat-icon {
+    color: var(--color-text);
+  }
+}
+
+// Tooltip: tinta invertida, como um balão de ajuda deve ser.
+.mat-mdc-tooltip .mdc-tooltip__surface {
+  background-color: var(--color-text);
+  color: var(--color-bg);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: var(--fs-body-xs);
+}
+
+.mat-mdc-snack-bar-container {
+  --mdc-snackbar-container-color: var(--color-text);
+  --mdc-snackbar-supporting-text-color: var(--color-bg);
+  --mdc-snackbar-supporting-text-font: var(--font-body);
+  --mdc-snackbar-supporting-text-size: var(--fs-body-sm);
+  --mdc-snackbar-container-shape: var(--radius-md);
+  --mat-snack-bar-button-color: var(--color-bg);
+}
+
+// =============================================================
+// FORMULÁRIO PÚBLICO — /report e /user-invite-register
+//
+// Páginas sem o chrome do app: não há sidebar para carregar a marca, então elas
+// ganham um cabeçalho próprio com o logo (mesmo problema que o /login tinha).
+//
+// O corpo segue o modelo de ficha do px-operations: seções NUMERADAS, cada uma
+// com título e uma dica curta, separadas por filete. Numerar dá noção de
+// progresso num formulário longo preenchido por quem é de fora do produto.
+// =============================================================
+.public-top {
+  background-color: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.public-top-inner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  min-height: 4rem;
+  max-width: 48rem;
+  margin-inline: auto;
+  padding-inline: var(--content-padding);
+}
+
+.public-logo-on-light,
+.public-logo-on-dark {
+  height: 1.5rem;
+  width: auto;
+}
+
+.public-logo-on-dark {
+  display: none;
+}
+
+:root[data-theme='dark'] {
+  .public-logo-on-light {
+    display: none;
+  }
+
+  .public-logo-on-dark {
+    display: block;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    .public-logo-on-light {
+      display: none;
+    }
+
+    .public-logo-on-dark {
+      display: block;
+    }
+  }
+}
+
+.form-intro {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding-block: var(--space-xl);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.form-intro-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-heading-lg);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+  color: var(--color-text);
+}
+
+.form-intro-meta {
+  margin: var(--space-2xs) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--fs-body-sm);
+}
+
+// Seção numerada. É um `<fieldset>`: agrupa controles relacionados e leva
+// `aria-labelledby`/`aria-describedby` para o título e a dica. Precisa zerar
+// borda e margem, que o user-agent aplica.
+.q {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0;
+  padding-block: var(--space-xl);
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.q-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: var(--space-lg);
+}
+
+// O número é decorativo — Geist Mono, o papel que a marca reserva para ele.
+.q-num {
+  font-family: var(--font-mono);
+  font-size: var(--fs-decoration-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.q-title {
+  margin: var(--space-2xs) 0 0;
+  max-width: 40ch;
+  font-family: var(--font-display);
+  font-size: var(--fs-heading-md);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-base);
+  color: var(--color-text);
+}
+
+.q-hint {
+  margin: var(--space-xs) 0 0;
+  max-width: 62ch;
+  font-size: var(--fs-body-sm);
+  color: var(--color-text-muted);
+}
+
+// ---------- Estados de página pública (carregando, erro, sucesso) ----------
+// Mesma moldura do resto: painel com filete e canto de 8px. O ícone vai num
+// disco tingido, no par tom+tinta já validado — um ícone de 64px solto numa
+// página em branco não é um estado, é um vazio.
+.status-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: var(--space-xl) var(--content-padding);
+}
+
+.status-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  max-width: 28rem;
+  padding: var(--space-2xl);
+  background-color: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.status-panel-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: var(--space-2xs);
+  border-radius: var(--radius-full);
+
+  .mat-icon {
+    width: var(--icon-lg);
+    height: var(--icon-lg);
+    font-size: var(--icon-lg);
+  }
+}
+
+.status-panel-icon--good {
+  background-color: var(--color-good-bg);
+  color: var(--color-good);
+}
+
+.status-panel-icon--danger {
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.status-panel-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-heading-md);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-tight);
+  color: var(--color-text);
+}
+
+.status-panel-text {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--fs-body-sm);
+}
+
+// ---------- Linha de campos ----------
+// `gap` no grid vale para as duas direções, e era isso que quebrava o ritmo no
+// mobile: ao colapsar, a linha separava os campos por 16px enquanto o container
+// usava 4px — o mesmo formulário com dois ritmos. Separando os eixos, o
+// vertical acompanha o container (o subscript do campo já dá o respiro) e o
+// horizontal fica maior, que é o que as colunas precisam para não colarem.
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  row-gap: var(--form-gap);
+  column-gap: var(--space-md);
+}
+
+// Ritmo único de formulário. Definido uma vez para as telas e os diálogos não
+// divergirem — eram cinco valores diferentes espalhados.
+.report-form,
+.invite-form,
+.startup-form,
+.indicator-form,
+.meeting-form,
+.executive-form,
+.deal-form,
+.user-form,
+.token-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--form-gap);
+}
+
+// ---------- Ações do formulário ----------
+// Mobile-first: o botão ocupa a linha inteira por padrão e só encolhe para
+// `max-content` quando há largura. Um alvo de largura total é mais fácil de
+// acertar com o polegar, e é o último passo do formulário.
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+
+  button {
+    width: 100%;
+  }
+}
+
+@media (min-width: 30em) {
+  .form-actions button {
+    width: auto;
+  }
+}
+
+// =============================================================
+// PILL -- primitiva compartilhada
+//
+// Rótulo de ESTADO estático: sem hover, sem ponteiro, nunca vira ação. Divide a
+// forma com `.tag` (mesma borda, peso e padding) para o app ter um só
+// tratamento de rótulo tingido.
+//
+// Cada tom pareia uma cor de texto sólida com sua tinta pré-calculada. As
+// tintas são sólidas de propósito (nunca `color-mix`): fundo translúcido faz o
+// audit ler o backdrop em vez da tinta, e é o par que sustenta os 4.5:1 nos
+// dois temas. Estado nunca é só cor — o rótulo escrito carrega o significado.
+// =============================================================
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  padding: var(--space-2xs) var(--space-sm);
+  border: 1px solid color-mix(in srgb, currentColor 24%, transparent);
+  border-radius: var(--radius-full);
+  font-family: var(--font-body);
+  font-size: var(--fs-body-xs);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  white-space: nowrap;
+}
+
+.pill::before {
+  content: '';
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-full);
+  background-color: currentColor;
+}
+
+.pill--good {
+  background-color: var(--color-good-bg);
+  color: var(--color-good);
+}
+
+.pill--warn {
+  background-color: var(--color-warn-bg);
+  color: var(--color-warn);
+}
+
+.pill--danger {
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.pill--info {
+  background-color: var(--color-info-bg);
+  color: var(--color-info);
+}
+
+// Neutro para estados que NÃO são problema. "Inativo" não é erro — pintá-lo de
+// vermelho exagera o que o dado diz.
+.pill--neutral {
+  background-color: var(--color-surface);
+  color: var(--color-text-muted);
+}
+
+// =============================================================
+// TAG -- shared primitive
+//
+// A tag is a static LABEL, never an action. It has no hover, no pointer and
+// never becomes a link or a button. Its opposite number is the chip, which IS
+// interactive (rounded, hover, `aria-pressed`).
+//
+// Rule of thumb: rounded + hover = action; tinted label = descriptor.
+//
+// Purple is the default. Reach for another tone only when it carries semantic
+// meaning -- never a rainbow of colors by category.
+// =============================================================
+.tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  flex: none;
+  margin: 0;
+  padding: var(--space-2xs) var(--space-sm);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 24%, transparent);
+  border-radius: var(--radius-full);
+  background-color: var(--color-info-bg);
+  color: var(--color-info);
+  font-family: var(--font-body);
+  font-size: var(--fs-body-xs);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  white-space: nowrap;
+}
+
+// Only the padding tightens. Upstream this variant also bumped the size to
+// 14px — LARGER than the 12px base — which makes "small" bigger than default.
+// Keeping one size across variants is what lets a tag and a status pill read
+// as the same component family.
+.tag--sm {
+  padding: 1px var(--space-xs);
+}
+
+.tag--gray {
+  background-color: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.tag--good {
+  background-color: var(--color-good-bg);
+  border-color: color-mix(in srgb, var(--color-good) 24%, transparent);
+  color: var(--color-good);
+}
+
+.tag--warn {
+  background-color: var(--color-warn-bg);
+  border-color: color-mix(in srgb, var(--color-warn) 24%, transparent);
+  color: var(--color-warn);
+}
+
 // Drag-and-drop global styles (CDK renders preview/placeholder at <body> level)
 .deal-card.cdk-drag-preview {
-  background: var(--mat-sys-primary-container);
-  color: var(--mat-sys-on-primary-container);
-  box-shadow: var(--mat-sys-level3);
-  border-radius: 8px;
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-lg);
+  border-radius: var(--radius-md);
   rotate: 3deg;
   scale: 1.04;
 }
 
 .deal-card.cdk-drag-placeholder {
-  background: var(--mat-sys-surface-variant);
-  border: 2px dashed var(--mat-sys-outline);
-  border-radius: 8px;
+  background: var(--color-surface);
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-md);
   opacity: 0.4;
 
   * {
     visibility: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
   }
 }

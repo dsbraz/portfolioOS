@@ -12,9 +12,14 @@ export interface ExecutiveFormDialogData {
   readonly?: boolean;
 }
 
+import { DialogHeader } from '../../../components/dialog-header/dialog-header';
+import { ReadSection, ReadView } from '../../../components/read-view/read-view';
+
 @Component({
   selector: 'app-executive-form-dialog',
   imports: [
+    DialogHeader,
+    ReadView,
     ReactiveFormsModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -40,12 +45,30 @@ export class ExecutiveFormDialog implements OnInit {
     linkedin: [''],
   });
 
+  /** Ver [[ReadView]]: o modo leitura deixou de ser um formulário desabilitado. */
+  readonly readSections: ReadSection[] = this.buildReadSections();
+
+  /** O executivo não tem grupos no modo de edição, então também não tem aqui. */
+  private buildReadSections(): ReadSection[] {
+    const e = this.data?.executive;
+    if (!e) return [];
+
+    return [
+      {
+        items: [
+          { label: 'Nome', value: e.name || null },
+          { label: 'Cargo', value: e.role || null },
+          { label: 'Email', value: e.email || null },
+          { label: 'Telefone', value: e.phone || null },
+          { label: 'LinkedIn', value: e.linkedin || null, kind: 'long' },
+        ],
+      },
+    ];
+  }
+
   ngOnInit(): void {
     if (this.data?.executive) {
       this.form.patchValue(this.data.executive);
-    }
-    if (this.isReadonly) {
-      this.form.disable();
     }
   }
 

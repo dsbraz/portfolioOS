@@ -13,15 +13,25 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 
 import { MonthlyIndicator, MONTH_LABELS } from '../../../models/monthly-indicator.model';
+import {
+  formatCurrencyBRL,
+  formatInteger,
+  formatPercent,
+} from '../../../models/formatters';
+import { ReadSection, ReadView } from '../../../components/read-view/read-view';
 
 export interface IndicatorFormDialogData {
   indicator?: MonthlyIndicator;
   readonly?: boolean;
 }
 
+import { DialogHeader } from '../../../components/dialog-header/dialog-header';
+
 @Component({
   selector: 'app-indicator-form-dialog',
   imports: [
+    DialogHeader,
+    ReadView,
     ReactiveFormsModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -68,12 +78,56 @@ export class IndicatorFormDialog implements OnInit {
     return null;
   }
 
+  /**
+   * No modo leitura o formulário não é renderizado — o registro vira uma lista
+   * de definição. Antes ele era exibido com `form.disable()`, e o dado herdava a
+   * cor de controle inativo: 2,46:1 no tema claro, contra 18,7:1 do rótulo ao
+   * lado. A WCAG isenta componentes inativos, então a auditoria passava; só que
+   * o texto do controle era a informação inteira do diálogo.
+   */
+  readonly readSections: ReadSection[] = this.buildReadSections();
+
+  /** Mesmos grupos do modo de edição, na mesma ordem: o período solto no topo,
+   *  depois Quantitativos e Qualitativos. */
+  private buildReadSections(): ReadSection[] {
+    const ind = this.data?.indicator;
+    if (!ind) return [];
+
+    return [
+      {
+        items: [{ label: 'Período', value: `${MONTH_LABELS[ind.month]}/${ind.year}` }],
+      },
+      {
+        title: 'Quantitativos',
+        items: [
+          { label: 'Receita do mês', value: formatCurrencyBRL(ind.total_revenue), kind: 'num' },
+          {
+            label: 'Percentual de receita recorrente',
+            value: formatPercent(ind.recurring_revenue_pct),
+            kind: 'num',
+          },
+          { label: 'Margem bruta', value: formatPercent(ind.gross_margin_pct), kind: 'num' },
+          { label: 'Saldo em caixa', value: formatCurrencyBRL(ind.cash_balance), kind: 'num' },
+          { label: 'Headcount', value: formatInteger(ind.headcount), kind: 'num' },
+          { label: 'Burn / EBITDA', value: formatCurrencyBRL(ind.ebitda_burn), kind: 'num' },
+        ],
+      },
+      {
+        title: 'Qualitativos',
+        // `|| null` porque texto em branco é ausência aqui: um textarea nunca
+        // preenchido chega como string vazia e renderizaria um valor vazio.
+        items: [
+          { label: 'Conquistas do mês', value: ind.achievements || null, kind: 'long' },
+          { label: 'Desafios do mês', value: ind.challenges || null, kind: 'long' },
+          { label: 'Comentários', value: ind.comments || null, kind: 'long' },
+        ],
+      },
+    ];
+  }
+
   ngOnInit(): void {
     if (this.data?.indicator) {
       this.form.patchValue(this.data.indicator);
-    }
-    if (this.isReadonly) {
-      this.form.disable();
     }
   }
 

@@ -17,9 +17,12 @@ export interface UserFormDialogData {
 
 const USERNAME_NO_SPACES_PATTERN = /^\S+$/;
 
+import { DialogHeader } from '../../../components/dialog-header/dialog-header';
+
 @Component({
   selector: 'app-user-form-dialog',
   imports: [
+    DialogHeader,
     ReactiveFormsModule,
     MatButtonModule,
     MatDialogModule,

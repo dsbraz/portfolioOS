@@ -1,13 +1,22 @@
 @if (isPublicRoute()) {
   <router-outlet />
 } @else {
+  <a class="skip-link" href="#main-content">Pular para o conteúdo</a>
   <mat-sidenav-container class="app-container">
-    <mat-sidenav mode="side" [opened]="sidenavOpened()" class="app-sidenav">
+    <!-- `openedChange` fecha o ciclo: a gaveta também se fecha sozinha (backdrop,
+         Escape), e sem isso o sinal ficava preso em "aberta". -->
+    <mat-sidenav
+      [mode]="sidenavMode()"
+      [opened]="sidenavOpened()"
+      (openedChange)="sidenavOpened.set($event)"
+      class="app-sidenav"
+      aria-label="Navegação principal">
+      <div class="sidenav-inner">
       <div class="sidenav-header">
-        <picture class="app-logo">
-          <source srcset="logo-dark.svg" media="(prefers-color-scheme: dark)" />
-          <img src="logo-light.svg" alt="BRQ Portfolio" />
-        </picture>
+        <span class="app-logo">
+          <img class="app-logo-on-light" src="logo-light.svg" alt="BRQ Portfolio" />
+          <img class="app-logo-on-dark" src="logo-dark.svg" alt="" aria-hidden="true" />
+        </span>
         <button
           mat-icon-button
           class="sidenav-toggle"
@@ -16,31 +25,61 @@
           <mat-icon>menu_open</mat-icon>
         </button>
       </div>
-      <mat-nav-list>
-        <a mat-list-item routerLink="/portfolio" routerLinkActive="active-link">
-          <mat-icon matListItemIcon>dashboard</mat-icon>
-          <span matListItemTitle>Monitoramento</span>
-        </a>
-        <a mat-list-item routerLink="/dealflow" routerLinkActive="active-link">
-          <mat-icon matListItemIcon>view_kanban</mat-icon>
-          <span matListItemTitle>Dealflow</span>
-        </a>
-        <a mat-list-item routerLink="/users" routerLinkActive="active-link">
-          <mat-icon matListItemIcon>people</mat-icon>
-          <span matListItemTitle>Usuários</span>
-        </a>
-      </mat-nav-list>
+      <nav class="side-nav" aria-label="Seções">
+        <ul class="side-nav-list" role="list">
+          <li>
+            <a
+              class="side-nav-link"
+              routerLink="/portfolio"
+              routerLinkActive
+              ariaCurrentWhenActive="page"
+              (click)="closeOnCompact()">
+              <mat-icon class="side-nav-icon">dashboard</mat-icon>
+              <span>Monitoramento</span>
+            </a>
+          </li>
+          <li>
+            <a
+              class="side-nav-link"
+              routerLink="/dealflow"
+              routerLinkActive
+              ariaCurrentWhenActive="page"
+              (click)="closeOnCompact()">
+              <mat-icon class="side-nav-icon">view_kanban</mat-icon>
+              <span>Dealflow</span>
+            </a>
+          </li>
+          <li>
+            <a
+              class="side-nav-link"
+              routerLink="/users"
+              routerLinkActive
+              ariaCurrentWhenActive="page"
+              (click)="closeOnCompact()">
+              <mat-icon class="side-nav-icon">people</mat-icon>
+              <span>Usuários</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
       <div class="sidenav-footer">
-        <mat-nav-list>
-          <a mat-list-item (click)="logout()">
-            <mat-icon matListItemIcon>logout</mat-icon>
-            <span matListItemTitle>Sair</span>
-          </a>
-        </mat-nav-list>
+        <button
+          type="button"
+          class="side-nav-link side-foot-btn"
+          [attr.aria-label]="'Tema: ' + themeLabel() + '. Alternar.'"
+          (click)="theme.cycle()">
+          <mat-icon class="side-nav-icon">{{ themeIcon() }}</mat-icon>
+          <span>{{ themeLabel() }}</span>
+        </button>
+        <button type="button" class="side-nav-link side-foot-btn" (click)="logout()">
+          <mat-icon class="side-nav-icon">logout</mat-icon>
+          <span>Sair</span>
+        </button>
+      </div>
       </div>
     </mat-sidenav>
     <mat-sidenav-content class="app-content">
-      @if (!sidenavOpened()) {
+      @if (showOpenBar()) {
         <div class="sidenav-open-bar">
           <button
             mat-icon-button
@@ -49,9 +88,15 @@
             aria-label="Abrir menu lateral">
             <mat-icon>menu</mat-icon>
           </button>
+          <span class="app-logo">
+            <img class="app-logo-on-light" src="logo-light.svg" alt="BRQ Portfolio" />
+            <img class="app-logo-on-dark" src="logo-dark.svg" alt="" aria-hidden="true" />
+          </span>
         </div>
       }
-      <router-outlet />
+      <main id="main-content" tabindex="-1">
+        <router-outlet />
+      </main>
     </mat-sidenav-content>
   </mat-sidenav-container>
 }

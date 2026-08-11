@@ -1,71 +1,87 @@
-<h2 mat-dialog-title>{{ isEditMode ? 'Editar Startup' : 'Nova Startup' }}</h2>
+<app-dialog-header [title]="isEditMode ? 'Editar Startup' : 'Nova Startup'" />
 
 <mat-dialog-content>
   <form [formGroup]="form" class="startup-form">
-    <mat-form-field appearance="outline">
-      <mat-label>Nome</mat-label>
-      <input matInput formControlName="name" />
-      @if (form.controls.name.hasError('required')) {
-        <mat-error>Nome e obrigatorio</mat-error>
-      }
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Site</mat-label>
-      <input matInput formControlName="site" placeholder="https://..." />
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>URL do Logotipo</mat-label>
-      <input matInput formControlName="logo_url" placeholder="https://..." />
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Status</mat-label>
-      <mat-select formControlName="status">
-        @for (opt of statusOptions; track opt) {
-          <mat-option [value]="opt">{{ statusConfig[opt].label }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Setor</mat-label>
-      <input matInput formControlName="sector" />
-      @if (form.controls.sector.hasError('required')) {
-        <mat-error>Setor e obrigatorio</mat-error>
-      }
-    </mat-form-field>
-
-    <div class="form-row">
+    <div class="field">
+      <label class="field-label" id="l-2ea6-name" for="f-2ea6-name">Nome<span class="field-required" aria-hidden="true">*</span></label>
       <mat-form-field appearance="outline">
-        <mat-label>Data do Investimento</mat-label>
-        <input matInput [matDatepicker]="picker" formControlName="investment_date" />
-        <mat-datepicker-toggle matIconSuffix [for]="picker" />
-        <mat-datepicker #picker />
-        @if (form.controls.investment_date.hasError('required')) {
-          <mat-error>Data e obrigatoria</mat-error>
-        }
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="field-stake">
-        <mat-label>% de Participacao</mat-label>
-        <input matInput type="number" formControlName="equity_stake" placeholder="0,00" min="0" max="100" step="0.01" />
-        @if (form.controls.equity_stake.hasError('min') || form.controls.equity_stake.hasError('max')) {
-          <mat-error>Entre 0 e 100</mat-error>
+  <input id="f-2ea6-name" matInput formControlName="name" />
+        @if (form.controls.name.hasError('required')) {
+          <mat-error>Nome é obrigatório</mat-error>
         }
       </mat-form-field>
     </div>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Observacao</mat-label>
-      <textarea matInput formControlName="notes" rows="3"></textarea>
-    </mat-form-field>
+    <div class="field">
+      <label class="field-label" id="l-2ea6-site" for="f-2ea6-site">Site</label>
+      <mat-form-field appearance="outline">
+  <input id="f-2ea6-site" matInput formControlName="site" placeholder="https://..." />
+      </mat-form-field>
+    </div>
+
+    <div class="field">
+      <label class="field-label" id="l-2ea6-logo_url" for="f-2ea6-logo_url">URL do Logotipo</label>
+      <mat-form-field appearance="outline">
+  <input id="f-2ea6-logo_url" matInput formControlName="logo_url" placeholder="https://..." />
+      </mat-form-field>
+    </div>
+
+    <div class="field">
+      <label class="field-label" id="l-2ea6-status" for="f-2ea6-status">Status</label>
+      <mat-form-field appearance="outline">
+  <mat-select aria-label="Status" formControlName="status">
+          @for (opt of statusOptions; track opt) {
+            <mat-option [value]="opt">{{ statusConfig[opt].label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="field">
+      <label class="field-label" id="l-2ea6-sector" for="f-2ea6-sector">Setor<span class="field-required" aria-hidden="true">*</span></label>
+      <mat-form-field appearance="outline">
+  <input id="f-2ea6-sector" matInput formControlName="sector" />
+        @if (form.controls.sector.hasError('required')) {
+          <mat-error>Setor é obrigatório</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <div class="field">
+        <label class="field-label" id="l-2ea6-investment_date" for="f-2ea6-investment_date">Data do Investimento<span class="field-required" aria-hidden="true">*</span></label>
+        <mat-form-field appearance="outline">
+  <input id="f-2ea6-investment_date" matInput [matDatepicker]="picker" formControlName="investment_date" />
+          <mat-datepicker-toggle matIconSuffix [for]="picker" />
+          <mat-datepicker #picker />
+          @if (form.controls.investment_date.hasError('required')) {
+            <mat-error>Data é obrigatória</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="field field-stake">
+        <label class="field-label" id="l-2ea6-equity_stake" for="f-2ea6-equity_stake">% de Participação</label>
+        <mat-form-field appearance="outline">
+  <input id="f-2ea6-equity_stake" matInput type="number" formControlName="equity_stake" placeholder="0,00" min="0" max="100" step="0.01" />
+          @if (form.controls.equity_stake.hasError('min') || form.controls.equity_stake.hasError('max')) {
+            <mat-error>Entre 0 e 100</mat-error>
+          }
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label" id="l-2ea6-notes" for="f-2ea6-notes">Observação</label>
+      <mat-form-field appearance="outline">
+  <textarea id="f-2ea6-notes" matInput formControlName="notes" rows="3"></textarea>
+      </mat-form-field>
+    </div>
   </form>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button mat-button (click)="onCancel()">Cancelar</button>
+  <button mat-stroked-button (click)="onCancel()">Cancelar</button>
   <button mat-flat-button color="primary" (click)="onSubmit()" [disabled]="form.invalid">
     {{ isEditMode ? 'Salvar' : 'Criar' }}
   </button>

@@ -1,0 +1,87 @@
+.dialog-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+  padding: var(--space-lg) var(--space-lg) var(--space-md);
+}
+
+.dialog-header-text {
+  min-width: 0;
+}
+
+// Overrides Material's dialog-title typography, which lands at 24px. The brand
+// keeps dialog titles at the same scale as a page title -- this is a dense
+// tool, not a marketing surface.
+.dialog-title {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-heading-md);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+  color: var(--color-text);
+
+  &::before {
+    display: none;
+  }
+}
+
+.dialog-description {
+  margin: var(--space-2xs) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--fs-body-sm);
+}
+
+// Optical alignment, two corrections — both keep the 40px hit area while making
+// the GLYPH line up with the title, which is what the eye actually reads.
+//
+// Vertically: `align-items: flex-start` lines up the boxes, but a 40px button
+// beside a ~22px line of text puts the icon 9px low. The negative top margin is
+// exactly half that difference, derived from the tokens so it follows the title
+// if its scale changes.
+//
+// Horizontally: the icon sits 10px inside its own button, so a button flush to
+// the 24px padding leaves the glyph 34px in — visibly deeper than the title's
+// 24px. Pulling the button out by that same inset lands the glyph on the
+// padding line.
+.dialog-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-inline-start: auto;
+  margin-block-start: calc((var(--fs-heading-md) * var(--lh-tight) - 2.5rem) / 2);
+  margin-inline-end: calc((2.5rem - var(--icon-md)) / -2);
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+
+  &:hover {
+    background-color: var(--color-tertiary-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+}
+
+.dialog-close-icon {
+  width: var(--icon-md);
+  height: var(--icon-md);
+  font-size: var(--icon-md);
+  line-height: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog-close {
+    transition: none;
+  }
+}
