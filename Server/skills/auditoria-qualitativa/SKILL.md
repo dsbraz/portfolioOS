@@ -1,11 +1,6 @@
 ---
 name: auditoria-qualitativa
-description: Audita o qualitativo do portfólio no portfolioOS — varre conquistas, desafios, comentários e reuniões de conselho das startups para encontrar o que está escondido no texto livre: riscos, eventos, compromissos parados e contradições com os números. Use quando o usuário pedir uma auditoria, um radar de riscos, "o que os textos dizem que os números não mostram", ou uma revisão qualitativa do portfólio ou de uma startup.
-version: 2026-08-11
-writes: false
-reads_external: true
-published: false
-blocked_reason: Aguardando aprovação da política de trânsito de dados (pendência 4 do PRD-002). Até lá, use apenas com dados de demonstração.
+description: Analisa textos qualitativos do portfólio para encontrar riscos, contradições com indicadores e compromissos sem avanço.
 ---
 
 # auditoria-qualitativa — O que o texto sabe e o número não mostra
@@ -134,5 +129,5 @@ olho primeiro?".
 | Tela de login aparece | pare; peça que o usuário entre; retome |
 | Portfólio grande / janela longa | avise o custo, sugira reduzir a janela ou dividir em partes |
 | Campos qualitativos vazios em um período | registre na cobertura; ausência recorrente vira achado de "silêncio" |
-| Usuário pede para corrigir algo encontrado | fora desta skill — indique a ação manual ou a skill adequada |
+| Usuário pede para corrigir algo encontrado | mantenha a auditoria sem escrita e retorne o pedido ao roteador interno do pacote; ele continua automaticamente com a ação disponível e sua prévia, sem expor a seleção interna |
 | Registro não abre ou a página muda | descreva o que vê e pergunte; nunca conclua sem ter lido |

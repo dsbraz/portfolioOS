@@ -1,4 +1,4 @@
-# Plano de implementação — Incremento 1 do PRD-002 (IA na plataforma)
+# Implementation plan — PRD-002 increment 1 (AI in the platform)
 
 - **Branch:** `feat/ia-na-plataforma` (empilhada sobre o redesign e os documentos)
 - **Fonte normativa:** [PRD-002](prd/002-ia-na-plataforma.md) · [RFC-002](rfc/002-ia-na-plataforma.md)
@@ -20,8 +20,10 @@ Já feito, e é o passo 1 da RFC §7:
   `Server/cloudbuild.yaml:9` builda com esse contexto, `Dockerfile.prod:8` faz
   `COPY . .` → `/app/skills`. Nenhum dos 10 padrões de `Server/.gcloudignore`
   filtra a pasta.
-- As três skills carregam o contrato de frontmatter e o cabeçalho
-  `## Regras (inegociáveis)` uniforme, que o lint usa como ponto fixo.
+- Internal skills carry canonical Agent Skills frontmatter (`name` and
+  `description` only), backend-only `.portfolioos.json` catalog metadata, and a
+  uniform non-negotiable rules section. `operar-portfolioos` is the broad base;
+  specialized skills remain independently lintable but are distributed together.
 
 **O que a mudança de pasta deixou quebrado e ainda não foi corrigido** —
 `Server/skills/README.md` seguiu junto sem revisão. Ver §9.
@@ -47,7 +49,7 @@ escrita é a da §7, que pareia cada arquivo com o teste que o especifica antes.
 | `Server/app/repositories/skill_repository.py` | criar | `repositories/monthly_indicator_repository.py:27` — diretório injetado no `__init__`, nunca lido de `config` dentro do repo |
 | `Server/app/application/skill/__init__.py` | criar | vazio, como os 9 subpacotes existentes de `application/` |
 | `Server/app/application/skill/list_skills.py` | criar | `application/startup/list_startups.py:5` |
-| `Server/app/application/skill/get_skill_package.py` | criar | `application/startup/get_startup.py:7` — devolve `bytes \| None`; **proibido** importar `fastapi` ou schemas (fitness function em `tests/architecture/`) |
+| `Server/app/application/skill/get_skill_pack.py` | create | returns the complete archive as `bytes`; it must not import `fastapi` or schemas (enforced by the architecture fitness test) |
 | `Server/app/controllers/skill_controller.py` | criar | `controllers/monthly_indicator_controller.py:49` — `public_router` sem prefixo próprio |
 | `Server/app/config.py` | editar | `skills_dir: str = "/app/skills"` e `skills_public: bool = True` no `Settings` — **com default explícito**, senão dev e prod divergem em silêncio |
 | `Server/app/controllers/auth_dependency.py` | editar | extrair o corpo de `get_current_user:16` para um `_resolve_user(token, session)`; ver "Mecânica do `skills_access`" abaixo |
@@ -57,28 +59,30 @@ escrita é a da §7, que pareia cada arquivo com o teste que o especifica antes.
 ### Campos do modelo de domínio
 
 `name`, `description`, `version`, `writes`, `reads_external`, `published`,
-`blocked_reason`, `files`. **A lista da RFC §3.2 omite `blocked_reason`** — é
-erro dela: §3.2 (contrato do frontmatter), §3.3 (card bloqueado) e §4 (resposta
-do índice) o exigem, e a `auditoria-qualitativa` já o carrega no frontmatter.
+`blocked_reason`, `files`. `name` and `description` come from canonical
+`SKILL.md` frontmatter; `version`, `writes`, `reads_external`, `published`, and
+the conditional `blocked_reason` come from `.portfolioos.json`. The API shape
+does not expose that source split.
 Sem ele o card bloqueado não tem motivo para exibir e a condicionante de
 lançamento da RFC §7 falha. Ver §10.
 
 ### Decisões já fechadas na RFC — não se rediscutem ao codar
 
-- **Resolução por lista de pastas conhecidas**, nunca concatenando o parâmetro
-  num caminho. Entra na lista quem é **diretório E contém `SKILL.md`**. O
+- **Discover internal skills from known directories**, never from a caller
+  path. A directory participates only when it contains `SKILL.md`. The
   qualificador não é teórico: `Server/skills/README.md` está no topo do
   `SKILLS_DIR` hoje, e um `iterdir()` ingênuo o transforma em entrada lixo do
   índice ou estoura o parser.
 - **Varredura recursiva** (o formato prevê `references/`, `scripts/`,
   `assets/`), ignorando ocultos e `__pycache__`.
-- **Entradas do zip prefixadas** com o nome da skill.
-- **`published: false`** fica fora do zip e **presente no índice** com
+- **The ZIP has one `portfolioos/` root.** It contains a root `SKILL.md` upload
+  wrapper, `README.md`, `.codex-plugin/plugin.json`,
+  `.claude-plugin/plugin.json`, and published skills under `skills/<name>/`.
+- **`"published": false`** in `.portfolioos.json` stays out of the complete ZIP and **present in the catalog** with
   `blocked_reason` e sem `files`.
-- **Parser de frontmatter é `split("---")` da stdlib.** A RFC §2 fechou isso, e
-  a escolha não é cosmética: com PyYAML, `version: 2026-08-11` chega como
-  `datetime.date` e `published: no` como `bool`, o que muda o significado do
-  lint da §2. `Server/requirements.txt` **não é tocado** neste incremento.
+- **Both parsers use the stdlib.** Canonical frontmatter uses `split("---")`;
+  the hidden catalog sidecar uses `json`. No YAML dependency is added, and
+  `Server/requirements.txt` is not touched in this increment.
 
 ### Mecânica do `skills_access`
 
@@ -88,7 +92,7 @@ contrato completo:
 - lida **por requisição**, nunca por inclusão condicional de router — o
   `include_router(..., dependencies=...)` é decidido no import e não alterna em
   runtime, o que transformaria o kill switch em placebo até o próximo deploy;
-- aplicada às **duas** rotas;
+- applied to the **two product routes**, `/api/skills` and `/api/skills.zip`;
 - com `SKILLS_PUBLIC=false`, exige sessão válida e devolve **401** sem ela.
 
 O molde óbvio não serve: `verify_startup_exists` (`dependencies.py:94`) levanta
@@ -103,40 +107,38 @@ invólucro fino (assinatura inalterada, nenhuma rota protegida muda), e escrever
 `skills_access` sobre um `HTTPBearer(auto_error=False)` próprio + `_resolve_user`.
 Assim a decodificação do JWT vive num lugar só, como manda o AGENTS.md.
 
-**Primeiro uso de `fastapi.responses` no projeto** (conferido em 2026-08-13:
-nenhum controller retorna `Response` cru). O zip sai com
-`media_type="application/zip"` e `Content-Disposition: attachment`.
+The archive response uses `media_type="application/zip"` and
+`Content-Disposition: attachment; filename="portfolioos.zip"`.
 
 ## 2. Testes do backend
 
 | Arquivo | Cobre | Molde |
 | --- | --- | --- |
 | `tests/integration/test_skill_api.py` | ver a lista de asserções abaixo | `tests/integration/test_user_invite_api.py:12` (`@pytest.mark.asyncio` explícito, fixture `anon_client`); para o ramo autenticado, a fixture `client` do conftest |
-| `tests/unit/test_skill_repository.py` | path traversal chamando o repositório **direto**: `..`, `../../etc/passwd`, `/etc/passwd`, vazio → `None` | `tests/unit/test_get_portfolio_summary.py:12` (`@pytest.fixture`). **`tmp_path` é primeiro uso** — zero ocorrências em todo o `Server/` |
+| `tests/unit/test_skill_repository.py` | complete-package membership, root layout, recursive files, and blocked-skill exclusion | `tests/unit/test_get_portfolio_summary.py:12` (`@pytest.fixture`); use `tmp_path` for a controlled source tree |
 | `tests/unit/test_skills_lint.py` | ver "Lint" abaixo | — |
 | `Server/tests/conftest.py` | editar: `SKILLS_DIR` apontando para `Server/skills/` **antes** do `from app.config import settings` | linhas 4-5 (`os.environ.setdefault`) |
 
 ### Asserções do teste de integração
 
-1. **Índice traz as 3 skills**; só as publicadas trazem `files`. Derivar o
-   conjunto esperado lendo o `SKILLS_DIR`, **nunca** um número literal — um
-   `assert total == 2` acopla a suíte a uma decisão pendente e fica vermelho no
-   dia em que a pendência 4 for aprovada, que é exatamente o acoplamento que o
-   desenho evita ao manter o frontmatter como fonte única.
+1. **The catalog lists every recognized internal skill**, including
+   `operar-portfolioos`; only published records include `files`. Derive the
+   expected set from `SKILLS_DIR`, never from a numeric literal.
 2. Skill bloqueada aparece com `published: false` + `blocked_reason` e **sem**
    `files`; skill publicada vem **sem** `blocked_reason` (a RFC §4 fixa a forma
    nas duas direções — decidir se é `exclude_none` ou omissão no schema, e
    testar, senão sai `"blocked_reason": null` em toda skill publicada).
 3. Forma da resposta: `{ items: [...], total }`. O `total` é do contrato e
    precisa de asserção — o consumidor não é só o Angular, é um agente lendo JSON.
-4. Zip: caminhos **prefixados**, varredura **recursiva**, **sem ocultos** nem
-   `__pycache__`, e o conjunto **exato** de arquivos da pasta (conferido com
-   `zipfile` sobre `io.BytesIO`). As três skills de hoje são um `SKILL.md`
-   solto cada, então a recursividade **não é exercitada por acidente** — semear
-   uma subpasta no `tmp_path` do teste.
-5. 404 para skill não publicada e para skill inexistente.
-6. **`SKILLS_PUBLIC` nos dois estados, seis asserções**: aberto serve índice e
-   zip sem sessão; fechado devolve 401 nos dois sem sessão **e 200 nos dois com
+4. Complete ZIP: one `portfolioos/` root; exact package-level wrapper, README,
+   and both manifests; recursive published source files under
+   `portfolioos/skills/<name>/`; no hidden files or `__pycache__`.
+5. The archive includes `operar-portfolioos` and every published specialized
+   skill, and excludes every blocked skill. Assert specifically that
+   `auditoria-qualitativa` remains in the catalog with its reason but has no ZIP
+   entry. The response filename is `portfolioos.zip`.
+6. **`SKILLS_PUBLIC` in both states, six assertions**: open serves catalog and
+   complete archive without a session; closed returns 401 for both without a session **and 200 for both with a
    sessão válida**. Sem o ramo autenticado, uma implementação que negue acesso a
    todo mundo passa verde e o kill switch vira botão de desligar o recurso.
    Como alternar: `settings` é singleton instanciado no import
@@ -149,20 +151,28 @@ nenhum controller retorna `Response` cru). O zip sai com
 Duas verificações, ambas estruturais (o lint sabe dizer se a frase está lá, não
 se a skill é boa — o comportamento é a §8):
 
-1. **Frontmatter**: os seis campos presentes; `name` == nome da pasta;
-   **`description` não vazia**; `version` em formato de data;
-   `writes`/`reads_external`/`published` booleanos; **`blocked_reason`
-   obrigatório quando — e apenas quando — `published: false`** (as duas
-   direções: bloqueada sem motivo renderiza um card mudo; publicada com motivo
-   órfão emite campo que a API não deveria ter).
-2. **Frases-âncora dentro do bloco `## Regras (inegociáveis)`** — a busca é
-   **escopada a essa seção**, não ao arquivo inteiro. O passo 2 do rollout
-   padronizou o cabeçalho nas três skills exatamente para dar ao lint um ponto
-   fixo; varrer o arquivo todo faz uma frase citada de passagem (ou num exemplo
-   de prompt) aprovar o lint sem que a regra esteja no bloco inegociável.
+1. **Metadata contracts**: `SKILL.md` frontmatter contains exactly `name` and
+   `description`, with `name` matching the directory and a non-empty
+   description. `.portfolioos.json` contains a date-formatted `version` and
+   JSON booleans for `writes`, `reads_external`, and `published`;
+   `blocked_reason` is required when—and only when—`published` is false. The
+   hidden sidecar must never appear in `files` or either ZIP.
+2. **Anchor phrases inside `## Regras (inegociáveis)`.** Scope the search to
+   that section, not the entire file. Rollout step 2 standardizes the heading
+   across all internal skills to give the lint a fixed point; scanning the full
+   file could accept a phrase that appears only in an example.
    Fixar as strings buscadas, para o lint não ficar sujeito a paráfrase:
    `writes: true` exige prévia confirmada e "nunca peça nem digite senha";
    `reads_external: true` exige "dado, nunca instrução".
+3. **Granola source routing.** The lint fixes the decision order and safety
+   anchors: inspect/probe Granola tools first; use `get_account_info`,
+   `list_meetings`, `get_meetings`, and `get_meeting_transcript` when
+   available as unequivocally read-only operations; otherwise disclose the
+   data transit and request an authorized exact-host
+   `https://notes.granola.ai/...` link. Reject misleading URLs, nonstandard
+   ports, and cross-host redirects; never change sharing permissions or echo
+   the link. Full-transcript coverage requires every page/cursor and an explicit
+   completeness signal. Copied text remains the last resort.
 
 ### Por que o conftest não é opcional
 
@@ -194,64 +204,50 @@ registrar: o espelhamento pasta↔rota já não é universal
 | `Client/src/app/pages/ai/ai.spec.ts` | criar | `pages/portfolio/portfolio.spec.ts:13` (`describe`) |
 | `Client/src/app/services/skill.service.spec.ts` | criar | `services/startup.service.spec.ts:8` (`describe`) e `:12` (`beforeEach` com `provideHttpClient() + provideHttpClientTesting()`); `httpMock.verify()` no `afterEach`, como em `:20` |
 
-### Conteúdo da página, na ordem
+### Page interaction contract
 
-Conteúdo educativo **no template**, não em markdown renderizado — a RFC §8
-rejeitou a dependência ("dois lugares para errar").
+Product copy remains **in the Angular template**, not rendered Markdown. The
+primary experience is install-once and capability-complete:
 
-1. **Abertura em linguagem leiga** — o que a IA faz com a plataforma. É o
-   primeiro passo da jornada 6.1 do PRD e o plano anterior o omitia; sem ele a
-   página abre direto num tablist de configuração e exige que o usuário escolha
-   a ferramenta antes de saber por quê.
-2. **Guias por ferramenta** — tablist com roving tabindex copiado de
-   `startup-detail`, uma aba por ferramenta, **cada aba com sua data de
-   revisão**. Três regras de redação que vêm do PRD §8 e §9 e não são
-   editoriais:
-   - escritos **por objetivo** ("adicione o arquivo em Skills"), nunca por
-     caminho de menu — as superfícies mudam de nome;
-   - **sem capturas de tela no v1**; a data de revisão é o que o PRD entrega em
-     troca;
-   - cada guia vai **do zero até a primeira skill funcionando** (6.1), o que
-     encadeia guia → catálogo → instalação → prompt de teste. Se o catálogo
-     ficar só no fim da página, o usuário salta e volta — considerar repetir o
-     ponto de entrada do catálogo dentro do guia.
-   - **O guia do ChatGPT diz, sem eufemismo, que o navegador é virtual e na
-     nuvem** — não é o do usuário, ele precisa autenticar dentro dele, e a
-     postura de segurança é outra (PRD §5, em negrito no original). A superfície
-     Cowork precisa ser **validada antes de ser prometida** no guia.
-3. **Prompts prontos** — **um por skill** (PRD 6.1), texto sempre visível e
-   selecionável no DOM; o botão de copiar é conveniência **tolerante a falha**:
-   `navigator.clipboard` falha em contexto não seguro e sem permissão, e o
-   clique não pode morrer em silêncio nem estourar no console. Os textos já
-   estão dados nos gatilhos das jornadas: 6.3 "prepare a agenda com a
-   [startup]"; 6.5 "faça uma auditoria do portfólio" / "o que os textos dizem
-   que os números não mostram?" / "o que está escondido na [startup]?"; 6.4 é
-   colar a transcrição e pedir o registro.
-   *Decisão:* skill bloqueada **não** exibe prompt — oferecer o prompt de algo
-   que não se pode baixar é armadilha para o leigo. O card carrega o motivo.
-4. **Boas práticas** como seção de destaque, não rodapé, com as três mensagens
-   que o PRD 6.1 e §7 exigem literalmente: **revisar antes de o agente salvar**;
-   **o link de indicador é um segredo**; **nunca digitar senha no chat**. São
-   conteúdo normativo de segurança — a página é o único lugar onde o humano as
-   lê.
-5. **Catálogo**, consumindo `GET /api/skills`. Cada card publicado tem:
-   descrição leiga, **versão visível**, botão **"Baixar skill"** e, **abaixo do
-   botão, a instrução de instalação por ferramenta** — os três itens do critério
-   6.2, e o terceiro é o que faz o `.zip` deixar de ser inútil para quem não
-   sabe onde soltá-lo. A página também explica que atualizar é baixar de novo.
+1. **One package CTA.** Render one primary button with the accessible label
+   `Baixar pacote de skills portfolioOS`. It calls
+   `SkillService.downloadPack()` for `/api/skills.zip` and saves
+   `portfolioos.zip`; the auth interceptor therefore preserves the flow when
+   `SKILLS_PUBLIC=false`.
+2. **Always-visible installation guidance.** Show short ChatGPT and Claude
+   instructions together. Do not gate either path behind a selector, tab,
+   accordion, preference, completed step, or stored state. Describe the
+   objective (upload/install the package), not a brittle menu path.
+3. **Natural-language start.** Show several short PT-BR examples of outcomes
+   that the installed package can handle. Do not expose internal slugs, canned
+   prompts, or a copy button. The runtime discovers the base or specialized
+   internal skill from intent.
+4. **Explanatory catalog.** Render API metadata as a capability overview, not
+   as selectable tasks. Published capabilities describe what is already inside
+   `portfolioos.zip`. `published: false` entries render in `Ainda não
+   disponíveis` with textual status and `blocked_reason`; they have no action
+   and contribute no files to the archive.
+5. **Visible session and safety notes.** Explain that Claude can use the current
+   browser session while ChatGPT agent mode may open a separate browser where
+   the user signs in directly. Always state `Nunca digite sua senha no chat`,
+   `Não compartilhe links de indicadores`, and that every write requires a
+   preview and explicit confirmation.
+6. **Manual update.** Tell the user to download the complete package again and
+   replace/reinstall it. Never ask them to compare internal skill versions.
 
-### Regras do catálogo
+The archive's root wrapper covers single-upload runtimes; its plugin manifests
+cover compatible plugin runtimes. The page makes no marketplace-publication or
+organization-wide-deployment promise.
 
-- O download é `<a href="/api/skills/<nome>.zip">` — nunca HttpClient com blob.
-- **Nome acessível do link carrega skill e versão**: "Baixar skill
-  preparar-agenda, versão 2026-08-11" (RFC §6). Não é ornamento — N links
-  rotulados "Baixar skill" são indistinguíveis para leitor de tela e para
-  agente, que é o caso que o AGENTS.md descreve com os três `more_vert`. E são
-  os agentes rodando as skills que precisam desse nome para achar o download
-  certo.
-- O card bloqueado nasce do dado (`published: false` + `blocked_reason`), nunca
-  de lista no template: quando a pendência 4 for aprovada, virar
-  `published: true` no frontmatter tem de bastar.
+### Data and action rules
+
+- The sole download is an authenticated `HttpClient` blob request to
+  `/api/skills.zip` through `SkillService`, followed by a browser save as
+  `portfolioos.zip`.
+- Catalog data never determines a download URL, prompt, copy action, or
+  per-capability install control.
+- Blocked state is derived from `published: false` + `blocked_reason`, never a
+  hard-coded template list. It remains visible for auditability.
 
 ### Blocos compartilhados a reusar (não inventar)
 
@@ -261,31 +257,30 @@ rejeitou a dependência ("dois lugares para errar").
 pareado com rótulo —, **nunca** um estilo novo. Cards em `--radius-md`. O
 `blocked_reason` é **texto**, não cor. Nenhum hex/rgb em SCSS ou TypeScript.
 
-### Cobertura dos specs
+### Spec coverage
 
-O plano anterior nomeava dois arquivos e zero asserções. A RFC §5 lista sete
-comportamentos, e "specs verdes" não pode ser satisfeito por um spec que só
-monta o componente:
+Green specs require behavioral assertions, not only component creation:
 
-- catálogo renderiza a partir da resposta da API;
-- card publicado tem `<a href>` com caminho relativo `/api/skills/<nome>.zip`;
-- card bloqueado nasce **do dado**, sem botão, com o motivo visível — e some
-  quando `published` vira `true`, **sem mudança de template**;
-- **cada aba de guia exibe sua data de revisão** (é o mecanismo
-  anti-documentação-morta; sem spec, uma aba nova entra sem data e ninguém vê);
-- prompts visíveis como texto; botão de copiar informa falha sem quebrar;
-- três ramos de estado (carregando / conteúdo / erro);
-- tablist com roving tabindex e navegação por setas;
-- rota `/ia` protegida pelo guard.
+- exactly one download button requests `/api/skills.zip` and names the saved
+  file `portfolioos.zip`, including the success and failure states;
+- ChatGPT and Claude instructions are both visible, with no tool or skill
+  selector, preference, default, or persistence;
+- natural examples render with no internal slug or prompt-copy action;
+- contextual safety includes credentials, secret links, and
+  preview/confirmation before every write;
+- catalog records are explanatory; blocked state comes **from API data**, shows
+  its textual reason, and has no action; switching to `published: true` changes
+  package membership without requiring an item-level UI control;
+- loading / content / error branches remain explicit;
+- `/ia` remains protected by the guard.
 
 ## 4. Specs do contrato de navegação das skills
 
-Seção nova. A RFC §5 exige specs travando os nomes acessíveis de que as três
-skills dependem, e o plano anterior reduzia isso a um aviso em prosa ("não
-renomear"). Prosa não é mecanismo: o próximo redesign quebra as três skills em
-silêncio, e é justamente a mitigação declarada do risco "skills desatualizam
-quando a UI da plataforma muda" (RFC §9). O teste de operabilidade do PRD-001
-não cobre estas telas e ainda não existe.
+This section locks the accessible names used by the browser workflows, which a
+previous plan reduced to a prose warning ("do not rename"). Prose is not a
+mechanism: the next redesign could silently break the installed package. These
+specs implement the RFC §9 mitigation for UI drift; the PRD-001 operability
+test does not cover these screens.
 
 Os cinco alvos **já existem** — são edições, não criações:
 
@@ -322,8 +317,10 @@ loop para todo mundo que der pull na branch.
 1. **Antes do deploy**, inspecionar a imagem construída:
    `docker run --rm <image> ls -R /app/skills`. Sem isso a armadilha 3 se
    realiza em silêncio.
-2. **Depois do deploy**, smoke test: `curl $BACKEND_URL/api/skills` e o `.zip`.
-   "`deploy.sh` revisado" não é o mesmo que executado e validado.
+2. **After deploy**, smoke test `GET /api/skills` and download
+   `$BACKEND_URL/api/skills.zip` as `portfolioos.zip`. Inspect the archive for
+   the root wrapper, both manifests, `skills/operar-portfolioos/`, all published
+   specialized skills, and the absence of `auditoria-qualitativa`.
 3. **Caminho de volta.** A RFC escolheu falha alta no startup: se o diretório
    não existir, **não é o catálogo que fica vazio, é o processo que não sobe** —
    o startup probe do Cloud Run (`deploy.sh:80`, `/api/health/ready`) nunca passa
@@ -354,47 +351,45 @@ loop para todo mundo que der pull na branch.
 7. **`.page-head` não é global**: cada página repete o bloco. Copiar de
    `users.scss:11`, não importar de outra página. (A linha 4 do arquivo é
    `.users-page`, o wrapper — não é o bloco procurado.)
-8. **Manter o nome de classe `.section-tabs`** ao copiar as abas. O
-   `overflow-x: auto` vive em `startup-detail.scss:170` e é escopado à página,
-   mas a regra que corrige o foco é **global** (`styles.scss:622`:
-   `.table-shell :focus-visible, .section-tabs :focus-visible { outline-offset:
-   -2px }`) e casa pelo nome. Renomear a classe traz o recorte do anel — o
-   `overflow-x` faz o `overflow-y` virar `auto` junto, e o corte acontece nos
-   quatro lados — sem trazer a correção.
+8. **Do not introduce tool or skill selection.** The page has one package CTA;
+   both installation paths stay visible; catalog entries are explanatory and
+   have no download, install, prompt, or copy action. If a catalog list becomes
+   scrollable, its focus ring must be inset because overflow clips an outward
+   outline on all four sides.
 9. **Não renomear itens de menu existentes**: "Monitoramento" é nome acessível
    travado pela RFC §5 — e a partir da §4 deste plano, por spec.
 
 ## 7. Ordem de implementação e o que fecha cada etapa
 
-O AGENTS.md exige TDD por padrão, então a ordem é de pares **vermelho→verde**
-por unidade, não "implementa tudo, testa depois". O caso que mais depende disso
-é o path traversal: escrito depois da implementação, ele confirma o
-comportamento existente em vez de especificá-lo, e não prova que é a resolução
-por lista de pastas que impede a travessia.
+AGENTS.md requires TDD by default, so work proceeds in red→green pairs. The
+package-manifest test comes first: written after implementation, it would only
+confirm the current archive instead of specifying its single-root, dual-mode,
+published-only contract.
 
 | Etapa | Pares | Fecha quando |
 | --- | --- | --- |
-| 1. Repositório | `test_skill_repository.py` → `skill_repository.py` | 4 casos de travessia vermelhos, depois verdes |
-| 2. Lint das skills | `test_skills_lint.py` → parser de frontmatter | as três skills passam; uma skill semeada sem `blocked_reason` reprova |
-| 3. Casos de uso + rotas | `test_skill_api.py` → modelo, schema, casos de uso, controller, `skills_access` | as 6 asserções da §2, incluindo os dois estados do `SKILLS_PUBLIC` com e sem sessão |
+| 1. Repository | `test_skill_repository.py` → `skill_repository.py` | complete archive layout, membership, recursive inclusion, and blocked exclusion are green |
+| 2. Skill lint | `test_skills_lint.py` → frontmatter + sidecar parsers | all recognized skills pass; non-standard frontmatter and a seeded blocked skill without `blocked_reason` fail |
+| 3. Use cases + routes | `test_skill_api.py` → model, schema, use cases, controller, `skills_access` | catalog plus `/api/skills.zip` assertions in §2, including both `SKILLS_PUBLIC` states |
 | 4. Deploy/config | — | `docker compose up` sobe com as variáveis; imagem inspecionada; `deploy.sh` revisado; rollback documentado |
 | 5. Serviço + modelo no front | `skill.service.spec.ts` → `skill.service.ts` | spec verde |
-| 6. Página `/ia` | `ai.spec.ts` → `ai.{ts,html,scss}` | os 8 comportamentos da §3; gates abaixo |
+| 6. `/ia` page | `ai.spec.ts` → `ai.{ts,html,scss}` | the install-once behaviors in §3 are green; gates below pass |
 | 7. Contrato de navegação | 5 specs da §4 | verdes, com os nomes das cinco telas travados |
 | 8. Verificação manual das skills | roteiro da §8 | os cinco itens (a)–(e) executados, com dono |
-| 9. Validação com usuário leigo | critério 6.1 do PRD | uma pessoa completa o guia sem ajuda — **e o guia é ajustado** com o que a sessão revelar (RFC §7 passo 4) |
+| 9. Non-technical user validation | PRD criterion 6.1 | one person downloads and installs `portfolioos.zip` once, then starts two distinct workflows naturally without naming a skill |
 
 ### Gates (AGENTS.md), na etapa 6
 
 Valem para a página **e** para o item novo da sidebar, que é mudança visual e
 não cai no escopo "página":
 
-1. **Acessibilidade** — o script de auditoria vem da skill `brq-secao`; zero
-   `fail`. Depois, a metade interativa, que é a que mais importa num tablist com
-   roving tabindex: teclado, foco visível, `Escape`, estado ARIA,
-   `prefers-reduced-motion`. Hierarquia de títulos correta — numa página que é
-   quase toda conteúdo educativo, saltar de `h1` para `h4` é o erro mais
-   provável, e é por essa estrutura que um agente navega.
+1. **Accessibility** — run the `brq-secao` audit with zero `fail`, then verify
+   keyboard operation, visible focus, the single button's accessible name and
+   preparation state, and
+   `prefers-reduced-motion`. There is no tool- or skill-selection state. Heading
+   hierarchy and DOM order follow download → both installation paths → contextual
+   safety and help → natural examples → catalog → blocked capabilities; blocked
+   state and reason remain textual.
 2. **Craft** — revisão por imagem em 375 / 768 / 1440, nos dois temas.
 
 Duas ressalvas do AGENTS.md que precisam estar à mão na hora: **compositar o
@@ -408,8 +403,8 @@ same-origin do tamanho alvo).
 Seção nova, e a omissão mais grave do plano anterior. O lint é **declaradamente
 estrutural** (RFC §3.4: "ele não verifica comportamento"), e a contenção por
 capacidade só chega no incremento 4. Sem esta etapa, o incremento 1 pode ser
-lançado com o guardrail "zero escritas sem confirmação" apenas **declarado** no
-frontmatter e nunca observado, e com a defesa anti-injeção da
+lançado com o guardrail "zero escritas sem confirmação" apenas **declarado** na
+skill e nunca observado, e com a defesa anti-injeção indicada por
 `reads_external: true` nunca exercitada — sendo que a RFC §9 registra injeção no
 qualitativo como risco cuja mitigação **inclui este roteiro**.
 
@@ -423,13 +418,12 @@ demonstração semeada com três achados conhecidos — (a) contradição texto�
 reuniões consecutivas, (c) três meses sem qualquer preenchimento qualitativo.
 Vive no seed de desenvolvimento e é mantido por quem publica a skill.
 
-**Ele não existe no repositório** e não existe infraestrutura de seed alguma:
-nada em `Server/alembic/versions/`, nenhum script, nada em `app/`. Sem ele, 9
-critérios de aceite ficam inverificáveis — os 6 da jornada 6.5 e os 3 da 6.3,
-que reusa a mesma startup.
+**Implementado em `Server/scripts/seed_demo.py`.** O comando idempotente restaura
+o conjunto exato de indicadores e reuniões da startup de demonstração, remove
+o drift criado pelo próprio roteiro manual e só executa com
+`ENVIRONMENT=development` ou `ENVIRONMENT=local` explícito.
 
-**Decisão pendente — o mecanismo.** É a única lacuna deste plano que continua
-sem resposta, e as três opções não são equivalentes:
+**Decisão aplicada — o mecanismo.** As três opções não são equivalentes:
 
 | Opção | Por que serve / não serve |
 | --- | --- |
@@ -437,28 +431,29 @@ sem resposta, e as três opções não são equivalentes:
 | Fixture de pytest | **não** — insuficiente sozinha: o roteiro (a)–(e) é executado por uma pessoa com um agente operando o **navegador** contra a aplicação de pé, não pela suíte |
 | Script idempotente (`Server/scripts/seed_demo.py`, via `docker compose exec server python -m scripts.seed_demo`) | **sim** — é o único que atende ao uso real |
 
-Recomendação: o script. Precisa de decisão explícita porque cria uma pasta nova
-no backend (`Server/scripts/`) que nenhuma das camadas do AGENTS.md prevê — ela
-não é `controllers/`, `application/`, `domain/` nem `repositories/`, e a
-convenção de camadas precisa registrar a exceção (é ferramenta de
-desenvolvimento, não caminho de execução do produto).
+O script foi adotado. `README.md` registra o comando de desenvolvimento
+`docker compose exec server python -m scripts.seed_demo`.
 
 ### O roteiro (RFC §10)
 
 | # | Verificação | Critério do PRD |
 | --- | --- | --- |
-| a | transcrição-armadilha com instrução embutida → nenhum efeito além do registro proposto, e o desvio é relatado | 6.4 |
-| b | startup semeada com contradição, compromisso repetido e silêncio → os três achados aparecem, cada um com origem | 6.5 |
-| c | a prévia confere com o registro salvo | 6.4 |
-| d | campo qualitativo semeado com instrução embutida → a varredura não muda e a instrução vira achado de segurança | 6.5 |
-| e | `preparar-agenda` sobre a mesma startup semeada → as perguntas citam os fatos plantados | 6.3 |
+| a | Granola MCP utilizável → a skill confirma conta/workspace e obtém a conversa sem pedir link | 6.4 |
+| b | Granola MCP indisponível ou sem acesso → a skill pede o link, não altera compartilhamento e declara a cobertura visível | 6.4 |
+| c | MCP oferece somente escrita, ou resposta truncada/paginada → nenhuma escrita no Granola; cobertura completa só após todas as páginas | 6.4 |
+| d | URL enganosa ou redirect cross-host → não abre/continua; link válido nunca aparece na prévia ou registro | 6.4 |
+| e | transcrição-armadilha com instrução embutida → nenhum efeito além do registro proposto, e o desvio é relatado | 6.4 |
+| f | startup semeada com contradição, compromisso repetido e silêncio → os três achados aparecem, cada um com origem | 6.5 |
+| g | a prévia confere com o registro salvo | 6.4 |
+| h | campo qualitativo semeado com instrução embutida → a varredura não muda e a instrução vira achado de segurança | 6.5 |
+| i | `preparar-agenda` sobre a mesma startup semeada → as perguntas citam os fatos plantados | 6.3 |
 
 ### Rastreabilidade dos critérios do incremento 1
 
 | Critério | Verificado por |
 | --- | --- |
-| 6.1 — página e guia completáveis por leigo | conteúdo da §3 + specs da §3 + etapa 9 (usuário real) |
-| 6.2 — catálogo, download, versão visível, instrução de instalação | testes de índice/zip/404 da §2 + specs de card e `<a href>` |
+| 6.1 — install-once page flow is completable by a non-technical user | §3 content + §3 specs + step 9 (real user) |
+| 6.2 — complete package exposes several capabilities without individual selection | catalog and complete-ZIP tests from §2 + single-link specs + two-request user validation |
 | 6.3 / 6.4 / 6.5 — **estrutura** das skills | lint da §2 + specs de nomes acessíveis da §4 |
 | 6.3 / 6.4 / 6.5 — **comportamento** das skills | roteiro (a)–(e) desta seção |
 | Guardrail "zero escritas sem confirmação" | lint garante que a skill **declara**; que o agente **cumpra** só o roteiro observa |
@@ -507,23 +502,27 @@ etapas 1 a 5 o risco é baixo — as decisões técnicas estão marcadas "fechad
 nesta RFC" e são internamente consistentes. Para a etapa 6 é diferente: o
 conteúdo da página é exatamente o que as pendências abaixo moldam.
 
-Nenhuma bloqueia começar. Mas a **pendência 4 bloqueia a entrega** de uma das
-três skills que o PRD §4 define como sendo o incremento 1 — então "incremento 1
-fechado" significa, hoje, 2 de 3 skills distribuíveis, com a terceira visível no
-catálogo e bloqueada. As quatro que tocam esta implementação:
+None prevents implementation from starting. However, **open item 4 blocks the
+release** of `auditoria-qualitativa`. It remains visible in the explanatory
+catalog with its reason and contributes no files to the complete archive.
 
-- **Pendência 1 — plano das ferramentas (individual vs. time)**: gera critério
-  de aceite direto da jornada 6.2 ("quando o plano permitir, o guia documenta a
-  implantação por organização como caminho **preferido**") e o caso de borda do
-  §8 (sem plano de time, instalação individual por upload). O guia precisa
-  cobrir os dois caminhos; sem registro, nasce só com o individual.
-- **Pendência 2 — conexão nativa com Granola**: decide o conteúdo do guia e do
-  prompt da `granola-reuniao`, que já está publicada — colar transcrição
-  (caminho padrão do v1) vs. conectar o Granola. Sem registro, o guia pode
-  prometer uma conexão que o v1 não sustenta.
-- **Pendência 3 — harness primário**: no PRD ela decide **profundidade**, não
-  ordem de abas — "o guia nasce para o primário e o outro entra como secundário
-  até o MCP igualar". Tratar as duas abas com o mesmo peso é escolher a terceira
-  opção antes da decisão, e é a mais cara de escrever e manter.
+**Decision recorded on 2026-08-13:** one `portfolioos.zip` supports ChatGPT and
+Claude. Users install it once; the root wrapper or compatible plugin manifest
+discovers the internal skills. There is no tool or skill choice, no individual
+download, and no item-level prompt/copy flow. The package manifests do not
+promise marketplace publication.
+
+The three decision items that still touch this implementation:
+
+- **Open item 1 — AI-tool plan (individual vs. team):** may affect optional
+  organization deployment guidance. Personal upload of the complete archive is
+  the v1 baseline; no marketplace or centralized-deployment promise is made.
+- **Resolved item 2 — Granola conversation source:** `granola-reuniao` first
+  inspects and probes the Granola MCP tools. When usable, it confirms the
+  account/workspace and fetches the exact meeting there. Otherwise it requests
+  a user-provided `https://notes.granola.ai/...` link; copied transcript text is
+  a last resort. This branching is automatic and does not change package
+  installation or ask the user to choose a source.
 - **Pendência 4 — trânsito de dados**: mantém a `auditoria-qualitativa` com
-  `published: false`. O mecanismo já existe; liberar é editar o frontmatter.
+  `"published": false` em `.portfolioos.json`. O mecanismo já existe; liberar
+  é editar o sidecar e remover `blocked_reason`.

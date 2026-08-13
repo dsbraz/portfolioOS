@@ -37,6 +37,14 @@ describe('MeetingFormDialog em modo leitura', () => {
     expect(el.textContent).toContain('01/07/2026');
     expect(el.textContent).toContain('Revisão do trimestre.');
     expect(el.querySelectorAll('.read-value--empty').length).toBe(2);
+    expect([...el.querySelectorAll('dt')].map((label) => label.textContent?.trim())).toEqual([
+      'Data',
+      'Participantes',
+      'Resumo',
+      'Pontos de atenção',
+      'Próximos passos',
+    ]);
+    expect(el.querySelector('mat-dialog-actions button')?.textContent?.trim()).toBe('Fechar');
   });
 });
 
@@ -87,5 +95,22 @@ describe('MeetingFormDialog', () => {
     dialogRefSpy.close.mockClear();
     component.onCancel();
     expect(dialogRefSpy.close).toHaveBeenCalledWith();
+  });
+
+  it('should preserve the field and action names used by the meeting skill', () => {
+    const el = fixture.nativeElement as HTMLElement;
+    const text = el.textContent ?? '';
+
+    for (const label of [
+      'Nova Reunião de Conselho',
+      'Data',
+      'Participantes',
+      'Resumo',
+      'Pontos de Atenção',
+      'Próximos passos',
+      'Adicionar',
+    ]) {
+      expect(text).toContain(label);
+    }
   });
 });

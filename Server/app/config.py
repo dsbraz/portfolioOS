@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     db_pool_size: int = 5
     db_max_overflow: int = 10
     db_pool_pre_ping: bool = True
+    skills_dir: str = "/app/skills"
+    skills_public: bool = True
 
     class Config:
         env_file = ".env"

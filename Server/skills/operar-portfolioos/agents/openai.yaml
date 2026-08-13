@@ -1,0 +1,6 @@
+interface:
+  display_name: "Operar portfolioOS"
+  short_description: "Consultar e administrar o portfolioOS"
+  default_prompt: "Ajude-me a executar esta tarefa no portfolioOS com segurança."
+policy:
+  allow_implicit_invocation: true

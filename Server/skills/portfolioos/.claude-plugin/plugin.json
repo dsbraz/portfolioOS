@@ -1,0 +1,10 @@
+{
+  "name": "portfolioos",
+  "displayName": "portfolioOS",
+  "version": "1.0.0",
+  "description": "Skills oficiais para consultar e operar o portfolioOS com segurança.",
+  "author": {
+    "name": "portfolioOS"
+  },
+  "skills": "./skills/"
+}

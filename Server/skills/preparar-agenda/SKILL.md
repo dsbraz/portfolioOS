@@ -1,10 +1,6 @@
 ---
 name: preparar-agenda
-description: Prepara o usuário para a próxima conversa com uma startup investida do portfolioOS — recap da última reunião de conselho, movimento dos indicadores e perguntas sugeridas. Use quando o usuário pedir para preparar uma agenda, call, 1:1 ou reunião com uma investida, ou perguntar "o que devo cobrar da [startup]?".
-version: 2026-08-11
-writes: false
-reads_external: true
-published: true
+description: Prepara conversas com uma startup usando reuniões e indicadores do portfolioOS. Use para agenda, call, 1:1 ou para decidir o que acompanhar ou cobrar da investida.
 ---
 
 # preparar-agenda — Preparação para conversa com investida
@@ -106,4 +102,4 @@ Regras do conteúdo:
 | Startup não encontrada | liste as que você vê e pergunte |
 | Sem reunião registrada | siga sem recap e registre a ausência no documento |
 | Sem indicadores recentes | diga desde quando não há reporte — e sugira a cobrança como pergunta |
-| Usuário pede para registrar/alterar algo | fora desta skill — indique a skill adequada (ex.: granola-reuniao) |
+| Usuário pede para registrar/alterar algo | mantenha esta preparação sem escrita e retorne o pedido ao roteador interno do pacote; ele deve continuar automaticamente com o fluxo aplicável e sua prévia, sem pedir que o usuário escolha ou nomeie uma skill |
