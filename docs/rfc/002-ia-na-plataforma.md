@@ -168,11 +168,13 @@ version: 2026-08-11          # data da última mudança
 writes: false                # true = a skill grava na plataforma
 reads_external: true         # true = lê texto escrito por terceiros
 published: true              # false = não distribuível (ver abaixo)
+blocked_reason: ...          # obrigatório quando published: false; ausente quando true
 ---
 ```
 
-**Os seis campos são obrigatórios e sem default. Campo ausente reprova no
-lint** — o default é seguro, e uma skill nova não escapa por omissão. Três
+**Os seis primeiros campos são obrigatórios e sem default; `blocked_reason` é
+obrigatório quando — e apenas quando — `published: false`. Campo ausente
+reprova no lint** — o default é seguro, e uma skill nova não escapa por omissão. Três
 deles carregam garantia, e é por isso que existem:
 
 - **`writes: true`** exige as frases-âncora de escrita: prévia confirmada
@@ -182,8 +184,10 @@ deles carregam garantia, e é por isso que existem:
   escrito por terceiros — inclusive as somente-leitura, que são justamente as
   que **não** têm prévia de escrita para proteger o usuário.
 - **`published: false`** torna a skill **não distribuível**: ela continua no
-  índice, com o motivo do bloqueio, mas **sem a lista de arquivos**, e o zip
-  responde 404. É o mecanismo que realiza o bloqueio da
+  índice, com o `blocked_reason` do próprio frontmatter, mas **sem a lista de
+  arquivos**, e o zip responde 404. O motivo vive na skill porque é ela que
+  sabe por que está bloqueada — servir um texto que a API inventa recriaria a
+  segunda fonte de verdade que este desenho evita. É o mecanismo que realiza o bloqueio da
   `auditoria-qualitativa` até a pendência 4 do PRD ser aprovada.
 
 A skill bloqueada aparecer no índice — em vez de sumir dele — é deliberado:
@@ -339,9 +343,11 @@ explícito, e um flip emergencial feito com `gcloud run services update
 --update-env-vars` deve ser refletido no heredoc — senão o próximo deploy o
 apaga em silêncio. O `DEPLOY.md` ganha esse procedimento.
 
-Nada mais muda na API, **e nada muda no compose**: o serviço `server` já monta
-`./Server:/app`, então `Server/skills/` aparece em `/app/skills`, que é o
-default de `SKILLS_DIR`. Em produção, `SKILLS_DIR` e `SKILLS_PUBLIC` entram no
+Nada mais muda na API. No compose, **`SKILLS_DIR` não precisa de linha** — o
+mount `./Server:/app` já expõe `Server/skills/` em `/app/skills`, que é o
+default —, mas **`SKILLS_PUBLIC` precisa**: o bloco `environment:` do serviço
+`server` só repassa o que está listado nele, e sem a entrada o kill switch não
+é testável em desenvolvimento. Em produção, `SKILLS_DIR` e `SKILLS_PUBLIC` entram no
 heredoc do `deploy.sh` — é dali que o Cloud Run recebe variáveis; o
 `.env.production.example` é documentação para quem roda o deploy.
 
@@ -434,7 +440,8 @@ Ordem de implementação do incremento 1, cada passo entregável sozinho:
    repositório, casos de uso e rotas; testes de integração e unitários; lint.
    `SKILLS_DIR` e `SKILLS_PUBLIC` entram no heredoc `ENV_VARS_FILE` do
    `deploy.sh`, na tabela de variáveis do `DEPLOY.md` e no
-   `.env.production.example` — o compose não precisa de linha nova.
+   `.env.production.example`. No `docker-compose.yml`, só `SKILLS_PUBLIC`
+   precisa entrar no `environment:` do serviço `server`.
 2. **Padronizar as skills** — o cabeçalho `## Regras (inegociáveis)` nas três,
    para o lint ter ponto fixo (§3.4). O frontmatter já está completo.
 3. **Página `/ia`** — guias com data de revisão, prompts, boas práticas e
