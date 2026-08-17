@@ -5,7 +5,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { Executive } from '../../../models/executive.model';
 import { MonthlyIndicatorToken } from '../../../models/monthly-indicator-token.model';
-import { MONTH_LABELS } from '../../../models/monthly-indicator.model';
+import { MONTH_LABELS, MONTH_LABELS_FULL } from '../../../models/monthly-indicator.model';
 import {
   buildIndicatorRequestMessage,
   buildWhatsAppLink,
@@ -41,6 +41,11 @@ export class TokenPanel {
   private readonly snackBar = inject(MatSnackBar);
 
   readonly period = computed(() => `${MONTH_LABELS[this.token().month]}/${this.token().year}`);
+  // The fund's message names the month in full ("julho/2026"); the title and the
+  // copy control keep the compact form.
+  private readonly messagePeriod = computed(
+    () => `${MONTH_LABELS_FULL[this.token().month]}/${this.token().year}`,
+  );
   readonly formUrl = computed(
     () => `${window.location.origin}/monthly-indicator/${this.token().token}`,
   );
@@ -51,10 +56,10 @@ export class TokenPanel {
    * phone is missing from the record", which is the actionable case.
    */
   readonly recipients = computed<Recipient[]>(() => {
-    const period = this.period();
+    const messagePeriod = this.messagePeriod();
     const url = this.formUrl();
     return this.executives().map((executive) => {
-      const message = buildIndicatorRequestMessage(executive.name, period, url);
+      const message = buildIndicatorRequestMessage(executive.name, messagePeriod, url);
       return {
         name: executive.name,
         role: executive.role,

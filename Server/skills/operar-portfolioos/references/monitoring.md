@@ -79,7 +79,7 @@ indicador`, which opens `Adicionar indicador — {Mmm/AAAA}`. Pick the period, t
 the mode: `Preencher agora` fills the reportable zone plus the fund note, and
 `Gerar link para a investida` creates the link. In link mode, `Gerar link` opens
 the panel inline: the link as text under `Link do formulário`, a `Copiar link de
-{Mmm/AAAA}` control, and one `Enviar para {name} no WhatsApp` link per executive
+{Mmm/AAAA}` control, and one `Enviar por WhatsApp para {name}` link per executive
 with a valid registered phone. An executive whose phone does not resolve appears
 as `Sem telefone válido` and gets no send control.
 

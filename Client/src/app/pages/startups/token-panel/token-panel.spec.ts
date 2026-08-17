@@ -54,8 +54,8 @@ describe('TokenPanel', () => {
       executive({ id: 'e2', name: 'Bruno Lima', phone: 'ramal 22' }),
     ]);
 
-    expect(element.querySelector('[aria-label="Enviar para Ana Costa no WhatsApp"]')).toBeTruthy();
-    expect(element.querySelector('[aria-label="Enviar para Bruno Lima no WhatsApp"]')).toBeNull();
+    expect(element.querySelector('[aria-label="Enviar por WhatsApp para Ana Costa"]')).toBeTruthy();
+    expect(element.querySelector('[aria-label="Enviar por WhatsApp para Bruno Lima"]')).toBeNull();
     expect(element.textContent).toContain('Sem telefone válido');
   });
 

@@ -160,7 +160,7 @@ describe('AddIndicatorDialog', () => {
     expect(dialogRef.close).not.toHaveBeenCalled();
     // The panel appears inline with the link as text and the send affordance.
     expect(el.querySelector('app-token-panel')).toBeTruthy();
-    expect(el.querySelector('[aria-label="Enviar para Ana Costa no WhatsApp"]')).toBeTruthy();
+    expect(el.querySelector('[aria-label="Enviar por WhatsApp para Ana Costa"]')).toBeTruthy();
   });
 
   it('reports a save error and stays open', async () => {
@@ -218,7 +218,7 @@ describe('AddIndicatorDialog', () => {
     // The send is a real wa.me link, named for its recipient, present before any
     // click — an agent can read the href instead of clicking.
     const send = el.querySelector<HTMLAnchorElement>(
-      '[aria-label="Enviar para Ana Costa no WhatsApp"]',
+      '[aria-label="Enviar por WhatsApp para Ana Costa"]',
     );
     expect(send?.tagName).toBe('A');
     expect(send?.getAttribute('href')).toContain('https://wa.me/5511912345678?text=');

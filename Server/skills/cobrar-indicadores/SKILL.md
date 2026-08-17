@@ -130,7 +130,7 @@ Como você quer enviar?
 ```
 
 - **Um a um (padrão).** Para cada item, acione o botão
-  **Enviar para {nome} no WhatsApp**.
+  **Enviar por WhatsApp para {nome}**.
   O WhatsApp abre com a mensagem pronta. **Pare aí** e diga ao usuário que é ele
   quem confirma o envio. Só siga para o próximo item quando ele disser que
   enviou ou que quer pular.

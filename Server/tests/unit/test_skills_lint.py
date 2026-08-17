@@ -205,7 +205,7 @@ def test_chase_skill_never_assumes_the_send_mode_or_the_recipient():
         "Gerar link",
         "Link do formulário",
         "Links anteriores",
-        "Enviar para {nome} no WhatsApp",
+        "Enviar por WhatsApp para {nome}",
         "Sem telefone válido",
         "Executivos",
     ):
