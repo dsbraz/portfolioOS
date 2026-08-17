@@ -54,11 +54,12 @@ describe('IndicatorFormDialog em modo leitura', () => {
   // seções que o modo de edição já tem.
   it('should keep the quantitative and qualitative sections apart', () => {
     const titulos = [...el.querySelectorAll('h3')].map((h) => h.textContent?.trim());
-    expect(titulos).toEqual(['Quantitativos', 'Qualitativos']);
+    // The fund note is its own section, separate from the reportable zone.
+    expect(titulos).toEqual(['Quantitativos', 'Qualitativos', 'Anotações do fundo']);
 
     const listas = el.querySelectorAll('dl');
-    // Período solto no topo, depois os dois grupos.
-    expect(listas.length).toBe(3);
+    // Período solto no topo, depois os três grupos.
+    expect(listas.length).toBe(4);
     expect(listas[1].textContent).toContain('Receita do mês');
     expect(listas[2].textContent).toContain('Conquistas do mês');
   });
@@ -108,7 +109,11 @@ describe('IndicatorFormDialog em modo leitura', () => {
   it('should preserve the qualitative labels used by read-only skills', () => {
     const labels = [...el.querySelectorAll('dt')].map((label) => label.textContent?.trim());
 
-    expect(labels.slice(-3)).toEqual(['Conquistas do mês', 'Desafios do mês', 'Comentários']);
+    expect(labels.slice(-3)).toEqual([
+      'Conquistas do mês',
+      'Desafios do mês',
+      'Comentários do fundo',
+    ]);
     expect(el.querySelector('mat-dialog-actions button')?.textContent?.trim()).toBe('Fechar');
   });
 });

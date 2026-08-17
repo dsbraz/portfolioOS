@@ -119,8 +119,13 @@ export class IndicatorFormDialog implements OnInit {
         items: [
           { label: 'Conquistas do mês', value: ind.achievements || null, kind: 'long' },
           { label: 'Desafios do mês', value: ind.challenges || null, kind: 'long' },
-          { label: 'Comentários', value: ind.comments || null, kind: 'long' },
         ],
+      },
+      {
+        // A anotação do fundo é interna — nunca vai no formulário da investida —
+        // e por isso é uma seção própria, separada da zona reportável.
+        title: 'Anotações do fundo',
+        items: [{ label: 'Comentários do fundo', value: ind.comments || null, kind: 'long' }],
       },
     ];
   }
