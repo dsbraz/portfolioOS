@@ -485,7 +485,7 @@ travados por spec próprio, agrupados por tela:
 | Monitoramento | colunas da tabela (Startup, Status, Receita, Caixa, EBITDA/Burn, Headcount) e a nota de reporte ("Último: …", "Nunca reportou") |
 | Detalhe da startup | abas "Indicadores Mensais", "Reuniões de Conselho", "Executivos"; botões "Adicionar reunião" e "Adicionar indicador"; cartões do topo (Receita Total, Total da Participação, Saldo em Caixa, EBITDA/Burn, Headcount) |
 | Diálogo de reunião | título "Nova Reunião de Conselho"; rótulos Data, Participantes, Resumo, Pontos de Atenção, Próximos passos; botão "Adicionar" |
-| Vista de leitura | rótulos Conquistas do mês, Desafios do mês, Comentários; botão "Fechar" |
+| Vista de leitura | rótulos Destaques do mês, Próximos passos e necessidades, Comentários do fundo; botão "Fechar" |
 
 **Uma dependência que nenhum spec cobre**: o passo inicial de todas as três
 skills é *clicar na linha da startup* na tabela de monitoramento — e uma linha

@@ -72,8 +72,8 @@ avise e mostre progresso por startup.
    os cartões do topo.
 3. Aba **"Indicadores Mensais"**: para cada período da janela, abra com
    **Ver indicador de {Mmm/AAAA}** e leia a vista — Quantitativos e,
-   principalmente, **Conquistas do mês, Desafios do mês e Comentários** (a
-   anotação do fundo). Feche com **"Fechar"**.
+   principalmente, **Destaques do mês, Próximos passos e necessidades e
+   Comentários do fundo** (a anotação do fundo). Feche com **"Fechar"**.
 4. Aba **"Reuniões de Conselho"**: para cada reunião da janela, abra com
    **Ver reunião de {dd/mm/aaaa}** e leia **Resumo, Pontos de atenção e
    Próximos passos**. Feche com **"Fechar"**.

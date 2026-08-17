@@ -61,7 +61,7 @@ describe('IndicatorFormDialog em modo leitura', () => {
     // Período solto no topo, depois os três grupos.
     expect(listas.length).toBe(4);
     expect(listas[1].textContent).toContain('Receita do mês');
-    expect(listas[2].textContent).toContain('Conquistas do mês');
+    expect(listas[2].textContent).toContain('Destaques do mês');
   });
 
   it('should show the formatted values', () => {
@@ -110,8 +110,8 @@ describe('IndicatorFormDialog em modo leitura', () => {
     const labels = [...el.querySelectorAll('dt')].map((label) => label.textContent?.trim());
 
     expect(labels.slice(-3)).toEqual([
-      'Conquistas do mês',
-      'Desafios do mês',
+      'Destaques do mês',
+      'Próximos passos e necessidades',
       'Comentários do fundo',
     ]);
     expect(el.querySelector('mat-dialog-actions button')?.textContent?.trim()).toBe('Fechar');

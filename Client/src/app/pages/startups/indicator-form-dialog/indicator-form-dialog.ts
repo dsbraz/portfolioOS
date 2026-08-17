@@ -117,8 +117,8 @@ export class IndicatorFormDialog implements OnInit {
         // `|| null` porque texto em branco é ausência aqui: um textarea nunca
         // preenchido chega como string vazia e renderizaria um valor vazio.
         items: [
-          { label: 'Conquistas do mês', value: ind.achievements || null, kind: 'long' },
-          { label: 'Desafios do mês', value: ind.challenges || null, kind: 'long' },
+          { label: 'Destaques do mês', value: ind.achievements || null, kind: 'long' },
+          { label: 'Próximos passos e necessidades', value: ind.challenges || null, kind: 'long' },
         ],
       },
       {
