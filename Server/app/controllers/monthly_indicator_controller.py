@@ -32,6 +32,7 @@ from app.controllers.dependencies import (
     public_form_builder,
     verify_startup_exists,
 )
+from app.domain.exceptions import ConflictError
 from app.domain.models.monthly_indicator import MonthlyIndicator
 from app.domain.schemas.monthly_indicator import (
     MonthlyIndicatorCreate,
@@ -216,6 +217,11 @@ async def update_indicator(
     try:
         updated = await update_uc.execute(
             indicator, data.model_dump(exclude_unset=True)
+        )
+    except ConflictError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(e),
         )
     except ValueError as e:
         raise HTTPException(

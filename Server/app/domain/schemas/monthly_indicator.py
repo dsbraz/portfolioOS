@@ -11,6 +11,9 @@ from app.domain.schemas.common import PaginatedResponse
 _MAX_MONEY = Decimal("9999999999999.99")
 _MIN_MONEY = Decimal("-9999999999999.99")
 _MAX_PCT = Decimal("99999.99")
+# Bounds of the `Integer` column behind `headcount`: a larger value cannot be
+# stored, so the API refuses it (422) instead of failing in the driver (500).
+_MAX_HEADCOUNT = 2_147_483_647
 
 
 # --- Monthly Indicator schemas ---
@@ -23,7 +26,7 @@ class MonthlyIndicatorBase(BaseModel):
     recurring_revenue_pct: Decimal | None = Field(None, ge=0, le=_MAX_PCT)
     gross_margin_pct: Decimal | None = Field(None, ge=0, le=_MAX_PCT)
     cash_balance: Decimal | None = Field(None, ge=_MIN_MONEY, le=_MAX_MONEY)
-    headcount: int | None = Field(None, ge=0)
+    headcount: int | None = Field(None, ge=0, le=_MAX_HEADCOUNT)
     ebitda_burn: Decimal | None = Field(None, ge=_MIN_MONEY, le=_MAX_MONEY)
     achievements: str | None = None
     challenges: str | None = None
@@ -41,7 +44,7 @@ class MonthlyIndicatorUpdate(BaseModel):
     recurring_revenue_pct: Decimal | None = Field(None, ge=0, le=_MAX_PCT)
     gross_margin_pct: Decimal | None = Field(None, ge=0, le=_MAX_PCT)
     cash_balance: Decimal | None = Field(None, ge=_MIN_MONEY, le=_MAX_MONEY)
-    headcount: int | None = Field(None, ge=0)
+    headcount: int | None = Field(None, ge=0, le=_MAX_HEADCOUNT)
     ebitda_burn: Decimal | None = Field(None, ge=_MIN_MONEY, le=_MAX_MONEY)
     achievements: str | None = None
     challenges: str | None = None
@@ -116,6 +119,6 @@ class PublicIndicatorSubmit(BaseModel):
     ebitda_burn: Decimal | None = Field(None, ge=_MIN_MONEY, le=_MAX_MONEY)
     recurring_revenue_pct: Decimal | None = Field(None, ge=0, le=_MAX_PCT)
     gross_margin_pct: Decimal | None = Field(None, ge=0, le=_MAX_PCT)
-    headcount: int | None = Field(None, ge=0)
+    headcount: int | None = Field(None, ge=0, le=_MAX_HEADCOUNT)
     achievements: str | None = None
     challenges: str | None = None
