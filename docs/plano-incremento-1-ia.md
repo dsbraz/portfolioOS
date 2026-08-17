@@ -76,8 +76,9 @@ lançamento da RFC §7 falha. Ver §10.
 - **Varredura recursiva** (o formato prevê `references/`, `scripts/`,
   `assets/`), ignorando ocultos e `__pycache__`.
 - **The ZIP has one `portfolioos/` root.** It contains a root `SKILL.md` upload
-  wrapper, `README.md`, `.codex-plugin/plugin.json`,
-  `.claude-plugin/plugin.json`, and published skills under `skills/<name>/`.
+  wrapper, `README.md`, and published skills under `skills/<name>/GUIDE.md`.
+  The archive carries exactly one `SKILL.md`; the Claude and ChatGPT upload
+  validators reject any archive that carries more.
 - **`"published": false`** in `.portfolioos.json` stays out of the complete ZIP and **present in the catalog** with
   `blocked_reason` e sem `files`.
 - **Both parsers use the stdlib.** Canonical frontmatter uses `split("---")`;
@@ -131,8 +132,9 @@ The archive response uses `media_type="application/zip"` and
 3. Forma da resposta: `{ items: [...], total }`. O `total` é do contrato e
    precisa de asserção — o consumidor não é só o Angular, é um agente lendo JSON.
 4. Complete ZIP: one `portfolioos/` root; exact package-level wrapper, README,
-   and both manifests; recursive published source files under
-   `portfolioos/skills/<name>/`; no hidden files or `__pycache__`.
+   and `agents/openai.yaml`; recursive published source files under
+   `portfolioos/skills/<name>/`; exactly one `SKILL.md`; no hidden files or
+   `__pycache__`.
 5. The archive includes `operar-portfolioos` and every published specialized
    skill, and excludes every blocked skill. Assert specifically that
    `auditoria-qualitativa` remains in the catalog with its reason but has no ZIP
@@ -235,8 +237,8 @@ primary experience is install-once and capability-complete:
 6. **Manual update.** Tell the user to download the complete package again and
    replace/reinstall it. Never ask them to compare internal skill versions.
 
-The archive's root wrapper covers single-upload runtimes; its plugin manifests
-cover compatible plugin runtimes. The page makes no marketplace-publication or
+The archive's root wrapper is the single uploaded skill; the internal workflows
+travel with it as guides. The page makes no marketplace-publication or
 organization-wide-deployment promise.
 
 ### Data and action rules
@@ -319,8 +321,10 @@ loop para todo mundo que der pull na branch.
    realiza em silêncio.
 2. **After deploy**, smoke test `GET /api/skills` and download
    `$BACKEND_URL/api/skills.zip` as `portfolioos.zip`. Inspect the archive for
-   the root wrapper, both manifests, `skills/operar-portfolioos/`, all published
-   specialized skills, and the absence of `auditoria-qualitativa`.
+   the root wrapper, `skills/operar-portfolioos/`, all published specialized
+   skills, and the absence of `auditoria-qualitativa`. Confirm the entrypoint
+   count with `unzip -Z1 portfolioos.zip | grep -c '/SKILL\.md$'` — it must
+   print 1.
 3. **Caminho de volta.** A RFC escolheu falha alta no startup: se o diretório
    não existir, **não é o catálogo que fica vazio, é o processo que não sobe** —
    o startup probe do Cloud Run (`deploy.sh:80`, `/api/health/ready`) nunca passa
@@ -363,8 +367,8 @@ loop para todo mundo que der pull na branch.
 
 AGENTS.md requires TDD by default, so work proceeds in red→green pairs. The
 package-manifest test comes first: written after implementation, it would only
-confirm the current archive instead of specifying its single-root, dual-mode,
-published-only contract.
+confirm the current archive instead of specifying its single-root,
+single-entrypoint, published-only contract.
 
 | Etapa | Pares | Fecha quando |
 | --- | --- | --- |
@@ -507,10 +511,16 @@ release** of `auditoria-qualitativa`. It remains visible in the explanatory
 catalog with its reason and contributes no files to the complete archive.
 
 **Decision recorded on 2026-08-13:** one `portfolioos.zip` supports ChatGPT and
-Claude. Users install it once; the root wrapper or compatible plugin manifest
-discovers the internal skills. There is no tool or skill choice, no individual
-download, and no item-level prompt/copy flow. The package manifests do not
-promise marketplace publication.
+Claude. Users install it once; the root wrapper discovers the internal guides.
+There is no tool or skill choice, no individual download, and no item-level
+prompt/copy flow. The package promises no marketplace publication.
+
+**Correction recorded on 2026-08-13:** the archive originally also carried
+`.codex-plugin` / `.claude-plugin` manifests over a nested `skills/*/SKILL.md`
+collection. That shape ships four `SKILL.md` files and the Claude upload flow
+rejects it ("Zip must contain exactly one SKILL.md file"). Packaging now renames
+each internal `SKILL.md` to `GUIDE.md` and drops the manifests; plugin-style
+installation is not offered; no manifest remains in the repository.
 
 The three decision items that still touch this implementation:
 

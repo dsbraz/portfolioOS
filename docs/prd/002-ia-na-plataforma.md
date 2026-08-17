@@ -25,11 +25,11 @@ and selects the internal skill; the user never selects, downloads, installs, or
 mentions an individual skill. The catalog explains capabilities and release
 status, but is not an installation selector.
 
-The same archive supports two runtime conventions. A root `SKILL.md` acts as a
-wrapper for tools that accept one uploaded skill, while `.codex-plugin` and
-`.claude-plugin` manifests expose the internal `skills/` directory to
-plugin-compatible runtimes. This is a portable package contract, not a promise
-that portfolioOS will be published in any marketplace.
+The archive is a single uploadable skill. A root `SKILL.md` acts as the wrapper,
+and each internal workflow ships as `skills/<name>/GUIDE.md` so the archive holds
+exactly one `SKILL.md` — the count the Claude and ChatGPT upload validators
+enforce. This is a portable package contract, not a promise that portfolioOS
+will be published in any marketplace.
 
 The browser is the **bridge**, not the destination. The MCP connector in
 increment 4 becomes the capability layer; the workflows remain useful because
@@ -93,12 +93,16 @@ only the way the agent reaches the data changes.
      (writes only after a mandatory preview). `auditoria-qualitativa` remains
      visible in the explanatory catalog but is excluded from the package until
      open item 4 is approved;
-  2. **Skill de cobrança de indicadores** — quem falta vem da plataforma
-     (`last_reported`), link e envio pelo fluxo do PRD-001 (`wa.me` com
-     telefone do cadastro). É o **nível 2 da progressão de automação** do
-     PRD-001: o agente detecta, gera e enfileira; o humano confirma cada envio
-     no WhatsApp. O nível 3 (a plataforma enviando sozinha, sem confirmação) é
-     o futuro PRD-003 e depende de decisão de canal. Jornada 6.7;
+  2. **Skill de cobrança de indicadores** (`cobrar-indicadores`) — quem falta
+     vem da plataforma (`last_reported`), link e envio pelo painel do PRD-001
+     (`wa.me` com telefone do cadastro). O agente detecta, mostra a lista,
+     obtém confirmação do lote, gera os links e monta a fila. **O modo de envio
+     é escolhido pelo usuário a cada execução**: abrir cada mensagem para ele
+     confirmar no WhatsApp (padrão), ou autorizar o agente a enviar a fila.
+     Isso põe a skill entre os níveis 2 e 3 da progressão de automação do
+     PRD-001 — o nível 3 puro (a plataforma enviando sozinha, sem escolha
+     humana em execução alguma) continua sendo o futuro PRD-003 e depende de
+     decisão de canal. Jornada 6.7;
   3. **Apresentação do portfólio na identidade BRQ** — a geração **já
      existe** (`brq-pptx` + `brq-brand-identity` + `brq-tom-de-voz`); este
      incremento **documenta** o trio no catálogo (o template proprietário de
@@ -123,9 +127,9 @@ only the way the agent reaches the data changes.
   knows who responded); automatic package updates; publishing or guaranteeing
   availability in a ChatGPT, Claude, or other marketplace; a developer-first
   distribution channel such as `.well-known` or `npx`; skills that write
-  without human confirmation; and personal API keys in v1. Plugin manifests
-  carried inside the downloadable archive are part of its compatibility
-  contract and do not imply marketplace publication.
+  without human confirmation; and personal API keys in v1. The downloadable
+  archive is a portable package contract and does not imply marketplace
+  publication.
 
 ## 5. Personas e permissões
 
@@ -212,15 +216,16 @@ profundidade e explica claramente as diferenças de sessão e segurança.
   download the complete archive again and replace/reinstall the previous
   package according to the runtime's own package flow.
 - **Rules / invariants:** the package is self-contained and is the only public
-  download artifact. Its root wrapper supports a single uploaded skill; its
-  plugin manifests support compatible runtimes. Internal skills are discovered
+  download artifact. It uploads as a single skill: exactly one `SKILL.md`, whose
+  wrapper routes to the internal guides. Internal skills are discovered
   automatically. No flow asks the user which skill to install. The product
   does not claim marketplace publication or universal organization deployment.
 - **Acceptance criteria:**
-  - [ ] `portfolioos.zip` contains a root `SKILL.md`, package `README.md`,
-        `.codex-plugin/plugin.json`, `.claude-plugin/plugin.json`, and the
-        complete directories of all and only published internal skills under
-        `skills/`.
+  - [ ] `portfolioos.zip` contains a root `SKILL.md`, package `README.md`, and
+        the complete directories of all and only published internal skills under
+        `skills/`, each with its instructions as `GUIDE.md`.
+  - [ ] The archive contains exactly one file named `SKILL.md`; the upload flow
+        in Claude and ChatGPT rejects any archive that contains more.
   - [ ] The package contains `operar-portfolioos` and the published specialized
         skills; the base skill resolves broad requests and delegates to a more
         specific skill when one applies.
@@ -373,14 +378,23 @@ profundidade e explica claramente as diferenças de sessão e segurança.
   startups atrasadas".
 - **Fluxo:** o agente lê no monitoramento quem está sem indicador no período
   → **apresenta a lista e pede confirmação do lote** → só então gera os links
-  pela entrada única do PRD-001 → monta cada mensagem no template padrão do
-  fundo com o destinatário do cadastro → **o usuário confirma cada envio no
-  WhatsApp**, um a um.
+  pelo painel do PRD-001 → monta cada mensagem no template padrão do fundo com
+  o destinatário do cadastro → **o usuário escolhe o modo de envio**: abrir cada
+  mensagem e confirmar no WhatsApp, um a um (padrão), ou autorizar o agente a
+  enviar a fila nesta execução.
 - **Regras / invariantes:**
   - **Gerar link é escrita** — cria um registro por (startup, período) — e por
     isso entra na regra transversal: o agente **não gera link nenhum** antes
-    da confirmação do lote. A confirmação no WhatsApp é sobre o *envio*, não
-    sobre a *criação*; são dois momentos distintos e ambos são humanos.
+    da confirmação do lote. A criação e o envio são dois momentos distintos e
+    ambos são humanos: o lote é confirmado, e o modo de envio é escolhido.
+  - **O modo de envio é perguntado a cada execução**, nunca memorizado e nunca
+    assumido; o padrão é um a um. No modo automático o agente confere o
+    destinatário contra a fila antes de cada disparo e para se divergir.
+  - **O link de reporte não é segredo** (decisão de 14/08/2026): pode aparecer
+    na prévia e na fila, e transitar pela ferramenta de IA. Continua sendo
+    capacidade de escrita naquele período daquela startup, então só é entregue
+    ao contato cadastrado — e a pendência 1 do PRD-001 (expiração) segue
+    aberta.
   - O estado de quem falta vem **sempre da plataforma**, nunca de leitura de
     canal externo.
   - Destinatário exclusivamente do telefone cadastrado (PRD-001, jornada 6.5).
@@ -391,9 +405,14 @@ profundidade e explica claramente as diferenças de sessão e segurança.
   - [ ] Nenhum link é gerado antes da confirmação do lote pelo usuário.
   - [ ] Cada item da fila mostra startup, período, destinatário (nome e
         número) e o link, antes de qualquer envio.
-  - [ ] Nenhum envio é concluído sem ação do usuário no WhatsApp.
+  - [ ] O modo de envio é perguntado em toda execução, com "um a um" como
+        padrão; a escolha nunca é memorizada nem assumida.
+  - [ ] No modo "um a um", nenhum envio é concluído sem ação do usuário no
+        WhatsApp. No modo automático, o agente só envia depois da escolha
+        explícita nesta execução e confere o destinatário contra a fila antes
+        de cada disparo.
   - [ ] Startup sem executivo com telefone cadastrado aparece na fila marcada
-        como impedida, com o motivo.
+        como impedida, com o motivo, e nunca entra no envio.
 
 
 ## 7. Regras transversais
@@ -444,7 +463,7 @@ profundidade e explica claramente as diferenças de sessão e segurança.
 | Capacidade no v1 | **browser-first**: o agente opera a UI com a sessão do usuário; zero backend novo |
 | Educação | página exclusiva **dentro da plataforma**, parte do produto — não documentação externa |
 | Primary page flow | one `/api/skills.zip` CTA → install `portfolioos.zip` once in ChatGPT or Claude → ask naturally; both installation instructions are always visible; the catalog explains capabilities and never acts as a selector |
-| Distribution | one complete archive with a root upload wrapper and plugin manifests; optional organization deployment only where the runtime and plan support it; no marketplace-publication promise |
+| Distribution | one complete archive that uploads as a single skill (one root `SKILL.md` wrapper, internal workflows as `GUIDE.md`); optional organization deployment only where the runtime and plan support it; no marketplace-publication promise |
 | Escrita | sempre com prévia e confirmação humana, em toda skill, sem exceção |
 | Cobrança | estado vem da plataforma (`last_reported`); envio pelo fluxo do PRD-001; **sem leitura de WhatsApp Web** |
 | MCP do portfolioOS | fora do v1, mas é o **destino declarado** da camada de capacidade (velocidade da auditoria, paridade de harness, contenção por capacidade); o navegador é a ponte, e as skills sobrevivem à transição. O Granola MCP já pode atuar no v1 como fonte externa da conversa |
@@ -460,6 +479,8 @@ profundidade e explica claramente as diferenças de sessão e segurança.
 | 2 | Fonte da conversa do Granola | detectar e usar o Granola MCP conectado → fallback para link compartilhado → texto copiado somente como último recurso | Daniel Braz | Não — resolvida em 13/08/2026; a skill escolhe automaticamente a fonte |
 | 3 | Canais de IA do v1 | **one complete package supports ChatGPT and Claude; both brief installation paths appear together with equal weight, with no tool or skill selector** | Daniel Braz | No — resolved on 2026-08-13; both are first-class channels |
 | 4 | Política de trânsito de dados | executar skills envia dados do portfólio — **inclusive as anotações do fundo** — para a ferramenta de IA do usuário; aprovar formalmente esse trânsito e em qual plano/conta ele ocorre | Daniel Braz | **Sim para a `auditoria-qualitativa`** (a skill que mais expõe conteúdo sensível); não para as demais |
+| 6 | Segredo do link de reporte | o link **não** é segredo: pode transitar pela ferramenta de IA e aparecer em prévia e fila; continua sendo escrita no período, entregue só ao contato cadastrado | Matheus Donangelo | Não — resolvida em 14/08/2026; a expiração (pendência 1 do PRD-001) segue aberta |
+| 7 | Envio automático na cobrança | o **usuário escolhe a cada execução** entre confirmar cada envio no WhatsApp (padrão) ou autorizar o agente a enviar a fila | Matheus Donangelo | Não — resolvida em 14/08/2026; o nível 3 puro continua no futuro PRD-003 |
 | 5 | Distribuição do trio `brq-pptx` | catálogo documenta e aponta o canal, sem hospedar (RFC-002 §3.5) · hospedar em mount não versionado com invariante de não-publicação | Daniel Braz | Não — afeta só o incremento 3 |
 
 ## 10. Referências

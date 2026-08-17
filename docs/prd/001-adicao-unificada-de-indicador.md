@@ -184,6 +184,12 @@ Onde o controle deve **sumir** (não basta bloquear no backend):
 
 ### 6.5 Enviar o link por WhatsApp (humano ou agente)
 
+> **Implementada em 14/08/2026** pelo painel `Link de indicador — {Mmm/AAAA}`
+> (`Client/src/app/pages/startups/token-panel-dialog/`), aberto ao confirmar
+> `Gerar` e por `Links anteriores` → `Abrir link de {Mmm/AAAA}`. Os sete
+> critérios abaixo estão cobertos por spec. O restante do PRD-001 (jornada 6.1,
+> entrada unificada) continua pendente.
+
 - **Ator / gatilho:** administrador — ou um agente de IA operando com a sessão
   dele — a partir do painel do link gerado (jornada 6.1, modo link).
 - **Fluxo:** escolhe o destinatário entre os executivos da startup que possuem
@@ -228,10 +234,13 @@ Onde o controle deve **sumir** (não basta bloquear no backend):
 
 - **Confidencialidade da anotação:** a anotação do fundo é dado interno; nunca
   transita pelo fluxo público (formulário, payload ou resposta).
-- **O link é um segredo portador:** quem o possui escreve no período. Sem
+- **O link é capacidade de escrita, não credencial** (decisão de 14/08/2026,
+  PRD-002 pendência 6): ele pode ser exibido como texto no painel, entrar numa
+  fila de cobrança e transitar pela ferramenta de IA do usuário. Quem o possui
+  escreve no período, então ele só é entregue ao contato cadastrado. Sem
   expiração no v1 (pendência 1); a mitigação é o escopo estreito — um link só
   escreve na zona reportada de um único período de uma única startup.
-- **Envio consciente:** por carregar um segredo portador, o envio sempre exibe
+- **Envio consciente:** por conceder escrita no período, o envio sempre exibe
   o destinatário (nome e número normalizado) antes de abrir o WhatsApp.
   Telefones não entram em URLs do próprio produto; `wa.me` é o destino externo
   oficial do click-to-chat.

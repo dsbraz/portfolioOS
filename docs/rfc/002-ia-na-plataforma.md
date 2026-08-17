@@ -30,11 +30,13 @@ catalog-visible but contributes no files. The runtime discovers the appropriate 
 natural request. The UI never exposes an individual skill download, install
 action, canned prompt, or copy-prompt action.
 
-The archive is dual-mode. `portfolioos/SKILL.md` is a root wrapper for runtimes
-that accept a single uploaded skill archive. `portfolioos/.codex-plugin/` and
-`portfolioos/.claude-plugin/` declare the same internal `portfolioos/skills/`
-collection for plugin-compatible runtimes. These manifests are a package
-compatibility mechanism; this RFC does not promise marketplace publication.
+The archive is a single uploadable skill. `portfolioos/SKILL.md` is its only
+`SKILL.md` and acts as the root wrapper; each internal workflow ships as
+`portfolioos/skills/<name>/GUIDE.md`. The upload validators in Claude and
+ChatGPT accept exactly one `SKILL.md` per archive, so a nested skill collection
+is not a packaging option. Plugin-style installation is not offered — the
+manifests were removed and none remain in the repository — and this RFC does not
+promise marketplace publication.
 
 The catalog and archive are public by default because their source is already
 public. The single CTA downloads `GET /api/skills.zip` through `SkillService`
@@ -110,8 +112,8 @@ Fatos do repositório que moldam o desenho:
 | base skill | `operar-portfolioos` | broad platform contract and safe router/delegator across domains |
 | catalog | `GET /api/skills` | explanatory metadata for published and blocked capabilities |
 | complete package | `GET /api/skills.zip` | the only user-facing download; filename `portfolioos.zip` |
-| root wrapper | `portfolioos/SKILL.md` inside the archive | upload-once entry point that discovers/delegates to internal skills |
-| plugin manifests | `.codex-plugin/plugin.json` and `.claude-plugin/plugin.json` | runtime-compatible discovery metadata, not marketplace listings |
+| root wrapper | `portfolioos/SKILL.md` inside the archive | the archive's only `SKILL.md`; upload-once entry point that discovers/delegates to the internal guides |
+| internal guide | `portfolioos/skills/<name>/GUIDE.md` inside the archive | an internal skill's `SKILL.md`, renamed on packaging so the archive keeps a single `SKILL.md` |
 | page | Angular route `/ia` | one-package setup flow plus explanatory capability catalog |
 | conector MCP | incremento 4 | servidor MCP com OAuth sobre a API existente |
 | Granola MCP | fonte externa já suportada pela skill `granola-reuniao` | ferramentas conectadas na LLM do usuário; não é o futuro MCP do portfolioOS |
@@ -174,22 +176,22 @@ files and `__pycache__`. The generated archive has this normative shape:
 
 ```text
 portfolioos/
-├── SKILL.md                         # upload-once wrapper and skill router
+├── SKILL.md                         # the archive's ONLY SKILL.md: wrapper and router
 ├── README.md                        # runtime-neutral installation notes
-├── .codex-plugin/plugin.json        # compatible plugin discovery
-├── .claude-plugin/plugin.json       # compatible plugin discovery
+├── agents/openai.yaml               # OpenAI interface metadata for the package
 └── skills/
     ├── operar-portfolioos/
-    │   ├── SKILL.md
+    │   ├── GUIDE.md                 # source SKILL.md, renamed on packaging
     │   └── references/...
     ├── preparar-agenda/...
-    └── granola-reuniao/...
+    ├── granola-reuniao/...
+    └── cobrar-indicadores/...
 ```
 
 The specialized entries are illustrative of the current published set;
 membership always follows metadata. A directory with `"published": false` in
-`.portfolioos.json`, including `auditoria-qualitativa`, is omitted entirely. The root wrapper and manifests
-describe discovery over the same `skills/` subtree; they must not fork the
+`.portfolioos.json`, including `auditoria-qualitativa`, is omitted entirely. The
+root wrapper describes discovery over the `skills/` subtree; it must not fork the
 platform operating rules.
 
 #### Contratos de autoria e catálogo
@@ -294,9 +296,13 @@ desenho.
   with `SKILL.md` and optional support files. `operar-portfolioos` is the broad
   base skill; published specialized skills add focused workflows.
 - Package-level files are generated from controlled templates: a root wrapper,
-  runtime-neutral README, and the two plugin manifests. The wrapper routes
-  broad requests and delegates when a specialized skill applies; plugin-aware
-  runtimes discover those same skills directly.
+  a runtime-neutral README, and `agents/openai.yaml` with the ChatGPT interface
+  strings. That last file is resolved by OpenAI relative to the directory holding
+  `SKILL.md`, so it must sit at the package root; it is optional and fails open,
+  which is why the archive test pins its path. The wrapper routes broad requests and delegates
+  when a specialized skill applies. Packaging renames each internal `SKILL.md`
+  to `GUIDE.md` and moves nothing else, so a guide's relative links to its own
+  `references/` stay valid and no skill content depends on the archive layout.
 - **Título padronizado.** As três skills passam a usar o mesmo cabeçalho —
   `## Regras (inegociáveis)` — porque o lint precisa de um ponto fixo onde
   procurar. Antes divergiam ("Regras de segurança (inegociáveis)" numa,
@@ -427,15 +433,18 @@ heredoc do `deploy.sh` — é dali que o Cloud Run recebe variáveis; o
   `blocked_reason`, **sem** `files`;
 - `GET /api/skills.zip` returns `application/zip`, names the attachment
   `portfolioos.zip`, and uses the single `portfolioos/` root directory;
-- the archive contains the root `SKILL.md`, `README.md`, both plugin manifests,
-  `skills/operar-portfolioos/`, and every published specialized skill with
-  recursive support files;
+- the archive contains the root `SKILL.md`, `README.md`, `agents/openai.yaml`,
+  `skills/operar-portfolioos/GUIDE.md`, and every published specialized skill
+  with recursive support files;
+- the archive contains exactly one file named `SKILL.md`, at
+  `portfolioos/SKILL.md`; `SkillRepository.get_pack` fails rather than emit an
+  archive the upload flow would reject;
 - the archive contains no hidden file, `__pycache__`, unknown source directory,
   or `published: false` skill; specifically, no
   `skills/auditoria-qualitativa/` entry exists while its catalog record is
   blocked;
-- the root wrapper and both manifests reference the internal `skills/`
-  collection rather than a per-skill download flow;
+- the root wrapper references the internal `skills/` collection rather than a
+  per-skill download flow, and links each workflow as `GUIDE.md`;
 - **`SKILLS_PUBLIC` in both states**: open serves catalog and complete archive;
   fechado devolve 401 nos dois sem sessão e 200 com sessão válida;
 - **invariante de vendor** (se `SKILLS_VENDOR_DIR` for adotado): skill de
@@ -516,7 +525,8 @@ Increment 1 implementation order:
    `.env.production.example`. No `docker-compose.yml`, só `SKILLS_PUBLIC`
    precisa entrar no `environment:` do serviço `server`.
 2. **Build the complete package** — generate the root upload wrapper, README,
-   plugin manifests, and `skills/` subtree from the published source set.
+   and `skills/` subtree from the published source set, keeping a single
+   `SKILL.md` in the archive.
 3. **Standardize internal skills** — keep metadata and non-negotiable safety
    anchors lintable (§3.4), including the broad `operar-portfolioos` base.
 4. **Build `/ia`** — one package CTA, always-visible ChatGPT and Claude
@@ -568,7 +578,7 @@ Sem migração, sem mudança em rota existente, sem impacto nos PRs abertos.
 | Critério do PRD-002 | Verificação |
 |---|---|
 | 6.1 — non-technical user completes the install-once page flow | manual validation with a real user + single-CTA/page-structure specs |
-| 6.2 — complete package installs once and exposes multiple capabilities | archive-layout tests, published-only membership test, root-wrapper/manifests checks, and two natural-request smoke flows |
+| 6.2 — complete package installs once and exposes multiple capabilities | archive-layout tests, published-only membership test, root-wrapper/single-entrypoint checks, and two natural-request smoke flows |
 | 6.3/6.4/6.5 — **estrutura** das skills | lint (frontmatter padrão, sidecar interno, `writes`, seções de segurança) + specs de nomes acessíveis (§5) |
 | 6.3/6.4/6.5 — **comportamento** das skills | **verificação manual com roteiro fixo**, antes do lançamento: (a) com Granola MCP utilizável, a conversa é obtida por ele sem pedir link; (b) sem MCP, a skill pede link e declara a cobertura visível; (c) transcrição-armadilha com instrução embutida → nenhum efeito além do registro proposto; (d) startup semeada com contradição conhecida, compromisso repetido e silêncio → os três achados aparecem com origem; (e) prévia confere com o registro salvo; (f) **campo qualitativo semeado com instrução embutida** → a varredura não muda e a instrução vira achado de segurança; (g) `preparar-agenda` sobre a mesma startup semeada → as perguntas citam os fatos plantados. Dono: quem publica a skill no catálogo. O lint trava a ordem MCP → link e as frases de segurança, não a execução real |
 | 6.6 — apresentação (incremento 3) | skill `apresentacao-portfolio` + decisão de distribuição da §3.5 |
@@ -589,10 +599,11 @@ Sem migração, sem mudança em rota existente, sem impacto nos PRs abertos.
 | `SKILLS_PUBLIC` como dependência por requisição, kill switch de emergência | fechada nesta RFC |
 | Sem alias `/.well-known/` | fechada nesta RFC |
 | One `portfolioos.zip` supports ChatGPT and Claude; both brief installation paths remain visible with equal weight and no selector or preference | closed by product decision on 2026-08-13 |
-| Package is dual-mode: root `SKILL.md` wrapper for one upload plus plugin manifests for compatible runtimes | closed in this RFC |
-| Plugin manifests do not constitute or promise marketplace publication | closed in this RFC |
+| Package uploads as a single skill: one root `SKILL.md` wrapper, internal workflows as `GUIDE.md` | reopened and closed on 2026-08-13 — the previous dual-mode shape shipped four `SKILL.md` files and was rejected by the Claude upload validator |
+| Plugin manifests dropped from the archive and from the repository; plugin-style installation is not offered and no marketplace publication is promised | closed on 2026-08-13 |
 | Primary page contract is one CTA → install once → ask naturally; catalog is explanatory and has no item-level actions | closed in this RFC |
 | `granola-reuniao` automatically probes Granola MCP, then falls back to a user-provided note link and only then copied text | closed by product decision on 2026-08-13 |
+| `cobrar-indicadores` ships in the package; the reporting link is a write capability rather than a bearer secret, and the send mode is chosen by the user in every run | closed by product decision on 2026-08-14 |
 | Template de marketing fora do repositório (incremento 3) | proposta — precisa do ok do Daniel |
 | Publicação da `auditoria-qualitativa` condicionada à pendência 4 do PRD | proposta — precisa do ok do Daniel |
 | Forma do MCP (OAuth + escopos sobre a API existente) | direcional; detalhe em RFC-003 |
