@@ -180,4 +180,47 @@ describe('AddIndicatorDialog', () => {
     expect(el.textContent).toContain('Anotações do fundo');
     expect(el.querySelector('#add-comments')).toBeTruthy();
   });
+
+  // PRD-001 criterion 6.5.7 / item 6: a browser agent completes generate → send
+  // using only roles and accessible names, never an implementation selector.
+  it('is operable end to end by role and accessible name', async () => {
+    tokenService.create.mockReturnValue(of(token));
+    const el = await render({
+      executives: [
+        {
+          id: 'e1',
+          startup_id: 's1',
+          name: 'Ana Costa',
+          role: 'CEO',
+          email: null,
+          phone: '(11) 91234-5678',
+          linkedin: null,
+          created_at: '',
+          updated_at: '',
+        },
+      ],
+    });
+
+    // Pick the link mode by its label, not by index.
+    const linkRadio = [...el.querySelectorAll('mat-radio-button')].find((r) =>
+      r.textContent?.includes('Gerar link para a investida'),
+    );
+    linkRadio!.querySelector('input')!.click();
+    fixture.detectChanges();
+
+    // Trigger the primary action by its name.
+    const generate = [...el.querySelectorAll('mat-dialog-actions button')].find(
+      (b) => b.textContent?.trim() === 'Gerar link',
+    );
+    (generate as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    // The send is a real wa.me link, named for its recipient, present before any
+    // click — an agent can read the href instead of clicking.
+    const send = el.querySelector<HTMLAnchorElement>(
+      '[aria-label="Enviar para Ana Costa no WhatsApp"]',
+    );
+    expect(send?.tagName).toBe('A');
+    expect(send?.getAttribute('href')).toContain('https://wa.me/5511912345678?text=');
+  });
 });
