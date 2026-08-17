@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, ParamMap, Router, convertToParamMap } from '@angular/router';
-import { BehaviorSubject, NEVER, of } from 'rxjs';
+import { BehaviorSubject, NEVER, Subject, of } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
@@ -9,6 +9,15 @@ import { Portfolio } from './portfolio';
 import { PortfolioSummary } from '../../models/portfolio.model';
 import { PortfolioService } from '../../services/portfolio.service';
 import { StartupService } from '../../services/startup.service';
+
+// `routerLink` on the startup name builds and serializes an href and subscribes
+// to navigation events, so the stub needs more than `navigate`.
+const routerStub = () => ({
+  navigate: vi.fn().mockResolvedValue(true),
+  createUrlTree: vi.fn((commands: unknown[]) => commands),
+  serializeUrl: vi.fn((tree: unknown) => (tree as unknown[]).join('/')),
+  events: new Subject<unknown>(),
+});
 
 describe('Portfolio', () => {
   let component: Portfolio;
@@ -21,9 +30,7 @@ describe('Portfolio', () => {
   const startupServiceSpy = {
     create: vi.fn(),
   };
-  const routerSpy = {
-    navigate: vi.fn().mockResolvedValue(true),
-  };
+  const routerSpy = routerStub();
   const dialogSpy = {
     open: vi.fn(),
   };
@@ -228,6 +235,12 @@ describe('Portfolio', () => {
     const el = fixture.nativeElement as HTMLElement;
     const headers = [...el.querySelectorAll('th')].map((header) => header.textContent?.trim());
     expect(headers).toEqual(['Startup', 'Status', 'Receita', 'Caixa', 'EBITDA/Burn', 'Headcount']);
+    // A pointer-only row is unreachable by keyboard; the name is the real
+    // control, and it is a link because the action is a navigation.
+    const opener = el.querySelector<HTMLAnchorElement>('.row-opener');
+    expect(opener?.tagName).toBe('A');
+    expect(opener?.textContent?.trim()).toBeTruthy();
+
     expect(el.textContent).toContain('Último: Abr/2026');
     expect(el.textContent).toContain('Nunca reportou');
   });
@@ -246,7 +259,7 @@ describe('Portfolio (estado de carregamento)', () => {
           provide: ActivatedRoute,
           useValue: { queryParamMap: of(convertToParamMap({ month: '7', year: '2026' })) },
         },
-        { provide: Router, useValue: { navigate: vi.fn().mockResolvedValue(true) } },
+        { provide: Router, useValue: routerStub() },
         { provide: MatDialog, useValue: { open: vi.fn() } },
         { provide: MatSnackBar, useValue: { open: vi.fn() } },
         {
@@ -302,7 +315,7 @@ describe('Portfolio (ordenação)', () => {
           provide: ActivatedRoute,
           useValue: { queryParamMap: of(convertToParamMap({ month: '7', year: '2026' })) },
         },
-        { provide: Router, useValue: { navigate: vi.fn().mockResolvedValue(true) } },
+        { provide: Router, useValue: routerStub() },
         { provide: MatDialog, useValue: { open: vi.fn() } },
         { provide: MatSnackBar, useValue: { open: vi.fn() } },
         {
@@ -404,7 +417,7 @@ describe('Portfolio (estado do reporte na coluna de status)', () => {
           provide: ActivatedRoute,
           useValue: { queryParamMap: of(convertToParamMap({ month: '7', year: '2026' })) },
         },
-        { provide: Router, useValue: { navigate: vi.fn().mockResolvedValue(true) } },
+        { provide: Router, useValue: routerStub() },
         { provide: MatDialog, useValue: { open: vi.fn() } },
         { provide: MatSnackBar, useValue: { open: vi.fn() } },
         {

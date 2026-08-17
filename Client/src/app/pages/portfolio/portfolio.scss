@@ -221,6 +221,35 @@
   }
 }
 
+// The row stays clickable for the mouse, but the operable element is this one:
+// a real link/button that carries the row's name. It has to read as the plain
+// text it replaced, so only focus makes it look interactive.
+.row-opener {
+  display: inline-block;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  // `.table-shell` scrolls, and `overflow-x: auto` clips on all four sides —
+  // an outward ring would be cut off, and a clipped focus ring is an invisible
+  // one (WCAG 2.4.7).
+  &:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: -2px;
+    border-radius: var(--radius-sm);
+  }
+}
+
 // ---------- Empty state ----------
 .empty-state {
   text-align: center;

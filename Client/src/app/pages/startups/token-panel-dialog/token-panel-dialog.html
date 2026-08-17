@@ -1,0 +1,89 @@
+<app-dialog-header
+  [title]="'Link de indicador — ' + period"
+  description="O link abre o formulário de reporte deste período. Quem o recebe consegue preencher os dados da startup."
+/>
+
+<mat-dialog-content>
+  <section class="panel-section" aria-labelledby="token-link-title">
+    <p class="section-title" id="token-link-title">Link do formulário</p>
+    <div class="link-row">
+      <!-- Visible as text: no step of this flow depends on the clipboard. -->
+      <p class="link-text">{{ formUrl }}</p>
+      <button
+        mat-stroked-button
+        type="button"
+        [attr.aria-label]="'Copiar link de ' + period"
+        (click)="copyLink()"
+      >
+        <mat-icon aria-hidden="true">content_copy</mat-icon>
+        Copiar
+      </button>
+    </div>
+  </section>
+
+  <section class="panel-section" aria-labelledby="token-send-title">
+    <p class="section-title" id="token-send-title">Enviar por WhatsApp</p>
+
+    @if (reachable().length === 0 && blocked().length === 0) {
+      <p class="panel-empty">
+        Nenhum executivo cadastrado nesta startup. Cadastre o responsável na aba
+        <strong>Executivos</strong>, com telefone, para poder enviar.
+      </p>
+    } @else {
+      @if (reachable().length > 0) {
+        <ul class="recipient-list" role="list">
+          @for (recipient of reachable(); track recipient.name) {
+            <li>
+              <div class="recipient-copy">
+                <h3>{{ recipient.name }}</h3>
+                <p>{{ recipient.role ?? 'Sem cargo informado' }} · {{ recipient.formattedPhone }}</p>
+              </div>
+              <a
+                mat-flat-button
+                [href]="recipient.whatsappUrl"
+                target="_blank"
+                rel="noopener"
+                [attr.aria-label]="'Enviar para ' + recipient.name + ' no WhatsApp'"
+              >
+                <mat-icon aria-hidden="true">send</mat-icon>
+                Enviar
+              </a>
+            </li>
+          }
+        </ul>
+      }
+
+      @if (blocked().length > 0) {
+        <ul class="recipient-list recipient-list--blocked" role="list">
+          @for (recipient of blocked(); track recipient.name) {
+            <li>
+              <div class="recipient-copy">
+                <h3>{{ recipient.name }}</h3>
+                <p>{{ recipient.role ?? 'Sem cargo informado' }}</p>
+              </div>
+              <span class="pill pill--warn">Sem telefone válido</span>
+            </li>
+          }
+        </ul>
+        <p class="panel-hint">
+          Um telefone brasileiro válido (DDD e número) é obrigatório para enviar. Corrija o
+          cadastro na aba <strong>Executivos</strong>.
+        </p>
+      }
+    }
+  </section>
+
+  @if (reachable().length > 0) {
+    <section class="panel-section" aria-labelledby="token-message-title">
+      <p class="section-title" id="token-message-title">Mensagem</p>
+      <pre class="message-preview">{{ reachable()[0].message }}</pre>
+      <p class="panel-hint">
+        O WhatsApp abre com a mensagem pronta. Você pode editá-la e confirma o envio por lá.
+      </p>
+    </section>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-stroked-button mat-dialog-close>Fechar</button>
+</mat-dialog-actions>

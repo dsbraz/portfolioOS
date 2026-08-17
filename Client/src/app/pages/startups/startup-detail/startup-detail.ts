@@ -54,6 +54,10 @@ import {
   TokenListDialogData,
 } from '../token-list-dialog/token-list-dialog';
 import {
+  TokenPanelDialog,
+  TokenPanelDialogData,
+} from '../token-panel-dialog/token-panel-dialog';
+import {
   TokenGenerateDialog,
   TokenGenerateDialogData,
 } from '../token-generate-dialog/token-generate-dialog';
@@ -150,7 +154,7 @@ export class StartupDetail implements OnInit {
 
   readonly indicatorColumns = ['period', 'total_revenue', 'cash_balance', 'ebitda_burn', 'headcount', 'actions'];
   readonly meetingColumns = ['meeting_date', 'summary', 'actions'];
-  readonly executiveColumns = ['name', 'role', 'email', 'actions'];
+  readonly executiveColumns = ['name', 'role', 'email', 'phone', 'actions'];
 
   readonly indicatorSort = signal<SortState>({ active: '', direction: '' });
   readonly meetingSort = signal<SortState>({ active: '', direction: '' });
@@ -183,6 +187,7 @@ export class StartupDetail implements OnInit {
       name: (e) => e.name,
       role: (e) => e.role,
       email: (e) => e.email,
+      phone: (e) => e.phone,
     }),
   );
 
@@ -457,11 +462,13 @@ export class StartupDetail implements OnInit {
 
       this.tokenService.create(this.startupId, period).subscribe({
         next: (token) => {
-          const url = `${window.location.origin}/monthly-indicator/${token.token}`;
-          navigator.clipboard.writeText(url).then(() => {
-            this.snackBar.open('Link gerado e copiado!', 'Fechar', { duration: 3000 });
-          });
           this.loadAll();
+          // The link is shown as text in the panel, with the send affordance —
+          // no step of this flow depends on the clipboard.
+          this.dialog.open(TokenPanelDialog, {
+            width: '560px',
+            data: { token, executives: this.executives() } as TokenPanelDialogData,
+          });
         },
         error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao gerar link', 'Fechar', { duration: 3000 }),
       });
@@ -479,7 +486,7 @@ export class StartupDetail implements OnInit {
   openTokenListDialog(): void {
     this.dialog.open(TokenListDialog, {
       width: '400px',
-      data: { tokens: this.tokens() } as TokenListDialogData,
+      data: { tokens: this.tokens(), executives: this.executives() } as TokenListDialogData,
     });
   }
 }

@@ -9,6 +9,7 @@ import { StartupDetail } from './startup-detail';
 import { StartupService } from '../../../services/startup.service';
 import { MonthlyIndicatorService } from '../../../services/monthly-indicator.service';
 import { BoardMeetingService } from '../../../services/board-meeting.service';
+import { Executive } from '../../../models/executive.model';
 import { ExecutiveService } from '../../../services/executive.service';
 import { MonthlyIndicatorTokenService } from '../../../services/monthly-indicator-token.service';
 import { MonthlyIndicator } from '../../../models/monthly-indicator.model';
@@ -161,7 +162,7 @@ describe('StartupDetail (carregamento e ARIA)', () => {
           useValue: { list: () => resposta(lista([indicatorFixture])) },
         },
         { provide: BoardMeetingService, useValue: { list: () => resposta(lista([])) } },
-        { provide: ExecutiveService, useValue: { list: () => resposta(lista([])) } },
+        { provide: ExecutiveService, useValue: { list: () => resposta(lista([executiveFixture])) } },
         { provide: MonthlyIndicatorTokenService, useValue: { list: () => resposta(lista([])) } },
       ],
     }).compileComponents();
@@ -171,6 +172,18 @@ describe('StartupDetail (carregamento e ARIA)', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     return fixture.nativeElement as HTMLElement;
+  };
+
+  const executiveFixture: Executive = {
+    id: 'e1',
+    startup_id: 's1',
+    name: 'Ana Costa',
+    role: 'CEO',
+    email: 'ana@lumina.example',
+    phone: '(11) 91234-5678',
+    linkedin: null,
+    created_at: '',
+    updated_at: '',
   };
 
   const indicatorFixture: MonthlyIndicator = {
@@ -251,6 +264,23 @@ describe('StartupDetail (carregamento e ARIA)', () => {
       .map((header) => header.textContent?.trim())
       .filter(Boolean);
     expect(indicatorHeaders).toEqual(['Período', 'Receita', 'Caixa', 'EBITDA/Burn', 'Headcount']);
+
+    // The chase workflow resolves the recipient from this table. Reading the
+    // phone must not require opening a row whose only keyboard path is `Editar`.
+    const executiveHeaders = [...el.querySelectorAll('#panel-executivos th[scope="col"]')]
+      .map((header) => header.textContent?.trim())
+      .filter(Boolean);
+    expect(executiveHeaders).toEqual(['Nome', 'Cargo', 'Email', 'Telefone']);
+
+    // The row click is mouse-only. Each row must also expose a focusable control
+    // whose name identifies the row it opens (WCAG 2.1.1, and the row-action
+    // naming rule in CLAUDE.md).
+    for (const name of ['Ver indicador de Jul/2026', 'Ver executivo Ana Costa']) {
+      const opener = el.querySelector<HTMLButtonElement>(`[aria-label="${name}"]`);
+      expect(opener, name).toBeTruthy();
+      expect(opener?.tagName).toBe('BUTTON');
+      expect(opener?.hasAttribute('disabled')).toBe(false);
+    }
 
     const kpiLabels = [...el.querySelectorAll('.kpi-label')].map((label) =>
       label.textContent?.trim(),

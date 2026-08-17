@@ -175,7 +175,18 @@
               <th mat-header-cell *matHeaderCellDef mat-sort-header="period" scope="col">
                 Período
               </th>
-              <td mat-cell *matCellDef="let ind">{{ monthLabels[ind.month] }}/{{ ind.year }}</td>
+              <td mat-cell *matCellDef="let ind">
+                <button
+                  type="button"
+                  class="row-opener"
+                  [attr.aria-label]="
+                    'Ver indicador de ' + monthLabels[ind.month] + '/' + ind.year
+                  "
+                  (click)="$event.stopPropagation(); openViewIndicator(ind)"
+                >
+                  {{ monthLabels[ind.month] }}/{{ ind.year }}
+                </button>
+              </td>
             </ng-container>
             <ng-container matColumnDef="total_revenue">
               <th
@@ -307,7 +318,18 @@
               <th mat-header-cell *matHeaderCellDef mat-sort-header="meeting_date" scope="col">
                 Data
               </th>
-              <td mat-cell *matCellDef="let m">{{ m.meeting_date | date: 'dd/MM/yyyy' }}</td>
+              <td mat-cell *matCellDef="let m">
+                <button
+                  type="button"
+                  class="row-opener"
+                  [attr.aria-label]="
+                    'Ver reunião de ' + (m.meeting_date | date: 'dd/MM/yyyy')
+                  "
+                  (click)="$event.stopPropagation(); openViewMeeting(m)"
+                >
+                  {{ m.meeting_date | date: 'dd/MM/yyyy' }}
+                </button>
+              </td>
             </ng-container>
             <ng-container matColumnDef="summary">
               <th mat-header-cell *matHeaderCellDef mat-sort-header="summary" scope="col">
@@ -379,11 +401,20 @@
             (matSortChange)="executiveSort.set($event)"
           >
             <caption class="visually-hidden">
-              Executivos da startup, com nome, cargo e e-mail.
+              Executivos da startup, com nome, cargo, e-mail e telefone.
             </caption>
             <ng-container matColumnDef="name">
               <th mat-header-cell *matHeaderCellDef mat-sort-header="name" scope="col">Nome</th>
-              <td mat-cell *matCellDef="let e">{{ e.name }}</td>
+              <td mat-cell *matCellDef="let e">
+                <button
+                  type="button"
+                  class="row-opener"
+                  [attr.aria-label]="'Ver executivo ' + e.name"
+                  (click)="$event.stopPropagation(); openViewExecutive(e)"
+                >
+                  {{ e.name }}
+                </button>
+              </td>
             </ng-container>
             <ng-container matColumnDef="role">
               <th mat-header-cell *matHeaderCellDef mat-sort-header="role" scope="col">Cargo</th>
@@ -392,6 +423,12 @@
             <ng-container matColumnDef="email">
               <th mat-header-cell *matHeaderCellDef mat-sort-header="email" scope="col">Email</th>
               <td mat-cell *matCellDef="let e">{{ e.email ?? '-' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="phone">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="phone" scope="col">
+                Telefone
+              </th>
+              <td mat-cell *matCellDef="let e">{{ e.phone ?? '-' }}</td>
             </ng-container>
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef scope="col"></th>
