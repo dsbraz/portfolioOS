@@ -39,6 +39,9 @@
         <label class="field-label" id="l-9312-total_revenue" for="f-9312-total_revenue">Receita do mês</label>
         <mat-form-field appearance="outline">
   <input id="f-9312-total_revenue" matInput type="number" (wheel)="$event.target.blur()" formControlName="total_revenue" />
+          @if (form.get('total_revenue')?.hasError('min') || form.get('total_revenue')?.hasError('max')) {
+            <mat-error>Valor fora do limite permitido.</mat-error>
+          }
           <span matTextPrefix class="field-affix">R$&nbsp;</span>
         </mat-form-field>
       </div>
@@ -47,6 +50,9 @@
         <label class="field-label" id="l-9312-recurring_revenue_pct" for="f-9312-recurring_revenue_pct">Percentual de receita recorrente</label>
         <mat-form-field appearance="outline">
   <input id="f-9312-recurring_revenue_pct" matInput type="number" (wheel)="$event.target.blur()" formControlName="recurring_revenue_pct" />
+          @if (form.get('recurring_revenue_pct')?.hasError('min') || form.get('recurring_revenue_pct')?.hasError('max')) {
+            <mat-error>Use um valor entre 0 e 99999,99.</mat-error>
+          }
           <span matTextSuffix class="field-affix">%</span>
         </mat-form-field>
       </div>
@@ -57,6 +63,9 @@
         <label class="field-label" id="l-9312-gross_margin_pct" for="f-9312-gross_margin_pct">Margem bruta</label>
         <mat-form-field appearance="outline">
   <input id="f-9312-gross_margin_pct" matInput type="number" (wheel)="$event.target.blur()" formControlName="gross_margin_pct" />
+          @if (form.get('gross_margin_pct')?.hasError('min') || form.get('gross_margin_pct')?.hasError('max')) {
+            <mat-error>Use um valor entre 0 e 99999,99.</mat-error>
+          }
           <span matTextSuffix class="field-affix">%</span>
         </mat-form-field>
       </div>
@@ -65,6 +74,9 @@
         <label class="field-label" id="l-9312-cash_balance" for="f-9312-cash_balance">Saldo em caixa</label>
         <mat-form-field appearance="outline">
   <input id="f-9312-cash_balance" matInput type="number" (wheel)="$event.target.blur()" formControlName="cash_balance" />
+          @if (form.get('cash_balance')?.hasError('min') || form.get('cash_balance')?.hasError('max')) {
+            <mat-error>Valor fora do limite permitido.</mat-error>
+          }
           <span matTextPrefix class="field-affix">R$&nbsp;</span>
         </mat-form-field>
       </div>
@@ -75,6 +87,9 @@
         <label class="field-label" id="l-9312-headcount" for="f-9312-headcount">Headcount</label>
         <mat-form-field appearance="outline">
   <input id="f-9312-headcount" matInput type="number" (wheel)="$event.target.blur()" formControlName="headcount" />
+          @if (form.get('headcount')?.hasError('min') || form.get('headcount')?.hasError('max') || form.get('headcount')?.hasError('integer')) {
+            <mat-error>Use um número inteiro não negativo.</mat-error>
+          }
         </mat-form-field>
       </div>
 
@@ -82,6 +97,9 @@
         <label class="field-label" id="l-9312-ebitda_burn" for="f-9312-ebitda_burn">Burn / EBITDA</label>
         <mat-form-field appearance="outline">
   <input id="f-9312-ebitda_burn" matInput type="number" (wheel)="$event.target.blur()" formControlName="ebitda_burn" />
+          @if (form.get('ebitda_burn')?.hasError('min') || form.get('ebitda_burn')?.hasError('max')) {
+            <mat-error>Valor fora do limite permitido.</mat-error>
+          }
           <span matTextPrefix class="field-affix">R$&nbsp;</span>
         </mat-form-field>
       </div>
@@ -119,7 +137,7 @@
     <button mat-stroked-button (click)="onCancel()">Fechar</button>
   } @else {
     <button mat-stroked-button (click)="onCancel()">Cancelar</button>
-    <button mat-flat-button color="primary" (click)="onSubmit()" [disabled]="form.invalid">
+    <button mat-flat-button color="primary" (click)="onSubmit()">
       {{ isEditMode ? 'Salvar' : 'Adicionar' }}
     </button>
   }

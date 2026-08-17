@@ -1,17 +1,16 @@
 import { Component, inject, OnInit } from '@angular/core';
-import {
-  AbstractControl,
-  FormBuilder,
-  ReactiveFormsModule,
-  ValidationErrors,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 
+import {
+  INDICATOR_LIMITS,
+  futurePeriodValidator,
+  integerValidator,
+} from '../../../models/indicator-form';
 import { MonthlyIndicator, MONTH_LABELS } from '../../../models/monthly-indicator.model';
 import {
   formatCurrencyBRL,
@@ -53,30 +52,42 @@ export class IndicatorFormDialog implements OnInit {
   readonly monthLabels = MONTH_LABELS;
   readonly currentYear = new Date().getFullYear();
 
-  readonly form = this.fb.group({
-    month: [new Date().getMonth() + 1, [Validators.required, Validators.min(1), Validators.max(12)]],
-    year: [this.currentYear, [Validators.required, Validators.min(2000), Validators.max(2100)]],
-    total_revenue: [null as number | null],
-    recurring_revenue_pct: [null as number | null],
-    gross_margin_pct: [null as number | null],
-    cash_balance: [null as number | null],
-    headcount: [null as number | null],
-    ebitda_burn: [null as number | null],
-    achievements: [''],
-    challenges: [''],
-    comments: [''],
-  }, { validators: [IndicatorFormDialog.futurePeriodValidator] });
-
-  private static futurePeriodValidator(group: AbstractControl): ValidationErrors | null {
-    const month = group.get('month')?.value;
-    const year = group.get('year')?.value;
-    if (!month || !year) return null;
-    const now = new Date();
-    if (year > now.getFullYear() || (year === now.getFullYear() && month > now.getMonth() + 1)) {
-      return { futurePeriod: true };
-    }
-    return null;
-  }
+  // The reportable fields carry the same limits as the shared factory, so an
+  // out-of-range value is caught here on edit and not only by the server's 422.
+  readonly form = this.fb.group(
+    {
+      month: [new Date().getMonth() + 1, [Validators.required, Validators.min(1), Validators.max(12)]],
+      year: [this.currentYear, [Validators.required, Validators.min(2000), Validators.max(2100)]],
+      total_revenue: [
+        null as number | null,
+        [Validators.min(INDICATOR_LIMITS.MIN_MONEY), Validators.max(INDICATOR_LIMITS.MAX_MONEY)],
+      ],
+      recurring_revenue_pct: [
+        null as number | null,
+        [Validators.min(0), Validators.max(INDICATOR_LIMITS.MAX_PCT)],
+      ],
+      gross_margin_pct: [
+        null as number | null,
+        [Validators.min(0), Validators.max(INDICATOR_LIMITS.MAX_PCT)],
+      ],
+      cash_balance: [
+        null as number | null,
+        [Validators.min(INDICATOR_LIMITS.MIN_MONEY), Validators.max(INDICATOR_LIMITS.MAX_MONEY)],
+      ],
+      headcount: [
+        null as number | null,
+        [Validators.min(0), Validators.max(INDICATOR_LIMITS.MAX_HEADCOUNT), integerValidator],
+      ],
+      ebitda_burn: [
+        null as number | null,
+        [Validators.min(INDICATOR_LIMITS.MIN_MONEY), Validators.max(INDICATOR_LIMITS.MAX_MONEY)],
+      ],
+      achievements: [''],
+      challenges: [''],
+      comments: [''],
+    },
+    { validators: [futurePeriodValidator] },
+  );
 
   /**
    * No modo leitura o formulário não é renderizado — o registro vira uma lista
@@ -137,7 +148,12 @@ export class IndicatorFormDialog implements OnInit {
   }
 
   onSubmit(): void {
-    if (this.form.invalid) return;
+    // Reveal the errors instead of silently doing nothing — the primary button
+    // stays enabled so a click on an out-of-range value points at the field.
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     this.dialogRef.close(this.form.getRawValue());
   }
 

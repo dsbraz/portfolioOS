@@ -173,4 +173,17 @@ describe('IndicatorFormDialog', () => {
     component.onCancel();
     expect(dialogRefSpy.close).toHaveBeenCalledWith();
   });
+
+  // The edit path now catches an out-of-range value on the client, not only via
+  // the server's 422 — the same shared limits the report form uses.
+  it('does not submit a value beyond the limits; it flags the field instead', () => {
+    dialogRefSpy.close.mockClear();
+    component.form.patchValue({ month: 2, year: 2026, total_revenue: -10_000_000_000_000 });
+
+    component.onSubmit();
+
+    expect(component.form.get('total_revenue')!.hasError('max')).toBe(false);
+    expect(component.form.get('total_revenue')!.hasError('min')).toBe(true);
+    expect(dialogRefSpy.close).not.toHaveBeenCalled();
+  });
 });
