@@ -200,9 +200,9 @@ def test_chase_skill_never_assumes_the_send_mode_or_the_recipient():
     # Every control the skill navigates by must exist verbatim in the UI.
     for label in (
         "Mês anterior",
+        "Adicionar indicador",
+        "Gerar link para a investida",
         "Gerar link",
-        "Gerar link de indicador",
-        "Link de indicador",
         "Link do formulário",
         "Links anteriores",
         "Enviar para {nome} no WhatsApp",

@@ -1,0 +1,50 @@
+.add-indicator-form {
+  display: flex;
+  flex-direction: column;
+  min-width: min(34rem, 100%);
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+
+  .field {
+    flex: 1 1 12rem;
+  }
+}
+
+.mode-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  margin: var(--space-sm) 0 var(--space-md);
+  padding: var(--space-sm) 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.mode-panel {
+  margin-top: var(--space-sm);
+}
+
+.period-note {
+  margin: 0 0 var(--space-sm);
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+.mode-intro {
+  color: var(--color-text);
+  font-size: 0.875rem;
+}
+
+.section-hint {
+  margin: 0 0 var(--space-xs);
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+.period-error {
+  display: block;
+  margin-bottom: var(--space-sm);
+}

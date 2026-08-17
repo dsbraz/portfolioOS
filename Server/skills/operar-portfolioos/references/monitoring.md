@@ -74,17 +74,19 @@ person within the startup and compare role, email, or phone.
 
 ## Manage monthly-report links
 
-On a startup page, `Gerar link` opens `Gerar link de indicador` for a month and
-year; confirming with `Gerar` opens the panel `Link de indicador — {Mmm/AAAA}`.
-The panel shows the link as text under `Link do formulário`, a `Copiar link de
+Both filling an indicator and generating a link start from `Adicionar
+indicador`, which opens `Adicionar indicador — {Mmm/AAAA}`. Pick the period, then
+the mode: `Preencher agora` fills the reportable zone plus the fund note, and
+`Gerar link para a investida` creates the link. In link mode, `Gerar link` opens
+the panel inline: the link as text under `Link do formulário`, a `Copiar link de
 {Mmm/AAAA}` control, and one `Enviar para {name} no WhatsApp` link per executive
 with a valid registered phone. An executive whose phone does not resolve appears
 as `Sem telefone válido` and gets no send control.
 
 `Mais ações` → `Links anteriores` lists existing periods; `Abrir link de
-{Mmm/AAAA}` opens the same panel. A startup and period have one token; generating
-it again returns that token.
+{Mmm/AAAA}` opens that panel for an existing token. A startup and period have one
+token; generating it again returns that token.
 
-Preview the startup and period before `Gerar`. The interface cannot expire,
-revoke, or delete a reporting link, and the recipient always comes from the
-registered executive phone — there is no free-form number entry.
+The interface cannot expire, revoke, or delete a reporting link, and the
+recipient always comes from the registered executive phone — there is no
+free-form number entry.

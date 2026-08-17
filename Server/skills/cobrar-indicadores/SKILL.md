@@ -86,14 +86,15 @@ Para cada startup confirmada:
 
 1. Abra a startup pelo **nome dela** no **Monitoramento** — a primeira coluna é
    um link.
-2. **Gerar link** → diálogo **Gerar link de indicador** → escolha **Mês** e
-   **Ano** do período confirmado → **Gerar**.
-   - Sempre defina o período explicitamente: o diálogo já vem preenchido com o
+2. **Adicionar indicador** → no diálogo **Adicionar indicador — {Mmm/AAAA}**,
+   confira **Mês** e **Ano** e escolha o modo **Gerar link para a investida** →
+   **Gerar link**.
+   - Sempre confira o período explicitamente: o diálogo já vem preenchido com o
      mês anterior, que pode não ser o que você confirmou.
    - `Período não pode ser no futuro.` significa que o período escolhido está à
      frente do mês corrente. Pare e confirme o período com o usuário.
-3. Abre o painel **Link de indicador — {Mmm/AAAA}**. Leia dali o link e os
-   destinatários.
+3. O painel do link aparece no próprio diálogo. Leia dali, sob **Link do
+   formulário**, o link e os destinatários.
 4. Um link por startup e período: repetir devolve o mesmo link, então não
    duplica nada. Para um período já gerado antes, use **Mais ações** →
    **Links anteriores** → **Abrir link de {Mmm/AAAA}**.

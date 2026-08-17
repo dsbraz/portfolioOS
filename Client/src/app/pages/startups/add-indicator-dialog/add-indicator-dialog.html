@@ -1,0 +1,217 @@
+<app-dialog-header [title]="'Adicionar indicador — ' + periodLabel()" />
+
+<mat-dialog-content>
+  @if (generatedToken(); as token) {
+    <!-- Link mode, after generating: the link and its send affordances. -->
+    <p class="mode-intro" role="status">
+      Link de <strong>{{ periodLabel() }}</strong> gerado. A investida preenche o formulário
+      por ele.
+    </p>
+    <app-token-panel [token]="token" [executives]="data.executives" />
+  } @else {
+    <form [formGroup]="form" class="add-indicator-form">
+      <div class="form-row">
+        <div class="field">
+          <label class="field-label" id="add-month">Mês</label>
+          <mat-form-field appearance="outline">
+            <mat-select aria-labelledby="add-month" formControlName="month">
+              @for (m of monthOptions; track m) {
+                <mat-option [value]="m">{{ monthLabels[m] }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="field">
+          <label class="field-label" id="add-year" for="add-year-input">Ano</label>
+          <mat-form-field appearance="outline">
+            <input
+              id="add-year-input"
+              matInput
+              type="number"
+              (wheel)="$event.target.blur()"
+              formControlName="year"
+            />
+          </mat-form-field>
+        </div>
+      </div>
+      @if (form.hasError('futurePeriod')) {
+        <mat-error class="period-error">Período não pode ser no futuro.</mat-error>
+      }
+
+      <!-- Context derived from what the page already loaded — never overwrites -->
+      <!-- silently, and the link mode reuses an existing token per period. -->
+      @if (hasIndicator()) {
+        <p class="period-note" role="status">
+          {{ periodLabel() }} já possui indicador. Salvar substitui os campos preenchidos.
+        </p>
+      }
+      @if (hasLink()) {
+        <p class="period-note" role="status">Já existe um link para este período.</p>
+      }
+
+      <mat-radio-group
+        class="mode-selector"
+        aria-label="O que fazer com este período"
+        [value]="mode()"
+        (change)="setMode($event.value)"
+      >
+        <mat-radio-button value="fill">Preencher agora</mat-radio-button>
+        <mat-radio-button value="link">Gerar link para a investida</mat-radio-button>
+      </mat-radio-group>
+
+      @if (mode() === 'fill') {
+        <div class="mode-panel" formGroupName="reported">
+          <h3 class="section-title">Quantitativos</h3>
+          <div class="form-row">
+            <div class="field">
+              <label class="field-label" for="add-total_revenue">Receita do mês</label>
+              <mat-form-field appearance="outline">
+                <input
+                  id="add-total_revenue"
+                  matInput
+                  type="number"
+                  (wheel)="$event.target.blur()"
+                  formControlName="total_revenue"
+                />
+                <span matTextPrefix class="field-affix">R$&nbsp;</span>
+                @if (form.get('reported.total_revenue')?.hasError('min') || form.get('reported.total_revenue')?.hasError('max')) {
+                  <mat-error>Valor fora do limite permitido.</mat-error>
+                }
+              </mat-form-field>
+            </div>
+            <div class="field">
+              <label class="field-label" for="add-recurring_revenue_pct">
+                Percentual de receita recorrente
+              </label>
+              <mat-form-field appearance="outline">
+                <input
+                  id="add-recurring_revenue_pct"
+                  matInput
+                  type="number"
+                  (wheel)="$event.target.blur()"
+                  formControlName="recurring_revenue_pct"
+                />
+                <span matTextSuffix class="field-affix">%</span>
+                @if (form.get('reported.recurring_revenue_pct')?.hasError('min') || form.get('reported.recurring_revenue_pct')?.hasError('max')) {
+                  <mat-error>Use um valor entre 0 e 99999,99.</mat-error>
+                }
+              </mat-form-field>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="field">
+              <label class="field-label" for="add-gross_margin_pct">Margem bruta</label>
+              <mat-form-field appearance="outline">
+                <input
+                  id="add-gross_margin_pct"
+                  matInput
+                  type="number"
+                  (wheel)="$event.target.blur()"
+                  formControlName="gross_margin_pct"
+                />
+                <span matTextSuffix class="field-affix">%</span>
+                @if (form.get('reported.gross_margin_pct')?.hasError('min') || form.get('reported.gross_margin_pct')?.hasError('max')) {
+                  <mat-error>Use um valor entre 0 e 99999,99.</mat-error>
+                }
+              </mat-form-field>
+            </div>
+            <div class="field">
+              <label class="field-label" for="add-cash_balance">Saldo em caixa</label>
+              <mat-form-field appearance="outline">
+                <input
+                  id="add-cash_balance"
+                  matInput
+                  type="number"
+                  (wheel)="$event.target.blur()"
+                  formControlName="cash_balance"
+                />
+                <span matTextPrefix class="field-affix">R$&nbsp;</span>
+                @if (form.get('reported.cash_balance')?.hasError('min') || form.get('reported.cash_balance')?.hasError('max')) {
+                  <mat-error>Valor fora do limite permitido.</mat-error>
+                }
+              </mat-form-field>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="field">
+              <label class="field-label" for="add-headcount">Headcount</label>
+              <mat-form-field appearance="outline">
+                <input
+                  id="add-headcount"
+                  matInput
+                  type="number"
+                  (wheel)="$event.target.blur()"
+                  formControlName="headcount"
+                />
+                @if (form.get('reported.headcount')?.hasError('min') || form.get('reported.headcount')?.hasError('max') || form.get('reported.headcount')?.hasError('integer')) {
+                  <mat-error>Use um número inteiro não negativo.</mat-error>
+                }
+              </mat-form-field>
+            </div>
+            <div class="field">
+              <label class="field-label" for="add-ebitda_burn">Burn / EBITDA</label>
+              <mat-form-field appearance="outline">
+                <input
+                  id="add-ebitda_burn"
+                  matInput
+                  type="number"
+                  (wheel)="$event.target.blur()"
+                  formControlName="ebitda_burn"
+                />
+                <span matTextPrefix class="field-affix">R$&nbsp;</span>
+                @if (form.get('reported.ebitda_burn')?.hasError('min') || form.get('reported.ebitda_burn')?.hasError('max')) {
+                  <mat-error>Valor fora do limite permitido.</mat-error>
+                }
+              </mat-form-field>
+            </div>
+          </div>
+
+          <h3 class="section-title">Qualitativos</h3>
+          <div class="field">
+            <label class="field-label" for="add-achievements">Conquistas do mês</label>
+            <mat-form-field appearance="outline">
+              <textarea id="add-achievements" matInput formControlName="achievements" rows="3"></textarea>
+            </mat-form-field>
+          </div>
+          <div class="field">
+            <label class="field-label" for="add-challenges">Desafios do mês</label>
+            <mat-form-field appearance="outline">
+              <textarea id="add-challenges" matInput formControlName="challenges" rows="3"></textarea>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="mode-panel">
+          <h3 class="section-title">Anotações do fundo</h3>
+          <p class="section-hint">Interno — não vai no formulário da investida.</p>
+          <div class="field">
+            <label class="field-label" for="add-comments">Comentários do fundo</label>
+            <mat-form-field appearance="outline">
+              <textarea id="add-comments" matInput formControlName="comments" rows="3"></textarea>
+            </mat-form-field>
+          </div>
+        </div>
+      } @else {
+        <p class="mode-panel mode-intro">
+          A investida recebe um link para preencher os indicadores de
+          <strong>{{ periodLabel() }}</strong> — sem acesso às anotações do fundo. O link
+          aparece aqui para você enviar.
+        </p>
+      }
+    </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  @if (generatedToken()) {
+    <!-- A token was created, so signal a change to reload the page's link list. -->
+    <button mat-flat-button color="primary" [mat-dialog-close]="true">Fechar</button>
+  } @else {
+    <button mat-stroked-button mat-dialog-close>Cancelar</button>
+    <button mat-flat-button color="primary" [disabled]="submitting()" (click)="submit()">
+      {{ mode() === 'fill' ? 'Salvar indicador' : 'Gerar link' }}
+    </button>
+  }
+</mat-dialog-actions>
