@@ -233,7 +233,7 @@ describe('Ai', () => {
     const help = element.querySelector<HTMLDetailsElement>('.support-details');
 
     expect(packageCard?.textContent).toContain('Nunca digite sua senha no chat');
-    expect(packageCard?.textContent).toContain('link de indicador é um segredo');
+    expect(packageCard?.textContent).toContain('link de indicador permite escrever no período');
     expect(packageCard?.textContent).toContain('Revise a prévia antes de permitir uma gravação');
     expect(element.querySelector('time[datetime="2026-08-13"]')).toBeTruthy();
     expect(help?.textContent).toContain('instalação para toda a organização');

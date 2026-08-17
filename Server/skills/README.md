@@ -14,25 +14,38 @@ for `GET /api/skills.zip`; the response filename is `portfolioos.zip`. The
 generated archive includes all and only internal skills whose internal
 `.portfolioos.json` metadata says `"published": true`.
 
-The package supports two discovery modes without requiring two downloads:
+The archive is **one Agent Skill**, not a collection of them:
 
 ```text
 portfolioos/
-├── SKILL.md
+├── SKILL.md                          # the only SKILL.md in the archive
 ├── README.md
-├── .codex-plugin/plugin.json
-├── .claude-plugin/plugin.json
+├── agents/openai.yaml                # OpenAI UI metadata for the package
 └── skills/
-    ├── operar-portfolioos/
-    └── <every published specialized skill>/
+    ├── operar-portfolioos/GUIDE.md
+    └── <every published specialized skill>/GUIDE.md
 ```
 
 - The root `SKILL.md` is the upload-once wrapper. It handles broad natural
-  requests and delegates to the appropriate internal skill.
-- The two manifests expose the same `skills/` subtree to compatible plugin
-  runtimes.
-- Manifests provide runtime compatibility only. They do not mean or promise
-  publication in a ChatGPT, Claude, Codex, or other marketplace.
+  requests and delegates to the appropriate internal guide.
+- **An internal skill's `SKILL.md` becomes `GUIDE.md` inside the archive.** The
+  Claude and ChatGPT upload validators accept exactly one `SKILL.md` per archive
+  and reject anything else ("Zip must contain exactly one SKILL.md file").
+  `SkillRepository` asserts the count before returning the bytes.
+- Renaming only the entry file keeps every internal relative link valid: a guide
+  still resolves its own `references/*.md` from its own directory, so no skill
+  content changes when packaging changes.
+- A nested skill collection is exactly what breaks the upload, so the package
+  carries no plugin manifests, and none exist anywhere in this repository.
+  Plugin-style installation is not offered, and no marketplace publication in
+  ChatGPT, Claude, Codex, or elsewhere is promised.
+- `agents/openai.yaml` carries the ChatGPT interface strings. OpenAI resolves it
+  as `<directory holding SKILL.md>/agents/openai.yaml`, so package-level metadata
+  belongs beside the wrapper — a copy under `skills/<name>/` is never read. It is
+  optional and fails open: a misplaced or misspelled file degrades silently, so
+  the archive test asserts its path rather than trusting the runtime to complain.
+  Its `default_prompt` must not name the skill with `$portfolioos`; the page
+  promises users never have to.
 - To update, download and reinstall the complete archive. Never instruct a user
   to compare or update one internal skill at a time.
 
@@ -46,9 +59,13 @@ copy action.
 `operar-portfolioos` is the broad base capability. It covers safe navigation,
 entity resolution, read operations across the platform, and preview/confirm
 rules for writes. Specialized skills add focused workflows such as preparing an
-agenda or registering a Granola meeting. The Granola workflow automatically
-probes a connected Granola MCP first and requests a shared conversation link
-only when that source is unavailable or cannot access the meeting.
+agenda, registering a Granola meeting, or chasing the startups that have not
+reported a period. The Granola workflow automatically probes a connected Granola
+MCP first and requests a shared conversation link only when that source is
+unavailable or cannot access the meeting. `cobrar-indicadores` confirms the batch
+before generating any link — generating one is a write — and asks, in every run,
+whether to open each WhatsApp message for the user to send or to send the queue
+itself; it never remembers that answer.
 
 `auditoria-qualitativa` remains unpublished until PRD-002 open item 4
 (data-transit policy) is approved. Its `.portfolioos.json` keeps it visible in
@@ -71,7 +88,8 @@ Each internal directory contains two source contracts:
 
 - `SKILL.md` uses standard Agent Skills frontmatter with exactly `name` and
   `description`, plus the instructions and optional focused `references/`,
-  `scripts/`, or `assets/`;
+  `scripts/`, or `assets/`. Keep its links relative to its own directory —
+  packaging renames the file to `GUIDE.md` and moves nothing else;
 - `.portfolioos.json` is backend-only catalog metadata with `version`,
   `writes`, `reads_external`, and `published`. `blocked_reason` is required
   only when `published` is false.
@@ -79,8 +97,8 @@ Each internal directory contains two source contracts:
 The hidden sidecar is never distributed or returned in `files`; it exists only
 to preserve the public API without adding non-standard fields to `SKILL.md`.
 Backend lint validates both contracts and their safety anchors. Archive tests
-validate the single root, wrapper, manifests, recursive published membership,
-and exclusion of blocked skills and sidecars.
+validate the single root, the single `SKILL.md` entrypoint, the wrapper,
+recursive published membership, and exclusion of blocked skills and sidecars.
 
 Publish an internal skill by setting `"published": true` in
 `.portfolioos.json` only after its behavioral acceptance script and data-policy

@@ -10,6 +10,15 @@ o que ficou da última reunião, como os números se moveram desde então, e as
 perguntas que valem fazer. **Esta skill é somente leitura** — ela não cria,
 edita nem exclui nada na plataforma.
 
+## Conteúdo
+
+- Regras (inegociáveis)
+- Pré-requisito
+- Fluxo (identificar a startup, coletar os dados, montar o documento)
+- Formato do documento
+- Como navegar
+- Situações previstas
+
 ## Regras (inegociáveis)
 
 1. **Somente leitura.** Não clique em "Adicionar", "Editar", "Excluir",
@@ -40,17 +49,19 @@ Navegador com o usuário já autenticado no portfolioOS.
 1. **Identifique a startup.** Se o pedido não deixar claro, pergunte —
    nunca adivinhe.
 2. **Colete os dados**, nesta ordem:
-   1. Menu lateral → **Monitoramento** → clique na **linha da startup**.
+   1. Menu lateral → **Monitoramento** → abra a startup pelo **nome dela**,
+      que é um link na primeira coluna.
    2. Leia os **cartões do topo** (Receita Total, Total da Participação,
       Saldo em Caixa, EBITDA/Burn, Headcount) e o status da startup no
       cabeçalho — lembrando da regra 2: zero neles pode ser ausência.
    3. Aba **"Indicadores Mensais"**: leia a tabela (Período, Receita, Caixa,
       EBITDA/Burn, Headcount) — os 3–4 períodos mais recentes bastam. Para o
-      qualitativo, clique na linha do período mais recente e leia o registro
-      (Conquistas do mês, Desafios do mês); feche com **"Fechar"**.
-   4. Aba **"Reuniões de Conselho"**: clique na reunião mais recente e leia
-      Data, Participantes, Resumo, Pontos de atenção e Próximos passos;
-      feche com **"Fechar"**. Se não houver reunião registrada, siga sem o
+      qualitativo, abra o período mais recente com **Ver indicador de
+      {Mmm/AAAA}** e leia o registro (Conquistas do mês, Desafios do mês);
+      feche com **"Fechar"**.
+   4. Aba **"Reuniões de Conselho"**: abra a mais recente com **Ver reunião de
+      {dd/mm/aaaa}** e leia Data, Participantes, Resumo, Pontos de atenção e
+      Próximos passos; feche com **"Fechar"**. Se não houver reunião registrada, siga sem o
       recap e diga isso no documento.
 3. **Monte o documento de preparação** no formato abaixo.
 

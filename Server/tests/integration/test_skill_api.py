@@ -1,6 +1,6 @@
 import json
 from io import BytesIO
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from zipfile import ZipFile
 
 import pytest
@@ -10,45 +10,27 @@ from jose import jwt
 from app.config import settings
 
 
-def _write_plugin_sources(skills_dir: Path) -> None:
-    plugin_dir = skills_dir / "portfolioos"
-    codex_manifest = {
-        "name": "portfolioos",
-        "version": "1.0.0",
-        "description": "Test portfolioOS plugin",
-        "author": {"name": "portfolioOS"},
-        "skills": "./skills/",
-        "interface": {
-            "displayName": "portfolioOS",
-            "shortDescription": "Use portfolioOS with Agent Skills.",
-            "longDescription": "Agent Skills for portfolioOS workflows.",
-            "developerName": "portfolioOS",
-            "category": "Productivity",
-            "capabilities": ["Read", "Write"],
-            "defaultPrompt": "Help me use portfolioOS.",
-        },
-    }
-    claude_manifest = {
-        "name": "portfolioos",
-        "version": "1.0.0",
-        "description": "Test portfolioOS plugin",
-        "author": {"name": "portfolioOS"},
-    }
+def _write_package_sources(skills_dir: Path) -> None:
+    package_dir = skills_dir / "portfolioos"
     artifacts = {
-        ".codex-plugin/plugin.json": json.dumps(codex_manifest, indent=2) + "\n",
-        ".claude-plugin/plugin.json": json.dumps(claude_manifest, indent=2) + "\n",
         "README.md": "# Install\n\nUpload `portfolioos.zip` as one skill.\n",
+        "agents/openai.yaml": (
+            "interface:\n"
+            '  display_name: "portfolioOS"\n'
+            "policy:\n"
+            "  allow_implicit_invocation: true\n"
+        ),
         "PACK_SKILL.md": (
             "---\n"
             "name: portfolioos\n"
-            "description: Route portfolioOS tasks to bundled skills.\n"
+            "description: Route portfolioOS tasks to bundled guides.\n"
             "---\n\n"
-            "## Bundled skills\n\n"
+            "## Bundled workflows\n\n"
             "<!-- portfolioos:published-skills -->\n"
         ),
     }
     for relative_path, content in artifacts.items():
-        path = plugin_dir / relative_path
+        path = package_dir / relative_path
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8")
 
@@ -200,7 +182,7 @@ async def test_pack_download_contains_all_and_only_published_skills(
     tmp_path: Path,
 ):
     skills_dir = tmp_path / "skills"
-    _write_plugin_sources(skills_dir)
+    _write_package_sources(skills_dir)
     _write_skill(skills_dir, "operar-portfolioos")
     alpha_dir = _write_skill(skills_dir, "alpha-skill")
     beta_dir = _write_skill(skills_dir, "beta-skill")
@@ -232,15 +214,14 @@ async def test_pack_download_contains_all_and_only_published_skills(
     )
     with ZipFile(BytesIO(response.content)) as archive:
         assert set(archive.namelist()) == {
-            "portfolioos/.claude-plugin/plugin.json",
-            "portfolioos/.codex-plugin/plugin.json",
             "portfolioos/README.md",
             "portfolioos/SKILL.md",
-            "portfolioos/skills/alpha-skill/SKILL.md",
+            "portfolioos/agents/openai.yaml",
+            "portfolioos/skills/alpha-skill/GUIDE.md",
             "portfolioos/skills/alpha-skill/references/guide.md",
-            "portfolioos/skills/beta-skill/SKILL.md",
+            "portfolioos/skills/beta-skill/GUIDE.md",
             "portfolioos/skills/beta-skill/run.py",
-            "portfolioos/skills/operar-portfolioos/SKILL.md",
+            "portfolioos/skills/operar-portfolioos/GUIDE.md",
         }
         assert (
             archive.read("portfolioos/skills/alpha-skill/references/guide.md")
@@ -252,14 +233,15 @@ async def test_pack_download_contains_all_and_only_published_skills(
         )
         root_skill = archive.read("portfolioos/SKILL.md").decode()
         assert "<!-- portfolioos:published-skills -->" not in root_skill
-        assert "skills/operar-portfolioos/SKILL.md" in root_skill
-        assert "skills/alpha-skill/SKILL.md" in root_skill
-        assert "skills/beta-skill/SKILL.md" in root_skill
+        assert "skills/operar-portfolioos/GUIDE.md" in root_skill
+        assert "skills/alpha-skill/GUIDE.md" in root_skill
+        assert "skills/beta-skill/GUIDE.md" in root_skill
         assert "blocked-skill" not in root_skill
-        assert (
-            json.loads(archive.read("portfolioos/.codex-plugin/plugin.json"))["skills"]
-            == "./skills/"
-        )
+        assert [
+            name
+            for name in archive.namelist()
+            if PurePosixPath(name).name == "SKILL.md"
+        ] == ["portfolioos/SKILL.md"]
 
 
 @pytest.mark.asyncio

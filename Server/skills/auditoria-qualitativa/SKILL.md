@@ -14,6 +14,17 @@ relatório de auditoria em que **todo achado cita a origem**.
 
 **Somente leitura.** Não cria, edita nem exclui nada.
 
+## Conteúdo
+
+- Regras (inegociáveis)
+- Escopo da varredura
+- Coleta — por startup
+- O que procurar no texto
+- Os cruzamentos — onde mora o valor
+- Formato do relatório
+- Como navegar
+- Situações previstas
+
 ## Regras (inegociáveis)
 
 1. **Somente leitura** — os únicos cliques permitidos são navegação, abrir
@@ -57,13 +68,15 @@ avise e mostre progresso por startup.
    Linha vazia ali significa "não reportou naquele mês", não "não tem dado".
    A série de vários meses vem da aba **Indicadores Mensais** de cada startup;
    registre no relatório qual período a tabela mostrava.
-2. Clique na **linha da startup** → anote os cartões do topo.
-3. Aba **"Indicadores Mensais"**: para cada período da janela, clique na
-   linha e leia a vista — Quantitativos e, principalmente, **Conquistas do
-   mês, Desafios do mês e Comentários** (a anotação do fundo). Feche com
-   **"Fechar"**.
-4. Aba **"Reuniões de Conselho"**: para cada reunião da janela, abra e leia
-   **Resumo, Pontos de atenção e Próximos passos**. Feche com **"Fechar"**.
+2. Abra a startup pelo **nome dela**, que é um link na primeira coluna → anote
+   os cartões do topo.
+3. Aba **"Indicadores Mensais"**: para cada período da janela, abra com
+   **Ver indicador de {Mmm/AAAA}** e leia a vista — Quantitativos e,
+   principalmente, **Conquistas do mês, Desafios do mês e Comentários** (a
+   anotação do fundo). Feche com **"Fechar"**.
+4. Aba **"Reuniões de Conselho"**: para cada reunião da janela, abra com
+   **Ver reunião de {dd/mm/aaaa}** e leia **Resumo, Pontos de atenção e
+   Próximos passos**. Feche com **"Fechar"**.
 
 ## O que procurar no texto
 

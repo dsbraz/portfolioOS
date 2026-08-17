@@ -1,8 +1,8 @@
 # portfolioOS Agent Skills
 
-Upload this archive as one custom skill in Claude or ChatGPT. The root skill
-routes natural-language requests to the published workflows bundled in its
-`skills/` folder.
+Upload this archive as one custom skill in Claude or ChatGPT. The archive holds
+a single `SKILL.md` at the root of the `portfolioos/` folder; it routes
+natural-language requests to the workflow guides bundled under `skills/`.
 
 ## Claude
 
@@ -15,10 +15,6 @@ the package.
 
 Availability depends on the user's plan and the workspace policies configured by
 an administrator.
-
-The archive also carries `.codex-plugin` and `.claude-plugin` manifests for
-runtimes that install the same folder as a plugin. Those runtimes discover each
-workflow directly under `skills/`.
 
 ## Updates and safety
 

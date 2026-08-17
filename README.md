@@ -201,11 +201,11 @@ The `/ia` page exposes one Stripe-like install-once artifact. Its single CTA
 requests `/api/skills.zip` through the authenticated frontend service and saves
 `portfolioos.zip`. The same file installs in ChatGPT and Claude.
 
-The archive contains a broad `operar-portfolioos` base skill plus every
-published specialized skill. Its root `SKILL.md` supports single-upload
-runtimes; `.codex-plugin/plugin.json` and `.claude-plugin/plugin.json` support
-compatible plugin runtimes. These manifests do not imply marketplace
-publication.
+The archive is a single Agent Skill. Its one `SKILL.md`, at the root of the
+`portfolioos/` folder, routes requests to the workflow guides bundled under
+`skills/<name>/GUIDE.md`: the broad `operar-portfolioos` base guide plus every
+published specialized guide. Upload validators accept exactly one `SKILL.md`
+per archive, so internal workflows are never packaged as nested skills.
 
 For Granola meeting requests, the package probes an available Granola MCP
 connection first. If it cannot use that source, it asks for the shared

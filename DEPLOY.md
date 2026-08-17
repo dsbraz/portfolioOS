@@ -224,9 +224,15 @@ curl --fail --header "Authorization: Bearer $PORTFOLIOOS_ACCESS_TOKEN" \
     "$BACKEND_URL/api/skills.zip"
 ```
 
-The archive must have one `portfolioos/` root containing `SKILL.md`,
-`README.md`, `.codex-plugin/plugin.json`, `.claude-plugin/plugin.json`, and
-`skills/operar-portfolioos/` plus every published specialized skill.
+The archive must have one `portfolioos/` root containing exactly one `SKILL.md`,
+plus `README.md`, `agents/openai.yaml`, `skills/operar-portfolioos/GUIDE.md` and
+every published specialized guide. More than one `SKILL.md` fails the upload validation in
+Claude and ChatGPT, so verify the count after any packaging change:
+
+```bash
+unzip -Z1 /tmp/portfolioos.zip | grep -c '/SKILL\.md$'   # must print 1
+```
+
 `skills/auditoria-qualitativa/` must remain absent while its catalog record is
 `published: false` (sourced from its hidden `.portfolioos.json`, which must also
 remain absent from the archive).

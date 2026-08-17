@@ -3,11 +3,12 @@ from datetime import date
 from pathlib import Path
 
 import pytest
+import yaml
 
 from app.repositories.skill_repository import SkillRepository
 
 SKILLS_DIR = Path(__file__).resolve().parent.parent.parent / "skills"
-PLUGIN_SOURCE_DIR = SKILLS_DIR / "portfolioos"
+PACKAGE_SOURCE_DIR = SKILLS_DIR / "portfolioos"
 RULES_HEADINGS = ("## Regras (inegociáveis)", "## Non-negotiable rules")
 
 
@@ -123,6 +124,9 @@ def test_skills_compose_without_exposing_internal_routing_to_users():
     )
     assert "retorne o pedido ao roteador interno do pacote" in audit
 
+    chase = (SKILLS_DIR / "cobrar-indicadores" / "SKILL.md").read_text(encoding="utf-8")
+    assert "retorne essa parte ao roteador interno do pacote" in chase
+
     openai_metadata = (
         SKILLS_DIR / "operar-portfolioos" / "agents" / "openai.yaml"
     ).read_text(encoding="utf-8")
@@ -170,30 +174,85 @@ def test_granola_skill_detects_mcp_before_requesting_a_conversation_link():
     assert "conversation, link or notes from Granola" in base
 
 
-def test_plugin_source_artifacts_are_installable_without_duplicating_skills():
-    codex_manifest = json.loads(
-        (PLUGIN_SOURCE_DIR / ".codex-plugin" / "plugin.json").read_text(
-            encoding="utf-8"
-        )
-    )
-    claude_manifest = json.loads(
-        (PLUGIN_SOURCE_DIR / ".claude-plugin" / "plugin.json").read_text(
-            encoding="utf-8"
-        )
-    )
+def test_chase_skill_never_assumes_the_send_mode_or_the_recipient():
+    chase = (SKILLS_DIR / "cobrar-indicadores" / "SKILL.md").read_text(encoding="utf-8")
+    normalized = " ".join(chase.casefold().split())
 
-    assert codex_manifest["name"] == "portfolioos"
-    assert codex_manifest["version"] == "1.0.0"
-    assert codex_manifest["skills"] == "./skills/"
-    assert "mcpServers" not in codex_manifest
-    assert "apps" not in codex_manifest
-    assert claude_manifest["name"] == "portfolioos"
-    assert claude_manifest["version"] == "1.0.0"
-    assert claude_manifest["skills"] == "./skills/"
-    assert (PLUGIN_SOURCE_DIR / "README.md").is_file()
-    assert (PLUGIN_SOURCE_DIR / "PACK_SKILL.md").is_file()
-    assert not (PLUGIN_SOURCE_DIR / "SKILL.md").exists()
-    assert not (PLUGIN_SOURCE_DIR / "skills").exists()
+    # Generating a link is a platform write, so the batch is confirmed first and
+    # the send mode is a separate, per-run human choice.
+    assert "gerar link **é escrita**" in normalized
+    assert "pode gerar" in normalized
+    assert "pergunte, sempre, e **nunca assuma**" in normalized
+    assert "a escolha vale só para esta execução" in normalized
+    assert "nunca a memorize" in normalized
+    assert "um a um (padrão)" in normalized
+
+    # The recipient comes from the registry, never from the conversation.
+    assert "não aceite, não peça e não digite número avulso" in normalized
+    assert "nunca entra no envio" in normalized
+
+    # The reporting state is inversely encoded on screen; reading it backwards
+    # would chase exactly the startups that did report.
+    assert "startup sem nota é startup que reportou" in normalized
+    assert "nunca deduza pelas colunas numéricas" in normalized
+    assert "report mensal" in normalized
+
+    # Every control the skill navigates by must exist verbatim in the UI.
+    for label in (
+        "Mês anterior",
+        "Gerar link",
+        "Gerar link de indicador",
+        "Link de indicador",
+        "Link do formulário",
+        "Links anteriores",
+        "Enviar para {nome} no WhatsApp",
+        "Sem telefone válido",
+        "Executivos",
+    ):
+        assert label in chase, label
+
+
+def test_package_source_artifacts_are_uploadable_without_duplicating_skills():
+    assert (PACKAGE_SOURCE_DIR / "README.md").is_file()
+    assert (PACKAGE_SOURCE_DIR / "PACK_SKILL.md").is_file()
+    assert not (PACKAGE_SOURCE_DIR / "SKILL.md").exists()
+    assert not (PACKAGE_SOURCE_DIR / "skills").exists()
+
+    # An upload validator rejects an archive with more than one SKILL.md, so the
+    # package must never regain a nested skill collection or its plugin manifests.
+    assert not (PACKAGE_SOURCE_DIR / ".codex-plugin").exists()
+    assert not (PACKAGE_SOURCE_DIR / ".claude-plugin").exists()
+
+    # OpenAI reads it as <dir holding SKILL.md>/agents/openai.yaml. The package is
+    # one skill rooted at portfolioos/, so package-level UI metadata lives here.
+    interface = yaml.safe_load(
+        (PACKAGE_SOURCE_DIR / "agents" / "openai.yaml").read_text(encoding="utf-8")
+    )
+    assert interface["interface"]["display_name"] == "portfolioOS"
+    assert 25 <= len(interface["interface"]["short_description"]) <= 64
+    assert interface["policy"]["allow_implicit_invocation"] is True
+    assert set(interface) <= {"interface", "policy", "dependencies"}
+    assert set(interface["interface"]) <= {
+        "display_name",
+        "short_description",
+        "icon_small",
+        "icon_large",
+        "brand_color",
+        "default_prompt",
+    }
+    # The page promises users never name a skill, so no `$portfolioos` trigger.
+    assert "$" not in interface["interface"]["default_prompt"]
+
+    wrapper = (PACKAGE_SOURCE_DIR / "PACK_SKILL.md").read_text(encoding="utf-8")
+    frontmatter = wrapper.split("---", maxsplit=2)[1]
+    fields = {
+        line.split(":", maxsplit=1)[0].strip()
+        for line in frontmatter.splitlines()
+        if line.strip()
+    }
+    assert fields == {"name", "description"}
+    assert "name: portfolioos" in frontmatter
+    assert wrapper.count("<!-- portfolioos:published-skills -->") == 1
 
 
 def test_unpublished_skill_without_blocked_reason_is_invalid(tmp_path: Path):

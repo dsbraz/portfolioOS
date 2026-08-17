@@ -6,7 +6,8 @@ board meetings, executives, and monthly-report links.
 ## Monitor the portfolio
 
 Open `Monitoramento`. Use `Mês anterior` and `Próximo mês` to select a period;
-the interface does not advance beyond the current month. Read:
+the interface does not advance beyond the current month. Each row opens through
+the startup name, which is a link. Read:
 
 - portfolio totals for revenue, estimated participation, monthly reporting, and
   board routines;
@@ -37,7 +38,8 @@ same company name.
 ## Manage monthly indicators
 
 Open the `Indicadores Mensais` tab. The table shows period, revenue, cash,
-EBITDA/burn, and headcount. Open a row to read all fields:
+EBITDA/burn, and headcount. Open a period with `Ver indicador de {Mmm/AAAA}` to
+read all fields:
 
 - month and year;
 - monthly revenue and recurring-revenue percentage;
@@ -54,8 +56,9 @@ informado`.
 
 ## Manage board meetings
 
-Open `Reuniões de Conselho`. A row shows date and summary. Open it to read `Data`,
-`Participantes`, `Resumo`, `Pontos de Atenção`, and `Próximos passos`.
+Open `Reuniões de Conselho`. A row shows date and summary. Open it with
+`Ver reunião de {dd/mm/aaaa}` to read `Data`, `Participantes`, `Resumo`,
+`Pontos de Atenção`, and `Próximos passos`.
 
 Use `Adicionar reunião`, or `Ações da reunião de {date}` → `Editar` or `Excluir`.
 Date is required; other fields are optional. Duplicate dates are allowed, so use
@@ -64,16 +67,24 @@ or recording field.
 
 ## Manage executives
 
-Open `Executivos`. The table shows name, role, and email. Open a row to also read
-phone and LinkedIn. Use `Adicionar executivo`, or `Ações de {name}` → `Editar` or
+Open `Executivos`. The table shows name, role, email, and phone. Open a person
+with `Ver executivo {name}` to also read LinkedIn. Use `Adicionar executivo`, or `Ações de {name}` → `Editar` or
 `Excluir`. Only name is required. Names and emails are not unique; resolve the
 person within the startup and compare role, email, or phone.
 
 ## Manage monthly-report links
 
 On a startup page, `Gerar link` opens `Gerar link de indicador` for a month and
-year. `Mais ações` → `Links anteriores` lists existing periods and can copy a
-link. A startup and period have one token; generating it again returns that token.
+year; confirming with `Gerar` opens the panel `Link de indicador — {Mmm/AAAA}`.
+The panel shows the link as text under `Link do formulário`, a `Copiar link de
+{Mmm/AAAA}` control, and one `Enviar para {name} no WhatsApp` link per executive
+with a valid registered phone. An executive whose phone does not resolve appears
+as `Sem telefone válido` and gets no send control.
 
-Preview the startup and period before `Gerar e copiar`. Never expose the token in
-chat. The interface cannot expire, revoke, or delete a reporting link.
+`Mais ações` → `Links anteriores` lists existing periods; `Abrir link de
+{Mmm/AAAA}` opens the same panel. A startup and period have one token; generating
+it again returns that token.
+
+Preview the startup and period before `Gerar`. The interface cannot expire,
+revoke, or delete a reporting link, and the recipient always comes from the
+registered executive phone — there is no free-form number entry.

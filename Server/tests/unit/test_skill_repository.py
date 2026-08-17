@@ -1,6 +1,6 @@
 import json
 from io import BytesIO
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from zipfile import ZipFile
 
 import pytest
@@ -8,48 +8,30 @@ import pytest
 from app.repositories.skill_repository import SkillRepository
 
 
-def _write_plugin_sources(skills_dir: Path) -> Path:
-    plugin_dir = skills_dir / "portfolioos"
-    codex_manifest = {
-        "name": "portfolioos",
-        "version": "1.0.0",
-        "description": "Test portfolioOS plugin",
-        "author": {"name": "portfolioOS"},
-        "skills": "./skills/",
-        "interface": {
-            "displayName": "portfolioOS",
-            "shortDescription": "Use portfolioOS with Agent Skills.",
-            "longDescription": "Agent Skills for portfolioOS workflows.",
-            "developerName": "portfolioOS",
-            "category": "Productivity",
-            "capabilities": ["Read", "Write"],
-            "defaultPrompt": "Help me use portfolioOS.",
-        },
-    }
-    claude_manifest = {
-        "name": "portfolioos",
-        "version": "1.0.0",
-        "description": "Test portfolioOS plugin",
-        "author": {"name": "portfolioOS"},
-    }
+def _write_package_sources(skills_dir: Path) -> Path:
+    package_dir = skills_dir / "portfolioos"
     artifacts = {
-        ".codex-plugin/plugin.json": json.dumps(codex_manifest, indent=2) + "\n",
-        ".claude-plugin/plugin.json": json.dumps(claude_manifest, indent=2) + "\n",
         "README.md": "# Install\n\nUpload `portfolioos.zip` as one skill.\n",
+        "agents/openai.yaml": (
+            "interface:\n"
+            '  display_name: "portfolioOS"\n'
+            "policy:\n"
+            "  allow_implicit_invocation: true\n"
+        ),
         "PACK_SKILL.md": (
             "---\n"
             "name: portfolioos\n"
-            "description: Route portfolioOS tasks to bundled skills.\n"
+            "description: Route portfolioOS tasks to bundled guides.\n"
             "---\n\n"
-            "## Bundled skills\n\n"
+            "## Bundled workflows\n\n"
             "<!-- portfolioos:published-skills -->\n"
         ),
     }
     for relative_path, content in artifacts.items():
-        path = plugin_dir / relative_path
+        path = package_dir / relative_path
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8")
-    return plugin_dir
+    return package_dir
 
 
 def _write_skill(
@@ -122,7 +104,7 @@ def test_list_ignores_files_and_directories_without_skill_markdown(
 ):
     (skills_dir / "README.md").write_text("Not a skill", encoding="utf-8")
     (skills_dir / "incomplete").mkdir()
-    _write_plugin_sources(skills_dir)
+    _write_package_sources(skills_dir)
 
     items, total = repository.get_all()
 
@@ -210,7 +192,7 @@ def test_package_is_recursive_prefixed_and_excludes_ignored_paths(
 
 def test_pack_contains_only_published_skills_under_common_root(tmp_path: Path):
     skills_dir = tmp_path / "skills"
-    plugin_dir = _write_plugin_sources(skills_dir)
+    package_dir = _write_package_sources(skills_dir)
     _write_skill(skills_dir, "operar-portfolioos")
     alpha_dir = _write_skill(skills_dir, "alpha-skill")
     beta_dir = _write_skill(skills_dir, "beta-skill")
@@ -231,22 +213,21 @@ def test_pack_contains_only_published_skills_under_common_root(tmp_path: Path):
     cache_dir.mkdir(parents=True)
     (cache_dir / "compiled.pyc").write_bytes(b"compiled")
     (alpha_dir / "guide-link.md").symlink_to(guide_file)
-    (plugin_dir / ".internal").write_text("Internal", encoding="utf-8")
-    (plugin_dir / "readme-link.md").symlink_to(plugin_dir / "README.md")
+    (package_dir / ".internal").write_text("Internal", encoding="utf-8")
+    (package_dir / "readme-link.md").symlink_to(package_dir / "README.md")
 
     package = SkillRepository(skills_dir).get_pack()
 
     with ZipFile(BytesIO(package)) as archive:
         assert set(archive.namelist()) == {
-            "portfolioos/.claude-plugin/plugin.json",
-            "portfolioos/.codex-plugin/plugin.json",
             "portfolioos/README.md",
             "portfolioos/SKILL.md",
-            "portfolioos/skills/alpha-skill/SKILL.md",
+            "portfolioos/agents/openai.yaml",
+            "portfolioos/skills/alpha-skill/GUIDE.md",
             "portfolioos/skills/alpha-skill/references/guide.md",
-            "portfolioos/skills/beta-skill/SKILL.md",
+            "portfolioos/skills/beta-skill/GUIDE.md",
             "portfolioos/skills/beta-skill/run.py",
-            "portfolioos/skills/operar-portfolioos/SKILL.md",
+            "portfolioos/skills/operar-portfolioos/GUIDE.md",
         }
         assert (
             archive.read("portfolioos/skills/alpha-skill/references/guide.md")
@@ -254,33 +235,99 @@ def test_pack_contains_only_published_skills_under_common_root(tmp_path: Path):
         )
         assert archive.read("portfolioos/skills/beta-skill/run.py") == b"print('beta')"
 
-        codex_manifest = json.loads(
-            archive.read("portfolioos/.codex-plugin/plugin.json")
-        )
-        claude_manifest = json.loads(
-            archive.read("portfolioos/.claude-plugin/plugin.json")
-        )
-        assert codex_manifest["name"] == "portfolioos"
-        assert codex_manifest["version"] == "1.0.0"
-        assert codex_manifest["skills"] == "./skills/"
-        assert "mcpServers" not in codex_manifest
-        assert "apps" not in codex_manifest
-        assert claude_manifest["name"] == "portfolioos"
-        assert claude_manifest["version"] == "1.0.0"
         root_skill = archive.read("portfolioos/SKILL.md").decode()
         assert "<!-- portfolioos:published-skills -->" not in root_skill
         assert (
-            "[`operar-portfolioos`](skills/operar-portfolioos/SKILL.md): Test skill"
+            "[`operar-portfolioos`](skills/operar-portfolioos/GUIDE.md): Test skill"
             in root_skill
         )
-        assert "[`alpha-skill`](skills/alpha-skill/SKILL.md): Test skill" in root_skill
-        assert "[`beta-skill`](skills/beta-skill/SKILL.md): Test skill" in root_skill
+        assert "[`alpha-skill`](skills/alpha-skill/GUIDE.md): Test skill" in root_skill
+        assert "[`beta-skill`](skills/beta-skill/GUIDE.md): Test skill" in root_skill
         assert "blocked-skill" not in root_skill
+
+
+def test_pack_exposes_a_single_uploadable_skill_entrypoint(tmp_path: Path):
+    skills_dir = tmp_path / "skills"
+    _write_package_sources(skills_dir)
+    _write_skill(skills_dir, "operar-portfolioos")
+    _write_skill(skills_dir, "alpha-skill")
+
+    package = SkillRepository(skills_dir).get_pack()
+
+    with ZipFile(BytesIO(package)) as archive:
+        entrypoints = [
+            name
+            for name in archive.namelist()
+            if PurePosixPath(name).name == "SKILL.md"
+        ]
+
+    assert entrypoints == ["portfolioos/SKILL.md"]
+
+
+def test_pack_ships_openai_interface_metadata_beside_the_skill_entrypoint(
+    tmp_path: Path,
+):
+    skills_dir = tmp_path / "skills"
+    _write_package_sources(skills_dir)
+    _write_skill(skills_dir, "operar-portfolioos")
+
+    package = SkillRepository(skills_dir).get_pack()
+
+    with ZipFile(BytesIO(package)) as archive:
+        metadata = archive.read("portfolioos/agents/openai.yaml").decode()
+
+    # OpenAI resolves it as <dir holding SKILL.md>/agents/openai.yaml, so a copy
+    # under skills/<name>/ is never read.
+    assert 'display_name: "portfolioOS"' in metadata
+
+
+def test_pack_entries_extract_with_a_readable_file_mode(tmp_path: Path):
+    skills_dir = tmp_path / "skills"
+    _write_package_sources(skills_dir)
+    _write_skill(skills_dir, "operar-portfolioos")
+
+    package = SkillRepository(skills_dir).get_pack()
+
+    with ZipFile(BytesIO(package)) as archive:
+        modes = {
+            entry.filename: entry.external_attr >> 16 for entry in archive.infolist()
+        }
+
+    assert modes["portfolioos/SKILL.md"] == 0o100644
+    assert all(mode & 0o444 for mode in modes.values()), modes
+
+
+def test_pack_rejects_a_wrapper_link_to_the_source_skill_filename(tmp_path: Path):
+    skills_dir = tmp_path / "skills"
+    package_dir = _write_package_sources(skills_dir)
+    _write_skill(skills_dir, "operar-portfolioos")
+    template_path = package_dir / "PACK_SKILL.md"
+    template_path.write_text(
+        template_path.read_text(encoding="utf-8")
+        + "\nRead `skills/operar-portfolioos/SKILL.md`.\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="must link internal workflows as GUIDE.md"):
+        SkillRepository(skills_dir).get_pack()
+
+
+def test_pack_rejects_a_second_skill_entrypoint_in_support_files(tmp_path: Path):
+    skills_dir = tmp_path / "skills"
+    _write_package_sources(skills_dir)
+    _write_skill(skills_dir, "operar-portfolioos")
+    alpha_dir = _write_skill(skills_dir, "alpha-skill")
+    nested = alpha_dir / "references"
+    nested.mkdir()
+    (nested / "SKILL.md").write_text("Nested entrypoint", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="exactly one SKILL.md"):
+        SkillRepository(skills_dir).get_pack()
 
 
 def test_pack_requires_published_base_skill(tmp_path: Path):
     skills_dir = tmp_path / "skills"
-    _write_plugin_sources(skills_dir)
+    _write_package_sources(skills_dir)
     _write_skill(skills_dir, "specialized-skill")
 
     with pytest.raises(ValueError, match="Required base skill is missing"):
@@ -299,20 +346,20 @@ def test_pack_requires_published_base_skill(tmp_path: Path):
 
 def test_pack_requires_skill_index_marker(tmp_path: Path):
     skills_dir = tmp_path / "skills"
-    plugin_dir = _write_plugin_sources(skills_dir)
+    package_dir = _write_package_sources(skills_dir)
     _write_skill(skills_dir, "operar-portfolioos")
-    (plugin_dir / "PACK_SKILL.md").write_text(
+    (package_dir / "PACK_SKILL.md").write_text(
         "---\nname: portfolioos\ndescription: Test pack.\n---\n",
         encoding="utf-8",
     )
 
-    with pytest.raises(ValueError, match="Plugin skill index marker is missing"):
+    with pytest.raises(ValueError, match="Package skill index marker is missing"):
         SkillRepository(skills_dir).get_pack()
 
 
 def test_pack_rejects_template_reference_to_unpublished_skill(tmp_path: Path):
     skills_dir = tmp_path / "skills"
-    plugin_dir = _write_plugin_sources(skills_dir)
+    package_dir = _write_package_sources(skills_dir)
     _write_skill(skills_dir, "operar-portfolioos")
     _write_skill(
         skills_dir,
@@ -320,10 +367,10 @@ def test_pack_rejects_template_reference_to_unpublished_skill(tmp_path: Path):
         published=False,
         blocked_reason="Awaiting approval.",
     )
-    template_path = plugin_dir / "PACK_SKILL.md"
+    template_path = package_dir / "PACK_SKILL.md"
     template_path.write_text(
         template_path.read_text(encoding="utf-8")
-        + "\nRead `skills/blocked-skill/SKILL.md`.\n",
+        + "\nRead `skills/blocked-skill/GUIDE.md`.\n",
         encoding="utf-8",
     )
 
@@ -334,24 +381,24 @@ def test_pack_rejects_template_reference_to_unpublished_skill(tmp_path: Path):
         SkillRepository(skills_dir).get_pack()
 
 
-def test_pack_requires_installable_plugin_artifacts(tmp_path: Path):
+def test_pack_requires_installable_package_artifacts(tmp_path: Path):
     skills_dir = tmp_path / "skills"
     _write_skill(skills_dir, "operar-portfolioos")
 
-    with pytest.raises(ValueError, match="Plugin artifact is missing"):
+    with pytest.raises(ValueError, match="Package artifact is missing"):
         SkillRepository(skills_dir).get_pack()
 
 
-def test_pack_rejects_symlinked_plugin_source_directory(tmp_path: Path):
+def test_pack_rejects_symlinked_package_source_directory(tmp_path: Path):
     skills_dir = tmp_path / "skills"
     skills_dir.mkdir()
     _write_skill(skills_dir, "operar-portfolioos")
     external_skills_dir = tmp_path / "external-skills"
     external_skills_dir.mkdir()
-    plugin_dir = _write_plugin_sources(external_skills_dir)
-    (skills_dir / "portfolioos").symlink_to(plugin_dir, target_is_directory=True)
+    package_dir = _write_package_sources(external_skills_dir)
+    (skills_dir / "portfolioos").symlink_to(package_dir, target_is_directory=True)
 
-    with pytest.raises(ValueError, match="Plugin directory must not be a symlink"):
+    with pytest.raises(ValueError, match="Package directory must not be a symlink"):
         SkillRepository(skills_dir).get_pack()
 
 
