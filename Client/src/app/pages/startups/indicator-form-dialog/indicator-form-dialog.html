@@ -38,7 +38,7 @@
       <div class="field">
         <label class="field-label" id="l-9312-total_revenue" for="f-9312-total_revenue">Receita do mês</label>
         <mat-form-field appearance="outline">
-  <input id="f-9312-total_revenue" matInput type="number" (wheel)="$event.target.blur()" formControlName="total_revenue" />
+  <input id="f-9312-total_revenue" matInput type="text" inputmode="decimal" appCurrencyInput formControlName="total_revenue" />
           @if (form.get('total_revenue')?.hasError('min') || form.get('total_revenue')?.hasError('max')) {
             <mat-error>Valor fora do limite permitido.</mat-error>
           }
@@ -73,7 +73,7 @@
       <div class="field">
         <label class="field-label" id="l-9312-cash_balance" for="f-9312-cash_balance">Saldo em caixa</label>
         <mat-form-field appearance="outline">
-  <input id="f-9312-cash_balance" matInput type="number" (wheel)="$event.target.blur()" formControlName="cash_balance" />
+  <input id="f-9312-cash_balance" matInput type="text" inputmode="decimal" appCurrencyInput formControlName="cash_balance" />
           @if (form.get('cash_balance')?.hasError('min') || form.get('cash_balance')?.hasError('max')) {
             <mat-error>Valor fora do limite permitido.</mat-error>
           }
@@ -96,7 +96,7 @@
       <div class="field">
         <label class="field-label" id="l-9312-ebitda_burn" for="f-9312-ebitda_burn">Burn / EBITDA</label>
         <mat-form-field appearance="outline">
-  <input id="f-9312-ebitda_burn" matInput type="number" (wheel)="$event.target.blur()" formControlName="ebitda_burn" />
+  <input id="f-9312-ebitda_burn" matInput type="text" inputmode="decimal" appCurrencyInput formControlName="ebitda_burn" />
           @if (form.get('ebitda_burn')?.hasError('min') || form.get('ebitda_burn')?.hasError('max')) {
             <mat-error>Valor fora do limite permitido.</mat-error>
           }

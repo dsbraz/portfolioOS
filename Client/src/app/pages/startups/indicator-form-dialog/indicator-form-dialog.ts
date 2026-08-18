@@ -18,6 +18,7 @@ import {
   formatPercent,
 } from '../../../models/formatters';
 import { ReadSection, ReadView } from '../../../components/read-view/read-view';
+import { CurrencyInput } from '../../../directives/currency-input';
 
 export interface IndicatorFormDialogData {
   indicator?: MonthlyIndicator;
@@ -37,6 +38,7 @@ import { DialogHeader } from '../../../components/dialog-header/dialog-header';
     MatInputModule,
     MatSelectModule,
     MatButtonModule,
+    CurrencyInput,
   ],
   templateUrl: './indicator-form-dialog.html',
   styleUrl: './indicator-form-dialog.scss',

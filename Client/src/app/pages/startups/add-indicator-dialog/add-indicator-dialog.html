@@ -69,8 +69,9 @@
                 <input
                   id="add-total_revenue"
                   matInput
-                  type="number"
-                  (wheel)="$event.target.blur()"
+                  type="text"
+                  inputmode="decimal"
+                  appCurrencyInput
                   formControlName="total_revenue"
                 />
                 <span matTextPrefix class="field-affix">R$&nbsp;</span>
@@ -122,8 +123,9 @@
                 <input
                   id="add-cash_balance"
                   matInput
-                  type="number"
-                  (wheel)="$event.target.blur()"
+                  type="text"
+                  inputmode="decimal"
+                  appCurrencyInput
                   formControlName="cash_balance"
                 />
                 <span matTextPrefix class="field-affix">R$&nbsp;</span>
@@ -156,8 +158,9 @@
                 <input
                   id="add-ebitda_burn"
                   matInput
-                  type="number"
-                  (wheel)="$event.target.blur()"
+                  type="text"
+                  inputmode="decimal"
+                  appCurrencyInput
                   formControlName="ebitda_burn"
                 />
                 <span matTextPrefix class="field-affix">R$&nbsp;</span>

@@ -9,6 +9,7 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { DialogHeader } from '../../../components/dialog-header/dialog-header';
+import { CurrencyInput } from '../../../directives/currency-input';
 import { Executive } from '../../../models/executive.model';
 import { buildReportedIndicatorForm, futurePeriodValidator } from '../../../models/indicator-form';
 import {
@@ -49,6 +50,7 @@ type Mode = 'fill' | 'link';
     MatRadioModule,
     MatSnackBarModule,
     DialogHeader,
+    CurrencyInput,
     TokenPanel,
   ],
   templateUrl: './add-indicator-dialog.html',
