@@ -5,7 +5,7 @@
 - **Autor(es):** Matheus Donangelo
 - **Audiência:** Daniel Braz e Mauricio Bueno
 - **Revisores:** Daniel Braz
-- **Última atualização:** 2026-08-06
+- **Última atualização:** 2026-08-18
 - **Fonte funcional:** [PRD-001 — Adição unificada de indicador](../prd/001-adicao-unificada-de-indicador.md)
 
 > O PRD-001 é normativo para comportamento de produto. Esta RFC é normativa
@@ -94,7 +94,7 @@ contrato testado.
 | Produto/UI | Nome de domínio | Definição normativa |
 |---|---|---|
 | indicador mensal | `MonthlyIndicator` | registro único por (startup, mês, ano) |
-| link de indicador | `MonthlyIndicatorToken` | segredo portador que autoriza escrita pública na zona reportada de um período |
+| link de indicador | `MonthlyIndicatorToken` | capacidade de escrita pública na zona reportada de um único período; não é credencial — é entregue só ao contato cadastrado (decisão de 14/08/2026) |
 | zona reportada | reported fields | os 8 campos que a investida pode enviar: receita, % recorrente, margem, caixa, headcount, burn, conquistas, desafios |
 | anotação do fundo | `comments` | texto exclusivo do administrador; nunca transita pelo fluxo público |
 | entrada única | `AddIndicatorDialog` | diálogo com período, contexto e modo (preencher agora · gerar link) |
@@ -111,11 +111,13 @@ models/indicator-form.ts        ← NOVO: única fonte do contrato no cliente
   buildReportedIndicatorForm()  (FormGroup da zona reportada, validadores idênticos)
   futurePeriodValidator         (movido do diálogo; passa a ser compartilhado)
 
-models/whatsapp-share.ts        ← NOVO: funções puras, testáveis sem Angular
-  normalizePhoneBR()            (dígitos; 10–11 → prefixa 55; inválido → null)
-  buildWhatsAppShareUrl()       (wa.me/<dígitos>?text=<mensagem codificada>)
-  buildIndicatorInviteMessage() (modelo padrão do fundo: primeiro nome,
+models/whatsapp.ts              ← NOVO: funções puras, testáveis sem Angular
+  normalizeBrazilianPhone()     (dígitos; 10–11 → prefixa 55; inválido → null)
+  formatBrazilianPhone()        (exibição do número normalizado na prévia)
+  firstName()                   (primeiro token do nome, para a saudação)
+  buildIndicatorRequestMessage() (modelo padrão do fundo: primeiro nome,
                                  mês de referência, link — ver §3.3)
+  buildWhatsAppLink()           (wa.me/<dígitos>?text=<mensagem codificada>)
 
 pages/startups/add-indicator-dialog/   ← NOVO: a entrada única + painel do link
 pages/startups/indicator-form-dialog/  ← passa a ser SÓ edição e leitura
@@ -184,18 +186,18 @@ próprio WhatsApp. O produto termina ao abrir a URL; entrega não é rastreada.
 os executivos da startup, que já chegam ao diálogo pelo `MAT_DIALOG_DATA` (a
 página os carrega em `loadAll`). O painel lista os que têm telefone,
 pré-selecionando o primeiro; **não existe entrada de número avulso** — a
-mensagem carrega um segredo portador, e número não cadastrado significa acesso
-de escrita entregue sem rastro de quem é. Telefone novo se cadastra no
+mensagem carrega uma capacidade de escrita no período, e número não cadastrado
+significa essa escrita entregue sem rastro de quem é. Telefone novo se cadastra no
 executivo (aba Executivos), e o painel orienta esse caminho quando nenhum
 executivo tem telefone. Antes de abrir o WhatsApp, o painel exibe nome e número
 normalizado.
 
-**Normalização** (`normalizePhoneBR`, função pura): remove tudo que não é
+**Normalização** (`normalizeBrazilianPhone`, função pura): remove tudo que não é
 dígito; 10–11 dígitos ganham o prefixo 55; 12–13 dígitos começando em 55
 passam direto; qualquer outra forma é recusada com orientação — nunca se abre
 `wa.me` com número que não normalizou.
 
-**Mensagem** (`buildIndicatorInviteMessage`, função pura): o modelo padrão que
+**Mensagem** (`buildIndicatorRequestMessage`, função pura): o modelo padrão que
 o fundo já usa hoje, parametrizado —
 
 ```
@@ -249,7 +251,7 @@ protege com testes:
 | `recurring_revenue_pct` | percentual | `0..MAX_PCT` | sim |
 | `gross_margin_pct` | percentual | `0..MAX_PCT` | sim |
 | `cash_balance` | moeda | `MIN_MONEY..MAX_MONEY` | sim |
-| `headcount` | inteiro | `>= 0`, inteiro | sim |
+| `headcount` | inteiro | `MIN_HEADCOUNT..MAX_HEADCOUNT` (`0..2_147_483_647`, teto do `Integer` int32 da coluna), inteiro | sim |
 | `ebitda_burn` | moeda | `MIN_MONEY..MAX_MONEY` | sim |
 | `achievements` | texto longo | livre | sim |
 | `challenges` | texto longo | livre | sim |
@@ -337,18 +339,22 @@ Sem migração e sem efeito sobre links já emitidos — eles continuam válidos
 abrem o mesmo formulário público.
 
 Sequência de implementação em quatro incrementos, cada um entregável e testável
-sozinho:
+sozinho. **Os quatro estão entregues** (Fase 1 do plano de desenvolvimento,
+encerrada em 18/08/2026); o status por incremento fica registrado abaixo.
 
-1. **Contrato compartilhado** — `indicator-form.ts`, factory nos três
+1. **Contrato compartilhado** ✅ — `indicator-form.ts`, factory nos três
    formulários atuais, validação no diálogo do admin, testes de paridade e os
    guardas de backend. Corrige a assimetria de validação sem tocar na UX.
-2. **Entrada única** — `AddIndicatorDialog` com o painel do link (URL visível
+   Fecha com a máscara de moeda unificada nos dois diálogos do administrador.
+2. **Entrada única** ✅ — `AddIndicatorDialog` com o painel do link (URL visível
    como texto + copiar), remoção do "Gerar link" do cabeçalho e do
    `TokenGenerateDialog`; `IndicatorFormDialog` reduzido a edição/leitura.
-3. **Envio por WhatsApp** — `whatsapp-share.ts` (normalização, mensagem, URL),
-   seletor de destinatário no painel e o spec do fluxo por papéis/nomes que
+   O `token-generate-dialog` foi de fato removido da árvore.
+3. **Envio por WhatsApp** ✅ — `whatsapp.ts` (normalização, mensagem, URL),
+   seletor de destinatário no painel (extraído como `token-panel`, reutilizado
+   pelo diálogo e pela lista de links) e o spec do fluxo por papéis/nomes que
    sela a operabilidade por agente.
-4. **Zonas** — seção "Anotações do fundo" na edição e na vista de leitura.
+4. **Zonas** ✅ — seção "Anotações do fundo" na edição e na vista de leitura.
 
 ## 9. Alternativas consideradas
 
@@ -371,7 +377,7 @@ sozinho:
 | Sobrescrita silenciosa segue existindo | aviso de contexto no diálogo cobre o caso do admin; o caso do reenvio público é a pendência 2 do PRD, deliberadamente fora |
 | Divergência futura de limites entre TypeScript e Python | fonte única por lado, comentário cruzado, teste de paridade no cliente e guarda de schema no servidor |
 | Crescimento de complexidade do diálogo | estados enumerados na seção 3.2, um spec por estado; o componente não acumula responsabilidade de edição |
-| Número errado recebe o link (segredo portador) | destinatário vem exclusivamente do cadastro de executivos — sem número avulso; prévia obrigatória com nome + número normalizado |
+| Número errado recebe o link (capacidade de escrita no período) | destinatário vem exclusivamente do cadastro de executivos — sem número avulso; prévia obrigatória com nome + número normalizado |
 | Telefones cadastrados em formato livre | normalização com recusa explícita e orientação para corrigir o cadastro — `wa.me` nunca abre com número que não normalizou; casos cobertos por teste |
 | Mudança no contrato do `wa.me` | construção da URL isolada em função pura única, com teste; uma mudança externa é uma edição de um arquivo |
 

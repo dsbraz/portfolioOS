@@ -4,7 +4,7 @@
 - **Autor(es):** Matheus Donangelo
 - **Audiência:** Daniel Braz e Mauricio Bueno
 - **Revisores:** Daniel Braz
-- **Última atualização:** 2026-08-11
+- **Última atualização:** 2026-08-18
 - **Relacionados:** [RFC-001 — Adição unificada de indicador](../rfc/001-adicao-unificada-de-indicador.md) · [PRD-002 — IA na plataforma](002-ia-na-plataforma.md) (nível 2 da progressão de automação; o nível 3 é o futuro PRD-003) · PR do redesign BRQ ([#1](https://github.com/dsbraz/portfolioOS/pull/1))
 
 ## 1. Resumo
@@ -46,7 +46,7 @@ implementação atual trata como duas funcionalidades independentes:
   anotação interna do fundo — a investida não a vê nem a preenche.
 - **O envio do link acontece fora do produto.** Gerar copia para a área de
   transferência e o resto é colar em algum canal por conta própria — sem
-  destinatário sugerido, com um link que é um segredo portador. E a área de
+  destinatário sugerido, com um link que autoriza escrita no período. E a área de
   transferência é invisível para automação: um agente que gere o link hoje não
   tem como lê-lo nem enviá-lo.
 
@@ -204,7 +204,7 @@ Onde o controle deve **sumir** (não basta bloquear no backend):
   cadastrado na plataforma** (executivos da startup) — não existe entrada de
   número avulso; telefone novo se cadastra no executivo, e o cadastro é a fonte
   da verdade de contato. O produto exibe destinatário (nome e número) antes de
-  abrir o WhatsApp — a mensagem carrega um segredo portador; a mensagem é
+  abrir o WhatsApp — quem recebe o link escreve no período (§7); a mensagem é
   editável no WhatsApp antes do envio; o produto não rastreia entrega; número
   não normalizável é recusado com orientação para corrigir o cadastro.
 - **Critérios de aceite:**
