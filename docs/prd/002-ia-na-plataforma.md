@@ -4,7 +4,7 @@
 - **Autor(es):** Matheus Donangelo
 - **Audiência:** Daniel Braz e Mauricio Bueno
 - **Revisores:** Daniel Braz
-- **Última atualização:** 2026-08-13
+- **Última atualização:** 2026-08-18
 - **Relacionados:** [RFC-002 — IA na plataforma](../rfc/002-ia-na-plataforma.md) · [PRD-001 — Adição unificada de indicador](001-adicao-unificada-de-indicador.md) (jornada 6.5, operabilidade por agente) · AGENTS.md, seção *Machine-readable UI* · benchmark Stripe (skills/MCP/directory)
 
 ## 1. Summary
@@ -198,8 +198,9 @@ profundidade e explica claramente as diferenças de sessão e segurança.
   - [ ] Two short notes explain, without blocking the flow, that Claude uses
         the extension with the current browser session and ChatGPT agent mode
         opens a separate browser where the user signs in directly.
-  - [ ] The contextual safety block states: review before the agent saves;
-        indicator links are secrets; never type a password in chat. A writing
+  - [ ] The contextual safety block states: review before the agent saves; an
+        indicator link grants write access to its period, so it goes only to
+        the registered contact; never type a password in chat. A writing
         skill explicitly says that saving requires human confirmation.
   - [ ] The catalog identifies every included published capability and keeps
         `auditoria-qualitativa` visibly blocked with its textual reason; the

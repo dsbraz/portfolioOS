@@ -5,7 +5,7 @@
 - **Autor(es):** Matheus Donangelo
 - **Audiência:** Daniel Braz e Mauricio Bueno
 - **Revisores:** Daniel Braz
-- **Última atualização:** 2026-08-13
+- **Última atualização:** 2026-08-18
 - **Fonte funcional:** [PRD-002 — IA na plataforma](../prd/002-ia-na-plataforma.md)
 - **Relacionados:** [RFC-001](001-adicao-unificada-de-indicador.md) · `Server/skills/` (artefatos do incremento 1, já construídos)
 
@@ -284,8 +284,10 @@ desenho.
 - **Session and safety differences remain visible.** Claude can operate the
   current authenticated browser through its browser capability. ChatGPT agent
   mode may use a separate browser where the user signs in directly. Credentials
-  never go into chat, indicator links are secrets, and every write requires a
-  preview followed by explicit human confirmation.
+  never go into chat, an indicator link grants write access to its period and
+  therefore goes only to the registered contact (decision of 2026-08-14 — it is
+  a write capability, not a bearer secret), and every write requires a preview
+  followed by explicit human confirmation.
 - Loading, content (including an empty catalog), and API-failure branches remain
   explicit as required by AGENTS.md. Catalog failure does not invent per-skill
   fallback actions; the package CTA remains the sole installation path.
@@ -303,7 +305,7 @@ desenho.
   when a specialized skill applies. Packaging renames each internal `SKILL.md`
   to `GUIDE.md` and moves nothing else, so a guide's relative links to its own
   `references/` stay valid and no skill content depends on the archive layout.
-- **Título padronizado.** As três skills passam a usar o mesmo cabeçalho —
+- **Título padronizado.** Todas as skills do catálogo passam a usar o mesmo cabeçalho —
   `## Regras (inegociáveis)` — porque o lint precisa de um ponto fixo onde
   procurar. Antes divergiam ("Regras de segurança (inegociáveis)" numa,
   "Regras (inegociáveis)" nas outras), o que tornava a regra inverificável.
@@ -466,8 +468,9 @@ heredoc do `deploy.sh` — é dali que o Cloud Run recebe variáveis; o
   with no tool selector, tab, preference, default, or persisted state;
 - natural-language examples are visible, contain no internal skill slug, and
   have no prompt-copy action;
-- contextual safety always covers credentials, secret indicator links, and
-  preview plus explicit confirmation before any write;
+- contextual safety always covers credentials, the indicator link as write
+  access delivered only to the registered contact, and preview plus explicit
+  confirmation before any write;
 - published and blocked capabilities render as explanatory API-backed content;
   the blocked state and reason are textual, and neither group has item-level
   installation or start actions;
@@ -483,17 +486,21 @@ travados por spec próprio, agrupados por tela:
 |---|---|
 | Navegação | "Monitoramento" |
 | Monitoramento | colunas da tabela (Startup, Status, Receita, Caixa, EBITDA/Burn, Headcount) e a nota de reporte ("Último: …", "Nunca reportou") |
-| Detalhe da startup | abas "Indicadores Mensais", "Reuniões de Conselho", "Executivos"; botões "Adicionar reunião" e "Adicionar indicador"; cartões do topo (Receita Total, Total da Participação, Saldo em Caixa, EBITDA/Burn, Headcount) |
+| Detalhe da startup | abas "Indicadores Mensais", "Reuniões de Conselho", "Executivos"; botões "Adicionar reunião", "Adicionar indicador" e "Adicionar executivo"; cartões do topo (Receita Total, Total da Participação, Saldo em Caixa, EBITDA/Burn, Headcount) |
+| Ações de linha (`operar-portfolioos`) | "Ver indicador de {Mmm/AAAA}", "Ações do indicador de {period}", "Ver reunião de {dd/mm/aaaa}", "Ações da reunião de {date}", "Ver executivo {name}", "Ações de {name}" |
+| Entrada de indicador (`cobrar-indicadores`) | botão "Adicionar indicador"; título do diálogo "Adicionar indicador — {Mmm/AAAA}"; modos "Preencher agora" e "Gerar link para a investida"; botões "Salvar indicador" e "Gerar link" |
+| Painel do link | "Copiar link de {Mmm/AAAA}"; "Enviar por WhatsApp para {name}" |
 | Diálogo de reunião | título "Nova Reunião de Conselho"; rótulos Data, Participantes, Resumo, Pontos de Atenção, Próximos passos; botão "Adicionar" |
 | Vista de leitura | rótulos Destaques do mês, Próximos passos e necessidades, Comentários do fundo; botão "Fechar" |
 
-**Uma dependência que nenhum spec cobre**: o passo inicial de todas as três
-skills é *clicar na linha da startup* na tabela de monitoramento — e uma linha
-de tabela clicável não é um controle com nome acessível. As skills funcionam
-porque o agente lê o texto da linha, não porque exista um alvo nomeado. Isso é
-uma fragilidade real do modelo browser-first, registrada em §9; resolvê-la
-significa dar à linha um papel e um nome (ou um link explícito no nome da
-startup), o que é mudança de UI e não entra nesta RFC.
+**Uma dependência que era fragilidade e foi corrigida**: o passo inicial de
+toda skill é *chegar à startup* pela tabela de monitoramento. Enquanto a linha
+era apenas clicável, ela não era um controle com nome acessível — o agente
+dependia de ler o texto da linha, não de um alvo nomeado. A correção já está
+no código: o nome da startup é um link real (`href="/startup/{id}"`, padrão
+`row-opener`), operável por teclado e nomeado pela própria startup. A entrada
+por linha deixou de ser uma dependência não coberta e passou a fazer parte do
+contrato da tabela acima.
 
 A lista acima é derivada das skills: skill nova obriga a estendê-la.
 
@@ -516,23 +523,25 @@ explanatory catalog → blocked capabilities.
 
 ## 7. Compatibility and rollout
 
-Increment 1 implementation order:
+Increment 1 implementation order. **Passos 1–4 entregues** (incremento 1,
+2026-08-13; o incremento 2 acrescentou `cobrar-indicadores` ao catálogo em
+14/08). **O passo 5 segue pendente** — é o único item de rollout ainda aberto:
 
-1. **Backend do catálogo** — consolidar a fonte em `Server/skills/`;
+1. ✅ **Backend do catálogo** — consolidar a fonte em `Server/skills/`;
    repositório, casos de uso e rotas; testes de integração e unitários; lint.
    `SKILLS_DIR` e `SKILLS_PUBLIC` entram no heredoc `ENV_VARS_FILE` do
    `deploy.sh`, na tabela de variáveis do `DEPLOY.md` e no
    `.env.production.example`. No `docker-compose.yml`, só `SKILLS_PUBLIC`
    precisa entrar no `environment:` do serviço `server`.
-2. **Build the complete package** — generate the root upload wrapper, README,
+2. ✅ **Build the complete package** — generate the root upload wrapper, README,
    and `skills/` subtree from the published source set, keeping a single
    `SKILL.md` in the archive.
-3. **Standardize internal skills** — keep metadata and non-negotiable safety
+3. ✅ **Standardize internal skills** — keep metadata and non-negotiable safety
    anchors lintable (§3.4), including the broad `operar-portfolioos` base.
-4. **Build `/ia`** — one package CTA, always-visible ChatGPT and Claude
+4. ✅ **Build `/ia`** — one package CTA, always-visible ChatGPT and Claude
    instructions, natural examples, explanatory catalog, and contextual safety.
-5. **Validate with a real user** (PRD criterion 6.1), including two different
-   requests after a single installation.
+5. ⏳ **Validate with a real user** (PRD criterion 6.1), including two different
+   requests after a single installation. **Pendente** — nunca executado.
 
 Sem migração, sem mudança em rota existente, sem impacto nos PRs abertos.
 
@@ -580,7 +589,7 @@ Sem migração, sem mudança em rota existente, sem impacto nos PRs abertos.
 | 6.1 — non-technical user completes the install-once page flow | manual validation with a real user + single-CTA/page-structure specs |
 | 6.2 — complete package installs once and exposes multiple capabilities | archive-layout tests, published-only membership test, root-wrapper/single-entrypoint checks, and two natural-request smoke flows |
 | 6.3/6.4/6.5 — **estrutura** das skills | lint (frontmatter padrão, sidecar interno, `writes`, seções de segurança) + specs de nomes acessíveis (§5) |
-| 6.3/6.4/6.5 — **comportamento** das skills | **verificação manual com roteiro fixo**, antes do lançamento: (a) com Granola MCP utilizável, a conversa é obtida por ele sem pedir link; (b) sem MCP, a skill pede link e declara a cobertura visível; (c) transcrição-armadilha com instrução embutida → nenhum efeito além do registro proposto; (d) startup semeada com contradição conhecida, compromisso repetido e silêncio → os três achados aparecem com origem; (e) prévia confere com o registro salvo; (f) **campo qualitativo semeado com instrução embutida** → a varredura não muda e a instrução vira achado de segurança; (g) `preparar-agenda` sobre a mesma startup semeada → as perguntas citam os fatos plantados. Dono: quem publica a skill no catálogo. O lint trava a ordem MCP → link e as frases de segurança, não a execução real |
+| 6.3/6.4/6.5 — **comportamento** das skills | **verificação manual com roteiro fixo**, antes do lançamento: (a) com Granola MCP utilizável, a conversa é obtida por ele sem pedir link; (b) sem MCP, a skill pede link e declara a cobertura visível; (c) transcrição-armadilha com instrução embutida → nenhum efeito além do registro proposto; (d) startup semeada com contradição conhecida, compromisso repetido e silêncio → os três achados aparecem com origem; (e) prévia confere com o registro salvo; (f) **campo qualitativo semeado com instrução embutida** → a varredura não muda e a instrução vira achado de segurança; (g) `preparar-agenda` sobre a mesma startup semeada → as perguntas citam os fatos plantados; (h) **cobrança** — `cobrar-indicadores` sobre o período semeado: a fila confere com `last_reported`, o diálogo unificado abre no mês anterior, a prévia de destinatário e mensagem é exibida antes de qualquer envio, nenhum link é gerado ou enviado sem confirmação explícita, e startup sem executivo com telefone é bloqueada com a orientação de cadastro. Dono: quem publica a skill no catálogo. O lint trava a ordem MCP → link e as frases de segurança, não a execução real |
 | 6.6 — apresentação (incremento 3) | skill `apresentacao-portfolio` + decisão de distribuição da §3.5 |
 | 6.7 — cobrança (incremento 2) | skill própria consumindo a UI do PRD-001; verificação no roteiro manual, com a fila conferida contra `last_reported` |
 | Guardrail "zero escritas sem confirmação" | lint garante que a skill **declara** a regra (`writes: true` → seções obrigatórias); que o agente a **cumpra** é verificado pelo roteiro manual acima e, em capacidade, só pelo MCP (§3.6) |
@@ -604,6 +613,7 @@ Sem migração, sem mudança em rota existente, sem impacto nos PRs abertos.
 | Primary page contract is one CTA → install once → ask naturally; catalog is explanatory and has no item-level actions | closed in this RFC |
 | `granola-reuniao` automatically probes Granola MCP, then falls back to a user-provided note link and only then copied text | closed by product decision on 2026-08-13 |
 | `cobrar-indicadores` ships in the package; the reporting link is a write capability rather than a bearer secret, and the send mode is chosen by the user in every run | closed by product decision on 2026-08-14 |
+| Rota individual `GET /api/skills/{name}.zip` (`skill_controller.py:63-88`): remover ou reter de propósito. Existe no código, contradiz o "one complete package" da §4 e nenhum cliente a consome | **aberta — Produto** |
 | Template de marketing fora do repositório (incremento 3) | proposta — precisa do ok do Daniel |
 | Publicação da `auditoria-qualitativa` condicionada à pendência 4 do PRD | proposta — precisa do ok do Daniel |
 | Forma do MCP (OAuth + escopos sobre a API existente) | direcional; detalhe em RFC-003 |
