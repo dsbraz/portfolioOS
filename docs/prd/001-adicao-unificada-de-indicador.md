@@ -134,13 +134,13 @@ Onde o controle deve **sumir** (não basta bloquear no backend):
   descarta o que já foi digitado; salvar sobre período existente substitui
   campo a campo (campos vazios não apagam valor existente).
 - **Critérios de aceite:**
-  - [ ] "Gerar link" não existe mais como ação separada no cabeçalho.
-  - [ ] O diálogo abre com o período padrão igual ao mês anterior ao corrente.
-  - [ ] Alternar entre os modos preserva o período e os campos já digitados.
-  - [ ] Se o período já possui indicador, um aviso identifica isso antes do envio.
-  - [ ] Se o período já possui link, o modo link informa e devolve o mesmo link.
-  - [ ] Período futuro é recusado com mensagem, no cliente e no servidor.
-  - [ ] No modo link, confirmar gera o link e abre o painel do link — com o
+  - [x] "Gerar link" não existe mais como ação separada no cabeçalho.
+  - [x] O diálogo abre com o período padrão igual ao mês anterior ao corrente.
+  - [x] Alternar entre os modos preserva o período e os campos já digitados.
+  - [x] Se o período já possui indicador, um aviso identifica isso antes do envio.
+  - [x] Se o período já possui link, o modo link informa e devolve o mesmo link.
+  - [x] Período futuro é recusado com mensagem, no cliente e no servidor.
+  - [x] No modo link, confirmar gera o link e abre o painel do link — com o
         link **visível como texto selecionável**, não apenas na área de
         transferência.
 
@@ -184,11 +184,13 @@ Onde o controle deve **sumir** (não basta bloquear no backend):
 
 ### 6.5 Enviar o link por WhatsApp (humano ou agente)
 
-> **Implementada em 14/08/2026** pelo painel `Link de indicador — {Mmm/AAAA}`
-> (`Client/src/app/pages/startups/token-panel-dialog/`), aberto ao confirmar
-> `Gerar` e por `Links anteriores` → `Abrir link de {Mmm/AAAA}`. Os sete
-> critérios abaixo estão cobertos por spec. O restante do PRD-001 (jornada 6.1,
-> entrada unificada) continua pendente.
+> **Implementada** pelo painel do link
+> (`Client/src/app/pages/startups/token-panel/`), que aparece embutido no
+> `AddIndicatorDialog` ao confirmar `Gerar link` no modo link e também por
+> `Links anteriores` → `Abrir link de {Mmm/AAAA}`. Os sete critérios abaixo
+> estão cobertos por spec, distribuídos entre `add-indicator-dialog.spec.ts`,
+> `token-panel.spec.ts` e `whatsapp.spec.ts`. A entrada unificada da jornada
+> 6.1 também está entregue.
 
 - **Ator / gatilho:** administrador — ou um agente de IA operando com a sessão
   dele — a partir do painel do link gerado (jornada 6.1, modo link).
@@ -206,11 +208,11 @@ Onde o controle deve **sumir** (não basta bloquear no backend):
   editável no WhatsApp antes do envio; o produto não rastreia entrega; número
   não normalizável é recusado com orientação para corrigir o cadastro.
 - **Critérios de aceite:**
-  - [ ] O link gerado permanece visível como texto no painel — nenhum passo do
+  - [x] O link gerado permanece visível como texto no painel — nenhum passo do
         fluxo depende da área de transferência.
-  - [ ] "Enviar por WhatsApp" é um link real (`href` para `wa.me` presente no
+  - [x] "Enviar por WhatsApp" é um link real (`href` para `wa.me` presente no
         DOM antes do clique), com nome acessível que identifica o destinatário.
-  - [ ] A mensagem pré-preenchida segue o modelo padrão do fundo — saudação
+  - [x] A mensagem pré-preenchida segue o modelo padrão do fundo — saudação
         com o **primeiro nome** do destinatário, mês de referência e link do
         formulário:
 
@@ -218,15 +220,15 @@ Onde o controle deve **sumir** (não basta bloquear no backend):
         > Segue o link para atualizações dos dados referentes a
         > [mês de referência]: [link do formulário]
         > Obrigado
-  - [ ] Número brasileiro sem código do país é normalizado para +55; número
+  - [x] Número brasileiro sem código do país é normalizado para +55; número
         inválido é recusado com orientação para corrigir o cadastro do
         executivo.
-  - [ ] O painel não oferece entrada de número avulso — o destinatário vem
+  - [x] O painel não oferece entrada de número avulso — o destinatário vem
         sempre do cadastro.
-  - [ ] Startup sem executivo com telefone: o painel explica e orienta a
+  - [x] Startup sem executivo com telefone: o painel explica e orienta a
         cadastrar o telefone do responsável na aba Executivos; o envio fica
         indisponível até lá.
-  - [ ] Um agente de navegador completa gerar→enviar usando apenas papéis e
+  - [x] Um agente de navegador completa gerar→enviar usando apenas papéis e
         nomes acessíveis, verificado por teste que percorre o fluxo dessa
         forma.
 
