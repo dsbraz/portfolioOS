@@ -584,6 +584,10 @@ Sem migração, sem mudança em rota existente, sem impacto nos PRs abertos.
 
 ## 10. Verificação e rastreabilidade
 
+> **Registro de execução:** [`docs/roteiro-aceite-rfc-002.md`](../roteiro-aceite-rfc-002.md).
+> O cenário determinístico dos itens (d)–(h) existe desde 19/08/2026
+> (`scripts/seed_demo.py`); a execução por agente segue pendente.
+
 | Critério do PRD-002 | Verificação |
 |---|---|
 | 6.1 — non-technical user completes the install-once page flow | manual validation with a real user + single-CTA/page-structure specs |
