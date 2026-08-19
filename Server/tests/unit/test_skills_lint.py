@@ -317,6 +317,19 @@ def test_presentation_skill_protects_the_numbers_it_puts_on_a_slide():
     ):
         assert label in deck, label
 
+    # The deck follows the fund's real monthly deliverable — the Análise
+    # Crítica — in FUNCTION. Two anchors keep that model from silently
+    # degrading back into a generic deck:
+    assert "análise crítica" in normalized
+    # (a) every section declares its source: platform data vs user-provided —
+    # the split is what forbids inventing ecosystem KPIs or deal values.
+    assert "fonte declarada" in normalized
+    assert "o dealflow não guarda valor" in normalized
+    # (b) the coverage section is mandatory: the deck must say what it does
+    # NOT cover — who has no meeting, no indicator, or suspicious data.
+    assert "a seção 6 é obrigatória" in normalized
+    assert "a preencher" in normalized
+
 
 def test_every_published_skill_has_activation_vocabulary_in_the_wrapper():
     """A skill inside the archive is unreachable if the wrapper never activates.
@@ -338,7 +351,7 @@ def test_every_published_skill_has_activation_vocabulary_in_the_wrapper():
         "preparar-agenda": ("agenda",),
         "granola-reuniao": ("granola", "reunião de conselho"),
         "cobrar-indicadores": ("cobrança", "não reportou"),
-        "apresentacao-portfolio": ("apresentação", "deck", "slides"),
+        "apresentacao-portfolio": ("apresentação", "análise crítica", "deck", "slides"),
         "operar-portfolioos": ("portfolioos",),
     }
 

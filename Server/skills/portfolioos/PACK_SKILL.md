@@ -1,6 +1,6 @@
 ---
 name: portfolioos
-description: Operates portfolioOS in an authenticated browser to inspect or change startups, indicators, meetings, deals, users, and reporting links. Use for any portfolioOS task. Use também para portfólio e investidas, indicadores mensais, reunião de conselho, transcrição ou conversa do Granola, preparação de agenda ou call, dealflow e estágios, monitoramento, executivos, usuários, convites, link de relatório mensal, cobrança de quem não reportou o mês, e apresentação, deck ou slides do portfólio para comitê e reunião de sócios.
+description: Operates portfolioOS in an authenticated browser to inspect or change startups, indicators, meetings, deals, users, and reporting links. Use for any portfolioOS task. Use também para portfólio e investidas, indicadores mensais, reunião de conselho, transcrição ou conversa do Granola, preparação de agenda ou call, dealflow e estágios, monitoramento, executivos, usuários, convites, link de relatório mensal, cobrança de quem não reportou o mês, e apresentação, análise crítica, deck ou slides do portfólio para comitê e reunião de sócios.
 ---
 
 # Operate portfolioOS
