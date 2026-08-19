@@ -2,7 +2,7 @@ import os
 from collections.abc import AsyncGenerator
 from pathlib import Path
 
-os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///./test.db")
+os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite://")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-for-testing-only")
 os.environ.setdefault(
     "SKILLS_DIR", str(Path(__file__).resolve().parent.parent / "skills")
@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+from sqlalchemy.pool import StaticPool
 
 from app.config import settings
 from app.database import get_session
@@ -24,9 +25,19 @@ from app.infrastructure.bcrypt_password_hasher import BcryptPasswordHasher
 from app.infrastructure.jwt_token_generator import JwtTokenGenerator
 from app.main import app
 
-TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
+# In memory, never on disk. A shared `./test.db` inside the mounted tree meant
+# two pytest runs — or one interrupted run — poisoned each other's fixtures,
+# which is exactly what a multi-agent audit provokes. `StaticPool` keeps every
+# session on the same connection, without which each connection would get its
+# own empty database.
+TEST_DATABASE_URL = "sqlite+aiosqlite://"
 
-engine = create_async_engine(TEST_DATABASE_URL, echo=False)
+engine = create_async_engine(
+    TEST_DATABASE_URL,
+    echo=False,
+    poolclass=StaticPool,
+    connect_args={"check_same_thread": False},
+)
 TestSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
 _hasher = BcryptPasswordHasher()

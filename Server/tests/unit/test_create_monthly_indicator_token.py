@@ -54,3 +54,35 @@ async def test_raises_error_when_period_is_in_future(use_case, repo):
 
     repo.get_token_by_startup_and_period.assert_not_awaited()
     repo.create_token.assert_not_awaited()
+
+
+# --- Losing the insert race: one link per period must hold under contention ---
+
+
+@pytest.mark.asyncio
+async def test_lost_race_returns_the_link_that_won(use_case, repo):
+    from datetime import date
+    from app.domain.exceptions import ConflictError
+
+    winner = MagicMock()
+    repo.get_token_by_startup_and_period.side_effect = [None, winner]
+    repo.create_token.side_effect = ConflictError("link ja existe")
+
+    hoje = date.today()
+    result = await use_case.execute(uuid.uuid4(), hoje.month, hoje.year)
+
+    # A batch run gets the existing link, not an error.
+    assert result is winner
+
+
+@pytest.mark.asyncio
+async def test_lost_race_with_no_winner_visible_reraises(use_case, repo):
+    from datetime import date
+    from app.domain.exceptions import ConflictError
+
+    repo.get_token_by_startup_and_period.side_effect = [None, None]
+    repo.create_token.side_effect = ConflictError("link ja existe")
+
+    hoje = date.today()
+    with pytest.raises(ConflictError):
+        await use_case.execute(uuid.uuid4(), hoje.month, hoje.year)

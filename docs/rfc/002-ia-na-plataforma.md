@@ -350,7 +350,10 @@ Dependência dura: PRD-001 implementado.
 
 **Apresentação (incremento 3):** a skill nova `apresentacao-portfolio` (deste
 repositório: lê os dados pela plataforma, estrutura o spec, invoca a
-`brq-pptx`) entra no catálogo normalmente. **O trio da marca, não** — e o
+`brq-pptx`) entra no catálogo normalmente — **entregue e publicada em
+19/08/2026**; ela degrada com honestidade quando o trio da marca não está
+disponível, entregando narrativa e números em texto em vez de improvisar um
+`.pptx` fora da marca. **O trio da marca, não** — e o
 motivo é mais estreito do que eu havia escrito. Fontes da marca **já estão
 neste repositório público** (`Client/public/fonts/Aspekta-450.ttf`, servida
 pelo próprio frontend), então "vazamento de fontes" não sustenta nada. O ativo
@@ -583,6 +586,10 @@ Sem migração, sem mudança em rota existente, sem impacto nos PRs abertos.
 | Page becomes dead documentation | the package CTA is immediately actionable; catalog content is API-backed; natural examples make post-install use concrete; criterion 6.1 requires real-user validation before launch |
 
 ## 10. Verificação e rastreabilidade
+
+> **Registro de execução:** [`docs/roteiro-aceite-rfc-002.md`](../roteiro-aceite-rfc-002.md).
+> O cenário determinístico dos itens (d)–(h) existe desde 19/08/2026
+> (`scripts/seed_demo.py`); a execução por agente segue pendente.
 
 | Critério do PRD-002 | Verificação |
 |---|---|

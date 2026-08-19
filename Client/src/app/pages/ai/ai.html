@@ -93,7 +93,12 @@
       </aside>
 
       <div class="package-support">
-        <p>Instruções revisadas em <time datetime="2026-08-13">13/08/2026</time>.</p>
+        @if (revisedAt(); as revisao) {
+          <p>
+            Instruções revisadas em
+            <time [attr.datetime]="revisao">{{ revisedAtLabel() }}</time>.
+          </p>
+        }
         <details class="support-details">
           <summary>Ajuda para equipes e atualizações</summary>
           <div>

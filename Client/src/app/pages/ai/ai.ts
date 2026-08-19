@@ -12,6 +12,7 @@ const SKILL_TITLES: Record<string, string> = {
   'preparar-agenda': 'Preparar agenda de uma startup',
   'granola-reuniao': 'Registrar reunião de conselho',
   'cobrar-indicadores': 'Cobrar indicadores em falta',
+  'apresentacao-portfolio': 'Apresentar o portfólio',
   'auditoria-qualitativa': 'Auditar o portfólio',
 };
 
@@ -20,6 +21,7 @@ const SKILL_ORDER: Record<string, number> = {
   'preparar-agenda': 1,
   'granola-reuniao': 2,
   'cobrar-indicadores': 3,
+  'apresentacao-portfolio': 4,
 };
 
 @Component({
@@ -43,6 +45,30 @@ export class Ai implements OnInit {
   readonly blockedSkills = computed(() =>
     (this.skills() ?? []).filter((skill) => !skill.published),
   );
+
+  /**
+   * The newest version among the published capabilities, in ISO form.
+   *
+   * Derived, never typed by hand: the page used to hardcode a date and quietly
+   * drifted behind the package it describes — announcing instructions older
+   * than the ones being downloaded, which is the exact failure the notice is
+   * there to prevent.
+   */
+  readonly revisedAt = computed(() => {
+    const versions = this.publishedSkills()
+      .map((skill) => skill.version)
+      .filter((version): version is string => !!version)
+      .sort();
+    return versions.at(-1) ?? null;
+  });
+
+  /** `2026-08-19` → `19/08/2026`, the form the page shows. */
+  readonly revisedAtLabel = computed(() => {
+    const iso = this.revisedAt();
+    if (iso === null) return null;
+    const [year, month, day] = iso.split('-');
+    return `${day}/${month}/${year}`;
+  });
 
   ngOnInit(): void {
     this.skillService.list().subscribe({

@@ -6,9 +6,14 @@ import pytest
 from sqlalchemy import func, select
 
 from app.domain.models.board_meeting import BoardMeeting
+from app.domain.models.executive import Executive
+from app.domain.models.monthly_indicator_token import MonthlyIndicatorToken
 from app.domain.models.monthly_indicator import MonthlyIndicator
 from app.domain.models.startup import Startup, StartupStatus
 from scripts.seed_demo import (
+    CHASE_MISSING_MONTH,
+    CHASE_MISSING_YEAR,
+    CHASE_STARTUP_ID,
     DEMO_MALICIOUS_INSTRUCTION,
     DEMO_NEXT_STEP,
     DEMO_STARTUP_ID,
@@ -213,3 +218,73 @@ async def test_seed_demo_does_not_change_records_owned_by_another_startup(sessio
     assert other_meeting is not None
     assert other_meeting.startup_id == other_startup_id
     assert other_meeting.summary == "Unrelated meeting"
+
+
+# --- The scenarios the manual acceptance script (RFC-002 §10) needs ---
+
+
+@pytest.mark.asyncio
+async def test_seed_creates_executives_covering_every_send_channel_state(session):
+    """The chase flow branches on how a person can be reached, so the scenario
+    has to carry all three states — otherwise two items of the script cannot be
+    exercised at all."""
+    await seed_demo(session)
+
+    result = await session.execute(
+        select(Executive).where(Executive.startup_id == DEMO_STARTUP_ID)
+    )
+    executives = {e.name: e for e in result.scalars().all()}
+
+    reachable_by_phone = [e for e in executives.values() if e.phone]
+    email_only = [e for e in executives.values() if not e.phone and e.email]
+    unreachable = [e for e in executives.values() if not e.phone and not e.email]
+
+    assert reachable_by_phone, "no executive can be reached by WhatsApp"
+    assert email_only, "no executive exercises the e-mail fallback"
+    assert unreachable, "no executive exercises the blocked state"
+
+    # Every seeded phone carries its country prefix, like the product demands.
+    for executive in reachable_by_phone:
+        assert executive.phone.startswith("+")
+
+
+@pytest.mark.asyncio
+async def test_seed_leaves_a_startup_missing_the_last_period(session):
+    """The chase queue is built from who did NOT report. With every seeded
+    startup up to date, the queue is always empty and the flow is untestable."""
+    await seed_demo(session)
+
+    result = await session.execute(
+        select(Startup).where(Startup.id == CHASE_STARTUP_ID)
+    )
+    startup = result.scalar_one()
+
+    periods = await session.execute(
+        select(MonthlyIndicator.month, MonthlyIndicator.year).where(
+            MonthlyIndicator.startup_id == startup.id
+        )
+    )
+    reported = set(periods.all())
+
+    assert (CHASE_MISSING_MONTH, CHASE_MISSING_YEAR) not in reported
+    assert reported, "the startup must have history, or it reads as never onboarded"
+
+
+@pytest.mark.asyncio
+async def test_seed_clears_links_minted_while_exercising_the_scenario(session):
+    """Running the chase script mints tokens. They used to survive the re-seed,
+    so the next run found a link already there and silently took a different
+    branch."""
+    await seed_demo(session)
+
+    session.add(
+        MonthlyIndicatorToken(startup_id=CHASE_STARTUP_ID, month=6, year=2026)
+    )
+    await session.flush()
+
+    await seed_demo(session)
+
+    remaining = await session.execute(
+        select(func.count()).select_from(MonthlyIndicatorToken)
+    )
+    assert remaining.scalar_one() == 0

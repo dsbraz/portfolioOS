@@ -72,3 +72,59 @@ async def test_validates_period_not_future(use_case):
 
     with pytest.raises(ValueError, match="futuro"):
         await use_case.execute(indicator)
+
+
+# --- Losing the insert race (the branch the integration test cannot reach) ---
+#
+# The integration test pre-inserts the winner, so the guard finds it and the
+# `except ConflictError` branch never runs. Only a repo that returns "nothing
+# there" and THEN raises on create reproduces the true interleaving.
+
+
+@pytest.mark.asyncio
+async def test_lost_race_merges_onto_the_row_that_won(repo):
+    from app.domain.exceptions import ConflictError
+
+    winner = MagicMock(total_revenue=None, headcount=10)
+    # First check sees nothing; after the failed insert, the winner is there.
+    repo.get_by_startup_and_period.side_effect = [None, winner]
+    repo.create.side_effect = ConflictError("periodo ja existe")
+
+    incoming = MagicMock(month=1, year=2025, startup_id="abc")
+    incoming.total_revenue = 1234
+    incoming.headcount = None
+    for field in (
+        "recurring_revenue_pct", "gross_margin_pct", "cash_balance",
+        "ebitda_burn", "achievements", "challenges", "comments",
+    ):
+        setattr(incoming, field, None)
+
+    with patch(
+        "app.application.monthly_indicator.create_monthly_indicator.validate_period_not_future"
+    ):
+        result = await CreateMonthlyIndicator(repo).execute(incoming)
+
+    # Merged onto the winner: our value lands, the winner's survives.
+    assert result is winner
+    assert winner.total_revenue == 1234
+    assert winner.headcount == 10
+    repo.update.assert_awaited_once_with(winner)
+
+
+@pytest.mark.asyncio
+async def test_lost_race_with_no_winner_visible_reraises(repo):
+    from app.domain.exceptions import ConflictError
+
+    # Pathological: insert conflicts but the row is not visible either (e.g. the
+    # winner's transaction has not committed). Swallowing this would return
+    # nothing; re-raising lets the controller answer 409 honestly.
+    repo.get_by_startup_and_period.side_effect = [None, None]
+    repo.create.side_effect = ConflictError("periodo ja existe")
+
+    incoming = MagicMock(month=1, year=2025, startup_id="abc")
+
+    with patch(
+        "app.application.monthly_indicator.create_monthly_indicator.validate_period_not_future"
+    ):
+        with pytest.raises(ConflictError):
+            await CreateMonthlyIndicator(repo).execute(incoming)

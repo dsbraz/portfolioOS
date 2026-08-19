@@ -39,7 +39,16 @@
             <mat-card class="deal-card" cdkDrag [cdkDragData]="deal" (click)="openEditDialog(deal)">
               <mat-card-content>
                 <div class="deal-head">
-                  <span class="deal-empresa">{{ deal.company }}</span>
+                  <!-- Um botão, não um link: o card ABRE UM DIÁLOGO, não navega.
+                       É o que dá nome, papel e caminho por teclado ao card. -->
+                  <button
+                    type="button"
+                    class="deal-empresa row-opener"
+                    [attr.aria-label]="'Abrir negócio ' + deal.company"
+                    (click)="$event.stopPropagation(); openEditDialog(deal)"
+                  >
+                    {{ deal.company }}
+                  </button>
                 <div class="deal-actions" (click)="$event.stopPropagation()">
                   <button mat-icon-button [matMenuTriggerFor]="dealMenu" class="deal-menu-btn"
                     [attr.aria-label]="'Ações de ' + deal.company">

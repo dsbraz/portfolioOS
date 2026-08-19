@@ -235,9 +235,29 @@ describe('Ai', () => {
     expect(packageCard?.textContent).toContain('Nunca digite sua senha no chat');
     expect(packageCard?.textContent).toContain('link de indicador permite escrever no período');
     expect(packageCard?.textContent).toContain('Revise a prévia antes de permitir uma gravação');
+    // Derivada da capacidade publicada mais recente (13/08 é a maior entre as
+    // do fixture), nunca escrita à mão: a data fixa ficava para trás do pacote
+    // que descreve e anunciava instruções mais velhas que as baixadas.
     expect(element.querySelector('time[datetime="2026-08-13"]')).toBeTruthy();
     expect(help?.textContent).toContain('instalação para toda a organização');
     expect(help?.textContent).toContain('Cowork');
+  });
+
+  it('moves the revision date when a capability ships a newer version', async () => {
+    // Regressão: a data era literal e não acompanhava o pacote. Publicar uma
+    // capacidade mais nova precisa mover a data sozinho.
+    const element = await render(
+      of({
+        items: [
+          platformSkill,
+          { ...readSkill, name: 'cobrar-indicadores', version: '2026-08-19' },
+        ],
+        total: 2,
+      }),
+    );
+
+    expect(element.querySelector('time[datetime="2026-08-19"]')).toBeTruthy();
+    expect(element.querySelector('time')?.textContent).toContain('19/08/2026');
   });
 
   it('should announce loading, loaded and failure states', async () => {
