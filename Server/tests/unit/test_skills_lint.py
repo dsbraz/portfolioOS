@@ -316,3 +316,38 @@ def test_presentation_skill_protects_the_numbers_it_puts_on_a_slide():
         "Ver indicador de {Mmm/AAAA}",
     ):
         assert label in deck, label
+
+
+def test_every_published_skill_has_activation_vocabulary_in_the_wrapper():
+    """A skill inside the archive is unreachable if the wrapper never activates.
+
+    The runtime decides whether to load the WHOLE package from the wrapper's
+    `description`. Shipping the files is not enough: without a trigger word for
+    what the skill does, the request never reaches it. This is the failure that
+    let `apresentacao-portfolio` ride in the zip while "monte a apresentação do
+    portfólio" matched nothing.
+    """
+    wrapper = (PACKAGE_SOURCE_DIR / "PACK_SKILL.md").read_text(encoding="utf-8")
+    description = next(
+        line for line in wrapper.splitlines() if line.startswith("description:")
+    ).casefold()
+
+    # One representative trigger per published capability. A skill added without
+    # extending this map fails here, on purpose.
+    triggers = {
+        "preparar-agenda": ("agenda",),
+        "granola-reuniao": ("granola", "reunião de conselho"),
+        "cobrar-indicadores": ("cobrança", "não reportou"),
+        "apresentacao-portfolio": ("apresentação", "deck", "slides"),
+        "operar-portfolioos": ("portfolioos",),
+    }
+
+    skills, _ = SkillRepository(SKILLS_DIR).get_all()
+    published = {skill.name for skill in skills if skill.published}
+    assert published <= set(triggers), (
+        f"published skill without declared trigger vocabulary: "
+        f"{published - set(triggers)}"
+    )
+
+    for name in published:
+        assert any(word in description for word in triggers[name]), name
