@@ -111,6 +111,12 @@ models/indicator-form.ts        ← NOVO: única fonte do contrato no cliente
   buildReportedIndicatorForm()  (FormGroup da zona reportada, validadores idênticos)
   futurePeriodValidator         (movido do diálogo; passa a ser compartilhado)
 
+models/email.ts                 ← NOVO: canal alternativo, só `mailto:`
+  normalizeContactEmail()       (minúsculas e aparado; inválido → null)
+  buildIndicatorRequestSubject() ("{Startup} — indicadores de {mês}/{ano}")
+  buildMailtoLink()             (mailto:<endereço>?subject=…&body=…)
+  emailValidator                (validador do formulário de executivo)
+
 models/whatsapp.ts              ← NOVO: funções puras, testáveis sem Angular
   normalizeInternationalPhone() (E.164; sem prefixo do país → null)
   formatPhone()                 (exibição na prévia: máscara BR para +55,
@@ -205,6 +211,16 @@ por `normalize_international_phone`
 (`Server/app/domain/validators.py`) e espelhado no cliente pelo
 `phoneCountryPrefixValidator`. Qualquer forma que não resolva é recusada com
 orientação — nunca se abre `wa.me` com número que não normalizou.
+
+**Canal alternativo — e-mail** (decisão de 19/08/2026): quando o telefone não
+resolve, o painel oferece `mailto:` para o e-mail cadastrado do executivo, com a
+mesma mensagem no corpo e um assunto que nomeia startup e período. A escolha do
+`mailto:` é deliberada e **espelha o `wa.me`**: a plataforma compõe e entrega ao
+cliente de e-mail da própria pessoa, que confirma e envia. Não há SMTP, provedor
+de envio, credencial de saída nem rastreio de entrega — **a plataforma não envia
+nada**, o que preserva a garantia de que toda comunicação passa por confirmação
+humana. Envio autônomo pela plataforma continua fora de escopo aqui e pertence ao
+PRD-003, junto da decisão de canal.
 
 **Mensagem** (`buildIndicatorRequestMessage`, função pura): o modelo padrão que
 o fundo já usa hoje, parametrizado —

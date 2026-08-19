@@ -38,6 +38,7 @@ describe('AddIndicatorDialog', () => {
   async function render(over: Partial<AddIndicatorDialogData> = {}): Promise<HTMLElement> {
     const data: AddIndicatorDialogData = {
       startupId: 's1',
+      startupName: 'Vertah',
       indicators: [],
       tokens: [],
       executives: [],

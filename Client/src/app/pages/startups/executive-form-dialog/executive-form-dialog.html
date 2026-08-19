@@ -30,6 +30,10 @@
       <label class="field-label" id="l-886c-email" for="f-886c-email">Email</label>
       <mat-form-field appearance="outline">
   <input id="f-886c-email" matInput formControlName="email" type="email" />
+        <mat-hint>Serve como alternativa de envio quando não há WhatsApp.</mat-hint>
+        @if (form.controls.email.hasError('email')) {
+          <mat-error>Informe um e-mail válido (nome&#64;dominio.com).</mat-error>
+        }
       </mat-form-field>
     </div>
 

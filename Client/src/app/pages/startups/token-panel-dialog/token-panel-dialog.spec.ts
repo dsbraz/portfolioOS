@@ -88,7 +88,7 @@ describe('TokenPanelDialog', () => {
     const element = await render([executive({ name: 'Bruno Lima', phone: 'ramal 22' })]);
 
     expect(element.querySelector('[aria-label="Enviar por WhatsApp para Bruno Lima"]')).toBeNull();
-    expect(element.textContent).toContain('Sem telefone válido');
+    expect(element.textContent).toContain('Sem canal de envio');
     expect(element.textContent).toContain('Executivos');
   });
 

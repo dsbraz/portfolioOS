@@ -227,9 +227,15 @@ Onde o controle deve **sumir** (não basta bloquear no backend):
         o cadastro.
   - [x] O painel não oferece entrada de número avulso — o destinatário vem
         sempre do cadastro.
-  - [x] Startup sem executivo com telefone: o painel explica e orienta a
-        cadastrar o telefone do responsável na aba Executivos; o envio fica
-        indisponível até lá.
+  - [x] **E-mail é o canal alternativo** (decisão de 19/08/2026): quando o
+        executivo não tem telefone utilizável mas tem e-mail cadastrado, o
+        painel oferece o envio por `mailto:`, com a mesma mensagem e o assunto
+        nomeando startup e período. O WhatsApp continua sendo o canal primário.
+        Como no `wa.me`, **a plataforma não envia nada** — quem confirma é a
+        pessoa, no próprio programa de e-mail.
+  - [x] Startup sem executivo com telefone **nem e-mail**: o painel explica e
+        orienta a cadastrar o contato do responsável na aba Executivos; o envio
+        fica indisponível até lá.
   - [x] Um agente de navegador completa gerar→enviar usando apenas papéis e
         nomes acessíveis, verificado por teste que percorre o fluxo dessa
         forma.

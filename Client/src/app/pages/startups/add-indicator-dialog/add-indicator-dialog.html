@@ -7,7 +7,11 @@
       Link de <strong>{{ periodLabel() }}</strong> gerado. A investida preenche o formulário
       por ele.
     </p>
-    <app-token-panel [token]="token" [executives]="data.executives" />
+    <app-token-panel
+      [token]="token"
+      [executives]="data.executives"
+      [startupName]="data.startupName"
+    />
   } @else {
     <form [formGroup]="form" class="add-indicator-form">
       <div class="form-row">

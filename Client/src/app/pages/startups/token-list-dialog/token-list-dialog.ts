@@ -13,6 +13,7 @@ import { TokenPanelDialog, TokenPanelDialogData } from '../token-panel-dialog/to
 export interface TokenListDialogData {
   tokens: MonthlyIndicatorToken[];
   executives: Executive[];
+  startupName: string;
 }
 
 @Component({
@@ -84,7 +85,11 @@ export class TokenListDialog {
   openPanel(token: MonthlyIndicatorToken): void {
     this.dialog.open(TokenPanelDialog, {
       width: '560px',
-      data: { token, executives: this.data.executives } as TokenPanelDialogData,
+      data: {
+        token,
+        executives: this.data.executives,
+        startupName: this.data.startupName,
+      } as TokenPanelDialogData,
     });
   }
 }

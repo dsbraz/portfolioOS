@@ -39,6 +39,7 @@ describe('TokenPanel', () => {
     fixture = TestBed.createComponent(TokenPanel);
     fixture.componentRef.setInput('token', token);
     fixture.componentRef.setInput('executives', executives);
+    fixture.componentRef.setInput('startupName', 'Vertah');
     fixture.detectChanges();
     return fixture.nativeElement as HTMLElement;
   }
@@ -48,7 +49,7 @@ describe('TokenPanel', () => {
     vi.restoreAllMocks();
   });
 
-  it('splits recipients into reachable and blocked by phone validity', async () => {
+  it('splits recipients into reachable and blocked by contact validity', async () => {
     const element = await render([
       executive({ name: 'Ana Costa' }),
       executive({ id: 'e2', name: 'Bruno Lima', phone: 'ramal 22' }),
@@ -56,7 +57,47 @@ describe('TokenPanel', () => {
 
     expect(element.querySelector('[aria-label="Enviar por WhatsApp para Ana Costa"]')).toBeTruthy();
     expect(element.querySelector('[aria-label="Enviar por WhatsApp para Bruno Lima"]')).toBeNull();
-    expect(element.textContent).toContain('Sem telefone válido');
+    expect(element.textContent).toContain('Sem canal de envio');
+  });
+
+  // E-mail is the fallback channel: an executive with no usable phone is still
+  // reachable when a registered address exists.
+  it('offers e-mail when the phone cannot be used', async () => {
+    const element = await render([
+      executive({ name: 'Marina Alencar', phone: null, email: 'marina@vertah.com.br' }),
+    ]);
+
+    const mail = element.querySelector<HTMLAnchorElement>(
+      '[aria-label="Enviar por e-mail para Marina Alencar"]',
+    );
+    expect(mail?.tagName).toBe('A');
+    expect(mail?.getAttribute('href')).toContain('mailto:marina@vertah.com.br?subject=');
+    // Reachable by some channel, so it is not an impediment.
+    expect(element.textContent).not.toContain('Sem canal de envio');
+  });
+
+  it('blocks only when neither channel resolves', async () => {
+    const element = await render([
+      executive({ name: 'Bruno Lima', phone: 'ramal 22', email: null }),
+    ]);
+
+    expect(element.querySelector('[aria-label^="Enviar por WhatsApp"]')).toBeNull();
+    expect(element.querySelector('[aria-label^="Enviar por e-mail"]')).toBeNull();
+    expect(element.textContent).toContain('Sem canal de envio');
+  });
+
+  it('offers both channels when both resolve, with WhatsApp first', async () => {
+    const element = await render([
+      executive({ name: 'Ana Costa', email: 'ana@vertah.com.br' }),
+    ]);
+
+    const actions = [...element.querySelectorAll('a[aria-label^="Enviar por"]')].map((a) =>
+      a.getAttribute('aria-label'),
+    );
+    expect(actions).toEqual([
+      'Enviar por WhatsApp para Ana Costa',
+      'Enviar por e-mail para Ana Costa',
+    ]);
   });
 
   // The fund's executives are not all in Brazil: a foreign number carrying its
@@ -73,7 +114,7 @@ describe('TokenPanel', () => {
     // Shown as stored — no invented grouping for a country whose rules we do
     // not encode.
     expect(element.textContent).toContain('+14155551234');
-    expect(element.textContent).not.toContain('Sem telefone válido');
+    expect(element.textContent).not.toContain('Sem canal de envio');
   });
 
   // NOTE: copyLink's clipboard-failure branch (RFC-001 §6) is implemented in the

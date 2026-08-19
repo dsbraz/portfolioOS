@@ -65,6 +65,14 @@
   margin-top: var(--space-2xs);
 }
 
+// The two channels sit together and wrap as a unit, so a narrow panel breaks
+// between the recipient and the actions rather than between the actions.
+.recipient-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs);
+}
+
 .message-preview {
   margin: 0;
   padding: var(--space-sm);

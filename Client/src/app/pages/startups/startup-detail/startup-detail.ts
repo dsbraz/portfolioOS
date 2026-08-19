@@ -303,6 +303,7 @@ export class StartupDetail implements OnInit {
       width: '640px',
       data: {
         startupId: this.startupId,
+        startupName: this.startup()?.name ?? '',
         indicators: this.indicators(),
         tokens: this.tokens(),
         executives: this.executives(),
@@ -455,7 +456,11 @@ export class StartupDetail implements OnInit {
   openTokenListDialog(): void {
     this.dialog.open(TokenListDialog, {
       width: '400px',
-      data: { tokens: this.tokens(), executives: this.executives() } as TokenListDialogData,
+      data: {
+        tokens: this.tokens(),
+        executives: this.executives(),
+        startupName: this.startup()?.name ?? '',
+      } as TokenListDialogData,
     });
   }
 }

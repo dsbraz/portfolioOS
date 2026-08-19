@@ -6,6 +6,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 
 import { Executive } from '../../../models/executive.model';
+import { emailValidator, normalizeContactEmail } from '../../../models/email';
 import {
   formatPhone,
   normalizeInternationalPhone,
@@ -45,7 +46,9 @@ export class ExecutiveFormDialog implements OnInit {
   readonly form = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(255)]],
     role: [''],
-    email: [''],
+    // The e-mail is a send channel, so an address we cannot compose to is
+    // refused here rather than discovered at send time.
+    email: ['', [emailValidator]],
     // The country prefix is mandatory: the fund's executives are not all in
     // Brazil, so a local-format number cannot be told apart from a foreign one.
     phone: ['', [phoneCountryPrefixValidator]],
@@ -88,8 +91,13 @@ export class ExecutiveFormDialog implements OnInit {
       return;
     }
     const raw = this.form.getRawValue();
-    // Stored in E.164, the same shape the server persists.
-    this.dialogRef.close({ ...raw, phone: normalizeInternationalPhone(raw.phone) });
+    // Stored in the same shapes the server persists: E.164 and a lowercased
+    // address.
+    this.dialogRef.close({
+      ...raw,
+      phone: normalizeInternationalPhone(raw.phone),
+      email: normalizeContactEmail(raw.email),
+    });
   }
 
   onCancel(): void {
