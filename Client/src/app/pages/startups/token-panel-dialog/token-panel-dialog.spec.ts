@@ -69,7 +69,7 @@ describe('TokenPanelDialog', () => {
     const element = await render([executive({})]);
 
     const send = element.querySelector<HTMLAnchorElement>(
-      '[aria-label="Enviar para Ana Costa no WhatsApp"]',
+      '[aria-label="Enviar por WhatsApp para Ana Costa"]',
     );
     expect(send).toBeTruthy();
     expect(send?.tagName).toBe('A');
@@ -87,7 +87,7 @@ describe('TokenPanelDialog', () => {
   it('should offer no send for an unresolvable phone and say why', async () => {
     const element = await render([executive({ name: 'Bruno Lima', phone: 'ramal 22' })]);
 
-    expect(element.querySelector('[aria-label="Enviar para Bruno Lima no WhatsApp"]')).toBeNull();
+    expect(element.querySelector('[aria-label="Enviar por WhatsApp para Bruno Lima"]')).toBeNull();
     expect(element.textContent).toContain('Sem telefone válido');
     expect(element.textContent).toContain('Executivos');
   });
@@ -104,6 +104,6 @@ describe('TokenPanelDialog', () => {
 
     const preview = element.querySelector('.message-preview');
     expect(preview?.textContent).toContain('Olá Ana. Tudo bem?');
-    expect(preview?.textContent).toContain('Jul/2026');
+    expect(preview?.textContent).toContain('julho/2026');
   });
 });

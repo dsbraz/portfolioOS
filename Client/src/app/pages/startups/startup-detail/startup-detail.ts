@@ -54,13 +54,9 @@ import {
   TokenListDialogData,
 } from '../token-list-dialog/token-list-dialog';
 import {
-  TokenPanelDialog,
-  TokenPanelDialogData,
-} from '../token-panel-dialog/token-panel-dialog';
-import {
-  TokenGenerateDialog,
-  TokenGenerateDialogData,
-} from '../token-generate-dialog/token-generate-dialog';
+  AddIndicatorDialog,
+  AddIndicatorDialogData,
+} from '../add-indicator-dialog/add-indicator-dialog';
 
 import { KpiCard } from '../../../components/kpi-card/kpi-card';
 
@@ -293,20 +289,20 @@ export class StartupDetail implements OnInit {
   }
 
   openCreateIndicator(): void {
-    const dialogRef = this.dialog.open(IndicatorFormDialog, {
-      width: '560px',
-      data: {} as IndicatorFormDialogData,
+    // The single entry point: pick the period, then fill now or generate a link.
+    // The dialog does the create/generate itself and closes truthy on a change,
+    // so there is no false "Indicador criado" over an upsert here.
+    const dialogRef = this.dialog.open(AddIndicatorDialog, {
+      width: '640px',
+      data: {
+        startupId: this.startupId,
+        indicators: this.indicators(),
+        tokens: this.tokens(),
+        executives: this.executives(),
+      } as AddIndicatorDialogData,
     });
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) {
-        this.indicatorService.create(this.startupId, result).subscribe({
-          next: () => {
-            this.snackBar.open('Indicador criado', 'Fechar', { duration: 3000 });
-            this.loadAll();
-          },
-          error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao criar indicador', 'Fechar', { duration: 3000 }),
-        });
-      }
+    dialogRef.afterClosed().subscribe((changed) => {
+      if (changed) this.loadAll();
     });
   }
 
@@ -447,40 +443,6 @@ export class StartupDetail implements OnInit {
       },
       error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao excluir executivo', 'Fechar', { duration: 3000 }),
     });
-  }
-
-  // Tokens
-  generateToken(): void {
-    const defaultPeriod = this.getPreviousMonthPeriod();
-    const dialogRef = this.dialog.open(TokenGenerateDialog, {
-      width: '420px',
-      data: defaultPeriod as TokenGenerateDialogData,
-    });
-
-    dialogRef.afterClosed().subscribe((period) => {
-      if (!period) return;
-
-      this.tokenService.create(this.startupId, period).subscribe({
-        next: (token) => {
-          this.loadAll();
-          // The link is shown as text in the panel, with the send affordance —
-          // no step of this flow depends on the clipboard.
-          this.dialog.open(TokenPanelDialog, {
-            width: '560px',
-            data: { token, executives: this.executives() } as TokenPanelDialogData,
-          });
-        },
-        error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao gerar link', 'Fechar', { duration: 3000 }),
-      });
-    });
-  }
-
-  private getPreviousMonthPeriod(): { month: number; year: number } {
-    const today = new Date();
-    if (today.getMonth() === 0) {
-      return { month: 12, year: today.getFullYear() - 1 };
-    }
-    return { month: today.getMonth(), year: today.getFullYear() };
   }
 
   openTokenListDialog(): void {

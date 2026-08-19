@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal, ElementRef } from '@angular/core';
-import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -12,16 +12,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MonthlyIndicatorTokenService } from '../../services/monthly-indicator-token.service';
 import { PublicIndicatorForm } from '../../models/monthly-indicator-token.model';
 import { MONTH_LABELS } from '../../models/monthly-indicator.model';
-
-const MAX_MONEY = 9_999_999_999_999.99;
-const MIN_MONEY = -9_999_999_999_999.99;
-const MAX_PCT = 99_999.99;
-
-function integerValidator(control: AbstractControl): ValidationErrors | null {
-  const value = control.value;
-  if (value === null || value === undefined || value === '') return null;
-  return Number.isInteger(Number(value)) ? null : { integer: true };
-}
+import { buildReportedIndicatorForm } from '../../models/indicator-form';
 
 import { CurrencyInput } from '../../directives/currency-input';
 
@@ -57,16 +48,9 @@ export default class ReportForm implements OnInit {
 
   private token = '';
 
-  readonly form = this.fb.group({
-    total_revenue: [null as number | null, [Validators.min(MIN_MONEY), Validators.max(MAX_MONEY)]],
-    cash_balance: [null as number | null, [Validators.min(MIN_MONEY), Validators.max(MAX_MONEY)]],
-    ebitda_burn: [null as number | null, [Validators.min(MIN_MONEY), Validators.max(MAX_MONEY)]],
-    recurring_revenue_pct: [null as number | null, [Validators.min(0), Validators.max(MAX_PCT)]],
-    gross_margin_pct: [null as number | null, [Validators.min(0), Validators.max(MAX_PCT)]],
-    headcount: [null as number | null, [Validators.min(0), integerValidator]],
-    achievements: [''],
-    challenges: [''],
-  });
+  // The reportable zone comes from the shared factory — the same one the admin
+  // dialog builds from — so a limit can never drift between the two forms.
+  readonly form = buildReportedIndicatorForm(this.fb);
 
   ngOnInit(): void {
     this.token = this.route.snapshot.paramMap.get('token')!;

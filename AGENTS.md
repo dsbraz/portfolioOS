@@ -185,6 +185,15 @@ The app is read by assistive tech and by agents. Both use the same contract.
 - **Every row action needs a name that identifies its row**:
   `[attr.aria-label]="'Ações de ' + deal.company"`. Three identical unnamed
   `more_vert` buttons are indistinguishable.
+- **A row that navigates carries a real named link** (the `row-opener` pattern),
+  never a bare click handler on the `<tr>`. A clickable row is not a control: it
+  has no role, no name and no keyboard path, so an agent has to guess from the
+  row's text. Put the link on the identifying cell — the entity's own name is
+  the accessible name.
+- **A panel that hands over a value shows it as selectable text.** No step of a
+  flow may depend on the clipboard: `navigator.clipboard` is invisible to an
+  agent and can reject at runtime, so Copy is a convenience that must tolerate
+  failure, never the only way out.
 - A tab's `aria-controls` must reference an element that EXISTS. Keep all tabpanels
   mounted and toggle `[hidden]`; rendering only the active one leaves dangling
   references. `[hidden]` is a user-agent rule of minimal specificity, so any `display`

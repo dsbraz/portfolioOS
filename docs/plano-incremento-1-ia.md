@@ -1,9 +1,13 @@
 # Implementation plan — PRD-002 increment 1 (AI in the platform)
 
+- **Status:** ✅ **concluído** — documento histórico. O incremento 1 foi
+  entregue (página `/ia`, catálogo, pacote único) e o incremento 2
+  (`cobrar-indicadores`) veio depois. Mantido como registro do que foi
+  decidido e verificado; **não** é mais um plano a executar.
 - **Branch:** `feat/ia-na-plataforma` (empilhada sobre o redesign e os documentos)
 - **Fonte normativa:** [PRD-002](prd/002-ia-na-plataforma.md) · [RFC-002](rfc/002-ia-na-plataforma.md)
-- **Última atualização:** 2026-08-13
-- **Natureza:** artefato de trabalho — pode ser apagado quando o incremento fechar.
+- **Última atualização:** 2026-08-18
+- **Natureza:** artefato de trabalho — pode ser apagado a qualquer momento.
 
 > Os caminhos e modelos abaixo foram **verificados no repositório** em
 > 2026-08-13, não lembrados. Cada arquivo novo cita o arquivo existente que
@@ -93,7 +97,10 @@ contrato completo:
 - lida **por requisição**, nunca por inclusão condicional de router — o
   `include_router(..., dependencies=...)` é decidido no import e não alterna em
   runtime, o que transformaria o kill switch em placebo até o próximo deploy;
-- applied to the **two product routes**, `/api/skills` and `/api/skills.zip`;
+- applied to the **three product routes** — `/api/skills`
+  (`skill_controller.py:23`), `/api/skills.zip` (`:39`) e
+  `/api/skills/{name}.zip` (`:63`, rota retida cujo destino é decisão aberta na
+  §11 da RFC-002);
 - com `SKILLS_PUBLIC=false`, exige sessão válida e devolve **401** sem ela.
 
 O molde óbvio não serve: `verify_startup_exists` (`dependencies.py:94`) levanta

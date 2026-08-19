@@ -57,8 +57,8 @@ Navegador com o usuário já autenticado no portfolioOS.
    3. Aba **"Indicadores Mensais"**: leia a tabela (Período, Receita, Caixa,
       EBITDA/Burn, Headcount) — os 3–4 períodos mais recentes bastam. Para o
       qualitativo, abra o período mais recente com **Ver indicador de
-      {Mmm/AAAA}** e leia o registro (Conquistas do mês, Desafios do mês);
-      feche com **"Fechar"**.
+      {Mmm/AAAA}** e leia o registro (Destaques do mês, Próximos passos e
+      necessidades); feche com **"Fechar"**.
    4. Aba **"Reuniões de Conselho"**: abra a mais recente com **Ver reunião de
       {dd/mm/aaaa}** e leia Data, Participantes, Resumo, Pontos de atenção e
       Próximos passos; feche com **"Fechar"**. Se não houver reunião registrada, siga sem o
