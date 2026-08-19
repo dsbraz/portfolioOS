@@ -127,10 +127,10 @@ def test_skills_compose_without_exposing_internal_routing_to_users():
     chase = (SKILLS_DIR / "cobrar-indicadores" / "SKILL.md").read_text(encoding="utf-8")
     assert "retorne essa parte ao roteador interno do pacote" in chase
 
-    openai_metadata = (
-        SKILLS_DIR / "operar-portfolioos" / "agents" / "openai.yaml"
-    ).read_text(encoding="utf-8")
-    assert "$operar-portfolioos" not in openai_metadata
+    # OpenAI resolves `agents/openai.yaml` beside the archive's SKILL.md only,
+    # so a nested copy under a skill directory is never read — it must not
+    # exist, or it ships as dead weight in every download.
+    assert not (SKILLS_DIR / "operar-portfolioos" / "agents").exists()
 
 
 def test_granola_skill_detects_mcp_before_requesting_a_conversation_link():
