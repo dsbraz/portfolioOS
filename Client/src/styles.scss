@@ -592,6 +592,42 @@ h5 {
   text-align: center;
 }
 
+// Abridor de linha: o controle nomeado que torna uma linha clicável operável
+// por teclado e por agente.
+//
+// Uma linha que só responde a clique não é um controle — não tem papel, não tem
+// nome e não tem caminho por teclado, então quem lê a tela precisa adivinhar
+// pelo texto. O controle vai na célula que IDENTIFICA a linha, e o nome da
+// entidade é o nome acessível. Use `<a>` quando a linha navega e `<button>`
+// quando ela abre um diálogo — o elemento segue a ação, não a aparência.
+//
+// Vive aqui, e não em cada página, porque nasceu duplicado em dois arquivos e
+// já havia divergido uma vez.
+.row-opener {
+  display: inline-block;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  // `.table-shell` rola, e `overflow-x: auto` corta nos quatro lados — um anel
+  // para fora seria cortado, e anel de foco cortado é anel invisível (2.4.7).
+  &:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: -2px;
+    border-radius: var(--radius-sm);
+  }
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
