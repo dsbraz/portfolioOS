@@ -4,6 +4,7 @@ from unittest.mock import patch
 import pytest
 
 from app.domain.validators import (
+    normalize_international_phone,
     validate_period_not_future,
     validate_username_no_spaces,
 )
@@ -41,3 +42,60 @@ def test_username_without_space_is_valid():
 def test_username_with_space_raises():
     with pytest.raises(ValueError, match="Username"):
         validate_username_no_spaces("invalid user")
+
+
+# --- Phone: the country prefix is mandatory (product decision, 2026-08-19) ---
+#
+# The fund's executives are not all in Brazil, so the number cannot be guessed
+# from its length. Requiring the prefix is what makes the stored value
+# unambiguous — and it is what stops a local-format foreign number from being
+# read as a Brazilian one.
+
+
+@pytest.mark.parametrize(
+    "raw,expected",
+    [
+        ("+55 11 91234-5678", "+5511912345678"),
+        ("+351 912 345 678", "+351912345678"),
+        ("+1 415 555 1234", "+14155551234"),
+        ("+44 20 7946 0958", "+442079460958"),
+        # Separators, parentheses and non-breaking spaces are presentation only.
+        ("+55 (11) 91234-5678", "+5511912345678"),
+    ],
+)
+def test_international_phone_is_normalized_to_e164(raw, expected):
+    assert normalize_international_phone(raw) == expected
+
+
+def test_absent_phone_stays_absent():
+    assert normalize_international_phone(None) is None
+    assert normalize_international_phone("") is None
+    assert normalize_international_phone("   ") is None
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "11 91234-5678",  # Brazilian, no prefix
+        "(415) 555-1234",  # foreign in local format — the dangerous one
+        "912345678",
+        "0055 11 91234-5678",  # international access code is not a prefix
+    ],
+)
+def test_phone_without_country_prefix_raises(raw):
+    with pytest.raises(ValueError, match="código do país"):
+        normalize_international_phone(raw)
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "+55",  # prefix alone
+        "+1234",  # too short to be a real subscriber line
+        "+55119123456789012",  # beyond E.164's 15 digits
+        "+abc",
+    ],
+)
+def test_phone_that_is_not_a_valid_e164_number_raises(raw):
+    with pytest.raises(ValueError, match="[Tt]elefone"):
+        normalize_international_phone(raw)
