@@ -1,6 +1,6 @@
 ---
 name: cobrar-indicadores
-description: Encontra as startups sem indicador no período no portfolioOS, gera os links de reporte após confirmação e monta a fila de cobrança por WhatsApp. Use para cobrar, lembrar ou perguntar quem não reportou o mês.
+description: Encontra as startups sem indicador no período no portfolioOS, gera os links de reporte após confirmação e monta a fila de cobrança por WhatsApp, com e-mail como alternativa. Use para cobrar, lembrar ou perguntar quem não reportou o mês.
 ---
 
 # cobrar-indicadores — Cobrar o indicador de quem não reportou
