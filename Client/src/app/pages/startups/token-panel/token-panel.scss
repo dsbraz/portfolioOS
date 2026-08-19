@@ -65,6 +65,14 @@
   margin-top: var(--space-2xs);
 }
 
+// The two channels sit together and wrap as a unit, so a narrow panel breaks
+// between the recipient and the actions rather than between the actions.
+.recipient-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs);
+}
+
 .message-preview {
   margin: 0;
   padding: var(--space-sm);
@@ -83,4 +91,11 @@
   margin: var(--space-xs) 0 0;
   color: var(--color-text-muted);
   font-size: 0.8125rem;
+}
+
+// A sample number is read digit by digit; breaking it across lines would make
+// the example harder to copy than the rule it illustrates.
+.phone-example {
+  font-family: var(--font-mono);
+  white-space: nowrap;
 }

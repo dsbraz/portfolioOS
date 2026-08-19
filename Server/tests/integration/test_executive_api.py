@@ -96,3 +96,92 @@ async def test_executive_startup_not_found(client):
     fake_id = "00000000-0000-0000-0000-000000000001"
     resp = await client.get(f"/api/startups/{fake_id}/executives")
     assert resp.status_code == 404
+
+
+# --- Country prefix is mandatory (product decision, 2026-08-19) ---
+
+
+@pytest.mark.asyncio
+async def test_create_executive_stores_the_phone_in_e164(client, startup_id):
+    resp = await client.post(
+        f"/api/startups/{startup_id}/executives",
+        json={"name": "Ana Costa", "phone": "+55 (11) 91234-5678"},
+    )
+    assert resp.status_code == 201
+    # Stored normalized, so every consumer reads one shape.
+    assert resp.json()["phone"] == "+5511912345678"
+
+
+@pytest.mark.asyncio
+async def test_create_executive_accepts_a_foreign_number(client, startup_id):
+    resp = await client.post(
+        f"/api/startups/{startup_id}/executives",
+        json={"name": "John Miller", "phone": "+1 415 555 1234"},
+    )
+    assert resp.status_code == 201
+    assert resp.json()["phone"] == "+14155551234"
+
+
+@pytest.mark.asyncio
+async def test_create_executive_without_country_prefix_is_refused(client, startup_id):
+    # Regression: a foreign number in local format used to be prefixed with 55
+    # and became a plausible Brazilian line belonging to someone else.
+    resp = await client.post(
+        f"/api/startups/{startup_id}/executives",
+        json={"name": "John Miller", "phone": "(415) 555-1234"},
+    )
+    assert resp.status_code == 400
+    assert "código do país" in resp.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_update_executive_phone_without_prefix_is_refused(client, startup_id):
+    create_resp = await client.post(
+        f"/api/startups/{startup_id}/executives",
+        json={"name": "Ana Costa", "phone": "+5511912345678"},
+    )
+    executive_id = create_resp.json()["id"]
+
+    resp = await client.patch(
+        f"/api/startups/{startup_id}/executives/{executive_id}",
+        json={"phone": "11 91234-5678"},
+    )
+    assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_executive_phone_can_be_cleared(client, startup_id):
+    create_resp = await client.post(
+        f"/api/startups/{startup_id}/executives",
+        json={"name": "Ana Costa", "phone": "+5511912345678"},
+    )
+    executive_id = create_resp.json()["id"]
+
+    resp = await client.patch(
+        f"/api/startups/{startup_id}/executives/{executive_id}",
+        json={"phone": ""},
+    )
+    assert resp.status_code == 200
+    # Absence is not a validation failure — an executive may have no phone.
+    assert resp.json()["phone"] is None
+
+
+@pytest.mark.asyncio
+async def test_create_executive_normalizes_the_email(client, startup_id):
+    resp = await client.post(
+        f"/api/startups/{startup_id}/executives",
+        json={"name": "Ana Costa", "email": "  Ana@Startup.com.BR "},
+    )
+    assert resp.status_code == 201
+    assert resp.json()["email"] == "ana@startup.com.br"
+
+
+@pytest.mark.asyncio
+async def test_create_executive_with_invalid_email_is_refused(client, startup_id):
+    # The e-mail is the fallback send channel, so an address the product cannot
+    # compose to is refused at registration rather than at send time.
+    resp = await client.post(
+        f"/api/startups/{startup_id}/executives",
+        json={"name": "Ana Costa", "email": "ana arroba startup"},
+    )
+    assert resp.status_code == 400

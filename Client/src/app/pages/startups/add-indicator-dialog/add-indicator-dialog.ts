@@ -24,6 +24,8 @@ import { TokenPanel } from '../token-panel/token-panel';
 
 export interface AddIndicatorDialogData {
   startupId: string;
+  /** Names the startup in the e-mail subject when the link is sent by mail. */
+  startupName: string;
   indicators: MonthlyIndicator[];
   tokens: MonthlyIndicatorToken[];
   executives: Executive[];

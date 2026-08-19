@@ -72,6 +72,13 @@ with `Ver executivo {name}` to also read LinkedIn. Use `Adicionar executivo`, or
 `Excluir`. Only name is required. Names and emails are not unique; resolve the
 person within the startup and compare role, email, or phone.
 
+**The phone must carry its country prefix** (`+55 11 91234-5678`,
+`+1 415 555 1234`). The fund's executives are not all in Brazil, so the platform
+never infers a country: a number without `+` is refused when saving. If the
+person dictates a local number, ask which country it belongs to instead of
+assuming Brazil — an indicator link is write access to a period, and a misread
+number would send it to a stranger.
+
 ## Manage monthly-report links
 
 Both filling an indicator and generating a link start from `Adicionar
@@ -79,9 +86,13 @@ indicador`, which opens `Adicionar indicador — {Mmm/AAAA}`. Pick the period, t
 the mode: `Preencher agora` fills the reportable zone plus the fund note, and
 `Gerar link para a investida` creates the link. In link mode, `Gerar link` opens
 the panel inline: the link as text under `Link do formulário`, a `Copiar link de
-{Mmm/AAAA}` control, and one `Enviar por WhatsApp para {name}` link per executive
-with a valid registered phone. An executive whose phone does not resolve appears
-as `Sem telefone válido` and gets no send control.
+{Mmm/AAAA}` control, and one send control per reachable executive:
+`Enviar por WhatsApp para {name}` when the registered phone resolves, and
+`Enviar por e-mail para {name}` when a registered e-mail exists. WhatsApp is the
+fund's primary channel; e-mail is the alternative when the phone is missing or
+unusable. Both open the operator's own client with the message ready — the
+platform never sends anything. An executive with neither channel appears as
+`Sem canal de envio` and gets no send control.
 
 `Mais ações` → `Links anteriores` lists existing periods; `Abrir link de
 {Mmm/AAAA}` opens that panel for an existing token. A startup and period have one

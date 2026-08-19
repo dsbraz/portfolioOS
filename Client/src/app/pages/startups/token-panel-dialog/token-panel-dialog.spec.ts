@@ -24,7 +24,7 @@ describe('TokenPanelDialog', () => {
     name: 'Ana Costa',
     role: 'CEO',
     email: null,
-    phone: '(11) 91234-5678',
+    phone: '+5511912345678',
     linkedin: null,
     created_at: '',
     updated_at: '',
@@ -88,7 +88,7 @@ describe('TokenPanelDialog', () => {
     const element = await render([executive({ name: 'Bruno Lima', phone: 'ramal 22' })]);
 
     expect(element.querySelector('[aria-label="Enviar por WhatsApp para Bruno Lima"]')).toBeNull();
-    expect(element.textContent).toContain('Sem telefone válido');
+    expect(element.textContent).toContain('Sem canal de envio');
     expect(element.textContent).toContain('Executivos');
   });
 

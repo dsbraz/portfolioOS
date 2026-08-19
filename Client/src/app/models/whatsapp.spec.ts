@@ -2,38 +2,52 @@ import {
   buildIndicatorRequestMessage,
   buildWhatsAppLink,
   firstName,
-  formatBrazilianPhone,
-  normalizeBrazilianPhone,
+  formatPhone,
+  normalizeInternationalPhone,
 } from './whatsapp';
 
-describe('normalizeBrazilianPhone', () => {
-  it('should add the country code to a local number', () => {
-    expect(normalizeBrazilianPhone('(11) 91234-5678')).toBe('5511912345678');
-    expect(normalizeBrazilianPhone('11 1234-5678')).toBe('551112345678');
+describe('normalizeInternationalPhone', () => {
+  it('should keep any number that carries its country prefix', () => {
+    expect(normalizeInternationalPhone('+55 (11) 91234-5678')).toBe('+5511912345678');
+    expect(normalizeInternationalPhone('+1 415 555 1234')).toBe('+14155551234');
+    expect(normalizeInternationalPhone('+351 912 345 678')).toBe('+351912345678');
+    expect(normalizeInternationalPhone('+44 20 7946 0958')).toBe('+442079460958');
   });
 
-  it('should keep a number that already carries the country code', () => {
-    expect(normalizeBrazilianPhone('+55 (11) 91234-5678')).toBe('5511912345678');
+  it('should refuse a number without the country prefix instead of guessing one', () => {
+    // Regression: a foreign number in local format used to be prefixed with 55,
+    // resolving to a plausible Brazilian line belonging to someone else. The
+    // link is write access to a period, so a misread number hands that write
+    // to a stranger.
+    expect(normalizeInternationalPhone('(415) 555-1234')).toBeNull();
+    expect(normalizeInternationalPhone('11 91234-5678')).toBeNull();
+    expect(normalizeInternationalPhone('912345678')).toBeNull();
   });
 
-  it('should refuse anything that is not a Brazilian number', () => {
-    // Refusing beats guessing: the send is offered only for a number we resolved.
-    expect(normalizeBrazilianPhone('12345')).toBeNull();
-    expect(normalizeBrazilianPhone('+1 415 555 0100')).toBeNull();
-    expect(normalizeBrazilianPhone('ramal 22')).toBeNull();
-    expect(normalizeBrazilianPhone('')).toBeNull();
-    expect(normalizeBrazilianPhone(null)).toBeNull();
+  it('should refuse anything that is not a valid E.164 number', () => {
+    expect(normalizeInternationalPhone('+55')).toBeNull();
+    expect(normalizeInternationalPhone('+1234')).toBeNull();
+    expect(normalizeInternationalPhone('ramal 22')).toBeNull();
+    expect(normalizeInternationalPhone('')).toBeNull();
+    expect(normalizeInternationalPhone(null)).toBeNull();
   });
 });
 
-describe('formatBrazilianPhone', () => {
-  it('should present the resolved recipient number', () => {
-    expect(formatBrazilianPhone('11912345678')).toBe('+55 (11) 91234-5678');
-    expect(formatBrazilianPhone('1112345678')).toBe('+55 (11) 1234-5678');
+describe('formatPhone', () => {
+  it('should present a Brazilian number in the familiar shape', () => {
+    expect(formatPhone('+5511912345678')).toBe('+55 (11) 91234-5678');
+    expect(formatPhone('+551112345678')).toBe('+55 (11) 1234-5678');
+  });
+
+  it('should present a foreign number as stored, without inventing a grouping', () => {
+    // Grouping rules differ per country; showing E.164 is honest and unambiguous.
+    expect(formatPhone('+14155551234')).toBe('+14155551234');
+    expect(formatPhone('+351912345678')).toBe('+351912345678');
   });
 
   it('should return null when the number does not resolve', () => {
-    expect(formatBrazilianPhone('12345')).toBeNull();
+    expect(formatPhone('12345')).toBeNull();
+    expect(formatPhone(null)).toBeNull();
   });
 });
 
@@ -58,13 +72,20 @@ describe('buildIndicatorRequestMessage', () => {
 
 describe('buildWhatsAppLink', () => {
   it('should build the official click-to-chat URL with the message encoded', () => {
-    const url = buildWhatsAppLink('(11) 91234-5678', 'Olá Ana');
+    // wa.me takes digits only — the "+" is dropped, the country code is not.
+    expect(buildWhatsAppLink('+55 (11) 91234-5678', 'Olá Ana')).toBe(
+      'https://wa.me/5511912345678?text=Ol%C3%A1%20Ana',
+    );
+  });
 
-    expect(url).toBe('https://wa.me/5511912345678?text=Ol%C3%A1%20Ana');
+  it('should build the URL for a foreign recipient too', () => {
+    expect(buildWhatsAppLink('+1 415 555 1234', 'Hi')).toBe(
+      'https://wa.me/14155551234?text=Hi',
+    );
   });
 
   it('should return null when the phone does not resolve, so no send is offered', () => {
-    expect(buildWhatsAppLink('12345', 'Olá')).toBeNull();
+    expect(buildWhatsAppLink('(415) 555-1234', 'Olá')).toBeNull();
     expect(buildWhatsAppLink(null, 'Olá')).toBeNull();
   });
 });

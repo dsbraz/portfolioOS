@@ -111,9 +111,17 @@ models/indicator-form.ts        ← NOVO: única fonte do contrato no cliente
   buildReportedIndicatorForm()  (FormGroup da zona reportada, validadores idênticos)
   futurePeriodValidator         (movido do diálogo; passa a ser compartilhado)
 
+models/email.ts                 ← NOVO: canal alternativo, só `mailto:`
+  normalizeContactEmail()       (minúsculas e aparado; inválido → null)
+  buildIndicatorRequestSubject() ("{Startup} — indicadores de {mês}/{ano}")
+  buildMailtoLink()             (mailto:<endereço>?subject=…&body=…)
+  emailValidator                (validador do formulário de executivo)
+
 models/whatsapp.ts              ← NOVO: funções puras, testáveis sem Angular
-  normalizeBrazilianPhone()     (dígitos; 10–11 → prefixa 55; inválido → null)
-  formatBrazilianPhone()        (exibição do número normalizado na prévia)
+  normalizeInternationalPhone() (E.164; sem prefixo do país → null)
+  formatPhone()                 (exibição na prévia: máscara BR para +55,
+                                 E.164 como está para os demais países)
+  phoneCountryPrefixValidator   (validador do formulário de executivo)
   firstName()                   (primeiro token do nome, para a saudação)
   buildIndicatorRequestMessage() (modelo padrão do fundo: primeiro nome,
                                  mês de referência, link — ver §3.3)
@@ -150,7 +158,8 @@ período (mês/ano, padrão mês anterior)
                             ├─ URL visível como texto selecionável
                             ├─ Copiar (secundário, tolerante a falha)
                             └─ Enviar por WhatsApp
-                                 ├─ destinatário: SÓ executivos com telefone cadastrado
+                                 ├─ destinatário: SÓ executivos do cadastro
+                                 │    WhatsApp (primário) ou e-mail (alternativa)
                                  ├─ prévia: nome + número normalizado + mensagem
                                  └─ <a href="wa.me/..."> real, target _blank
   └─ ação primária: "Salvar indicador" | "Gerar link"
@@ -192,10 +201,27 @@ executivo (aba Executivos), e o painel orienta esse caminho quando nenhum
 executivo tem telefone. Antes de abrir o WhatsApp, o painel exibe nome e número
 normalizado.
 
-**Normalização** (`normalizeBrazilianPhone`, função pura): remove tudo que não é
-dígito; 10–11 dígitos ganham o prefixo 55; 12–13 dígitos começando em 55
-passam direto; qualquer outra forma é recusada com orientação — nunca se abre
-`wa.me` com número que não normalizou.
+**Normalização** (`normalizeInternationalPhone`, função pura): descarta apenas
+separadores de apresentação e exige E.164 — `+`, código do país e de 8 a 15
+dígitos. **O país nunca é inferido.** Os executivos do fundo não estão todos no
+Brasil, e um número local estrangeiro de 10 dígitos é indistinguível de um
+brasileiro: prefixar `55` por palpite transformava `(415) 555-1234` num celular
+plausível do Paraná, entregando a capacidade de escrita a um desconhecido. Por
+isso o prefixo é **obrigatório no cadastro do executivo**, imposto no domínio
+por `normalize_international_phone`
+(`Server/app/domain/validators.py`) e espelhado no cliente pelo
+`phoneCountryPrefixValidator`. Qualquer forma que não resolva é recusada com
+orientação — nunca se abre `wa.me` com número que não normalizou.
+
+**Canal alternativo — e-mail** (decisão de 19/08/2026): quando o telefone não
+resolve, o painel oferece `mailto:` para o e-mail cadastrado do executivo, com a
+mesma mensagem no corpo e um assunto que nomeia startup e período. A escolha do
+`mailto:` é deliberada e **espelha o `wa.me`**: a plataforma compõe e entrega ao
+cliente de e-mail da própria pessoa, que confirma e envia. Não há SMTP, provedor
+de envio, credencial de saída nem rastreio de entrega — **a plataforma não envia
+nada**, o que preserva a garantia de que toda comunicação passa por confirmação
+humana. Envio autônomo pela plataforma continua fora de escopo aqui e pertence ao
+PRD-003, junto da decisão de canal.
 
 **Mensagem** (`buildIndicatorRequestMessage`, função pura): o modelo padrão que
 o fundo já usa hoje, parametrizado —
@@ -298,9 +324,10 @@ pela página — zero requisições adicionais.
   factory);
 - "Anotações do fundo" presente na edição e na leitura, ausente no público;
 - falha de clipboard informada;
-- **normalização de telefone**: tabela de casos — `(11) 99999-9999` → `5511999999999`,
-  `5511999999999` → inalterado, `+55 11 99999-9999` → `5511999999999`,
-  `999` → recusado;
+- **normalização de telefone** (E.164, prefixo do país obrigatório): tabela de
+  casos — `+55 11 99999-9999` → `+5511999999999`, `+1 415 555 1234` →
+  `+14155551234`, `(11) 99999-9999` → **recusado** (sem prefixo),
+  `(415) 555-1234` → **recusado**, `+55` → recusado;
 - **URL do WhatsApp**: `href` contém o número normalizado e a mensagem
   codificada (`encodeURIComponent`) no modelo padrão — primeiro nome, mês de
   referência e link, com as quebras de linha preservadas (`%0A`);

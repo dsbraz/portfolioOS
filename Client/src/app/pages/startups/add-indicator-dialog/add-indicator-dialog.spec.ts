@@ -38,6 +38,7 @@ describe('AddIndicatorDialog', () => {
   async function render(over: Partial<AddIndicatorDialogData> = {}): Promise<HTMLElement> {
     const data: AddIndicatorDialogData = {
       startupId: 's1',
+      startupName: 'Vertah',
       indicators: [],
       tokens: [],
       executives: [],
@@ -140,7 +141,7 @@ describe('AddIndicatorDialog', () => {
           name: 'Ana Costa',
           role: 'CEO',
           email: null,
-          phone: '(11) 91234-5678',
+          phone: '+5511912345678',
           linkedin: null,
           created_at: '',
           updated_at: '',
@@ -193,7 +194,7 @@ describe('AddIndicatorDialog', () => {
           name: 'Ana Costa',
           role: 'CEO',
           email: null,
-          phone: '(11) 91234-5678',
+          phone: '+5511912345678',
           linkedin: null,
           created_at: '',
           updated_at: '',

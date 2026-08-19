@@ -71,4 +71,38 @@ describe('ExecutiveFormDialog', () => {
       expect.objectContaining({ name: 'Joao Silva', role: 'CEO' }),
     );
   });
+
+  // The country prefix is mandatory (product decision, 2026-08-19): the fund's
+  // executives are not all in Brazil, so the country cannot be guessed.
+  it('should refuse a phone without the country prefix', () => {
+    dialogRefSpy.close.mockClear();
+    component.form.patchValue({ name: 'John Miller', phone: '(415) 555-1234' });
+
+    component.onSubmit();
+
+    expect(component.form.controls.phone.hasError('phoneCountryPrefix')).toBe(true);
+    expect(dialogRefSpy.close).not.toHaveBeenCalled();
+  });
+
+  it('should accept a foreign number that carries its prefix, stored in E.164', () => {
+    dialogRefSpy.close.mockClear();
+    component.form.patchValue({ name: 'John Miller', phone: '+1 415 555 1234' });
+
+    component.onSubmit();
+
+    expect(dialogRefSpy.close).toHaveBeenCalledWith(
+      expect.objectContaining({ phone: '+14155551234' }),
+    );
+  });
+
+  it('should keep an empty phone valid — an executive may have none', () => {
+    dialogRefSpy.close.mockClear();
+    component.form.patchValue({ name: 'Joao Silva', phone: '' });
+
+    component.onSubmit();
+
+    expect(dialogRefSpy.close).toHaveBeenCalledWith(
+      expect.objectContaining({ phone: null }),
+    );
+  });
 });

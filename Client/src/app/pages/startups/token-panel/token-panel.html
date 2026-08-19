@@ -16,12 +16,12 @@
 </section>
 
 <section class="panel-section" aria-labelledby="token-send-title">
-  <p class="section-title" id="token-send-title">Enviar por WhatsApp</p>
+  <p class="section-title" id="token-send-title">Enviar para a investida</p>
 
   @if (reachable().length === 0 && blocked().length === 0) {
     <p class="panel-empty">
       Nenhum executivo cadastrado nesta startup. Cadastre o responsável na aba
-      <strong>Executivos</strong>, com telefone, para poder enviar.
+      <strong>Executivos</strong>, com telefone ou e-mail, para poder enviar.
     </p>
   } @else {
     @if (reachable().length > 0) {
@@ -30,18 +30,42 @@
           <li>
             <div class="recipient-copy">
               <h3>{{ recipient.name }}</h3>
-              <p>{{ recipient.role ?? 'Sem cargo informado' }} · {{ recipient.formattedPhone }}</p>
+              <p>
+                {{ recipient.role ?? 'Sem cargo informado' }}
+                @if (recipient.formattedPhone) {
+                  · {{ recipient.formattedPhone }}
+                }
+                @if (recipient.email) {
+                  · {{ recipient.email }}
+                }
+              </p>
             </div>
-            <a
-              mat-flat-button
-              [href]="recipient.whatsappUrl"
-              target="_blank"
-              rel="noopener"
-              [attr.aria-label]="'Enviar por WhatsApp para ' + recipient.name"
-            >
-              <mat-icon aria-hidden="true">send</mat-icon>
-              Enviar
-            </a>
+            <!-- WhatsApp first: it is the fund's habit. E-mail is the fallback
+                 that keeps the person reachable when the phone is not usable. -->
+            <div class="recipient-actions">
+              @if (recipient.whatsappUrl) {
+                <a
+                  mat-flat-button
+                  [href]="recipient.whatsappUrl"
+                  target="_blank"
+                  rel="noopener"
+                  [attr.aria-label]="'Enviar por WhatsApp para ' + recipient.name"
+                >
+                  <mat-icon aria-hidden="true">send</mat-icon>
+                  WhatsApp
+                </a>
+              }
+              @if (recipient.mailtoUrl) {
+                <a
+                  mat-stroked-button
+                  [href]="recipient.mailtoUrl"
+                  [attr.aria-label]="'Enviar por e-mail para ' + recipient.name"
+                >
+                  <mat-icon aria-hidden="true">mail</mat-icon>
+                  E-mail
+                </a>
+              }
+            </div>
           </li>
         }
       </ul>
@@ -55,13 +79,15 @@
               <h3>{{ recipient.name }}</h3>
               <p>{{ recipient.role ?? 'Sem cargo informado' }}</p>
             </div>
-            <span class="pill pill--warn">Sem telefone válido</span>
+            <span class="pill pill--warn">Sem canal de envio</span>
           </li>
         }
       </ul>
       <p class="panel-hint">
-        Um telefone brasileiro válido (DDD e número) é obrigatório para enviar. Corrija o
-        cadastro na aba <strong>Executivos</strong>.
+        Para enviar, cadastre um e-mail válido ou um telefone com o código do país — por
+        exemplo <span class="phone-example">+55 11 91234-5678</span> ou
+        <span class="phone-example">+1 415 555 1234</span>. Corrija o cadastro na aba
+        <strong>Executivos</strong>.
       </p>
     }
   }
@@ -72,7 +98,8 @@
     <p class="section-title" id="token-message-title">Mensagem</p>
     <pre class="message-preview">{{ reachable()[0].message }}</pre>
     <p class="panel-hint">
-      O WhatsApp abre com a mensagem pronta. Você pode editá-la e confirma o envio por lá.
+      O WhatsApp ou seu programa de e-mail abre com a mensagem pronta. Você pode editá-la e
+      confirma o envio por lá.
     </p>
   </section>
 }

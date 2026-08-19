@@ -7,9 +7,14 @@ import { Executive } from '../../../models/executive.model';
 import { MonthlyIndicatorToken } from '../../../models/monthly-indicator-token.model';
 import { MONTH_LABELS, MONTH_LABELS_FULL } from '../../../models/monthly-indicator.model';
 import {
+  buildIndicatorRequestSubject,
+  buildMailtoLink,
+  normalizeContactEmail,
+} from '../../../models/email';
+import {
   buildIndicatorRequestMessage,
   buildWhatsAppLink,
-  formatBrazilianPhone,
+  formatPhone,
 } from '../../../models/whatsapp';
 
 /** One executive, resolved for sending — or blocked, with the reason visible. */
@@ -17,7 +22,9 @@ interface Recipient {
   name: string;
   role: string | null;
   formattedPhone: string | null;
+  email: string | null;
   whatsappUrl: string | null;
+  mailtoUrl: string | null;
   message: string;
 }
 
@@ -37,6 +44,8 @@ interface Recipient {
 export class TokenPanel {
   readonly token = input.required<MonthlyIndicatorToken>();
   readonly executives = input.required<Executive[]>();
+  /** Names the startup in the e-mail subject. */
+  readonly startupName = input<string>('');
 
   private readonly snackBar = inject(MatSnackBar);
 
@@ -53,25 +62,38 @@ export class TokenPanel {
   /**
    * Every executive appears, including the ones that cannot be reached. Hiding
    * them would make "there is nobody to send to" indistinguishable from "the
-   * phone is missing from the record", which is the actionable case.
+   * contact is missing from the record", which is the actionable case.
+   *
+   * Two channels, same message: WhatsApp is the fund's habit and comes first;
+   * e-mail is the fallback that keeps an executive reachable when the phone is
+   * missing or unusable. Both hand the composed message to the operator's own
+   * client, which is where the send is confirmed.
    */
   readonly recipients = computed<Recipient[]>(() => {
     const messagePeriod = this.messagePeriod();
     const url = this.formUrl();
+    const subject = buildIndicatorRequestSubject(this.startupName(), messagePeriod);
     return this.executives().map((executive) => {
       const message = buildIndicatorRequestMessage(executive.name, messagePeriod, url);
       return {
         name: executive.name,
         role: executive.role,
-        formattedPhone: formatBrazilianPhone(executive.phone),
+        formattedPhone: formatPhone(executive.phone),
+        email: normalizeContactEmail(executive.email),
         whatsappUrl: buildWhatsAppLink(executive.phone, message),
+        mailtoUrl: buildMailtoLink(executive.email, subject, message),
         message,
       };
     });
   });
 
-  readonly reachable = computed(() => this.recipients().filter((r) => r.whatsappUrl !== null));
-  readonly blocked = computed(() => this.recipients().filter((r) => r.whatsappUrl === null));
+  /** Reachable by at least one channel; blocked only when neither resolves. */
+  readonly reachable = computed(() =>
+    this.recipients().filter((r) => r.whatsappUrl !== null || r.mailtoUrl !== null),
+  );
+  readonly blocked = computed(() =>
+    this.recipients().filter((r) => r.whatsappUrl === null && r.mailtoUrl === null),
+  );
 
   copyLink(): void {
     // The link is always visible as text above, so a clipboard failure — common

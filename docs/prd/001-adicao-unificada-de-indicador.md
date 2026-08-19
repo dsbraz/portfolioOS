@@ -220,14 +220,22 @@ Onde o controle deve **sumir** (não basta bloquear no backend):
         > Segue o link para atualizações dos dados referentes a
         > [mês de referência]: [link do formulário]
         > Obrigado
-  - [x] Número brasileiro sem código do país é normalizado para +55; número
-        inválido é recusado com orientação para corrigir o cadastro do
-        executivo.
+  - [x] O telefone do executivo é cadastrado **com o código do país** (E.164) e
+        o produto nunca infere o país: número sem prefixo é recusado no
+        cadastro, com orientação. Executivo de qualquer país é destinatário
+        normal; número que não resolve é recusado com orientação para corrigir
+        o cadastro.
   - [x] O painel não oferece entrada de número avulso — o destinatário vem
         sempre do cadastro.
-  - [x] Startup sem executivo com telefone: o painel explica e orienta a
-        cadastrar o telefone do responsável na aba Executivos; o envio fica
-        indisponível até lá.
+  - [x] **E-mail é o canal alternativo** (decisão de 19/08/2026): quando o
+        executivo não tem telefone utilizável mas tem e-mail cadastrado, o
+        painel oferece o envio por `mailto:`, com a mesma mensagem e o assunto
+        nomeando startup e período. O WhatsApp continua sendo o canal primário.
+        Como no `wa.me`, **a plataforma não envia nada** — quem confirma é a
+        pessoa, no próprio programa de e-mail.
+  - [x] Startup sem executivo com telefone **nem e-mail**: o painel explica e
+        orienta a cadastrar o contato do responsável na aba Executivos; o envio
+        fica indisponível até lá.
   - [x] Um agente de navegador completa gerar→enviar usando apenas papéis e
         nomes acessíveis, verificado por teste que percorre o fluxo dessa
         forma.
@@ -288,10 +296,10 @@ Onde o controle deve **sumir** (não basta bloquear no backend):
 
 | # | Decisão | Opções | Quem decide | Bloqueia entrega? |
 |---|---|---|---|---|
-| 1 | Expiração do link | nunca (atual) · 30 dias · fim do mês seguinte; com ou sem revogação manual | Produto/CTO | Não — v1 mantém sem expiração. **Atenção:** a automação planejada (PRD-003) cunha links todo mês; sem expiração, o estoque de segredos portadores válidos só cresce — quando a automação vier, expirar deixa de ser opcional |
+| 1 | Expiração do link | nunca (atual) · 30 dias · fim do mês seguinte; com ou sem revogação manual | Produto/CTO | Não — v1 mantém sem expiração. **Atenção:** a automação planejada (PRD-003) cunha links todo mês; sem expiração, o estoque de links de escrita válidos só cresce — quando a automação vier, expirar deixa de ser opcional |
 | 2 | Aviso de sobrescrita e procedência | manter silencioso (atual) · avisar no reenvio · registrar origem (manual/formulário) | Produto/CTO | Não |
 | 3 | Envio público em branco | aceitar (atual) · exigir ao menos um campo | Produto/CTO | Não |
-| 4 | Responsável pelo report como contato formal | escolher a cada envio entre os executivos com telefone (v1) · marcar um executivo como "responsável" da startup, pré-selecionado no envio | Produto/CTO | Não — v1 lista e o administrador escolhe |
+| 4 | Responsável pelo report como contato formal | escolher a cada envio entre os executivos alcançáveis, por telefone ou e-mail (v1) · marcar um executivo como "responsável" da startup, pré-selecionado no envio | Produto/CTO | Não — v1 lista e o administrador escolhe |
 
 ## 10. Referências
 

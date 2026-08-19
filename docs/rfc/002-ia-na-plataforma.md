@@ -489,7 +489,7 @@ travados por spec próprio, agrupados por tela:
 | Detalhe da startup | abas "Indicadores Mensais", "Reuniões de Conselho", "Executivos"; botões "Adicionar reunião", "Adicionar indicador" e "Adicionar executivo"; cartões do topo (Receita Total, Total da Participação, Saldo em Caixa, EBITDA/Burn, Headcount) |
 | Ações de linha (`operar-portfolioos`) | "Ver indicador de {Mmm/AAAA}", "Ações do indicador de {period}", "Ver reunião de {dd/mm/aaaa}", "Ações da reunião de {date}", "Ver executivo {name}", "Ações de {name}" |
 | Entrada de indicador (`cobrar-indicadores`) | botão "Adicionar indicador"; título do diálogo "Adicionar indicador — {Mmm/AAAA}"; modos "Preencher agora" e "Gerar link para a investida"; botões "Salvar indicador" e "Gerar link" |
-| Painel do link | "Copiar link de {Mmm/AAAA}"; "Enviar por WhatsApp para {name}" |
+| Painel do link | "Copiar link de {Mmm/AAAA}"; "Enviar por WhatsApp para {name}"; "Enviar por e-mail para {name}"; a pill de impedimento "Sem canal de envio" |
 | Diálogo de reunião | título "Nova Reunião de Conselho"; rótulos Data, Participantes, Resumo, Pontos de Atenção, Próximos passos; botão "Adicionar" |
 | Vista de leitura | rótulos Destaques do mês, Próximos passos e necessidades, Comentários do fundo; botão "Fechar" |
 

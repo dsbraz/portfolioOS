@@ -30,13 +30,30 @@
       <label class="field-label" id="l-886c-email" for="f-886c-email">Email</label>
       <mat-form-field appearance="outline">
   <input id="f-886c-email" matInput formControlName="email" type="email" />
+        <mat-hint>Serve como alternativa de envio quando não há WhatsApp.</mat-hint>
+        @if (form.controls.email.hasError('email')) {
+          <mat-error>Informe um e-mail válido (nome&#64;dominio.com).</mat-error>
+        }
       </mat-form-field>
     </div>
 
     <div class="field">
       <label class="field-label" id="l-886c-phone" for="f-886c-phone">Telefone</label>
       <mat-form-field appearance="outline">
-  <input id="f-886c-phone" matInput formControlName="phone" />
+  <input
+          id="f-886c-phone"
+          matInput
+          formControlName="phone"
+          type="tel"
+          inputmode="tel"
+          placeholder="+55 11 91234-5678"
+        />
+        <mat-hint>Comece pelo código do país (+55 no Brasil, +1 nos EUA…).</mat-hint>
+        @if (form.controls.phone.hasError('phoneCountryPrefix')) {
+          <mat-error>
+            Informe o telefone com o código do país, começando com +.
+          </mat-error>
+        }
       </mat-form-field>
     </div>
 
@@ -55,7 +72,9 @@
     <button mat-stroked-button (click)="onCancel()">Fechar</button>
   } @else {
     <button mat-stroked-button (click)="onCancel()">Cancelar</button>
-    <button mat-flat-button color="primary" (click)="onSubmit()" [disabled]="form.invalid">
+    <!-- Stays enabled so a click on an invalid value points at the field; a
+         disabled button explains nothing. -->
+    <button mat-flat-button color="primary" (click)="onSubmit()">
       {{ isEditMode ? 'Salvar' : 'Adicionar' }}
     </button>
   }
