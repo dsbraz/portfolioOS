@@ -6,6 +6,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 
 import { Executive } from '../../../models/executive.model';
+import {
+  formatPhone,
+  normalizeInternationalPhone,
+  phoneCountryPrefixValidator,
+} from '../../../models/whatsapp';
 
 export interface ExecutiveFormDialogData {
   executive?: Executive;
@@ -41,7 +46,9 @@ export class ExecutiveFormDialog implements OnInit {
     name: ['', [Validators.required, Validators.maxLength(255)]],
     role: [''],
     email: [''],
-    phone: [''],
+    // The country prefix is mandatory: the fund's executives are not all in
+    // Brazil, so a local-format number cannot be told apart from a foreign one.
+    phone: ['', [phoneCountryPrefixValidator]],
     linkedin: [''],
   });
 
@@ -59,7 +66,9 @@ export class ExecutiveFormDialog implements OnInit {
           { label: 'Nome', value: e.name || null },
           { label: 'Cargo', value: e.role || null },
           { label: 'Email', value: e.email || null },
-          { label: 'Telefone', value: e.phone || null },
+          // Falls back to the raw value so a legacy record without the prefix
+          // is shown as it is, rather than disappearing behind a "—".
+          { label: 'Telefone', value: formatPhone(e.phone) ?? e.phone ?? null },
           { label: 'LinkedIn', value: e.linkedin || null, kind: 'long' },
         ],
       },
@@ -73,8 +82,14 @@ export class ExecutiveFormDialog implements OnInit {
   }
 
   onSubmit(): void {
-    if (this.form.invalid) return;
-    this.dialogRef.close(this.form.getRawValue());
+    if (this.form.invalid) {
+      // Reveal the error instead of doing nothing silently.
+      this.form.markAllAsTouched();
+      return;
+    }
+    const raw = this.form.getRawValue();
+    // Stored in E.164, the same shape the server persists.
+    this.dialogRef.close({ ...raw, phone: normalizeInternationalPhone(raw.phone) });
   }
 
   onCancel(): void {

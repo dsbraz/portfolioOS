@@ -84,3 +84,10 @@
   color: var(--color-text-muted);
   font-size: 0.8125rem;
 }
+
+// A sample number is read digit by digit; breaking it across lines would make
+// the example harder to copy than the rule it illustrates.
+.phone-example {
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}

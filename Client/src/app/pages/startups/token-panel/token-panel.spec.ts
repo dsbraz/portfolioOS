@@ -23,7 +23,7 @@ describe('TokenPanel', () => {
     name: 'Ana Costa',
     role: 'CEO',
     email: null,
-    phone: '(11) 91234-5678',
+    phone: '+5511912345678',
     linkedin: null,
     created_at: '',
     updated_at: '',
@@ -57,6 +57,23 @@ describe('TokenPanel', () => {
     expect(element.querySelector('[aria-label="Enviar por WhatsApp para Ana Costa"]')).toBeTruthy();
     expect(element.querySelector('[aria-label="Enviar por WhatsApp para Bruno Lima"]')).toBeNull();
     expect(element.textContent).toContain('Sem telefone válido');
+  });
+
+  // The fund's executives are not all in Brazil: a foreign number carrying its
+  // country prefix is a normal recipient, not an impediment.
+  it('reaches a foreign executive whose number carries its country prefix', async () => {
+    const element = await render([
+      executive({ id: 'e3', name: 'John Miller', phone: '+14155551234' }),
+    ]);
+
+    const send = element.querySelector<HTMLAnchorElement>(
+      '[aria-label="Enviar por WhatsApp para John Miller"]',
+    );
+    expect(send?.getAttribute('href')).toContain('https://wa.me/14155551234?text=');
+    // Shown as stored — no invented grouping for a country whose rules we do
+    // not encode.
+    expect(element.textContent).toContain('+14155551234');
+    expect(element.textContent).not.toContain('Sem telefone válido');
   });
 
   // NOTE: copyLink's clipboard-failure branch (RFC-001 §6) is implemented in the

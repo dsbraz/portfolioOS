@@ -24,7 +24,7 @@ describe('TokenPanelDialog', () => {
     name: 'Ana Costa',
     role: 'CEO',
     email: null,
-    phone: '(11) 91234-5678',
+    phone: '+5511912345678',
     linkedin: null,
     created_at: '',
     updated_at: '',

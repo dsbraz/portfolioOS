@@ -22,6 +22,7 @@ import { forkJoin } from 'rxjs';
 import { Startup, StartupStatus, STARTUP_STATUS_CONFIG } from '../../../models/startup.model';
 import { MonthlyIndicator, MONTH_LABELS } from '../../../models/monthly-indicator.model';
 import { formatCurrencyBRL } from '../../../models/formatters';
+import { formatPhone as toDisplayPhone } from '../../../models/whatsapp';
 import { SortState, applySort } from '../../../models/sorting';
 import { participationValue } from '../../../models/participation';
 import { BoardMeeting } from '../../../models/board-meeting.model';
@@ -236,6 +237,12 @@ export class StartupDetail implements OnInit {
 
   formatCurrency(value: number | null): string {
     return formatCurrencyBRL(value) ?? '-';
+  }
+
+  /** Falls back to the stored value so a legacy record without the country
+   *  prefix stays visible — and visibly in need of a fix. */
+  formatPhone(value: string | null): string {
+    return toDisplayPhone(value) ?? value ?? '-';
   }
 
   extractDomain(url: string): string {

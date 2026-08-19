@@ -9,7 +9,7 @@ import { MONTH_LABELS, MONTH_LABELS_FULL } from '../../../models/monthly-indicat
 import {
   buildIndicatorRequestMessage,
   buildWhatsAppLink,
-  formatBrazilianPhone,
+  formatPhone,
 } from '../../../models/whatsapp';
 
 /** One executive, resolved for sending — or blocked, with the reason visible. */
@@ -63,7 +63,7 @@ export class TokenPanel {
       return {
         name: executive.name,
         role: executive.role,
-        formattedPhone: formatBrazilianPhone(executive.phone),
+        formattedPhone: formatPhone(executive.phone),
         whatsappUrl: buildWhatsAppLink(executive.phone, message),
         message,
       };
