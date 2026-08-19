@@ -116,9 +116,9 @@ async def test_uma_escrita_silenciosa_nao_escapa(session: AsyncSession):
 async def test_cobre_todas_as_tabelas_alcancaveis_pelo_produto(session: AsyncSession):
     """Uma tabela fora da lista é um ponto cego permanente."""
     from app.domain.models import Base
-    from scripts.eval_state import TABELAS_OBSERVADAS
+    from scripts.eval_state import tabelas_observadas
 
-    observadas = {modelo.__tablename__ for _, modelo in TABELAS_OBSERVADAS}
+    observadas = {modelo.__tablename__ for _, modelo in tabelas_observadas()}
     existentes = set(Base.metadata.tables) - {"alembic_version"}
 
     assert existentes <= observadas, (

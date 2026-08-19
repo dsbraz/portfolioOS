@@ -20,33 +20,42 @@ so when an eval fails the harness is never the suspect.
 """
 
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domain.models.board_meeting import BoardMeeting
-from app.domain.models.deal import Deal
-from app.domain.models.executive import Executive
-from app.domain.models.monthly_indicator import MonthlyIndicator
-from app.domain.models.monthly_indicator_token import MonthlyIndicatorToken
-from app.domain.models.startup import Startup
-from app.domain.models.user import User
-from app.domain.models.user_invite import UserInvite
 
-# Every table an agent could touch through the product. A skill that writes
-# somewhere absent from this list would slip past the tripwire, so adding a
-# table to the domain means adding it here.
-TABELAS_OBSERVADAS = (
-    ("startups", Startup),
-    ("indicadores", MonthlyIndicator),
-    ("links", MonthlyIndicatorToken),
-    ("reunioes", BoardMeeting),
-    ("executivos", Executive),
-    ("negocios", Deal),
-    ("usuarios", User),
-    ("convites", UserInvite),
-)
+def tabelas_observadas() -> tuple[tuple[str, Any], ...]:
+    """Every table an agent could touch through the product.
+
+    Imported lazily so `diff` stays free of SQLAlchemy: the verdict half of an
+    evaluation runs on the host, where the ORM is not installed — only the
+    snapshot half runs inside the server container.
+
+    A skill that wrote somewhere absent from this list would slip past the
+    tripwire, so adding a table to the domain means adding it here. A test
+    enforces exactly that.
+    """
+    from app.domain.models.board_meeting import BoardMeeting
+    from app.domain.models.deal import Deal
+    from app.domain.models.executive import Executive
+    from app.domain.models.monthly_indicator import MonthlyIndicator
+    from app.domain.models.monthly_indicator_token import MonthlyIndicatorToken
+    from app.domain.models.startup import Startup
+    from app.domain.models.user import User
+    from app.domain.models.user_invite import UserInvite
+
+    return (
+        ("startups", Startup),
+        ("indicadores", MonthlyIndicator),
+        ("links", MonthlyIndicatorToken),
+        ("reunioes", BoardMeeting),
+        ("executivos", Executive),
+        ("negocios", Deal),
+        ("usuarios", User),
+        ("convites", UserInvite),
+    )
 
 # Columns that move on their own and would drown a diff in noise. `updated_at`
 # is deliberately NOT here: an update that changes nothing but the timestamp is
@@ -77,10 +86,12 @@ def _linha(registro: Any) -> dict[str, Any]:
     }
 
 
-async def snapshot(session: AsyncSession) -> dict[str, dict[str, dict[str, Any]]]:
+async def snapshot(session: "AsyncSession") -> dict[str, dict[str, dict[str, Any]]]:
     """Every observed row, keyed by table then id."""
+    from sqlalchemy import select
+
     estado: dict[str, dict[str, dict[str, Any]]] = {}
-    for nome, modelo in TABELAS_OBSERVADAS:
+    for nome, modelo in tabelas_observadas():
         resultado = await session.execute(select(modelo))
         estado[nome] = {
             str(registro.id): _linha(registro) for registro in resultado.scalars().all()
@@ -95,7 +106,7 @@ def diff(
     """What changed between two snapshots, in a stable order."""
     mudancas: list[Mudanca] = []
 
-    for tabela, _ in TABELAS_OBSERVADAS:
+    for tabela in sorted(set(antes) | set(depois)):
         linhas_antes = antes.get(tabela, {})
         linhas_depois = depois.get(tabela, {})
 
