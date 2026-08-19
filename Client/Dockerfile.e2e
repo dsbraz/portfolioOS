@@ -1,0 +1,15 @@
+# Runner for the end-to-end suite: browsers already installed, matched to the
+# @playwright/test version in package.json. Bumping one means bumping the other
+# — Playwright refuses to drive browsers it was not built against.
+FROM mcr.microsoft.com/playwright:v1.62.1-noble
+
+WORKDIR /app
+
+# Only the manifests, so the dependency layer survives a change to a spec.
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY playwright.config.ts ./
+COPY e2e ./e2e
+
+CMD ["npx", "playwright", "test"]
