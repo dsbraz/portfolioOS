@@ -14,12 +14,18 @@ RUN npm ci
 # resolves to a newer Playwright and downloads a second browser at run time —
 # slow, and it makes an evaluation depend on the network.
 RUN npm install --no-save @playwright/mcp@0.0.78 \
-    # Its Playwright is a hair newer than the image's, so it wants a browser
-    # build the image does not carry. Fetching it HERE, at build time, is what
-    # keeps an evaluation offline and repeatable — otherwise the first agent
-    # run downloads ~150 MB mid-evaluation and the result depends on the
-    # network.
-    && npx playwright install chromium --only-shell
+    # The MCP nests its own Playwright (an alpha), which pins a browser
+    # revision the image does not carry — 1232 vs the image's 1234. The install
+    # must run through the MCP's OWN CLI, or `npx` resolves the root Playwright
+    # and fetches the wrong revision, and the first agent run then downloads
+    # ~150 MB mid-evaluation. Fetching HERE, at build time, keeps an evaluation
+    # offline and repeatable.
+    # SKIP_BROWSER_GC: the nested CLI garbage-collects every browser absent
+    # from ITS registry — which is all of them, including the chromium-1234 the
+    # test suite runs on. Without the flag this line deletes the suite's
+    # browser while installing the MCP's.
+    && PLAYWRIGHT_SKIP_BROWSER_GC=1 \
+       node node_modules/@playwright/mcp/cli.js install-browser chrome-for-testing
 
 COPY playwright.config.ts ./
 COPY e2e ./e2e

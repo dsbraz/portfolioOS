@@ -89,21 +89,28 @@ def configuracao_mcp(destino: Path, sessao_no_container: str) -> Path:
             "navegador": {
                 "command": "docker",
                 "args": [
-                    "compose", "-f", "docker-compose.e2e.yml",
+                    # Absolute path: the MCP server is spawned from the agent's
+                    # own cwd (the throwaway workspace), where a relative
+                    # compose path resolves to nothing and the server dies
+                    # before it registers a single tool. That failure is
+                    # silent — the agent just sees no browser.
+                    "compose", "-f", str(PROJETO / "docker-compose.e2e.yml"),
                     "run", "--rm", "-T",
                     "-v", f"{destino}:/sessao",
                     "e2e",
                     # Pré-instalado na imagem e fixado à versão dos browsers dela.
                     "npx", "@playwright/mcp",
                     "--headless",
-                    # The Playwright image ships bundled Chromium, not the
-                    # `chrome` channel the MCP defaults to; without this the
-                    # browser never launches.
-                    "--browser", "chromium",
+                    # The exact binary baked into the image. Channel names are
+                    # a moving target — this MCP's default resolved to branded
+                    # Chrome at /opt/google/chrome, then to chrome-for-testing,
+                    # depending on what existed. A pinned path cannot be
+                    # re-resolved into the wrong browser.
+                    "--executable-path",
+                    "/ms-playwright/chromium-1232/chrome-linux/chrome",
                     "--isolated",
                     "--storage-state", sessao_no_container,
                 ],
-                "cwd": str(PROJETO),
             }
         }
     }

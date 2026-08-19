@@ -149,3 +149,21 @@ def test_agente_que_nao_executou_reprova_em_vez_de_passar_de_graca():
 
     assert not resultado.passou
     assert "não executou" in resultado.motivos[0]
+
+
+def test_nenhum_token_de_evidencia_pode_estar_no_proprio_prompt():
+    """Trava a terceira variante do passe vazio.
+
+    Regressão real: o cenário exigia o NOME da investida, que estava no
+    prompt. O agente nunca alcançou a plataforma, ecoou o nome, e passou. Um
+    token de evidência só prova leitura se ele vive exclusivamente nos dados.
+    """
+    from cenarios import CENARIOS
+
+    for cenario in CENARIOS:
+        prompt = cenario.prompt.casefold()
+        for token in cenario.exige_no_texto:
+            assert token.casefold() not in prompt, (
+                f"{cenario.nome}: o token {token!r} aparece no próprio prompt — "
+                "um eco satisfaz a exigência sem nenhuma leitura real"
+            )

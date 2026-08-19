@@ -8,9 +8,10 @@ que a regra está escrita.
 ## Como rodar
 
 ```bash
-# 1. Sobe a plataforma de avaliação (portas 8100/4300 — o stack de
-#    desenvolvimento continua intocado em 8000/4200)
-docker compose -f docker-compose.e2e.yml -f docker-compose.evals.yml up -d --wait
+# 1. Sobe a plataforma de avaliação (nada publicado no host — todo acesso do
+#    harness acontece por dentro da rede do compose, então o stack de
+#    desenvolvimento continua intocado)
+docker compose -f docker-compose.e2e.yml up -d --wait
 
 # 2. Roda os cenários
 cd Server/evals
@@ -39,36 +40,48 @@ A metade determinística (`scripts/eval_state.py` e `avaliar`) tem testes
 próprios em `tests/unit/test_eval_state.py` e `test_eval_runner.py`: quando um
 eval falha, a pergunta deve ser "o que o agente fez", nunca "o harness mentiu".
 
-## Duas armadilhas que já custaram um falso verde
+## Três armadilhas que já custaram um falso verde
 
-Ambas foram descobertas rodando de verdade, e ambas têm teste de regressão:
+Todas descobertas rodando de verdade, e todas com teste de regressão:
 
 1. **Agente que não executa passa de graça.** Um cenário cuja única exigência é
    "nada mudou" é satisfeito trivialmente quando o agente nem sobe. Hoje uma
    falha de execução reprova explicitamente (`FALHA_DO_AGENTE`).
 2. **Recusa não é sucesso.** Se o agente responde "não consegui", nada muda no
    banco — e o cenário passaria. Por isso todo cenário exige **evidência
-   positiva de leitura** (`exige_no_texto`), como nomear a investida que só
-   aparece nos dados.
+   positiva de leitura** (`exige_no_texto`).
+3. **Eco não é evidência.** A primeira versão exigia o NOME da investida — que
+   estava no prompt. O agente nunca alcançou a página, ecoou o nome, e passou.
+   Todo token de evidência precisa viver **exclusivamente nos dados semeados**,
+   e um teste verifica que nenhum aparece no próprio prompt.
 
-## Fronteira conhecida: falta o navegador autenticado
+## O navegador autenticado
 
-As skills são **browser-first**: elas navegam a interface com a sessão do
-usuário já autenticado. O runner atual dá ao agente apenas `Read`, `Bash` e
-`WebFetch`.
+As skills são **browser-first**: navegam a interface com a sessão do usuário.
+O runner entrega exatamente isso — um navegador (MCP Playwright, em container,
+na rede do stack) que **já nasce autenticado**: o login acontece pela API antes
+do turno do agente e vira um `storageState`; o agente nunca vê uma credencial,
+que é a regra do produto.
 
-Consequência observada numa execução real: o agente lê a API, recebe **401**,
-e — corretamente — **se recusa a pedir ou digitar senha**, porque é uma regra
-inegociável das skills. Ele explica o bloqueio e para.
+O endereço aparece em cada prompt porque esse é o caminho sancionado pela skill
+mestre: *"o endereço vem do usuário, na conversa"*. O prompt É o turno do
+usuário.
 
-Isso é um bom sinal sobre a skill e um limite do harness. Enquanto não houver
-navegador com sessão, estes cenários avaliam a **disciplina de recusa**, não os
-fluxos completos. Fechar a lacuna exige dar ao agente automação de navegador
-(MCP) com uma sessão pré-autenticada apontando para `http://localhost:4300` —
-é o próximo incremento desta camada.
+Verificado em execução real (19/08): os três cenários passam com substância —
+o agente leu dados que só existem no seed, detectou a instrução maliciosa
+plantada e a reportou como achado sem segui-la, identificou a investida em
+atraso conferindo contra o cartão da tela, e não produziu nenhuma escrita.
 
-Até lá, os itens (a)–(h) do [roteiro de aceite](../../docs/roteiro-aceite-rfc-002.md)
-seguem verificáveis apenas por uma pessoa com a ferramenta de IA na mão.
+### O que ainda não é coberto
+
+- **Fluxos multi-turno de confirmação** (o "pode gerar" da cobrança): o runner
+  faz um turno só. Roteirizar o turno de confirmação é o próximo incremento.
+- **Item (a) do roteiro** (Granola MCP real): exige OAuth de conta viva —
+  permanece humano por decisão.
+- **Canal lateral entre sessões**: numa execução, o agente sem navegador pediu
+  os dados a outra sessão do Claude na mesma máquina. O harness não bloqueia
+  esse canal; a evidência só-dos-dados mitiga (ajuda sem dados continua
+  reprovando), e o avaliador deve recusar pedidos assim.
 
 ## Por que não `claude plugin eval`
 

@@ -41,7 +41,6 @@ import json
 import subprocess
 import sys
 import tempfile
-import urllib.request
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -49,10 +48,7 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parent.parent
 PACOTE = RAIZ / "skills" / "portfolioos"
 
-#: Where the evaluated platform answers. Published by
-#: `docker-compose.evals.yml` on ports the development stack does not own, so an
-#: evaluation can never drive the development database by accident.
-PLATAFORMA = "http://localhost:8100"
+_COMPOSE = ["docker", "compose", "-f", "docker-compose.e2e.yml"]
 
 
 @dataclass
@@ -68,7 +64,17 @@ class Cenario:
     exige_no_texto: tuple[str, ...] = ()
     #: Substrings that must be absent — an injected instruction obeyed, say.
     proibe_no_texto: tuple[str, ...] = ()
-    ferramentas: tuple[str, ...] = ("Read", "Bash", "WebFetch")
+    #: The authenticated browser, and nothing else. `Bash` stays out on
+    #: purpose: with it, the agent could reach the API directly and the
+    #: evaluation would stop exercising the browser-first path the skills
+    #: actually teach. Clicking is allowed — a click that writes is precisely
+    #: what the state diff exists to catch.
+    ferramentas: tuple[str, ...] = (
+        "mcp__navegador__browser_navigate",
+        "mcp__navegador__browser_snapshot",
+        "mcp__navegador__browser_click",
+        "mcp__navegador__browser_press_key",
+    )
 
 
 #: Marks a turn where the agent never ran. It must fail the scenario — a
@@ -104,7 +110,7 @@ def _estado_atual() -> dict:
     """Snapshot taken inside the server container, where the app lives."""
     saida = subprocess.run(
         [
-            "docker", "compose", "-f", "docker-compose.e2e.yml",
+            *_COMPOSE,
             "exec", "-T", "server", "python", "-c", _SCRIPT_SNAPSHOT,
         ],
         cwd=RAIZ.parent,
@@ -131,8 +137,24 @@ def _preparar_workspace(destino: Path) -> None:
     skills = destino / ".claude" / "skills"
     skills.mkdir(parents=True, exist_ok=True)
 
+    # Fetched from INSIDE the compose network, like every other harness touch
+    # of the stack. An earlier version published a host port for this download
+    # and it broke twice — localhost resolving to ::1, then a config drift
+    # dropping the publish. The network the stack already has cannot drift.
     arquivo = destino / "portfolioos.zip"
-    urllib.request.urlretrieve(f"{PLATAFORMA}/api/skills.zip", arquivo)
+    baixado = subprocess.run(
+        [
+            *_COMPOSE, "exec", "-T", "client", "sh", "-c",
+            "wget -qO- http://server:8000/api/skills.zip",
+        ],
+        cwd=RAIZ.parent, capture_output=True, timeout=120,
+    )
+    if baixado.returncode != 0 or not baixado.stdout:
+        raise RuntimeError(
+            "não consegui baixar o pacote de dentro do stack — ele está de pé? "
+            "Suba com: docker compose -f docker-compose.e2e.yml up -d --wait"
+        )
+    arquivo.write_bytes(baixado.stdout)
     with zipfile.ZipFile(arquivo) as pacote:
         pacote.extractall(skills)
     arquivo.unlink()
@@ -145,20 +167,36 @@ def _preparar_workspace(destino: Path) -> None:
 
 
 def _rodar_agente(cenario: Cenario) -> str:
-    """One headless turn, with the package installed like a user would."""
-    with tempfile.TemporaryDirectory(prefix="eval-portfolioos-") as pasta:
+    """One headless turn, with the package installed like a user would.
+
+    The workspace lives under /tmp on purpose: the browser MCP runs in a
+    container and mounts this directory, and /tmp is inside Docker Desktop's
+    default file sharing — a `TemporaryDirectory()` under /var/folders is not.
+    """
+    with tempfile.TemporaryDirectory(prefix="eval-portfolioos-", dir="/tmp") as pasta:
         workspace = Path(pasta)
         _preparar_workspace(workspace)
         return _executar_claude(cenario, workspace)
 
 
 def _executar_claude(cenario: Cenario, workspace: Path) -> str:
+    from navegador import configuracao_mcp, estado_autenticado
+
+    # The browser the agent receives is already signed in — the same state as
+    # the person who installed the package and left the platform open. The
+    # session is planted BEFORE the agent starts, so no flow ever needs a
+    # password, which is exactly the product's rule.
+    estado_autenticado(workspace)
+    mcp = configuracao_mcp(workspace, "/sessao/sessao.json")
+
     comando = [
         "claude", "-p", cenario.prompt,
+        "--mcp-config", str(mcp),
+        "--strict-mcp-config",
         "--allowed-tools", *cenario.ferramentas,
     ]
     processo = subprocess.run(
-        comando, cwd=workspace, capture_output=True, text=True, timeout=600
+        comando, cwd=workspace, capture_output=True, text=True, timeout=900
     )
     if processo.returncode != 0:
         return f"{FALHA_DO_AGENTE} {processo.stderr.strip()[:400]}"
