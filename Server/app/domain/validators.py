@@ -47,6 +47,33 @@ def normalize_international_phone(value: str | None) -> str | None:
     return candidate
 
 
+# One "@", no spaces, and a dotted domain. Deliberately not the full RFC 5322
+# grammar: the goal is to refuse an address the product cannot compose a message
+# to, not to certify deliverability — only sending proves that.
+_EMAIL = re.compile(r"^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+$")
+
+
+def normalize_contact_email(value: str | None) -> str | None:
+    """Normalizes an executive's e-mail, the fallback channel to WhatsApp.
+
+    Lowercased and trimmed so one address has one stored shape. Absence stays
+    absence; anything present must be a plausible address or the call raises
+    `ValueError` — the same reasoning as the phone, since this is an address the
+    product will build a `mailto:` for.
+    """
+    if value is None:
+        return None
+
+    candidate = value.strip().lower()
+    if not candidate:
+        return None
+
+    if not _EMAIL.match(candidate):
+        raise ValueError(f"E-mail invalido: {value.strip()}")
+
+    return candidate
+
+
 def validate_period_not_future(month: int, year: int) -> None:
     today = date.today()
     if year > today.year or (year == today.year and month > today.month):

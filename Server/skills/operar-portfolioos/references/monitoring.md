@@ -86,9 +86,13 @@ indicador`, which opens `Adicionar indicador — {Mmm/AAAA}`. Pick the period, t
 the mode: `Preencher agora` fills the reportable zone plus the fund note, and
 `Gerar link para a investida` creates the link. In link mode, `Gerar link` opens
 the panel inline: the link as text under `Link do formulário`, a `Copiar link de
-{Mmm/AAAA}` control, and one `Enviar por WhatsApp para {name}` link per executive
-with a valid registered phone. An executive whose phone does not resolve appears
-as `Sem telefone válido` and gets no send control.
+{Mmm/AAAA}` control, and one send control per reachable executive:
+`Enviar por WhatsApp para {name}` when the registered phone resolves, and
+`Enviar por e-mail para {name}` when a registered e-mail exists. WhatsApp is the
+fund's primary channel; e-mail is the alternative when the phone is missing or
+unusable. Both open the operator's own client with the message ready — the
+platform never sends anything. An executive with neither channel appears as
+`Sem canal de envio` and gets no send control.
 
 `Mais ações` → `Links anteriores` lists existing periods; `Abrir link de
 {Mmm/AAAA}` opens that panel for an existing token. A startup and period have one

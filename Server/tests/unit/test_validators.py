@@ -4,6 +4,7 @@ from unittest.mock import patch
 import pytest
 
 from app.domain.validators import (
+    normalize_contact_email,
     normalize_international_phone,
     validate_period_not_future,
     validate_username_no_spaces,
@@ -99,3 +100,44 @@ def test_phone_without_country_prefix_raises(raw):
 def test_phone_that_is_not_a_valid_e164_number_raises(raw):
     with pytest.raises(ValueError, match="[Tt]elefone"):
         normalize_international_phone(raw)
+
+
+# --- Contact e-mail: the fallback channel when WhatsApp is not available ---
+#
+# The e-mail is an address the product will compose a message to, so it is
+# validated at registration for the same reason the phone is: an address that
+# cannot be reached is better refused than discovered at send time.
+
+
+@pytest.mark.parametrize(
+    "raw,expected",
+    [
+        ("ana@startup.com.br", "ana@startup.com.br"),
+        ("  Ana@Startup.com.br  ", "ana@startup.com.br"),
+        ("john.miller+fundo@example.co.uk", "john.miller+fundo@example.co.uk"),
+    ],
+)
+def test_contact_email_is_normalized(raw, expected):
+    assert normalize_contact_email(raw) == expected
+
+
+def test_absent_contact_email_stays_absent():
+    assert normalize_contact_email(None) is None
+    assert normalize_contact_email("") is None
+    assert normalize_contact_email("   ") is None
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "ana arroba startup",
+        "ana@",
+        "@startup.com",
+        "ana@startup",
+        "ana @startup.com",
+        "ana@@startup.com",
+    ],
+)
+def test_invalid_contact_email_raises(raw):
+    with pytest.raises(ValueError, match="[Ee]-?mail"):
+        normalize_contact_email(raw)

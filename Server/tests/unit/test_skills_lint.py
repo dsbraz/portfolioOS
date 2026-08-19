@@ -206,10 +206,17 @@ def test_chase_skill_never_assumes_the_send_mode_or_the_recipient():
         "Link do formulário",
         "Links anteriores",
         "Enviar por WhatsApp para {nome}",
-        "Sem telefone válido",
+        "Enviar por e-mail para {nome}",
+        "Sem canal de envio",
         "Executivos",
     ):
         assert label in chase, label
+
+    # Channel order is a product rule, not a preference: WhatsApp is tried
+    # first, and e-mail is the fallback only when WhatsApp is unavailable.
+    assert "tente sempre o whatsapp primeiro" in normalized
+    assert "só use o e-mail quando o whatsapp não estiver disponível" in normalized
+    assert "a plataforma nunca envia nada sozinha" in normalized
 
 
 def test_package_source_artifacts_are_uploadable_without_duplicating_skills():

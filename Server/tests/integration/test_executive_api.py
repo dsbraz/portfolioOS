@@ -164,3 +164,24 @@ async def test_executive_phone_can_be_cleared(client, startup_id):
     assert resp.status_code == 200
     # Absence is not a validation failure — an executive may have no phone.
     assert resp.json()["phone"] is None
+
+
+@pytest.mark.asyncio
+async def test_create_executive_normalizes_the_email(client, startup_id):
+    resp = await client.post(
+        f"/api/startups/{startup_id}/executives",
+        json={"name": "Ana Costa", "email": "  Ana@Startup.com.BR "},
+    )
+    assert resp.status_code == 201
+    assert resp.json()["email"] == "ana@startup.com.br"
+
+
+@pytest.mark.asyncio
+async def test_create_executive_with_invalid_email_is_refused(client, startup_id):
+    # The e-mail is the fallback send channel, so an address the product cannot
+    # compose to is refused at registration rather than at send time.
+    resp = await client.post(
+        f"/api/startups/{startup_id}/executives",
+        json={"name": "Ana Costa", "email": "ana arroba startup"},
+    )
+    assert resp.status_code == 400
