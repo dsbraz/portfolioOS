@@ -412,8 +412,10 @@ profundidade e explica claramente as diferenças de sessão e segurança.
         WhatsApp. No modo automático, o agente só envia depois da escolha
         explícita nesta execução e confere o destinatário contra a fila antes
         de cada disparo.
-  - [ ] Startup sem executivo com telefone cadastrado aparece na fila marcada
-        como impedida, com o motivo, e nunca entra no envio.
+  - [ ] Startup sem executivo alcançável — sem telefone utilizável **e** sem
+        e-mail — aparece na fila marcada como impedida, com o motivo, e nunca
+        entra no envio. Havendo só e-mail, a skill cai para esse canal e diz
+        por quê; o WhatsApp é sempre tentado primeiro.
 
 
 ## 7. Regras transversais

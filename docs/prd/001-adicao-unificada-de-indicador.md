@@ -296,10 +296,10 @@ Onde o controle deve **sumir** (não basta bloquear no backend):
 
 | # | Decisão | Opções | Quem decide | Bloqueia entrega? |
 |---|---|---|---|---|
-| 1 | Expiração do link | nunca (atual) · 30 dias · fim do mês seguinte; com ou sem revogação manual | Produto/CTO | Não — v1 mantém sem expiração. **Atenção:** a automação planejada (PRD-003) cunha links todo mês; sem expiração, o estoque de segredos portadores válidos só cresce — quando a automação vier, expirar deixa de ser opcional |
+| 1 | Expiração do link | nunca (atual) · 30 dias · fim do mês seguinte; com ou sem revogação manual | Produto/CTO | Não — v1 mantém sem expiração. **Atenção:** a automação planejada (PRD-003) cunha links todo mês; sem expiração, o estoque de links de escrita válidos só cresce — quando a automação vier, expirar deixa de ser opcional |
 | 2 | Aviso de sobrescrita e procedência | manter silencioso (atual) · avisar no reenvio · registrar origem (manual/formulário) | Produto/CTO | Não |
 | 3 | Envio público em branco | aceitar (atual) · exigir ao menos um campo | Produto/CTO | Não |
-| 4 | Responsável pelo report como contato formal | escolher a cada envio entre os executivos com telefone (v1) · marcar um executivo como "responsável" da startup, pré-selecionado no envio | Produto/CTO | Não — v1 lista e o administrador escolhe |
+| 4 | Responsável pelo report como contato formal | escolher a cada envio entre os executivos alcançáveis, por telefone ou e-mail (v1) · marcar um executivo como "responsável" da startup, pré-selecionado no envio | Produto/CTO | Não — v1 lista e o administrador escolhe |
 
 ## 10. Referências
 

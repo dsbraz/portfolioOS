@@ -158,7 +158,8 @@ período (mês/ano, padrão mês anterior)
                             ├─ URL visível como texto selecionável
                             ├─ Copiar (secundário, tolerante a falha)
                             └─ Enviar por WhatsApp
-                                 ├─ destinatário: SÓ executivos com telefone cadastrado
+                                 ├─ destinatário: SÓ executivos do cadastro
+                                 │    WhatsApp (primário) ou e-mail (alternativa)
                                  ├─ prévia: nome + número normalizado + mensagem
                                  └─ <a href="wa.me/..."> real, target _blank
   └─ ação primária: "Salvar indicador" | "Gerar link"
