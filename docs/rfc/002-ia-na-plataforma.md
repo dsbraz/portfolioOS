@@ -350,7 +350,10 @@ Dependência dura: PRD-001 implementado.
 
 **Apresentação (incremento 3):** a skill nova `apresentacao-portfolio` (deste
 repositório: lê os dados pela plataforma, estrutura o spec, invoca a
-`brq-pptx`) entra no catálogo normalmente. **O trio da marca, não** — e o
+`brq-pptx`) entra no catálogo normalmente — **entregue e publicada em
+19/08/2026**; ela degrada com honestidade quando o trio da marca não está
+disponível, entregando narrativa e números em texto em vez de improvisar um
+`.pptx` fora da marca. **O trio da marca, não** — e o
 motivo é mais estreito do que eu havia escrito. Fontes da marca **já estão
 neste repositório público** (`Client/public/fonts/Aspekta-450.ttf`, servida
 pelo próprio frontend), então "vazamento de fontes" não sustenta nada. O ativo

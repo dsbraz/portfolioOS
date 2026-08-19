@@ -12,6 +12,7 @@ const SKILL_TITLES: Record<string, string> = {
   'preparar-agenda': 'Preparar agenda de uma startup',
   'granola-reuniao': 'Registrar reunião de conselho',
   'cobrar-indicadores': 'Cobrar indicadores em falta',
+  'apresentacao-portfolio': 'Apresentar o portfólio',
   'auditoria-qualitativa': 'Auditar o portfólio',
 };
 
@@ -20,6 +21,7 @@ const SKILL_ORDER: Record<string, number> = {
   'preparar-agenda': 1,
   'granola-reuniao': 2,
   'cobrar-indicadores': 3,
+  'apresentacao-portfolio': 4,
 };
 
 @Component({

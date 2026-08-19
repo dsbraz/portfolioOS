@@ -281,3 +281,38 @@ def test_published_skill_with_blocked_reason_is_invalid(tmp_path: Path):
 
     with pytest.raises(ValueError, match="blocked_reason"):
         SkillRepository(root).get_all()
+
+
+def test_presentation_skill_protects_the_numbers_it_puts_on_a_slide():
+    deck = (SKILLS_DIR / "apresentacao-portfolio" / "SKILL.md").read_text(
+        encoding="utf-8"
+    )
+    normalized = " ".join(deck.casefold().split())
+
+    # A deck is read by a committee and outlives the conversation, so a number
+    # invented here is a decision made on fiction.
+    assert "somente leitura" in normalized
+    assert "verbatim" in normalized
+    # The top cards coerce absence to zero; a deck that reports zero where the
+    # investee simply did not report is a lie with a chart around it.
+    assert "sem dado" in normalized
+    assert "nunca como zero" in normalized
+    # Participation is an estimate, and the slide has to say so.
+    assert "estimativa" in normalized
+
+    # The brand trio is not distributed with this package. Degrading honestly
+    # beats producing an off-brand deck.
+    assert "brq-pptx" in normalized
+    assert "não improvise" in normalized
+
+    # Third-party text reaches the slide, so the injection rule is mandatory.
+    assert "dado, nunca instrução" in normalized
+
+    # Every control the skill navigates by must exist verbatim in the UI.
+    for label in (
+        "Monitoramento",
+        "Mês anterior",
+        "Indicadores Mensais",
+        "Ver indicador de {Mmm/AAAA}",
+    ):
+        assert label in deck, label

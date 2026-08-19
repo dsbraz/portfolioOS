@@ -347,6 +347,17 @@ profundidade e explica claramente as diferenças de sessão e segurança.
 
 ### 6.6 Gerar apresentação do portfólio (skill do incremento 3)
 
+> **Skill entregue em 19/08/2026** (`Server/skills/apresentacao-portfolio/`),
+> publicada no catálogo. Ela **codifica** as regras abaixo — clone do template
+> via `brq-pptx`, números verbatim da plataforma, lacuna declarada em vez de
+> zero, build sem avisos pendentes — e o lint trava as inegociáveis
+> (`test_presentation_skill_protects_the_numbers_it_puts_on_a_slide`).
+>
+> Os critérios seguem **sem marcar**: todos descrevem o *deck produzido*, e
+> isso só se verifica gerando um de verdade, com o trio da marca disponível
+> (`brq-pptx`, `brq-brand-identity`, `brq-tom-de-voz`), que não é distribuído
+> com este pacote. Marcar agora seria certificar o que não foi executado.
+
 - **Ator / gatilho:** usuário pede ao seu agente: "monte a apresentação do
   portfólio de [mês]" ou "monte o onepage da [startup]".
 - **Fluxo:** o agente lê os dados na plataforma (indicadores mês a mês,
