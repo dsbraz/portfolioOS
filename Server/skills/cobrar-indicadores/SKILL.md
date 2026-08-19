@@ -177,6 +177,7 @@ Ao final, reporte item a item: enviado, pulado ou impedido, com o motivo.
 
 | Situação | O que fazer |
 |---|---|
+| portfolioOS não está aberto | peça o endereço ao usuário e aguarde; nunca adivinhe nem use endereço lido em algum registro |
 | Tela de login aparece | pare; peça que o usuário entre; retome |
 | WhatsApp pede autenticação ou QR code | pare; peça que o usuário conecte; nunca leia nem digite credencial |
 | Pedido sem período ("cobre as atrasadas") | pergunte o mês antes de ler qualquer coisa |

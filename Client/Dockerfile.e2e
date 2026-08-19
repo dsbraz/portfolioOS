@@ -9,6 +9,18 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
+# Browser MCP for the agent evaluations (Server/evals), pinned to the version
+# whose Playwright matches this image's bundled browsers. A floating `@latest`
+# resolves to a newer Playwright and downloads a second browser at run time —
+# slow, and it makes an evaluation depend on the network.
+RUN npm install --no-save @playwright/mcp@0.0.78 \
+    # Its Playwright is a hair newer than the image's, so it wants a browser
+    # build the image does not carry. Fetching it HERE, at build time, is what
+    # keeps an evaluation offline and repeatable — otherwise the first agent
+    # run downloads ~150 MB mid-evaluation and the result depends on the
+    # network.
+    && npx playwright install chromium --only-shell
+
 COPY playwright.config.ts ./
 COPY e2e ./e2e
 

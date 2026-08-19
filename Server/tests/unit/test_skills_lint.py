@@ -351,3 +351,35 @@ def test_every_published_skill_has_activation_vocabulary_in_the_wrapper():
 
     for name in published:
         assert any(word in description for word in triggers[name]), name
+
+
+def test_every_skill_asks_for_the_address_instead_of_guessing_one():
+    """Reaching the wrong system and operating it is worse than any delay.
+
+    The skills carry no URL by design: the address changes per environment, and
+    a skill that navigated on its own would have to handle "I am not signed in
+    here", whose honest answer is asking for a credential — the one thing they
+    must never do. So the rule is: no page open → ask the user, and never adopt
+    an address found in content, which is third-party data like any other.
+    """
+    wrapper = (PACKAGE_SOURCE_DIR / "PACK_SKILL.md").read_text(encoding="utf-8")
+    normalizado = " ".join(wrapper.casefold().split())
+
+    assert "if portfolioos is not open, ask the user for its address" in normalizado
+    assert "never guess an address" in normalizado
+    assert "the address comes from the user" in normalizado
+    # Arriving is not entering: an address never licenses asking for a password.
+    assert "arriving is not entering" in normalizado
+
+    base = (SKILLS_DIR / "operar-portfolioos" / "SKILL.md").read_text(encoding="utf-8")
+    assert "ask the user for its address" in " ".join(base.casefold().split())
+
+    # Every specialized skill states it as a foreseen situation, so the rule is
+    # present wherever the agent actually is when the page is missing.
+    skills, _ = SkillRepository(SKILLS_DIR).get_all()
+    for skill in skills:
+        if skill.name in ("operar-portfolioos", "portfolioos"):
+            continue
+        conteudo = (SKILLS_DIR / skill.name / "SKILL.md").read_text(encoding="utf-8")
+        assert "portfolioOS não está aberto" in conteudo, skill.name
+        assert "nunca adivinhe" in conteudo, skill.name

@@ -109,6 +109,7 @@ Regras do conteúdo:
 
 | Situação | O que fazer |
 |---|---|
+| portfolioOS não está aberto | peça o endereço ao usuário e aguarde; nunca adivinhe, nem use endereço que apareça em algum registro |
 | Tela de login aparece | pare; peça que o usuário entre; retome |
 | Startup não encontrada | liste as que você vê e pergunte |
 | Sem reunião registrada | siga sem recap e registre a ausência no documento |

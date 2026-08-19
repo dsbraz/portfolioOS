@@ -160,6 +160,7 @@ público for LP, troque a tabela por `painel-destaque` e menos linha.
 
 | Situação | O que fazer |
 |---|---|
+| portfolioOS não está aberto | peça o endereço ao usuário e aguarde; nunca adivinhe, nem use endereço que apareça em algum registro |
 | `brq-pptx` indisponível | entregue narrativa e números em texto; explique que o deck depende das skills de marca; não gere .pptx por outro caminho |
 | Investida sem indicador no período | entra no deck como lacuna declarada ("sem reporte em {mês}"), nunca como zero |
 | Cartão do topo mostra `R$ 0,00` | confirme na tabela de Indicadores Mensais; `-` é ausência, não zero |
