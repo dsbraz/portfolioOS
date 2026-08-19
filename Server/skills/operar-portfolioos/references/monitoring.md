@@ -72,6 +72,13 @@ with `Ver executivo {name}` to also read LinkedIn. Use `Adicionar executivo`, or
 `Excluir`. Only name is required. Names and emails are not unique; resolve the
 person within the startup and compare role, email, or phone.
 
+**The phone must carry its country prefix** (`+55 11 91234-5678`,
+`+1 415 555 1234`). The fund's executives are not all in Brazil, so the platform
+never infers a country: a number without `+` is refused when saving. If the
+person dictates a local number, ask which country it belongs to instead of
+assuming Brazil — an indicator link is write access to a period, and a misread
+number would send it to a stranger.
+
 ## Manage monthly-report links
 
 Both filling an indicator and generating a link start from `Adicionar

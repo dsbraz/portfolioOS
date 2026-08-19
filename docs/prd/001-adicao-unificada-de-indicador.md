@@ -220,9 +220,11 @@ Onde o controle deve **sumir** (não basta bloquear no backend):
         > Segue o link para atualizações dos dados referentes a
         > [mês de referência]: [link do formulário]
         > Obrigado
-  - [x] Número brasileiro sem código do país é normalizado para +55; número
-        inválido é recusado com orientação para corrigir o cadastro do
-        executivo.
+  - [x] O telefone do executivo é cadastrado **com o código do país** (E.164) e
+        o produto nunca infere o país: número sem prefixo é recusado no
+        cadastro, com orientação. Executivo de qualquer país é destinatário
+        normal; número que não resolve é recusado com orientação para corrigir
+        o cadastro.
   - [x] O painel não oferece entrada de número avulso — o destinatário vem
         sempre do cadastro.
   - [x] Startup sem executivo com telefone: o painel explica e orienta a

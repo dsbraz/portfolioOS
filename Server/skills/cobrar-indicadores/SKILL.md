@@ -113,7 +113,11 @@ Do painel de cada startup, registre para a fila:
 
 Mostre a fila completa antes de qualquer envio. **Item impedido aparece na fila
 com o motivo e nunca entra no envio** — diga que o caminho é cadastrar ou
-corrigir o telefone na aba **Executivos** da startup.
+corrigir o telefone na aba **Executivos** da startup, **sempre com o código do
+país** (`+55 11 91234-5678`, `+1 415 555 1234`). Nem todo executivo está no
+Brasil, e a plataforma não adivinha o país: número sem `+` é recusado. Se
+alguém ditar um número local, pergunte de que país ele é — nunca complete com
+`+55` por conta própria.
 
 Quando a startup tiver mais de um executivo com telefone, **pergunte para quem
 enviar**. Nunca escolha sozinho.
