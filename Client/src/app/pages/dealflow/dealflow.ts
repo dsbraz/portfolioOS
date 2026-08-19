@@ -40,7 +40,13 @@ export class Dealflow implements OnInit {
 
   readonly deals = signal<Deal[]>([]);
   readonly loading = signal(false);
-  readonly dealsByStage = signal<Record<string, Deal[]>>({});
+  // Born with every column present: the template reads
+  // `dealsByStage()[stage].length` unconditionally, so a bare `{}` crashed any
+  // render that happened before the load resolved — including every load
+  // failure, which turned an error toast into a broken page.
+  readonly dealsByStage = signal<Record<string, Deal[]>>(
+    Object.fromEntries(Object.values(DealStage).map((stage) => [stage, []])),
+  );
 
   readonly stages = Object.values(DealStage);
   readonly stageConfig = DEAL_STAGE_CONFIG;

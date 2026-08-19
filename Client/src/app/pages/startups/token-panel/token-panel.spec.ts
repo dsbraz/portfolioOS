@@ -117,10 +117,29 @@ describe('TokenPanel', () => {
     expect(element.textContent).not.toContain('Sem canal de envio');
   });
 
-  // NOTE: copyLink's clipboard-failure branch (RFC-001 §6) is implemented in the
-  // component but not unit-tested here — the Angular Vitest/jsdom builder does
-  // not expose a mockable navigator.clipboard to the component under test, so a
-  // rejection cannot be staged reliably. The link is always visible as text, so
-  // the copy path is a convenience, and its success path is exercised through
-  // the dialog spec.
+  // Clipboard failure is common outside a secure context; the panel promises a
+  // soft landing because the link is always visible as text (RFC-001 §6).
+  it('reports a clipboard failure and points at the visible link', async () => {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: () => Promise.reject(new Error('sem permissão')) },
+      configurable: true,
+    });
+    const snackSpy = vi.fn();
+    await render([executive({})]);
+    // Reach into the injected snackbar of this fixture.
+    const component = fixture.componentInstance as unknown as {
+      snackBar: { open: typeof snackSpy };
+      copyLink(): void;
+    };
+    component.snackBar.open = snackSpy;
+
+    component.copyLink();
+    await new Promise((resolve) => setTimeout(resolve));
+
+    expect(snackSpy).toHaveBeenCalledWith(
+      'Não foi possível copiar. O link está visível acima para copiar manualmente.',
+      'Fechar',
+      expect.anything(),
+    );
+  });
 });
