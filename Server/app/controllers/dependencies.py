@@ -2,15 +2,19 @@ import uuid
 from typing import Callable, TypeVar
 
 from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.startup.get_startup import GetStartup
+from app.config import settings
+from app.controllers.auth_dependency import _resolve_user
 from app.database import get_session
 from app.infrastructure.bcrypt_password_hasher import BcryptPasswordHasher
 from app.repositories.board_meeting_repository import BoardMeetingRepository
 from app.repositories.deal_repository import DealRepository
 from app.repositories.executive_repository import ExecutiveRepository
 from app.repositories.monthly_indicator_repository import MonthlyIndicatorRepository
+from app.repositories.skill_repository import SkillRepository
 from app.repositories.startup_repository import StartupRepository
 from app.repositories.user_invite_repository import UserInviteRepository
 from app.repositories.user_repository import UserRepository
@@ -82,6 +86,19 @@ user_invite_create_builder = _multi_repo_use_case_builder(
 )
 
 
+def _get_skill_repository() -> SkillRepository:
+    return SkillRepository(settings.skills_dir)
+
+
+def skill_builder(uc_class: type[T]) -> Callable[..., T]:
+    def factory(
+        repository: SkillRepository = Depends(_get_skill_repository),
+    ) -> T:
+        return uc_class(repository)
+
+    return factory
+
+
 def _get_password_hasher() -> BcryptPasswordHasher:
     return BcryptPasswordHasher()
 
@@ -89,6 +106,23 @@ def _get_password_hasher() -> BcryptPasswordHasher:
 user_invite_consume_builder = _multi_repo_use_case_with_hasher_builder(
     UserInviteRepository, UserRepository
 )
+
+
+optional_security = HTTPBearer(auto_error=False)
+
+
+async def skills_access(
+    credentials: HTTPAuthorizationCredentials | None = Depends(optional_security),
+    session: AsyncSession = Depends(get_session),
+) -> None:
+    if settings.skills_public:
+        return
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Autenticacao necessaria",
+        )
+    await _resolve_user(credentials.credentials, session)
 
 
 async def verify_startup_exists(

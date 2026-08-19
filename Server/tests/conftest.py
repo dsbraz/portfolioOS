@@ -1,8 +1,12 @@
 import os
 from collections.abc import AsyncGenerator
+from pathlib import Path
 
 os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///./test.db")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-for-testing-only")
+os.environ.setdefault(
+    "SKILLS_DIR", str(Path(__file__).resolve().parent.parent / "skills")
+)
 
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient

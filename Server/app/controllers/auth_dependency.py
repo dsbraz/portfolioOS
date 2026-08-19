@@ -13,11 +13,10 @@ from app.repositories.user_repository import UserRepository
 security = HTTPBearer()
 
 
-async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    session: AsyncSession = Depends(get_session),
+async def _resolve_user(
+    token: str,
+    session: AsyncSession,
 ) -> User:
-    token = credentials.credentials
     try:
         payload = jwt.decode(token, settings.secret_key, algorithms=["HS256"])
         user_id_str: str | None = payload.get("sub")
@@ -27,7 +26,7 @@ async def get_current_user(
                 detail="Token invalido",
             )
         user_id = uuid.UUID(user_id_str)
-    except JWTError:
+    except (JWTError, ValueError):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token invalido ou expirado",
@@ -41,3 +40,10 @@ async def get_current_user(
             detail="Usuario inativo ou nao encontrado",
         )
     return user
+
+
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    session: AsyncSession = Depends(get_session),
+) -> User:
+    return await _resolve_user(credentials.credentials, session)

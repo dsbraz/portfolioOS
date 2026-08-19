@@ -94,7 +94,15 @@
                   <mat-icon class="startup-logo-fallback">business</mat-icon>
                 }
                 <div>
-                  <div class="startup-name">{{ item.startup.name }}</div>
+                  <!-- The row click is a mouse convenience; this link is what
+                       keyboard and assistive tech actually operate, and it names
+                       the row it opens. -->
+                  <a
+                    class="startup-name row-opener"
+                    [routerLink]="['/startup', item.startup.id]"
+                    (click)="$event.stopPropagation()"
+                    >{{ item.startup.name }}</a
+                  >
                   <span class="startup-setor">{{ item.startup.sector }}</span>
                 </div>
               </div>

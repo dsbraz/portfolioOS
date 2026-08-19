@@ -129,6 +129,8 @@ Edite o `.env.production` com seus valores:
 | `DATABASE_URL` | URL PostgreSQL com Unix socket | Ver abaixo |
 | `SECRET_KEY` | Chave secreta da aplicação (min 32 chars) | Gerar com `openssl rand -hex 32` |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | Validade do JWT de acesso (em minutos) | `60` |
+| `SKILLS_DIR` | Diretório das skills dentro da imagem do backend | `/app/skills` |
+| `SKILLS_PUBLIC` | Libera o índice e os pacotes sem autenticação | `true` |
 
 **Formato da DATABASE_URL** (Unix socket do Cloud SQL):
 
@@ -153,7 +155,7 @@ chmod +x deploy.sh
 
 O script vai:
 1. Buildar e enviar a imagem do backend
-2. Fazer deploy do backend no Cloud Run com conexão ao Cloud SQL
+2. Fazer deploy do backend no Cloud Run com conexão ao Cloud SQL e acesso às skills
 3. Buildar e enviar a imagem do frontend
 4. Fazer deploy do frontend no Cloud Run com `API_URL` apontando para o backend
 5. Atualizar o CORS do backend para permitir a URL do frontend
@@ -189,7 +191,85 @@ gcloud run deploy portfolioos-client \
     --region REGION
 ```
 
-## 7. Migrations
+## 7. Verificação e contingência das skills
+
+Antes de promover uma imagem do backend, confirme que a fonte única foi
+incluída no build:
+
+```bash
+docker pull YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/portfolioos/server:latest
+docker run --rm --entrypoint ls \
+    YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/portfolioos/server:latest \
+    -R /app/skills
+```
+
+After deploy, validate the explanatory catalog and the one complete package.
+These anonymous commands assume `SKILLS_PUBLIC=true`:
+
+```bash
+curl --fail "$BACKEND_URL/api/skills"
+curl --fail --output /tmp/portfolioos.zip \
+    "$BACKEND_URL/api/skills.zip"
+unzip -l /tmp/portfolioos.zip
+```
+
+With `SKILLS_PUBLIC=false`, use a temporary token for a non-production test
+user and do not print or commit it:
+
+```bash
+curl --fail --header "Authorization: Bearer $PORTFOLIOOS_ACCESS_TOKEN" \
+    "$BACKEND_URL/api/skills"
+curl --fail --header "Authorization: Bearer $PORTFOLIOOS_ACCESS_TOKEN" \
+    --output /tmp/portfolioos.zip \
+    "$BACKEND_URL/api/skills.zip"
+```
+
+The archive must have one `portfolioos/` root containing exactly one `SKILL.md`,
+plus `README.md`, `agents/openai.yaml`, `skills/operar-portfolioos/GUIDE.md` and
+every published specialized guide. More than one `SKILL.md` fails the upload validation in
+Claude and ChatGPT, so verify the count after any packaging change:
+
+```bash
+unzip -Z1 /tmp/portfolioos.zip | grep -c '/SKILL\.md$'   # must print 1
+```
+
+`skills/auditoria-qualitativa/` must remain absent while its catalog record is
+`published: false` (sourced from its hidden `.portfolioos.json`, which must also
+remain absent from the archive).
+
+### Fechamento emergencial do catálogo
+
+To require a valid session on both routes, update the service and record the
+same value in `.env.production` so the next deployment does not reopen them:
+
+```bash
+gcloud run services update portfolioos-server \
+    --region YOUR_REGION \
+    --update-env-vars SKILLS_PUBLIC=false
+```
+
+Use `SKILLS_PUBLIC=true` in the same command and in `.env.production` to restore
+anonymous access. In closed mode, anonymous curl requests return 401; the
+authenticated `/ia` page continues to download through `SkillService`, whose
+HTTP request receives the bearer token from the auth interceptor.
+
+### Rollback por falha no diretório
+
+Se `/app/skills` estiver ausente, o backend falha no startup em vez de servir
+um catálogo vazio. Direcione o tráfego à revisão saudável anterior enquanto a
+imagem é corrigida:
+
+```bash
+gcloud run revisions list \
+    --service portfolioos-server \
+    --region YOUR_REGION
+
+gcloud run services update-traffic portfolioos-server \
+    --region YOUR_REGION \
+    --to-revisions PREVIOUS_REVISION=100
+```
+
+## 8. Migrations
 
 As migrations rodam automaticamente na inicialização do backend (via lifespan handler). Para execução manual:
 
@@ -204,7 +284,7 @@ cloud-sql-proxy YOUR_PROJECT:YOUR_REGION:portfolioos-db &
 alembic upgrade head
 ```
 
-## 8. Troubleshooting
+## 9. Troubleshooting
 
 ### Conexão recusada ao Cloud SQL
 

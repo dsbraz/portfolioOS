@@ -4,9 +4,9 @@
   <form [formGroup]="form" class="token-form">
     <div class="form-row">
       <div class="field">
-        <label class="field-label" id="l-087b-month" for="f-087b-month">Mes</label>
+        <label class="field-label" id="l-087b-month">Mês</label>
         <mat-form-field appearance="outline">
-  <mat-select aria-label="Mes" formControlName="month">
+          <mat-select aria-labelledby="l-087b-month" formControlName="month">
             @for (m of monthOptions; track m) {
               <mat-option [value]="m">{{ monthLabels[m] }}</mat-option>
             }
@@ -17,13 +17,13 @@
       <div class="field">
         <label class="field-label" id="l-087b-year" for="f-087b-year">Ano</label>
         <mat-form-field appearance="outline">
-  <input id="f-087b-year" matInput type="number" formControlName="year" />
+          <input id="f-087b-year" matInput type="number" formControlName="year" />
         </mat-form-field>
       </div>
     </div>
 
     @if (form.hasError('futurePeriod')) {
-      <mat-error class="period-error">Periodo nao pode ser no futuro.</mat-error>
+      <mat-error class="period-error">Período não pode ser no futuro.</mat-error>
     }
   </form>
 </mat-dialog-content>
@@ -31,6 +31,6 @@
 <mat-dialog-actions align="end">
   <button mat-stroked-button (click)="onCancel()">Cancelar</button>
   <button mat-flat-button color="primary" (click)="onSubmit()" [disabled]="form.invalid">
-    Gerar e copiar
+    Gerar
   </button>
 </mat-dialog-actions>

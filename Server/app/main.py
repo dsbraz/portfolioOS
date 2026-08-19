@@ -1,16 +1,16 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.database import engine
 from app.controllers.auth_controller import router as auth_router
 from app.controllers.auth_dependency import get_current_user
+from app.controllers.board_meeting_controller import router as board_meeting_router
 from app.controllers.deal_controller import router as deal_router
 from app.controllers.executive_controller import router as executive_router
 from app.controllers.health_controller import router as health_router
-from app.controllers.board_meeting_controller import router as board_meeting_router
 from app.controllers.monthly_indicator_controller import (
     public_router as monthly_indicator_public_router,
 )
@@ -18,16 +18,21 @@ from app.controllers.monthly_indicator_controller import (
     router as monthly_indicator_router,
 )
 from app.controllers.portfolio_controller import router as portfolio_router
+from app.controllers.skill_controller import public_router as skill_public_router
 from app.controllers.startup_controller import router as startup_router
 from app.controllers.user_controller import router as user_router
 from app.controllers.user_invite_controller import (
     public_router as user_invite_public_router,
 )
 from app.controllers.user_invite_controller import router as user_invite_router
+from app.database import engine
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    skills_dir = Path(settings.skills_dir)
+    if not skills_dir.is_dir():
+        raise RuntimeError(f"Skills directory does not exist: {skills_dir}")
     yield
     await engine.dispose()
 
@@ -52,6 +57,7 @@ app.include_router(health_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
 app.include_router(monthly_indicator_public_router, prefix="/api")
 app.include_router(user_invite_public_router, prefix="/api")
+app.include_router(skill_public_router, prefix="/api")
 
 # Protected routes (auth required)
 protected = [Depends(get_current_user)]

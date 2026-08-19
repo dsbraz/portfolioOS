@@ -53,7 +53,7 @@ describe('IndicatorFormDialog em modo leitura', () => {
   // Ler e editar precisam apresentar o registro com os mesmos grupos: são as
   // seções que o modo de edição já tem.
   it('should keep the quantitative and qualitative sections apart', () => {
-    const titulos = [...el.querySelectorAll('h3')].map(h => h.textContent?.trim());
+    const titulos = [...el.querySelectorAll('h3')].map((h) => h.textContent?.trim());
     expect(titulos).toEqual(['Quantitativos', 'Qualitativos']);
 
     const listas = el.querySelectorAll('dl');
@@ -76,7 +76,11 @@ describe('IndicatorFormDialog em modo leitura', () => {
   it('should mark absent values as such, including blank text', () => {
     const vazios = [...el.querySelectorAll('.read-value--empty')];
     expect(vazios.length).toBe(3); // margem bruta, desafios, comentários
-    expect(vazios.every(v => v.querySelector('.visually-hidden')?.textContent?.trim() === 'Não informado')).toBe(true);
+    expect(
+      vazios.every(
+        (v) => v.querySelector('.visually-hidden')?.textContent?.trim() === 'Não informado',
+      ),
+    ).toBe(true);
   });
 
   // Zero é dado. Um `||` no lugar de `== null` nos formatadores faria o mês de
@@ -99,6 +103,13 @@ describe('IndicatorFormDialog em modo leitura', () => {
     zerado.detectChanges();
     await zerado.whenStable();
     expect((zerado.nativeElement as HTMLElement).textContent).toContain('0,00');
+  });
+
+  it('should preserve the qualitative labels used by read-only skills', () => {
+    const labels = [...el.querySelectorAll('dt')].map((label) => label.textContent?.trim());
+
+    expect(labels.slice(-3)).toEqual(['Conquistas do mês', 'Desafios do mês', 'Comentários']);
+    expect(el.querySelector('mat-dialog-actions button')?.textContent?.trim()).toBe('Fechar');
   });
 });
 

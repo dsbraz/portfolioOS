@@ -1,0 +1,7 @@
+{
+  "version": "2026-08-11",
+  "writes": false,
+  "reads_external": true,
+  "published": false,
+  "blocked_reason": "Aguardando aprovação da política de trânsito de dados (pendência 4 do PRD-002). Até lá, use apenas com dados de demonstração."
+}

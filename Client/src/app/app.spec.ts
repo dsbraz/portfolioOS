@@ -71,6 +71,23 @@ describe('App', () => {
     expect(logo.alt).toBe('BRQ Portfolio');
   });
 
+  it('should expose the navigation labels used by people and browser agents', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const links = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>('nav a'),
+    );
+
+    expect(
+      links.some((link) => link.querySelector('span')?.textContent?.trim() === 'Monitoramento'),
+    ).toBe(true);
+    const aiLink = links.find(
+      (link) => link.querySelector('span')?.textContent?.trim() === 'IA na plataforma',
+    );
+    expect(aiLink?.getAttribute('href')).toBe('/ia');
+  });
+
   it('should start with sidenav opened', () => {
     const fixture = TestBed.createComponent(App);
     const app = fixture.componentInstance;
@@ -145,9 +162,7 @@ describe('App', () => {
     expect(fixture.nativeElement.querySelector('.sidenav-open-bar')).toBeNull();
 
     // O que backdrop e Escape disparam por dentro.
-    fixture.debugElement
-      .query(By.directive(MatSidenav))
-      .triggerEventHandler('openedChange', false);
+    fixture.debugElement.query(By.directive(MatSidenav)).triggerEventHandler('openedChange', false);
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -176,5 +191,4 @@ describe('App', () => {
     const openBtn = compiled.querySelector('.sidenav-open-btn');
     expect(openBtn).toBeTruthy();
   });
-
 });

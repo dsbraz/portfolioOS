@@ -15,8 +15,7 @@ export const routes: Routes = [
   },
   {
     path: 'portfolio',
-    loadComponent: () =>
-      import('./pages/portfolio/portfolio').then((m) => m.Portfolio),
+    loadComponent: () => import('./pages/portfolio/portfolio').then((m) => m.Portfolio),
     canActivate: [authGuard],
   },
   {
@@ -27,13 +26,17 @@ export const routes: Routes = [
   },
   {
     path: 'dealflow',
-    loadComponent: () =>
-      import('./pages/dealflow/dealflow').then((m) => m.Dealflow),
+    loadComponent: () => import('./pages/dealflow/dealflow').then((m) => m.Dealflow),
     canActivate: [authGuard],
   },
   {
     path: 'users',
     loadComponent: () => import('./pages/users/users').then((m) => m.Users),
+    canActivate: [authGuard],
+  },
+  {
+    path: 'ia',
+    loadComponent: () => import('./pages/ai/ai').then((m) => m.Ai),
     canActivate: [authGuard],
   },
   {

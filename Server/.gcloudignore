@@ -7,4 +7,6 @@ venv/
 .git
 .gitignore
 tests/
+!skills/**/tests/
+!skills/**/tests/**
 Dockerfile

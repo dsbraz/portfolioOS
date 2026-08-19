@@ -1,0 +1,201 @@
+<div class="ai-page" [attr.aria-busy]="loading() ? 'true' : null">
+  <header class="page-head">
+    <p class="section-title">IA na plataforma</p>
+    <h1>IA no portfolioOS</h1>
+    <p>Ensine seu agente a trabalhar com o portfólio usando um único pacote.</p>
+  </header>
+
+  @if (loading()) {
+    <div class="page-status" role="status">
+      <mat-spinner diameter="24" aria-hidden="true" />
+      <span>Carregando recursos de IA…</span>
+    </div>
+  } @else if (skills()) {
+    <section class="package-card" aria-labelledby="package-title">
+      <div class="package-intro">
+        <div class="package-icon" aria-hidden="true">
+          <mat-icon>extension</mat-icon>
+        </div>
+        <div>
+          <p class="section-title">Uma única instalação</p>
+          <h2 id="package-title">Pacote de skills portfolioOS</h2>
+          <p>
+            <strong>Instale uma vez.</strong> Este pacote reúne as skills do portfolioOS. Depois,
+            faça seus pedidos normalmente: o agente descobre automaticamente qual capacidade usar.
+          </p>
+        </div>
+      </div>
+
+      @if (publishedSkills().length > 0) {
+        <button
+          mat-flat-button
+          type="button"
+          class="package-download"
+          [disabled]="downloading()"
+          (click)="downloadPack()"
+          [attr.aria-label]="
+            downloading()
+              ? 'Preparando pacote de skills portfolioOS'
+              : 'Baixar pacote de skills portfolioOS'
+          "
+        >
+          <mat-icon aria-hidden="true">download</mat-icon>
+          {{ downloading() ? 'Preparando pacote…' : 'Baixar pacote' }}
+        </button>
+        @if (downloadFailed()) {
+          <p class="download-error" role="alert">
+            Não foi possível baixar o pacote. Tente novamente.
+          </p>
+        }
+      } @else {
+        <p class="package-empty">Nenhuma skill está disponível para download no momento.</p>
+      }
+
+      <div class="install-heading">
+        <h3>Como instalar</h3>
+        <p>O mesmo arquivo funciona nas duas ferramentas.</p>
+      </div>
+      <div class="tool-instructions">
+        <article class="tool-instruction">
+          <h3>Claude</h3>
+          <ol>
+            <li>
+              Abra a área de skills personalizadas do Claude, faça upload de
+              <strong>portfolioos.zip</strong> e habilite o pacote. Essa opção pode depender do
+              plano ou da liberação do administrador.
+            </li>
+            <li>Abra o portfolioOS, entre na sua conta e use a extensão do Claude na mesma aba.</li>
+          </ol>
+        </article>
+        <article class="tool-instruction">
+          <h3>ChatGPT</h3>
+          <ol>
+            <li>
+              Abra a área de Skills do ChatGPT, crie uma skill por upload com
+              <strong>portfolioos.zip</strong> e habilite o pacote. Essa opção pode depender do
+              plano ou da liberação do administrador.
+            </li>
+            <li>Ao usar o agente, entre no portfolioOS diretamente no navegador que ele abrir.</li>
+          </ol>
+        </article>
+      </div>
+
+      <aside class="safety-note" aria-labelledby="safety-title">
+        <mat-icon aria-hidden="true">verified_user</mat-icon>
+        <div>
+          <h3 id="safety-title">Durante o uso</h3>
+          <p>
+            Nunca digite sua senha no chat. O link de indicador permite escrever no período — envie
+            só para o contato cadastrado. Revise a prévia antes
+            de permitir uma gravação.
+          </p>
+        </div>
+      </aside>
+
+      <div class="package-support">
+        <p>Instruções revisadas em <time datetime="2026-08-13">13/08/2026</time>.</p>
+        <details class="support-details">
+          <summary>Ajuda para equipes e atualizações</summary>
+          <div>
+            <p>
+              Se o seu plano oferecer instalação para toda a organização, um administrador pode
+              disponibilizar o pacote para a equipe inteira. Para atualizar, baixe o pacote de novo
+              e substitua o anterior.
+            </p>
+            <p>
+              No Claude, confirme se o Cowork está disponível e validado no plano da equipe antes de
+              usá-lo no lugar da extensão.
+            </p>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section class="request-examples" aria-labelledby="examples-title">
+      <div>
+        <p class="section-title">Depois de instalar</p>
+        <h2 id="examples-title">Peça do seu jeito</h2>
+        <p>Não é preciso decorar comandos nem mencionar o nome da skill.</p>
+      </div>
+      <ul role="list">
+        <li><q>Prepare a agenda para minha reunião com a [startup].</q></li>
+        <li>
+          <q>Registre minha conversa do Granola com a [startup] e mostre a prévia.</q>
+        </li>
+        <li><q>Quais startups ainda não reportaram neste mês?</q></li>
+        <li><q>Mova o deal da [empresa] para Analisando e confirme comigo antes.</q></li>
+      </ul>
+    </section>
+
+    <section class="contents-section" id="package-contents" aria-labelledby="contents-title">
+      <div class="section-heading">
+        <div>
+          <p class="section-title">Conteúdo atual</p>
+          <h2 id="contents-title">O que vem no pacote</h2>
+        </div>
+        <p>
+          {{ publishedSkills().length }}
+          {{ publishedSkills().length === 1 ? 'capacidade disponível' : 'capacidades disponíveis' }}
+        </p>
+      </div>
+
+      @if (publishedSkills().length === 0) {
+        <p class="inline-empty">Nenhuma capacidade está disponível no pacote atual.</p>
+      } @else {
+        <ul class="capability-list" role="list">
+          @for (skill of publishedSkills(); track skill.name) {
+            <li [attr.data-included-skill]="skill.name">
+              <div class="capability-copy">
+                <h3>{{ skillTitle(skill) }}</h3>
+                <p>{{ skill.description }}</p>
+              </div>
+              <div class="capability-meta">
+                <span
+                  class="pill"
+                  [class.pill--info]="skill.writes"
+                  [class.pill--neutral]="!skill.writes"
+                >
+                  {{ skillStatus(skill) }}
+                </span>
+                <small>
+                  Versão de
+                  <time [attr.datetime]="skill.version">{{ formatVersion(skill.version) }}</time>
+                </small>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    @if (blockedSkills().length > 0) {
+      <section class="blocked-section" aria-labelledby="blocked-title">
+        <div class="section-heading">
+          <div>
+            <p class="section-title">Em avaliação</p>
+            <h2 id="blocked-title">Ainda não disponíveis</h2>
+          </div>
+          <p>Estas capacidades não fazem parte do pacote atual.</p>
+        </div>
+        <ul class="blocked-list" role="list">
+          @for (skill of blockedSkills(); track skill.name) {
+            <li [attr.data-blocked-skill]="skill.name">
+              <div>
+                <h3>{{ skillTitle(skill) }}</h3>
+                <p>{{ skill.description }}</p>
+              </div>
+              <div class="blocked-status">
+                <span class="pill pill--warn">Não incluída</span>
+                <p><strong>Motivo:</strong> {{ skill.blocked_reason }}</p>
+              </div>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  } @else {
+    <div class="page-status" role="alert">
+      <span>Não foi possível carregar os recursos de IA. Tente novamente mais tarde.</span>
+    </div>
+  }
+</div>

@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, ParamMap, Router, convertToParamMap } from '@angular/router';
-import { BehaviorSubject, NEVER, of } from 'rxjs';
+import { BehaviorSubject, NEVER, Subject, of } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
@@ -9,6 +9,15 @@ import { Portfolio } from './portfolio';
 import { PortfolioSummary } from '../../models/portfolio.model';
 import { PortfolioService } from '../../services/portfolio.service';
 import { StartupService } from '../../services/startup.service';
+
+// `routerLink` on the startup name builds and serializes an href and subscribes
+// to navigation events, so the stub needs more than `navigate`.
+const routerStub = () => ({
+  navigate: vi.fn().mockResolvedValue(true),
+  createUrlTree: vi.fn((commands: unknown[]) => commands),
+  serializeUrl: vi.fn((tree: unknown) => (tree as unknown[]).join('/')),
+  events: new Subject<unknown>(),
+});
 
 describe('Portfolio', () => {
   let component: Portfolio;
@@ -21,9 +30,7 @@ describe('Portfolio', () => {
   const startupServiceSpy = {
     create: vi.fn(),
   };
-  const routerSpy = {
-    navigate: vi.fn().mockResolvedValue(true),
-  };
+  const routerSpy = routerStub();
   const dialogSpy = {
     open: vi.fn(),
   };
@@ -77,9 +84,10 @@ describe('Portfolio', () => {
   it('should default to previous month when query params are missing', () => {
     routerSpy.navigate.mockClear();
     const now = new Date();
-    const expected = now.getMonth() === 0
-      ? { month: 12, year: now.getFullYear() - 1 }
-      : { month: now.getMonth(), year: now.getFullYear() };
+    const expected =
+      now.getMonth() === 0
+        ? { month: 12, year: now.getFullYear() - 1 }
+        : { month: now.getMonth(), year: now.getFullYear() };
 
     queryParamMap$.next(convertToParamMap({}));
     fixture.detectChanges();
@@ -192,6 +200,50 @@ describe('Portfolio', () => {
     expect(component.revenueTrendIcon()).toBe('trending_flat');
     expect(component.revenueVariationLabel()).toBe('Sem base');
   });
+
+  it('should preserve the table language used by browser-operated skills', () => {
+    portfolioServiceSpy.getSummary.mockReturnValue(
+      of({
+        ...summaryMock,
+        startups: [
+          {
+            startup: { id: 'a', name: 'Alpha', status: 'saudavel', equity_stake: 5 },
+            total_revenue: 1000,
+            cash_balance: 500,
+            ebitda_burn: -100,
+            headcount: 8,
+            accumulated_revenue_ytd: 3000,
+            last_reported_year: 2026,
+            last_reported_month: 4,
+          },
+          {
+            startup: { id: 'b', name: 'Beta', status: 'atencao', equity_stake: null },
+            total_revenue: null,
+            cash_balance: null,
+            ebitda_burn: null,
+            headcount: null,
+            accumulated_revenue_ytd: null,
+            last_reported_year: null,
+            last_reported_month: null,
+          },
+        ],
+      } as PortfolioSummary),
+    );
+    queryParamMap$.next(convertToParamMap({ month: '7', year: '2026' }));
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    const headers = [...el.querySelectorAll('th')].map((header) => header.textContent?.trim());
+    expect(headers).toEqual(['Startup', 'Status', 'Receita', 'Caixa', 'EBITDA/Burn', 'Headcount']);
+    // A pointer-only row is unreachable by keyboard; the name is the real
+    // control, and it is a link because the action is a navigation.
+    const opener = el.querySelector<HTMLAnchorElement>('.row-opener');
+    expect(opener?.tagName).toBe('A');
+    expect(opener?.textContent?.trim()).toBeTruthy();
+
+    expect(el.textContent).toContain('Último: Abr/2026');
+    expect(el.textContent).toContain('Nunca reportou');
+  });
 });
 
 describe('Portfolio (estado de carregamento)', () => {
@@ -207,7 +259,7 @@ describe('Portfolio (estado de carregamento)', () => {
           provide: ActivatedRoute,
           useValue: { queryParamMap: of(convertToParamMap({ month: '7', year: '2026' })) },
         },
-        { provide: Router, useValue: { navigate: vi.fn().mockResolvedValue(true) } },
+        { provide: Router, useValue: routerStub() },
         { provide: MatDialog, useValue: { open: vi.fn() } },
         { provide: MatSnackBar, useValue: { open: vi.fn() } },
         {
@@ -259,20 +311,27 @@ describe('Portfolio (ordenação)', () => {
       imports: [Portfolio],
       providers: [
         provideNoopAnimations(),
-        { provide: ActivatedRoute, useValue: { queryParamMap: of(convertToParamMap({ month: '7', year: '2026' })) } },
-        { provide: Router, useValue: { navigate: vi.fn().mockResolvedValue(true) } },
+        {
+          provide: ActivatedRoute,
+          useValue: { queryParamMap: of(convertToParamMap({ month: '7', year: '2026' })) },
+        },
+        { provide: Router, useValue: routerStub() },
         { provide: MatDialog, useValue: { open: vi.fn() } },
         { provide: MatSnackBar, useValue: { open: vi.fn() } },
         {
           provide: PortfolioService,
           useValue: {
-            getSummary: () => of({
-              total_startups: startups.length, revenue: 0,
-              revenue_variation_pct: null, revenue_variation_direction: 'neutral',
-              health: { healthy: 0, warning: 0, critical: 0 },
-              monthly_report_pct: 0, routines_up_to_date_pct: 0,
-              startups,
-            } as unknown as PortfolioSummary),
+            getSummary: () =>
+              of({
+                total_startups: startups.length,
+                revenue: 0,
+                revenue_variation_pct: null,
+                revenue_variation_direction: 'neutral',
+                health: { healthy: 0, warning: 0, critical: 0 },
+                monthly_report_pct: 0,
+                routines_up_to_date_pct: 0,
+                startups,
+              } as unknown as PortfolioSummary),
           },
         },
         { provide: StartupService, useValue: { create: vi.fn() } },
@@ -286,43 +345,66 @@ describe('Portfolio (ordenação)', () => {
 
   const item = (name: string, status: string, revenue: number | string | null) => ({
     startup: { id: name, name, status, equity_stake: null },
-    total_revenue: revenue, cash_balance: null, ebitda_burn: null,
-    headcount: null, accumulated_revenue_ytd: null,
+    total_revenue: revenue,
+    cash_balance: null,
+    ebitda_burn: null,
+    headcount: null,
+    accumulated_revenue_ytd: null,
   });
 
   // A API serializa Decimal como string. Ordenar isso como texto poria
   // "9.00" depois de "100.00".
   it('should sort revenue numerically even when it arrives as a string', async () => {
-    const component = await criar([item('a', 'saudavel', '9.00'), item('b', 'saudavel', '100.00'), item('c', 'saudavel', '20.00')]);
+    const component = await criar([
+      item('a', 'saudavel', '9.00'),
+      item('b', 'saudavel', '100.00'),
+      item('c', 'saudavel', '20.00'),
+    ]);
     component.sort.set({ active: 'total_revenue', direction: 'asc' });
 
-    expect(component.sortedStartups().map(i => i.startup.name)).toEqual(['a', 'c', 'b']);
+    expect(component.sortedStartups().map((i) => i.startup.name)).toEqual(['a', 'c', 'b']);
   });
 
   // Status é ORDINAL: por rótulo daria "Atenção, Crítico, Saudável", que não
   // descreve nada. Crescente traz o mais saudável primeiro.
   it('should sort status by severity, not by label', async () => {
-    const component = await criar([item('c', 'critico', 1), item('s', 'saudavel', 1), item('a', 'atencao', 1)]);
+    const component = await criar([
+      item('c', 'critico', 1),
+      item('s', 'saudavel', 1),
+      item('a', 'atencao', 1),
+    ]);
     component.sort.set({ active: 'status', direction: 'asc' });
 
-    expect(component.sortedStartups().map(i => i.startup.name)).toEqual(['s', 'a', 'c']);
+    expect(component.sortedStartups().map((i) => i.startup.name)).toEqual(['s', 'a', 'c']);
   });
 
   // Sem collator pt-BR, "Ávila" cairia depois de "Zago".
   it('should sort names ignoring accents', async () => {
-    const component = await criar([item('Zago', 'saudavel', 1), item('Ávila', 'saudavel', 1), item('Grão Verde', 'saudavel', 1)]);
+    const component = await criar([
+      item('Zago', 'saudavel', 1),
+      item('Ávila', 'saudavel', 1),
+      item('Grão Verde', 'saudavel', 1),
+    ]);
     component.sort.set({ active: 'name', direction: 'asc' });
 
-    expect(component.sortedStartups().map(i => i.startup.name)).toEqual(['Ávila', 'Grão Verde', 'Zago']);
+    expect(component.sortedStartups().map((i) => i.startup.name)).toEqual([
+      'Ávila',
+      'Grão Verde',
+      'Zago',
+    ]);
   });
 });
 
 describe('Portfolio (estado do reporte na coluna de status)', () => {
   const item = (name: string, ultimoAno: number | null, ultimoMes: number | null) => ({
     startup: { id: name, name, status: 'saudavel', equity_stake: null },
-    total_revenue: null, cash_balance: null, ebitda_burn: null,
-    headcount: null, accumulated_revenue_ytd: null,
-    last_reported_year: ultimoAno, last_reported_month: ultimoMes,
+    total_revenue: null,
+    cash_balance: null,
+    ebitda_burn: null,
+    headcount: null,
+    accumulated_revenue_ytd: null,
+    last_reported_year: ultimoAno,
+    last_reported_month: ultimoMes,
   });
 
   const montar = async () => {
@@ -331,19 +413,27 @@ describe('Portfolio (estado do reporte na coluna de status)', () => {
       imports: [Portfolio],
       providers: [
         provideNoopAnimations(),
-        { provide: ActivatedRoute, useValue: { queryParamMap: of(convertToParamMap({ month: '7', year: '2026' })) } },
-        { provide: Router, useValue: { navigate: vi.fn().mockResolvedValue(true) } },
+        {
+          provide: ActivatedRoute,
+          useValue: { queryParamMap: of(convertToParamMap({ month: '7', year: '2026' })) },
+        },
+        { provide: Router, useValue: routerStub() },
         { provide: MatDialog, useValue: { open: vi.fn() } },
         { provide: MatSnackBar, useValue: { open: vi.fn() } },
         {
           provide: PortfolioService,
           useValue: {
-            getSummary: () => of({
-              total_startups: 0, revenue: 0,
-              revenue_variation_pct: null, revenue_variation_direction: 'neutral',
-              health: { healthy: 0, warning: 0, critical: 0 },
-              monthly_report_pct: 0, routines_up_to_date_pct: 0, startups: [],
-            } as unknown as PortfolioSummary),
+            getSummary: () =>
+              of({
+                total_startups: 0,
+                revenue: 0,
+                revenue_variation_pct: null,
+                revenue_variation_direction: 'neutral',
+                health: { healthy: 0, warning: 0, critical: 0 },
+                monthly_report_pct: 0,
+                routines_up_to_date_pct: 0,
+                startups: [],
+              } as unknown as PortfolioSummary),
           },
         },
         { provide: StartupService, useValue: { create: vi.fn() } },

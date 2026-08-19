@@ -32,7 +32,7 @@
           <p class="page-head-sub">
             {{ s.sector }}
             <span aria-hidden="true">&middot;</span>
-            Investimento: {{ s.investment_date | date:'dd/MM/yyyy' }}
+            Investimento: {{ s.investment_date | date: 'dd/MM/yyyy' }}
           </p>
         </div>
       </div>
@@ -68,7 +68,11 @@
       <app-kpi-card
         label="Receita Total"
         [value]="formatCurrency(latestIndicator?.total_revenue ?? 0)"
-        [subtitle]="latestIndicator ? 'Ref.: ' + monthLabels[latestIndicator.month] + '/' + latestIndicator.year : ''"
+        [subtitle]="
+          latestIndicator
+            ? 'Ref.: ' + monthLabels[latestIndicator.month] + '/' + latestIndicator.year
+            : ''
+        "
       />
       <app-kpi-card
         label="Total da Participação"
@@ -82,10 +86,7 @@
         label="EBITDA/Burn"
         [value]="formatCurrency(latestIndicator?.ebitda_burn ?? 0)"
       />
-      <app-kpi-card
-        label="Headcount"
-        [value]="(latestIndicator?.headcount ?? 0).toString()"
-      />
+      <app-kpi-card label="Headcount" [value]="(latestIndicator?.headcount ?? 0).toString()" />
     </section>
 
     <div class="sections-bar">
@@ -100,11 +101,16 @@
             [class.is-active]="activeSection() === sec.id"
             [attr.aria-selected]="activeSection() === sec.id"
             [attr.aria-controls]="'panel-' + sec.id"
+            [attr.aria-label]="sec.label"
+            [attr.aria-describedby]="'tab-' + sec.id + '-count'"
             [attr.tabindex]="activeSection() === sec.id ? 0 : -1"
             (click)="selectSection(sec.id)"
-            (keydown)="onTabKeydown($event, i)">
+            (keydown)="onTabKeydown($event, i)"
+          >
             {{ sec.label }}
-            <span class="section-tab-count">{{ countFor(sec.id) }}</span>
+            <span class="section-tab-count" [id]="'tab-' + sec.id + '-count'">{{
+              countFor(sec.id)
+            }}</span>
           </button>
         }
       </div>
@@ -128,193 +134,334 @@
       }
     </div>
 
-      <!-- Os três painéis ficam no DOM, escondidos com `hidden` em vez de
+    <!-- Os três painéis ficam no DOM, escondidos com `hidden` em vez de
            removidos: as abas declaram `aria-controls`, e renderizar só o ativo
            deixava duas dessas referências apontando para ids inexistentes. É
            também o padrão da WAI-ARIA APG para tablist. -->
-        <section
-          class="section-panel"
-          role="tabpanel"
-          id="panel-indicadores"
-          tabindex="0"
-          aria-labelledby="tab-indicadores"
-          [hidden]="activeSection() !== 'indicadores'">
-
-@if (indicators().length === 0) {
+    <section
+      class="section-panel"
+      role="tabpanel"
+      id="panel-indicadores"
+      tabindex="0"
+      aria-labelledby="tab-indicadores"
+      [hidden]="activeSection() !== 'indicadores'"
+    >
+      @if (indicators().length === 0) {
         <div class="empty-state">
-            <p class="empty-text">Nenhum indicador cadastrado ainda.</p>
-            <button mat-flat-button (click)="openCreateIndicator()">
-              <mat-icon>add</mat-icon>
-              Adicionar indicador
-            </button>
-          </div>
+          <p class="empty-text">Nenhum indicador cadastrado ainda.</p>
+          <button mat-flat-button (click)="openCreateIndicator()">
+            <mat-icon>add</mat-icon>
+            Adicionar indicador
+          </button>
+        </div>
       } @else {
-        <div class="table-shell" tabindex="0" role="region" aria-label="Indicadores mensais da startup (rolável)">
-          <table mat-table [dataSource]="sortedIndicators()" class="section-table"
-                 matSort (matSortChange)="indicatorSort.set($event)">
-            <caption class="visually-hidden">Indicadores mensais da startup, com período, receita, caixa, EBITDA/burn e headcount.</caption>
-          <ng-container matColumnDef="period">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header="period" scope="col">Período</th>
-            <td mat-cell *matCellDef="let ind">{{ monthLabels[ind.month] }}/{{ ind.year }}</td>
-          </ng-container>
-          <ng-container matColumnDef="total_revenue">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header="total_revenue" arrowPosition="before" scope="col" class="is-num">Receita</th>
-            <td mat-cell *matCellDef="let ind" class="is-num">{{ formatCurrency(ind.total_revenue) }}</td>
-          </ng-container>
-          <ng-container matColumnDef="cash_balance">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header="cash_balance" arrowPosition="before" scope="col" class="is-num">Caixa</th>
-            <td mat-cell *matCellDef="let ind" class="is-num">{{ formatCurrency(ind.cash_balance) }}</td>
-          </ng-container>
-          <ng-container matColumnDef="ebitda_burn">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header="ebitda_burn" arrowPosition="before" scope="col" class="is-num">EBITDA/Burn</th>
-            <td mat-cell *matCellDef="let ind" class="is-num">{{ formatCurrency(ind.ebitda_burn) }}</td>
-          </ng-container>
-          <ng-container matColumnDef="headcount">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header="headcount" arrowPosition="before" scope="col" class="is-num">Headcount</th>
-            <td mat-cell *matCellDef="let ind" class="is-num">{{ ind.headcount ?? '-' }}</td>
-          </ng-container>
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef scope="col"></th>
-            <td mat-cell *matCellDef="let ind">
-              <button
-                mat-icon-button
-                [matMenuTriggerFor]="indMenu"
-                [attr.aria-label]="'Ações do indicador de ' + monthLabels[ind.month] + '/' + ind.year"
-                (click)="$event.stopPropagation()">
-                <mat-icon>more_vert</mat-icon>
-              </button>
-              <mat-menu #indMenu="matMenu">
-                <button mat-menu-item (click)="openEditIndicator(ind)">
-                  <mat-icon>edit</mat-icon> Editar
+        <div
+          class="table-shell"
+          tabindex="0"
+          role="region"
+          aria-label="Indicadores mensais da startup (rolável)"
+        >
+          <table
+            mat-table
+            [dataSource]="sortedIndicators()"
+            class="section-table"
+            matSort
+            (matSortChange)="indicatorSort.set($event)"
+          >
+            <caption class="visually-hidden">
+              Indicadores mensais da startup, com período, receita, caixa, EBITDA/burn e headcount.
+            </caption>
+            <ng-container matColumnDef="period">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="period" scope="col">
+                Período
+              </th>
+              <td mat-cell *matCellDef="let ind">
+                <button
+                  type="button"
+                  class="row-opener"
+                  [attr.aria-label]="
+                    'Ver indicador de ' + monthLabels[ind.month] + '/' + ind.year
+                  "
+                  (click)="$event.stopPropagation(); openViewIndicator(ind)"
+                >
+                  {{ monthLabels[ind.month] }}/{{ ind.year }}
                 </button>
-                <button mat-menu-item class="menu-item-danger" (click)="deleteIndicator(ind)">
-                  <mat-icon>delete</mat-icon> Excluir
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="total_revenue">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                mat-sort-header="total_revenue"
+                arrowPosition="before"
+                scope="col"
+                class="is-num"
+              >
+                Receita
+              </th>
+              <td mat-cell *matCellDef="let ind" class="is-num">
+                {{ formatCurrency(ind.total_revenue) }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="cash_balance">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                mat-sort-header="cash_balance"
+                arrowPosition="before"
+                scope="col"
+                class="is-num"
+              >
+                Caixa
+              </th>
+              <td mat-cell *matCellDef="let ind" class="is-num">
+                {{ formatCurrency(ind.cash_balance) }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="ebitda_burn">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                mat-sort-header="ebitda_burn"
+                arrowPosition="before"
+                scope="col"
+                class="is-num"
+              >
+                EBITDA/Burn
+              </th>
+              <td mat-cell *matCellDef="let ind" class="is-num">
+                {{ formatCurrency(ind.ebitda_burn) }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="headcount">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                mat-sort-header="headcount"
+                arrowPosition="before"
+                scope="col"
+                class="is-num"
+              >
+                Headcount
+              </th>
+              <td mat-cell *matCellDef="let ind" class="is-num">{{ ind.headcount ?? '-' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef scope="col"></th>
+              <td mat-cell *matCellDef="let ind">
+                <button
+                  mat-icon-button
+                  [matMenuTriggerFor]="indMenu"
+                  [attr.aria-label]="
+                    'Ações do indicador de ' + monthLabels[ind.month] + '/' + ind.year
+                  "
+                  (click)="$event.stopPropagation()"
+                >
+                  <mat-icon>more_vert</mat-icon>
                 </button>
-              </mat-menu>
-            </td>
-          </ng-container>
-          <tr mat-header-row *matHeaderRowDef="indicatorColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: indicatorColumns" class="clickable-row" (click)="openViewIndicator(row)"></tr>
+                <mat-menu #indMenu="matMenu">
+                  <button mat-menu-item (click)="openEditIndicator(ind)">
+                    <mat-icon>edit</mat-icon> Editar
+                  </button>
+                  <button mat-menu-item class="menu-item-danger" (click)="deleteIndicator(ind)">
+                    <mat-icon>delete</mat-icon> Excluir
+                  </button>
+                </mat-menu>
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="indicatorColumns"></tr>
+            <tr
+              mat-row
+              *matRowDef="let row; columns: indicatorColumns"
+              class="clickable-row"
+              (click)="openViewIndicator(row)"
+            ></tr>
           </table>
         </div>
       }
-        </section>
+    </section>
 
-        <section
-          class="section-panel"
-          role="tabpanel"
-          id="panel-reunioes"
-          tabindex="0"
-          aria-labelledby="tab-reunioes"
-          [hidden]="activeSection() !== 'reunioes'">
-
-@if (meetings().length === 0) {
+    <section
+      class="section-panel"
+      role="tabpanel"
+      id="panel-reunioes"
+      tabindex="0"
+      aria-labelledby="tab-reunioes"
+      [hidden]="activeSection() !== 'reunioes'"
+    >
+      @if (meetings().length === 0) {
         <div class="empty-state">
-            <p class="empty-text">Nenhuma reunião cadastrada ainda.</p>
-            <button mat-flat-button (click)="openCreateMeeting()">
-              <mat-icon>add</mat-icon>
-              Adicionar reunião
-            </button>
-          </div>
+          <p class="empty-text">Nenhuma reunião cadastrada ainda.</p>
+          <button mat-flat-button (click)="openCreateMeeting()">
+            <mat-icon>add</mat-icon>
+            Adicionar reunião
+          </button>
+        </div>
       } @else {
-        <div class="table-shell" tabindex="0" role="region" aria-label="Reuniões de conselho da startup (rolável)">
-          <table mat-table [dataSource]="sortedMeetings()" class="section-table"
-                 matSort (matSortChange)="meetingSort.set($event)">
-            <caption class="visually-hidden">Reuniões de conselho da startup, com data e resumo.</caption>
-          <ng-container matColumnDef="meeting_date">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header="meeting_date" scope="col">Data</th>
-            <td mat-cell *matCellDef="let m">{{ m.meeting_date | date:'dd/MM/yyyy' }}</td>
-          </ng-container>
-          <ng-container matColumnDef="summary">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header="summary" scope="col">Resumo</th>
-            <td mat-cell *matCellDef="let m" class="truncate-cell">{{ m.summary ?? '-' }}</td>
-          </ng-container>
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef scope="col"></th>
-            <td mat-cell *matCellDef="let m">
-              <button
-                mat-icon-button
-                [matMenuTriggerFor]="meetMenu"
-                [attr.aria-label]="'Ações da reunião de ' + (m.meeting_date | date: 'dd/MM/yyyy')"
-                (click)="$event.stopPropagation()">
-                <mat-icon>more_vert</mat-icon>
-              </button>
-              <mat-menu #meetMenu="matMenu">
-                <button mat-menu-item (click)="openEditMeeting(m)">
-                  <mat-icon>edit</mat-icon> Editar
+        <div
+          class="table-shell"
+          tabindex="0"
+          role="region"
+          aria-label="Reuniões de conselho da startup (rolável)"
+        >
+          <table
+            mat-table
+            [dataSource]="sortedMeetings()"
+            class="section-table"
+            matSort
+            (matSortChange)="meetingSort.set($event)"
+          >
+            <caption class="visually-hidden">
+              Reuniões de conselho da startup, com data e resumo.
+            </caption>
+            <ng-container matColumnDef="meeting_date">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="meeting_date" scope="col">
+                Data
+              </th>
+              <td mat-cell *matCellDef="let m">
+                <button
+                  type="button"
+                  class="row-opener"
+                  [attr.aria-label]="
+                    'Ver reunião de ' + (m.meeting_date | date: 'dd/MM/yyyy')
+                  "
+                  (click)="$event.stopPropagation(); openViewMeeting(m)"
+                >
+                  {{ m.meeting_date | date: 'dd/MM/yyyy' }}
                 </button>
-                <button mat-menu-item class="menu-item-danger" (click)="deleteMeeting(m)">
-                  <mat-icon>delete</mat-icon> Excluir
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="summary">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="summary" scope="col">
+                Resumo
+              </th>
+              <td mat-cell *matCellDef="let m" class="truncate-cell">{{ m.summary ?? '-' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef scope="col"></th>
+              <td mat-cell *matCellDef="let m">
+                <button
+                  mat-icon-button
+                  [matMenuTriggerFor]="meetMenu"
+                  [attr.aria-label]="'Ações da reunião de ' + (m.meeting_date | date: 'dd/MM/yyyy')"
+                  (click)="$event.stopPropagation()"
+                >
+                  <mat-icon>more_vert</mat-icon>
                 </button>
-              </mat-menu>
-            </td>
-          </ng-container>
-          <tr mat-header-row *matHeaderRowDef="meetingColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: meetingColumns" class="clickable-row" (click)="openViewMeeting(row)"></tr>
+                <mat-menu #meetMenu="matMenu">
+                  <button mat-menu-item (click)="openEditMeeting(m)">
+                    <mat-icon>edit</mat-icon> Editar
+                  </button>
+                  <button mat-menu-item class="menu-item-danger" (click)="deleteMeeting(m)">
+                    <mat-icon>delete</mat-icon> Excluir
+                  </button>
+                </mat-menu>
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="meetingColumns"></tr>
+            <tr
+              mat-row
+              *matRowDef="let row; columns: meetingColumns"
+              class="clickable-row"
+              (click)="openViewMeeting(row)"
+            ></tr>
           </table>
         </div>
       }
-        </section>
+    </section>
 
-        <section
-          class="section-panel"
-          role="tabpanel"
-          id="panel-executivos"
-          tabindex="0"
-          aria-labelledby="tab-executivos"
-          [hidden]="activeSection() !== 'executivos'">
-
-@if (executives().length === 0) {
+    <section
+      class="section-panel"
+      role="tabpanel"
+      id="panel-executivos"
+      tabindex="0"
+      aria-labelledby="tab-executivos"
+      [hidden]="activeSection() !== 'executivos'"
+    >
+      @if (executives().length === 0) {
         <div class="empty-state">
-            <p class="empty-text">Nenhum executivo cadastrado ainda.</p>
-            <button mat-flat-button (click)="openCreateExecutive()">
-              <mat-icon>add</mat-icon>
-              Adicionar executivo
-            </button>
-          </div>
+          <p class="empty-text">Nenhum executivo cadastrado ainda.</p>
+          <button mat-flat-button (click)="openCreateExecutive()">
+            <mat-icon>add</mat-icon>
+            Adicionar executivo
+          </button>
+        </div>
       } @else {
-        <div class="table-shell" tabindex="0" role="region" aria-label="Executivos da startup (rolável)">
-          <table mat-table [dataSource]="sortedExecutives()" class="section-table"
-                 matSort (matSortChange)="executiveSort.set($event)">
-            <caption class="visually-hidden">Executivos da startup, com nome, cargo e e-mail.</caption>
-          <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header="name" scope="col">Nome</th>
-            <td mat-cell *matCellDef="let e">{{ e.name }}</td>
-          </ng-container>
-          <ng-container matColumnDef="role">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header="role" scope="col">Cargo</th>
-            <td mat-cell *matCellDef="let e">{{ e.role ?? '-' }}</td>
-          </ng-container>
-          <ng-container matColumnDef="email">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header="email" scope="col">Email</th>
-            <td mat-cell *matCellDef="let e">{{ e.email ?? '-' }}</td>
-          </ng-container>
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef scope="col"></th>
-            <td mat-cell *matCellDef="let e">
-              <button
-                mat-icon-button
-                [matMenuTriggerFor]="execMenu"
-                [attr.aria-label]="'Ações de ' + e.name"
-                (click)="$event.stopPropagation()">
-                <mat-icon>more_vert</mat-icon>
-              </button>
-              <mat-menu #execMenu="matMenu">
-                <button mat-menu-item (click)="openEditExecutive(e)">
-                  <mat-icon>edit</mat-icon> Editar
+        <div
+          class="table-shell"
+          tabindex="0"
+          role="region"
+          aria-label="Executivos da startup (rolável)"
+        >
+          <table
+            mat-table
+            [dataSource]="sortedExecutives()"
+            class="section-table"
+            matSort
+            (matSortChange)="executiveSort.set($event)"
+          >
+            <caption class="visually-hidden">
+              Executivos da startup, com nome, cargo, e-mail e telefone.
+            </caption>
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="name" scope="col">Nome</th>
+              <td mat-cell *matCellDef="let e">
+                <button
+                  type="button"
+                  class="row-opener"
+                  [attr.aria-label]="'Ver executivo ' + e.name"
+                  (click)="$event.stopPropagation(); openViewExecutive(e)"
+                >
+                  {{ e.name }}
                 </button>
-                <button mat-menu-item class="menu-item-danger" (click)="deleteExecutive(e)">
-                  <mat-icon>delete</mat-icon> Excluir
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="role">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="role" scope="col">Cargo</th>
+              <td mat-cell *matCellDef="let e">{{ e.role ?? '-' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="email">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="email" scope="col">Email</th>
+              <td mat-cell *matCellDef="let e">{{ e.email ?? '-' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="phone">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header="phone" scope="col">
+                Telefone
+              </th>
+              <td mat-cell *matCellDef="let e">{{ e.phone ?? '-' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef scope="col"></th>
+              <td mat-cell *matCellDef="let e">
+                <button
+                  mat-icon-button
+                  [matMenuTriggerFor]="execMenu"
+                  [attr.aria-label]="'Ações de ' + e.name"
+                  (click)="$event.stopPropagation()"
+                >
+                  <mat-icon>more_vert</mat-icon>
                 </button>
-              </mat-menu>
-            </td>
-          </ng-container>
-          <tr mat-header-row *matHeaderRowDef="executiveColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: executiveColumns" class="clickable-row" (click)="openViewExecutive(row)"></tr>
+                <mat-menu #execMenu="matMenu">
+                  <button mat-menu-item (click)="openEditExecutive(e)">
+                    <mat-icon>edit</mat-icon> Editar
+                  </button>
+                  <button mat-menu-item class="menu-item-danger" (click)="deleteExecutive(e)">
+                    <mat-icon>delete</mat-icon> Excluir
+                  </button>
+                </mat-menu>
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="executiveColumns"></tr>
+            <tr
+              mat-row
+              *matRowDef="let row; columns: executiveColumns"
+              class="clickable-row"
+              (click)="openViewExecutive(row)"
+            ></tr>
           </table>
         </div>
       }
-        </section>
+    </section>
   </div>
 } @else {
   <div class="detail-page">
