@@ -2,8 +2,10 @@ import uuid
 from decimal import Decimal
 
 from sqlalchemy import Integer, cast, func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domain.exceptions import ConflictError
 from app.domain.models.monthly_indicator import MonthlyIndicator
 from app.domain.models.monthly_indicator_token import MonthlyIndicatorToken
 
@@ -64,8 +66,18 @@ class MonthlyIndicatorRepository:
         return result.scalar_one_or_none()
 
     async def create(self, indicator: MonthlyIndicator) -> MonthlyIndicator:
-        self._session.add(indicator)
-        await self._session.flush()
+        try:
+            self._session.add(indicator)
+            await self._session.flush()
+        except IntegrityError as e:
+            # Another writer inserted this period between the caller's check and
+            # this flush. Rolling back is not optional: the session is unusable
+            # after a failed flush, and the caller's recovery needs to query.
+            await self._session.rollback()
+            raise ConflictError(
+                f"Indicador de {indicator.month}/{indicator.year} "
+                "ja existe para esta startup"
+            ) from e
         await self._session.refresh(indicator)
         return indicator
 
@@ -190,7 +202,13 @@ class MonthlyIndicatorRepository:
         return list(result.scalars().all()), total
 
     async def create_token(self, token: MonthlyIndicatorToken) -> MonthlyIndicatorToken:
-        self._session.add(token)
-        await self._session.flush()
+        try:
+            self._session.add(token)
+            await self._session.flush()
+        except IntegrityError as e:
+            await self._session.rollback()
+            raise ConflictError(
+                f"Link de {token.month}/{token.year} ja existe para esta startup"
+            ) from e
         await self._session.refresh(token)
         return token
