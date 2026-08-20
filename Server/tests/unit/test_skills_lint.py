@@ -329,6 +329,11 @@ def test_presentation_skill_protects_the_numbers_it_puts_on_a_slide():
     # NOT cover — who has no meeting, no indicator, or suspicious data.
     assert "a seção 6 é obrigatória" in normalized
     assert "a preencher" in normalized
+    # (c) a section the platform does not hold still gets its slide — labels
+    # ready, values "a preencher" — and never blocks the flow waiting for the
+    # user to supply the numbers.
+    assert "nunca é omitida" in normalized
+    assert "não bloqueie o fluxo" in normalized
 
 
 def test_every_published_skill_has_activation_vocabulary_in_the_wrapper():
