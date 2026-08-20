@@ -95,6 +95,16 @@ export class TokenPanel {
     this.recipients().filter((r) => r.whatsappUrl === null && r.mailtoUrl === null),
   );
 
+  /**
+   * Whether the WhatsApp guidance applies at all. That send lands on WhatsApp's
+   * own page offering the desktop app or WhatsApp Web, which is worth
+   * explaining — but only where a WhatsApp button exists. Otherwise the hint
+   * sends the reader hunting for an affordance the panel never rendered.
+   */
+  readonly hasWhatsAppChannel = computed(() =>
+    this.reachable().some((r) => r.whatsappUrl !== null),
+  );
+
   copyLink(): void {
     // The link is always visible as text above, so a clipboard failure — common
     // outside a secure context — is a soft failure, not a dead end (RFC-001 §6).

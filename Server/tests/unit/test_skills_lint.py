@@ -219,6 +219,40 @@ def test_chase_skill_never_assumes_the_send_mode_or_the_recipient():
     assert "a plataforma nunca envia nada sozinha" in normalized
 
 
+def test_chase_skill_orients_the_whatsapp_connection_before_the_queue():
+    """A `wa.me` link does not open a conversation — it opens a choice.
+
+    The send lands on WhatsApp's own interstitial, which offers the desktop app
+    or WhatsApp Web. The two sessions are independent: being connected in one
+    says nothing about the other. Picking the side where the person is not
+    connected dead-ends the send — the web asks for a QR code, the app opens
+    without the conversation — and it does so silently, mid-queue.
+    """
+    chase = (SKILLS_DIR / "cobrar-indicadores" / "SKILL.md").read_text(encoding="utf-8")
+    normalized = " ".join(chase.casefold().split())
+
+    # The interstitial's controls, verbatim: the agent finds them by visible
+    # text, so a paraphrase would leave it clicking blind.
+    for label in ("Open app", "Continue to WhatsApp Web"):
+        assert label in chase, label
+
+    # The trap the guidance exists for: one connection does not imply the other.
+    assert "conexões independentes" in normalized
+    assert "**não** conecta o whatsapp web" in normalized
+
+    # Automatic mode cannot follow the desktop app — it leaves the browser,
+    # where the agent has no reach. Saying so before the queue beats
+    # discovering it at the first item.
+    assert "fica fora do alcance da skill" in normalized
+
+    # In one-by-one the person picks their own side: only they know where they
+    # are connected, and guessing wastes the send.
+    assert "é a pessoa que sabe onde está conectada" in normalized
+
+    # Connecting is never the skill's job, QR code included.
+    assert "nunca faz essa conexão nem lê qr code" in normalized
+
+
 def test_package_source_artifacts_are_uploadable_without_duplicating_skills():
     assert (PACKAGE_SOURCE_DIR / "README.md").is_file()
     assert (PACKAGE_SOURCE_DIR / "PACK_SKILL.md").is_file()

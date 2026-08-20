@@ -100,6 +100,31 @@ describe('TokenPanel', () => {
     ]);
   });
 
+  // The WhatsApp button does not open a conversation — it opens WhatsApp's own
+  // page offering the desktop app or WhatsApp Web. The two sessions are
+  // independent, so the panel has to say which one needs to be connected
+  // instead of promising that "WhatsApp opens with the message ready".
+  it('warns that WhatsApp opens a choice between the desktop app and the web', async () => {
+    const element = await render([executive({})]);
+
+    const hint = element.querySelector('.message-preview')?.closest('section')?.textContent ?? '';
+    expect(hint).toContain('aplicativo do computador');
+    expect(hint).toContain('WhatsApp Web');
+    expect(hint).toContain('conexões separadas');
+  });
+
+  // Describing a channel the panel is not offering sends the reader looking for
+  // a WhatsApp button that is not there. The guidance follows the affordance.
+  it('drops the WhatsApp guidance when no recipient can be reached there', async () => {
+    const element = await render([
+      executive({ name: 'Marina Alencar', phone: null, email: 'marina@vertah.com.br' }),
+    ]);
+
+    const hint = element.querySelector('.message-preview')?.closest('section')?.textContent ?? '';
+    expect(hint).toContain('O e-mail abre no seu programa');
+    expect(hint).not.toContain('conexões separadas');
+  });
+
   // The fund's executives are not all in Brazil: a foreign number carrying its
   // country prefix is a normal recipient, not an impediment.
   it('reaches a foreign executive whose number carries its country prefix', async () => {

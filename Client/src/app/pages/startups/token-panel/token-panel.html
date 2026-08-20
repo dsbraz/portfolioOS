@@ -97,9 +97,18 @@
   <section class="panel-section" aria-labelledby="token-message-title">
     <p class="section-title" id="token-message-title">Mensagem</p>
     <pre class="message-preview">{{ reachable()[0].message }}</pre>
+    <!-- The WhatsApp button lands on WhatsApp's own page offering the desktop
+         app or WhatsApp Web. The two sessions are independent, so promising
+         that "WhatsApp opens with the message ready" hides the step where an
+         unconnected side dead-ends the send on a QR code. The warning is tied
+         to the affordance: without a WhatsApp recipient there is no such step. -->
     <p class="panel-hint">
-      O WhatsApp ou seu programa de e-mail abre com a mensagem pronta. Você pode editá-la e
-      confirma o envio por lá.
+      O e-mail abre no seu programa com a mensagem pronta.
+      @if (hasWhatsAppChannel()) {
+        O WhatsApp abre uma página dele com duas opções — o aplicativo do computador ou o
+        WhatsApp Web — e você precisa estar conectado na que escolher: são conexões separadas.
+      }
+      Você pode editar a mensagem e confirma o envio por lá.
     </p>
   </section>
 }
