@@ -78,15 +78,24 @@ export function firstName(fullName: string): string {
   return fullName.trim().split(/\s+/)[0] ?? fullName;
 }
 
-/** The fund's standard message, already in use before the platform existed. */
+/**
+ * The fund's standard message, already in use before the platform existed —
+ * now naming the startup, so a contact who answers for several investees can
+ * tell the requests apart. The name takes bare "de" and never a gendered
+ * article: a company name has no knowable grammatical gender, and "da Payface"
+ * is a guess the template must not make.
+ */
 export function buildIndicatorRequestMessage(
   recipientName: string,
+  startupName: string | null | undefined,
   period: string,
   formUrl: string,
 ): string {
+  const name = startupName?.trim() ?? '';
+  const subjectOfTheData = name === '' ? 'dos dados' : `dos dados de ${name}`;
   return [
     `Olá ${firstName(recipientName)}. Tudo bem?`,
-    `Segue o link para atualizações dos dados referentes a ${period}: ${formUrl}`,
+    `Segue o link para atualizações ${subjectOfTheData} referentes a ${period}: ${formUrl}`,
     'Obrigado',
   ].join('\n');
 }

@@ -59,14 +59,35 @@ describe('firstName', () => {
 });
 
 describe('buildIndicatorRequestMessage', () => {
-  it('should follow the fund standard template', () => {
-    const message = buildIndicatorRequestMessage('Ana Costa', 'Jul/2026', 'https://app/x');
+  it('should follow the fund standard template, naming the startup', () => {
+    const message = buildIndicatorRequestMessage(
+      'Ana Costa',
+      'Payface',
+      'Jul/2026',
+      'https://app/x',
+    );
 
     expect(message).toBe(
       'Olá Ana. Tudo bem?\n' +
-        'Segue o link para atualizações dos dados referentes a Jul/2026: https://app/x\n' +
+        'Segue o link para atualizações dos dados de Payface referentes a Jul/2026: https://app/x\n' +
         'Obrigado',
     );
+  });
+
+  it('should never attach a gendered article to the startup name', () => {
+    // A company name has no knowable grammatical gender, so the template uses
+    // bare "de {name}" — never "da"/"do".
+    const message = buildIndicatorRequestMessage('Ana', 'iuPay', 'Jul/2026', 'https://app/x');
+
+    expect(message).toContain('dados de iuPay referentes');
+    expect(message).not.toMatch(/\bd[ao] iuPay\b/);
+  });
+
+  it('should fall back to the nameless phrasing when the startup name is absent', () => {
+    const message = buildIndicatorRequestMessage('Ana', '  ', 'Jul/2026', 'https://app/x');
+
+    expect(message).toContain('dos dados referentes a Jul/2026');
+    expect(message).not.toContain('de  ');
   });
 });
 

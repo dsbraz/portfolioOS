@@ -44,7 +44,7 @@ interface Recipient {
 export class TokenPanel {
   readonly token = input.required<MonthlyIndicatorToken>();
   readonly executives = input.required<Executive[]>();
-  /** Names the startup in the e-mail subject. */
+  /** Names the startup in the e-mail subject and in the message body. */
   readonly startupName = input<string>('');
 
   private readonly snackBar = inject(MatSnackBar);
@@ -74,7 +74,12 @@ export class TokenPanel {
     const url = this.formUrl();
     const subject = buildIndicatorRequestSubject(this.startupName(), messagePeriod);
     return this.executives().map((executive) => {
-      const message = buildIndicatorRequestMessage(executive.name, messagePeriod, url);
+      const message = buildIndicatorRequestMessage(
+        executive.name,
+        this.startupName(),
+        messagePeriod,
+        url,
+      );
       return {
         name: executive.name,
         role: executive.role,
