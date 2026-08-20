@@ -174,6 +174,139 @@ def test_granola_skill_detects_mcp_before_requesting_a_conversation_link():
     assert "conversation, link or notes from Granola" in base
 
 
+def test_agenda_skill_reads_the_conversation_before_the_platform():
+    """"Analyse the meeting" is not answered by the meeting record.
+
+    The record in Reuniões de Conselho is a summary written afterwards, already
+    filtered by whoever typed it. The conversation is the source. A brief built
+    only from the platform answers a different question while looking complete —
+    the failure that made "analise a reunião com a investida e me prepare para a
+    próxima" come back with indicators and no meeting content at all.
+    """
+    agenda = (SKILLS_DIR / "preparar-agenda" / "SKILL.md").read_text(encoding="utf-8")
+    normalized = " ".join(agenda.casefold().split())
+
+    # Granola is not an optional enrichment: it is the source of the meeting,
+    # and it is searched even when the user never names it.
+    assert "buscar a conversa no granola é passo obrigatório" in normalized
+    assert "mesmo que o usuário não cite o granola" in normalized
+    assert "a reunião vem da conversa, não só da plataforma" in normalized
+
+    # Same source discovery as the recording flow: probe the MCP, never ask the
+    # user whether it is connected, fall back to a link on the exact host.
+    assert "inspecione primeiro as ferramentas disponíveis" in normalized
+    assert "não pergunte se o mcp está conectado" in normalized
+    for tool in ("get_account_info", "list_meetings", "get_meetings"):
+        assert tool in agenda, tool
+    assert "peça o link da conversa" in normalized
+    assert "https://notes.granola.ai/" in agenda
+    assert normalized.index("inspecione primeiro as ferramentas disponíveis") < (
+        normalized.index("peça o link da conversa")
+    )
+
+    # Read-only has to cover Granola too, or the skill's own promise leaks.
+    assert "use apenas operações **inequivocamente de leitura**" in normalized
+    assert "não diga que leu a transcrição completa" in normalized
+
+    # Coming back empty is a reportable outcome, never a silent downgrade to
+    # platform-only — and never a dead end either: the brief still ships.
+    assert "o que você não achou, você diz" in normalized
+    assert "informe o usuário" in normalized
+    assert "não bloqueie a preparação esperando o link" in normalized
+
+    # The delivered document carries the source, so the reader can tell what a
+    # fact is worth: said in the call, or reported months ago on a form.
+    assert "fonte da reunião" in normalized
+    assert "conversa não encontrada no granola" in normalized
+
+    # The router has to say it too: the request that reaches it is "analyse the
+    # meeting", which never mentions Granola.
+    base = (SKILLS_DIR / "operar-portfolioos" / "SKILL.md").read_text(encoding="utf-8")
+    routing = " ".join(base.casefold().split())
+    assert "to analyse the last meeting with a startup" in routing
+    assert "reads the conversation from granola before it reads the platform" in routing
+
+
+def test_every_granola_flow_carries_the_same_source_safety_anchors():
+    """Three skills read Granola; the safety floor cannot depend on which one.
+
+    The discovery text is deliberately duplicated (each guide is self-contained
+    in the archive), and duplication drifts: the audit found the link-consent
+    warning present in one copy and silently missing from the other two. This
+    test pins the shared floor so a future edit to one flow fails loudly
+    instead of quietly weakening it.
+    """
+    granola_flows = ("granola-reuniao", "preparar-agenda", "apresentacao-portfolio")
+    shared_anchors = (
+        # Discovery: probe the MCP, never interrogate the user about it.
+        "inspecione primeiro as ferramentas disponíveis",
+        "não pergunte se o mcp está conectado",
+        # Read-only floor on the external system.
+        "inequivocamente de leitura",
+        # Link fallback: exact host, consent, and the link never travels on.
+        "notes.granola.ai",
+        "autorizado a compartilhar",
+        "dado sensível",
+        # Honest coverage: never claim more than what was actually read.
+        "transcrição completa",
+    )
+    for name in granola_flows:
+        content = (SKILLS_DIR / name / "SKILL.md").read_text(encoding="utf-8")
+        normalized = " ".join(content.casefold().split())
+        for anchor in shared_anchors:
+            assert anchor in normalized, f"{name}: missing anchor {anchor!r}"
+
+
+def test_agenda_skill_delivers_a_branded_html_it_never_regenerates():
+    """The shell is copied, not written. That is the whole economy of it.
+
+    Re-emitting the CSS on every run costs more tokens than the briefing
+    itself, drifts off-brand a little further each time, and quietly undoes
+    contrast decisions that were audited once. So the skill ships the shell as
+    an asset and the agent fills one marked slot.
+    """
+    agenda_dir = SKILLS_DIR / "preparar-agenda"
+    agenda = (agenda_dir / "SKILL.md").read_text(encoding="utf-8")
+    normalized = " ".join(agenda.casefold().split())
+
+    shell_path = agenda_dir / "assets" / "preparacao.html"
+    assert shell_path.is_file()
+    shell = shell_path.read_text(encoding="utf-8")
+
+    # One slot, clearly delimited, or "replace only the content" means nothing.
+    for marker in ("▼▼ CONTEÚDO", "▲▲ FIM DO CONTEÚDO", "{{STARTUP}}"):
+        assert marker in shell, marker
+
+    # Self-contained: no CDN, no webfont host, and no chance of the Granola
+    # link riding along inside the delivered file.
+    assert "http" not in shell
+
+    # The accent contract, which is the part a regenerated shell always loses:
+    # purple is the functional accent, orange is brand-only, and purple is
+    # raised on dark because #7f2ec9 reaches only 2.8:1 there.
+    assert "#7f2ec9" in shell
+    assert "#ee7c38" in shell
+    assert "#a94fd6" in shell
+    assert "prefers-color-scheme:dark" in shell
+
+    # The instructions have to forbid the expensive path explicitly — an agent
+    # that can write HTML will write HTML unless told plainly not to.
+    assert "**copie o shell**" in normalized
+    assert "copiar, não reescrever" in normalized
+    assert "nunca reescreva o css" in normalized
+    assert "nunca invente classe nova" in normalized
+    assert "assets/preparacao.html" in agenda
+
+    # The briefing lives in the file; repeating it in chat doubles the cost.
+    assert "no chat, no máximo cinco linhas" in normalized
+
+    # A file is a durable artifact — the conversation link must not be in it.
+    assert "o link do granola não entra no arquivo" in normalized
+
+    # No file system is a degraded path, not a dead end.
+    assert "sem meio de escrever arquivo" in normalized
+
+
 def test_chase_skill_never_assumes_the_send_mode_or_the_recipient():
     chase = (SKILLS_DIR / "cobrar-indicadores" / "SKILL.md").read_text(encoding="utf-8")
     normalized = " ".join(chase.casefold().split())
@@ -358,11 +491,44 @@ def test_presentation_skill_protects_the_numbers_it_puts_on_a_slide():
     # (a) every section declares its source: platform data vs user-provided —
     # the split is what forbids inventing ecosystem KPIs or deal values.
     assert "fonte declarada" in normalized
-    assert "o dealflow não guarda valor" in normalized
+    # "Deals no pipe" is the ecosystem's co-sell business grouped by investee —
+    # the real deck's meaning. The platform's Dealflow is the NEW-investment
+    # funnel and only feeds the routines line; a generated deck once swapped
+    # one for the other and shipped Seed/Série A stages where client deals
+    # belonged.
+    assert "a plataforma não guarda esses negócios" in normalized
+    assert "funil de **novas investidas**" in normalized
+    assert "nunca esta seção" in normalized
+    # The model is CLOSED: same sections, same order, the real deck's agenda
+    # blocks. The committee reads this deck every month; a re-invented agenda
+    # or an extra analysis slide breaks the anatomy exactly like an omission.
+    assert "o modelo é fechado" in normalized
+    assert "nenhum slide fora do modelo" in normalized
+    # The optional summary table replaces the canonical lines only — the
+    # per-investee narrative survives it. A who-reported table is not a
+    # per-investee summary.
+    assert "nunca a narrativa" in normalized
     # (b) the coverage section is mandatory: the deck must say what it does
     # NOT cover — who has no meeting, no indicator, or suspicious data.
     assert "a seção 6 é obrigatória" in normalized
     assert "a preencher" in normalized
+    # (b2) the qualitative sections also read the month's conversations — the
+    # platform holds no record of what was decided, blocked, or asked for.
+    # Granola is a THIRD source with its own marker, and it never crosses into
+    # a number: a figure said on a call is not a reported indicator.
+    assert "`[g]`" in normalized
+    assert "o granola entra no qualitativo, nunca no numérico" in normalized
+    assert "`[g]` nunca vira `[p]`" in normalized
+    assert "toda linha vinda de conversa é atribuída" in normalized
+    assert "inspecione primeiro as ferramentas disponíveis" in normalized
+    assert "não pergunte se o mcp está conectado" in normalized
+    for tool in ("get_account_info", "list_meetings", "get_meetings"):
+        assert tool in deck, tool
+    # A monthly deck spans the portfolio, so a queue of per-investee links is a
+    # request nobody finishes — the deck ships without them instead.
+    assert "não peça um link por investida" in normalized
+    assert "nada encontrado é resultado, não erro" in normalized
+    assert "não bloqueia o deck" in normalized
     # (c) a section the platform does not hold still gets its slide — labels
     # ready, values "a preencher" — and never blocks the flow waiting for the
     # user to supply the numbers.

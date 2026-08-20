@@ -60,9 +60,25 @@ copy action.
 entity resolution, read operations across the platform, and preview/confirm
 rules for writes. Specialized skills add focused workflows such as preparing an
 agenda, registering a Granola meeting, or chasing the startups that have not
-reported a period. The Granola workflow automatically probes a connected Granola
-MCP first and requests a shared conversation link only when that source is
-unavailable or cannot access the meeting. `cobrar-indicadores` confirms the batch
+reported a period. Every Granola-backed workflow probes a connected Granola
+MCP first and falls back to a shared conversation link only when that source is
+unavailable or cannot access the meeting. `preparar-agenda` reads the conversation
+before it reads the platform — the board-meeting record is a filtered summary
+written afterwards, so a brief built only from it silently answers a different
+question than "analyse the meeting". `apresentacao-portfolio` sweeps the deck's
+period for what the platform structurally cannot hold — what was decided, what
+blocked, what an investee asked for — and feeds only the qualitative sections
+with it: a figure said on a call is never promoted to a slide number, and a
+conversation held without a matching board-meeting record becomes a declared gap.
+Neither blocks on a link the user may not have: when no conversation is reachable
+they say so and continue, with the gap declared.
+
+`preparar-agenda` delivers a branded `.html` briefing built from the shell in its
+own `assets/`. The agent copies that file and replaces one marked slot; it never
+writes CSS. Regenerating the page each run would cost more tokens than the
+briefing itself and would drift off-brand and off-contrast a little further every
+time, so the shell — light and dark palettes, print rules, class vocabulary — is
+an asset, not a prompt. `cobrar-indicadores` confirms the batch
 before generating any link — generating one is a write — and asks, in every run,
 whether to open each WhatsApp message for the user to send or to send the queue
 itself; it never remembers that answer.
