@@ -161,8 +161,8 @@ def _preparar_workspace(destino: Path) -> None:
 
     if not (skills / "portfolioos" / "SKILL.md").is_file():
         raise RuntimeError(
-            "o pacote baixado não traz portfolioos/SKILL.md — "
-            "a plataforma de avaliação está no ar em " + PLATAFORMA + "?"
+            "o pacote baixado não traz portfolioos/SKILL.md — o servidor do "
+            "stack de avaliação está servindo http://server:8000/api/skills.zip?"
         )
 
 
