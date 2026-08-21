@@ -92,6 +92,22 @@
         </div>
       </aside>
 
+      <!-- A cobrança termina num envio por WhatsApp, e esse envio cai numa
+           escolha entre duas sessões independentes. Avisar aqui, no preparo do
+           ambiente, evita descobrir a conexão que falta no meio de uma fila. -->
+      <aside class="safety-note" aria-labelledby="whatsapp-title">
+        <mat-icon aria-hidden="true">forum</mat-icon>
+        <div>
+          <h3 id="whatsapp-title">Antes de cobrar por WhatsApp</h3>
+          <p>
+            O envio abre uma página do WhatsApp com duas opções: o aplicativo do computador ou o
+            WhatsApp Web. São conexões separadas — conecte-se na que for usar. Para o agente
+            enviar sozinho, precisa ser o WhatsApp Web, já conectado no mesmo navegador; o
+            aplicativo do computador fica fora do alcance dele.
+          </p>
+        </div>
+      </aside>
+
       <div class="package-support">
         @if (revisedAt(); as revisao) {
           <p>

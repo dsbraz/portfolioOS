@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A new push supersedes the run in flight for the same ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run the suite
+        working-directory: Server
+        run: |
+          docker build -t portfolioos-server .
+          docker run --rm \
+            -e DATABASE_URL='sqlite+aiosqlite://' \
+            -e SECRET_KEY='ci-secret-key-not-for-any-real-environment' \
+            -e PYTHONPATH=/app \
+            -v "$PWD":/app -w /app \
+            portfolioos-server pytest -q
+
+  frontend:
+    name: Frontend (vitest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Client/package-lock.json
+      - working-directory: Client
+        run: npm ci
+      - working-directory: Client
+        run: npx ng test --watch=false
+      # Production build, not development: AOT and budgets only fail here.
+      - working-directory: Client
+        run: npx ng build --configuration production
+
+  e2e:
+    name: E2E (playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bring the isolated stack up
+        run: docker compose -f docker-compose.e2e.yml up -d --build --wait
+      - name: Run the suite
+        run: docker compose -f docker-compose.e2e.yml run --rm e2e npx playwright test
+      - name: Collect the report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-results
+          path: Client/e2e-results/
+          retention-days: 7
+      - name: Server logs on failure
+        if: failure()
+        run: docker compose -f docker-compose.e2e.yml logs server
+      - name: Tear down
+        if: always()
+        run: docker compose -f docker-compose.e2e.yml down -v

@@ -219,6 +219,40 @@ def test_chase_skill_never_assumes_the_send_mode_or_the_recipient():
     assert "a plataforma nunca envia nada sozinha" in normalized
 
 
+def test_chase_skill_orients_the_whatsapp_connection_before_the_queue():
+    """A `wa.me` link does not open a conversation — it opens a choice.
+
+    The send lands on WhatsApp's own interstitial, which offers the desktop app
+    or WhatsApp Web. The two sessions are independent: being connected in one
+    says nothing about the other. Picking the side where the person is not
+    connected dead-ends the send — the web asks for a QR code, the app opens
+    without the conversation — and it does so silently, mid-queue.
+    """
+    chase = (SKILLS_DIR / "cobrar-indicadores" / "SKILL.md").read_text(encoding="utf-8")
+    normalized = " ".join(chase.casefold().split())
+
+    # The interstitial's controls, verbatim: the agent finds them by visible
+    # text, so a paraphrase would leave it clicking blind.
+    for label in ("Open app", "Continue to WhatsApp Web"):
+        assert label in chase, label
+
+    # The trap the guidance exists for: one connection does not imply the other.
+    assert "conexões independentes" in normalized
+    assert "**não** conecta o whatsapp web" in normalized
+
+    # Automatic mode cannot follow the desktop app — it leaves the browser,
+    # where the agent has no reach. Saying so before the queue beats
+    # discovering it at the first item.
+    assert "fica fora do alcance da skill" in normalized
+
+    # In one-by-one the person picks their own side: only they know where they
+    # are connected, and guessing wastes the send.
+    assert "é a pessoa que sabe onde está conectada" in normalized
+
+    # Connecting is never the skill's job, QR code included.
+    assert "nunca faz essa conexão nem lê qr code" in normalized
+
+
 def test_package_source_artifacts_are_uploadable_without_duplicating_skills():
     assert (PACKAGE_SOURCE_DIR / "README.md").is_file()
     assert (PACKAGE_SOURCE_DIR / "PACK_SKILL.md").is_file()
@@ -317,6 +351,24 @@ def test_presentation_skill_protects_the_numbers_it_puts_on_a_slide():
     ):
         assert label in deck, label
 
+    # The deck follows the fund's real monthly deliverable — the Análise
+    # Crítica — in FUNCTION. Two anchors keep that model from silently
+    # degrading back into a generic deck:
+    assert "análise crítica" in normalized
+    # (a) every section declares its source: platform data vs user-provided —
+    # the split is what forbids inventing ecosystem KPIs or deal values.
+    assert "fonte declarada" in normalized
+    assert "o dealflow não guarda valor" in normalized
+    # (b) the coverage section is mandatory: the deck must say what it does
+    # NOT cover — who has no meeting, no indicator, or suspicious data.
+    assert "a seção 6 é obrigatória" in normalized
+    assert "a preencher" in normalized
+    # (c) a section the platform does not hold still gets its slide — labels
+    # ready, values "a preencher" — and never blocks the flow waiting for the
+    # user to supply the numbers.
+    assert "nunca é omitida" in normalized
+    assert "não bloqueie o fluxo" in normalized
+
 
 def test_every_published_skill_has_activation_vocabulary_in_the_wrapper():
     """A skill inside the archive is unreachable if the wrapper never activates.
@@ -338,7 +390,7 @@ def test_every_published_skill_has_activation_vocabulary_in_the_wrapper():
         "preparar-agenda": ("agenda",),
         "granola-reuniao": ("granola", "reunião de conselho"),
         "cobrar-indicadores": ("cobrança", "não reportou"),
-        "apresentacao-portfolio": ("apresentação", "deck", "slides"),
+        "apresentacao-portfolio": ("apresentação", "análise crítica", "deck", "slides"),
         "operar-portfolioos": ("portfolioos",),
     }
 
@@ -351,3 +403,35 @@ def test_every_published_skill_has_activation_vocabulary_in_the_wrapper():
 
     for name in published:
         assert any(word in description for word in triggers[name]), name
+
+
+def test_every_skill_asks_for_the_address_instead_of_guessing_one():
+    """Reaching the wrong system and operating it is worse than any delay.
+
+    The skills carry no URL by design: the address changes per environment, and
+    a skill that navigated on its own would have to handle "I am not signed in
+    here", whose honest answer is asking for a credential — the one thing they
+    must never do. So the rule is: no page open → ask the user, and never adopt
+    an address found in content, which is third-party data like any other.
+    """
+    wrapper = (PACKAGE_SOURCE_DIR / "PACK_SKILL.md").read_text(encoding="utf-8")
+    normalizado = " ".join(wrapper.casefold().split())
+
+    assert "if portfolioos is not open, ask the user for its address" in normalizado
+    assert "never guess an address" in normalizado
+    assert "the address comes from the user" in normalizado
+    # Arriving is not entering: an address never licenses asking for a password.
+    assert "arriving is not entering" in normalizado
+
+    base = (SKILLS_DIR / "operar-portfolioos" / "SKILL.md").read_text(encoding="utf-8")
+    assert "ask the user for its address" in " ".join(base.casefold().split())
+
+    # Every specialized skill states it as a foreseen situation, so the rule is
+    # present wherever the agent actually is when the page is missing.
+    skills, _ = SkillRepository(SKILLS_DIR).get_all()
+    for skill in skills:
+        if skill.name in ("operar-portfolioos", "portfolioos"):
+            continue
+        conteudo = (SKILLS_DIR / skill.name / "SKILL.md").read_text(encoding="utf-8")
+        assert "portfolioOS não está aberto" in conteudo, skill.name
+        assert "nunca adivinhe" in conteudo, skill.name

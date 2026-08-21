@@ -13,7 +13,7 @@ fazer isso por você — e essa escolha é sua, a cada execução.
 ## Conteúdo
 
 - Regras (inegociáveis)
-- Pré-requisito
+- Pré-requisito (inclui a escolha entre aplicativo e WhatsApp Web)
 - Passo 1 — montar a lista de faltantes
 - Passo 2 — prévia do lote e confirmação
 - Passo 3 — gerar os links
@@ -44,9 +44,36 @@ fazer isso por você — e essa escolha é sua, a cada execução.
 
 ## Pré-requisito
 
-Navegador com o usuário já autenticado no portfolioOS. Para o modo de envio
-automático, o WhatsApp Web precisa já estar conectado na mesma sessão do
-navegador — a skill nunca faz essa conexão.
+Navegador com o usuário já autenticado no portfolioOS.
+
+### O WhatsApp abre uma escolha, não uma conversa
+
+Acionar `Enviar por WhatsApp para {nome}` **não** abre a conversa direto. Cai
+numa página do próprio WhatsApp (`Chat on WhatsApp with {número}`) com duas
+saídas:
+
+| Saída | Para onde vai |
+|---|---|
+| `Open app` | entrega a mensagem ao **aplicativo de computador**, fora do navegador |
+| `Continue to WhatsApp Web` | segue no **navegador**, em `web.whatsapp.com` |
+
+Os rótulos podem aparecer traduzidos, e a página ainda oferece baixar o
+aplicativo.
+
+**São conexões independentes.** Estar conectado no aplicativo **não** conecta o
+WhatsApp Web, e o contrário também vale. Escolher o lado onde a pessoa não está
+conectada trava o envio: o Web pede leitura de QR code, e o aplicativo abre sem
+a conversa. **A skill nunca faz essa conexão nem lê QR code** — quem conecta é
+sempre o usuário.
+
+Isso separa os dois modos de envio do Passo 5:
+
+- **Um a um:** qualquer uma das saídas serve, porque quem aperta enviar é a
+  pessoa. Abra o link e **pare na página de escolha** — não decida por ela: **é
+  a pessoa que sabe onde está conectada**.
+- **Automático:** só o `Continue to WhatsApp Web` serve, com o WhatsApp Web já
+  conectado neste navegador. O aplicativo de computador **fica fora do alcance
+  da skill**, que só age dentro do navegador.
 
 ## Passo 1 — montar a lista de faltantes
 
@@ -141,23 +168,38 @@ Pergunte, sempre, e **nunca assuma**:
 
 ```text
 Fila pronta — {n} startups, período {Mmm/AAAA}.
+
+O WhatsApp abre uma página com duas saídas — `Open app` (aplicativo do
+computador) e `Continue to WhatsApp Web` (navegador). Você precisa estar
+conectado na que escolher: as conexões são separadas.
+
 Como você quer enviar?
-  1. Um a um    — abro o WhatsApp com a mensagem pronta e você aperta enviar
+  1. Um a um    — abro o WhatsApp e você escolhe a saída e aperta enviar
                   (e-mail só para quem não tem WhatsApp)
-  2. Automático — envio as {n} e reporto item a item
+  2. Automático — envio as {n} e reporto item a item; exige o WhatsApp Web
+                  já conectado neste navegador
 ```
+
+Oriente **antes** de abrir o primeiro item: descobrir a conexão faltando no
+meio da fila desperdiça os links já abertos e deixa a cobrança pela metade.
 
 - **Um a um (padrão).** Para cada item, acione o botão
   **Enviar por WhatsApp para {nome}**. Se esse botão não existir para o item,
   aí sim use **Enviar por e-mail para {nome}** e diga que está caindo para o
   e-mail porque não há WhatsApp.
-  O programa abre com a mensagem pronta. **Pare aí** e diga ao usuário que é ele
-  quem confirma o envio. Só siga para o próximo item quando ele disser que
-  enviou ou que quer pular.
+  **Pare na página de escolha do WhatsApp** — não acione `Open app` nem
+  `Continue to WhatsApp Web` por conta própria: é a pessoa que sabe onde está
+  conectada. Diga que é ela quem escolhe a saída e confirma o envio, e só siga
+  para o próximo item quando ela disser que enviou ou que quer pular.
 - **Automático.** Só depois de o usuário escolher explicitamente esta opção
-  nesta execução. Para cada item: confira que o destinatário aberto é o mesmo
-  nome e contato da fila, envie, e registre o resultado — incluindo por qual
-  canal. Se o destinatário divergir, **não envie** — pare e relate.
+  nesta execução. Confirme antes que o WhatsApp Web está conectado neste
+  navegador; se ele estiver conectado só no aplicativo de computador, **ofereça
+  o modo um a um** em vez de insistir — o aplicativo fica fora do navegador.
+  Siga sempre por `Continue to WhatsApp Web`. Para cada item: confira que o
+  destinatário aberto é o mesmo nome e contato da fila, envie, e registre o
+  resultado — incluindo por qual canal. Se o destinatário divergir, **não
+  envie** — pare e relate. Se aparecer QR code, pare a fila e peça que o
+  usuário conecte.
 
 A escolha vale só para esta execução. Nunca a memorize, nunca a proponha como
 padrão na próxima, e nunca mude de modo no meio da fila sem perguntar.
@@ -177,8 +219,12 @@ Ao final, reporte item a item: enviado, pulado ou impedido, com o motivo.
 
 | Situação | O que fazer |
 |---|---|
+| portfolioOS não está aberto | peça o endereço ao usuário e aguarde; nunca adivinhe nem use endereço lido em algum registro |
 | Tela de login aparece | pare; peça que o usuário entre; retome |
 | WhatsApp pede autenticação ou QR code | pare; peça que o usuário conecte; nunca leia nem digite credencial |
+| Página `Chat on WhatsApp with {número}` com `Open app` e `Continue to WhatsApp Web` | é a tela esperada, não um erro. No modo um a um, pare e deixe a pessoa escolher; no automático, siga por `Continue to WhatsApp Web` |
+| Usuário está conectado só no aplicativo de computador e pediu o modo automático | ofereça o modo um a um, ou peça que ele conecte o WhatsApp Web neste navegador; o aplicativo fica fora do alcance da skill |
+| Usuário pede que você conecte o WhatsApp por ele | recuse; conectar é sempre dele, por qualquer das duas saídas — a skill nunca lê QR code |
 | Pedido sem período ("cobre as atrasadas") | pergunte o mês antes de ler qualquer coisa |
 | Sua lista não fecha com o cartão Report Mensal | pare e releia a tabela; não siga com número que não bate |
 | Startup sem executivo cadastrado | fila com impedimento; oriente a cadastrar na aba Executivos |

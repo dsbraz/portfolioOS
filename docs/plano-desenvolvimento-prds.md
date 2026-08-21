@@ -5,6 +5,16 @@
 - **Fonte:** auditoria verificada de PRD-001/RFC-001, PRD-002/RFC-002 e do
   código, contra a árvore de trabalho não-commitada em cima de `3a224a1`.
 
+> **Status de execução (19/08/2026):** Fases 0, 1 e 2 **concluídas**; o
+> endurecimento transversal do §10 **concluído** (corrida coberta, suíte
+> isolada, seed com executivos e investida em atraso, roteiro registrado em
+> `docs/roteiro-aceite-rfc-002.md`, gates de a11y rodados). Além do plano:
+> prefixo de país obrigatório, e-mail como canal alternativo, suíte e2e com CI,
+> avaliação de agente das skills, e a skill `apresentacao-portfolio` (metade
+> não-travada da Fase 3). Restam: a cauda travada da Fase 3 (decisões do
+> Daniel) e as Fases 4–5 (PRD-003/RFC-003 → MCP). Entrega em 6 PRs empilhados
+> (#1–#6), nenhum mesclado ainda.
+
 Este plano leva o repositório do estado atual (dois PRDs parcialmente
 implementados, quatro documentos em rascunho, tudo não-commitado) à **estrutura
 ideal**: todos os PRDs realizados ou explicitamente adiados por decisão
