@@ -84,6 +84,11 @@ export function firstName(fullName: string): string {
  * tell the requests apart. The name takes bare "de" and never a gendered
  * article: a company name has no knowable grammatical gender, and "da Payface"
  * is a guess the template must not make.
+ *
+ * The URL stands alone on its own line: glued to a sentence, chat clients can
+ * swallow neighbouring punctuation into the link or fail to linkify at all.
+ * (Note the linkification WhatsApp applies also needs a host with a dot —
+ * `localhost` stays plain text in development no matter the formatting.)
  */
 export function buildIndicatorRequestMessage(
   recipientName: string,
@@ -95,7 +100,8 @@ export function buildIndicatorRequestMessage(
   const subjectOfTheData = name === '' ? 'dos dados' : `dos dados de ${name}`;
   return [
     `Olá ${firstName(recipientName)}. Tudo bem?`,
-    `Segue o link para atualizações ${subjectOfTheData} referentes a ${period}: ${formUrl}`,
+    `Segue o link para atualizações ${subjectOfTheData} referentes a ${period}:`,
+    formUrl,
     'Obrigado',
   ].join('\n');
 }

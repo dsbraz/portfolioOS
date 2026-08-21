@@ -69,9 +69,19 @@ describe('buildIndicatorRequestMessage', () => {
 
     expect(message).toBe(
       'Olá Ana. Tudo bem?\n' +
-        'Segue o link para atualizações dos dados de Payface referentes a Jul/2026: https://app/x\n' +
+        'Segue o link para atualizações dos dados de Payface referentes a Jul/2026:\n' +
+        'https://app/x\n' +
         'Obrigado',
     );
+  });
+
+  it('should keep the URL alone on its own line so chat clients linkify it', () => {
+    // Glued to a sentence, some clients swallow neighbouring punctuation into
+    // the URL or give up on linkifying. A line containing only the URL is the
+    // robust form — and the easiest to tap.
+    const message = buildIndicatorRequestMessage('Ana', 'Payface', 'Jul/2026', 'https://app/x');
+
+    expect(message.split('\n')).toContain('https://app/x');
   });
 
   it('should never attach a gendered article to the startup name', () => {
@@ -86,7 +96,8 @@ describe('buildIndicatorRequestMessage', () => {
   it('should fall back to the nameless phrasing when the startup name is absent', () => {
     const message = buildIndicatorRequestMessage('Ana', '  ', 'Jul/2026', 'https://app/x');
 
-    expect(message).toContain('dos dados referentes a Jul/2026');
+    expect(message).toContain('dos dados referentes a Jul/2026:');
+    expect(message.split('\n')).toContain('https://app/x');
     expect(message).not.toContain('de  ');
   });
 });
