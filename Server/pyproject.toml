@@ -1,0 +1,15 @@
+# Ruff was a declared dependency with no configuration and no CI step — a
+# linter that never ran, which is how an undefined name shipped in the eval
+# runner. This config is the minimal correctness floor: syntax errors, unused
+# imports/variables, undefined names, import hygiene. Style rules stay out on
+# purpose; the gate must never fail on taste.
+[tool.ruff]
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E4",  # import placement
+    "E7",  # statement errors
+    "E9",  # syntax errors
+    "F",   # pyflakes: undefined names, unused imports/variables, redefinitions
+]

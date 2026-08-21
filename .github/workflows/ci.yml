@@ -25,7 +25,7 @@ jobs:
             -e SECRET_KEY='ci-secret-key-not-for-any-real-environment' \
             -e PYTHONPATH=/app \
             -v "$PWD":/app -w /app \
-            portfolioos-server pytest -q
+            portfolioos-server sh -c "ruff check app scripts evals tests && pytest -q"
 
   frontend:
     name: Frontend (vitest)
