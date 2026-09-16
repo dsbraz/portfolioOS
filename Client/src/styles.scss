@@ -301,9 +301,14 @@ html {
 
   // The sidebar bg/ink/border/hover already follow the aliases above. Only the
   // accent rail and active background need dark-specific values.
-  --color-sidebar-accent: var(--color-accent-on-dark); // >= 3:1 on dark
+  // The functional accent itself is raised on dark: #7f2ec9 only reaches 2.8:1
+  // there. Redefining the semantic token (not each consumer) is what keeps
+  // checkboxes, toggles, tags and the active tab above 3:1 in dark mode.
+  --color-accent: var(--color-accent-on-dark);
+  --color-accent-hover: color-mix(in srgb, var(--color-accent-on-dark), var(--color-white) 12%);
+  --color-sidebar-accent: var(--color-accent); // >= 3:1 on dark
   --color-sidebar-active-bg: #2a2a2e; // neutral dark gray
-  --color-focus: var(--color-accent-on-dark);
+  --color-focus: var(--color-accent);
 
   // The primary ink drives links, so it has to invert with the text -- otherwise
   // every link renders #121212 on a dark surface (1.08:1). The hover also flips
