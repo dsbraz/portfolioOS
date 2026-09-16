@@ -233,16 +233,16 @@ html {
   --content-max: 88rem;
   --content-padding: clamp(1rem, 0.5rem + 2vw, 2rem);
   --panel-gap: clamp(1rem, 0.6rem + 1.2vw, 1.5rem);
-  // Espaço DENTRO de um conjunto de tiles (a faixa de KPIs). Precisa ser menor
-  // que o padding do próprio card (--space-lg) e menor que --panel-gap: é a
-  // diferença entre os dois que faz os tiles lerem como um grupo, e o grupo se
-  // destacar da região seguinte. Igualá-los apaga a hierarquia.
+  // Space INSIDE a set of tiles (the KPI strip). It must be smaller than the
+  // card's own padding (--space-lg) and smaller than --panel-gap: the difference
+  // between the two is what makes the tiles read as a group, and the group
+  // stand out from the next region. Making them equal erases the hierarchy.
   --tile-gap: var(--space-sm);
   --table-row-h: 3rem;
   --chart-h: 16rem;
   --fs-stat: 1.625rem; // 26px -- KPI hero number at dashboard density
   --control-h: 2.25rem; // 36px -- single height for small button, select, search
-  --form-gap: var(--space-2xs); // ritmo vertical entre campos (o subscript soma)
+  --form-gap: var(--space-2xs); // vertical rhythm between fields (the subscript adds to it)
 
   // ---------- Borders / shadows / motion / layers ----------
   --radius-sm: 4px;
@@ -316,9 +316,9 @@ html {
   --color-primary: var(--color-white);
   --color-primary-hover: color-mix(in srgb, var(--color-white), var(--color-black) 12%);
 
-  // Sombra sobre superfície ESCURA precisa de preto puro e mais opacidade: o
-  // par claro (#121212 a 8%) é invisível sobre #141416, e aí um overlay passa a
-  // depender só do filete para se separar do fundo.
+  // A shadow on a DARK surface needs pure black and more opacity: the light
+  // pair (#121212 at 8%) is invisible on #141416, and then an overlay depends
+  // only on its hairline to separate from the background.
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.32);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45);
   --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55);
@@ -514,24 +514,25 @@ h5 {
 
 // Available to screen readers, removed from the visual flow. Used for table
 // captions and any label that the layout already conveys visually.
-// Cabeçalho ordenável. O `mat-sort-header` transforma o `th` em botão e envolve
-// o rótulo num flex — o que quebra o `text-align: end` das colunas numéricas,
-// porque o alinhamento passa a ser do container, não do texto.
+// Sortable header. `mat-sort-header` turns the `th` into a button and wraps the
+// label in a flex — which breaks `text-align: end` on numeric columns, because
+// alignment now belongs to the container, not the text.
 .mat-sort-header {
   --mat-sort-arrow-color: var(--color-text-muted);
 
   .mat-sort-header-container {
-    // A área de clique é o rótulo inteiro, e ela precisa de um foco visível
-    // próprio: o `th` não recebe outline por ser célula de tabela.
+    // The click area is the whole label, and it needs its own visible focus:
+    // the `th` gets no outline because it is a table cell.
     border-bottom: 0;
 
-    // O container é quem carrega `role="button"` e `tabindex="0"` — o alvo real
-    // é ele, não a célula. Na altura natural do texto ficava em 20px, abaixo dos
-    // 24px mínimos da WCAG 2.5.8.
+    // The container is what carries `role="button"` and `tabindex="0"` — it is
+    // the real target, not the cell. At the natural text height it was 20px,
+    // below the 24px minimum of WCAG 2.5.8.
     //
-    // É `min-height` e não `height: 100%`: porcentagem não resolve dentro de uma
-    // célula de tabela, que não tem altura definida. 2rem dá folga sobre o
-    // mínimo e cabe no espaço que já era padding do `th`, sem mexer na linha.
+    // It is `min-height`, not `height: 100%`: a percentage does not resolve
+    // inside a table cell, which has no defined height. 2rem leaves slack over
+    // the minimum and fits in what was already the `th` padding, without
+    // changing the row.
     min-height: 2rem;
   }
 
@@ -541,33 +542,34 @@ h5 {
 
 }
 
-// Numérica: o rótulo encosta à direita, alinhado com os números que ele
-// encabeça. A seta vem ANTES dele, senão ela se planta na borda e empurra o
-// texto para dentro.
+// Numeric: the label hugs the right, aligned with the numbers it heads. The
+// arrow comes BEFORE it, otherwise it plants itself on the edge and pushes the
+// text inward.
 .is-num.mat-sort-header .mat-sort-header-container {
   justify-content: flex-end;
 
-  // `arrowPosition="before"` põe o container em `row-reverse`, e num eixo
-  // invertido `flex-end` aponta para a ESQUERDA. Quem encosta o conteúdo na
-  // direita visual aqui é `flex-start`.
+  // `arrowPosition="before"` puts the container in `row-reverse`, and on a
+  // reversed axis `flex-end` points LEFT. What pushes the content to the
+  // visual right here is `flex-start`.
   &.mat-sort-header-position-before {
     justify-content: flex-start;
   }
 }
 
-// Eyebrow de seção: agrupa campos dentro de um formulário ou pares dentro de
-// uma vista de leitura ("QUANTITATIVOS", "QUALITATIVOS").
+// Section eyebrow: groups fields inside a form or pairs inside a read view
+// ("QUANTITATIVOS", "QUALITATIVOS").
 //
-// É global porque ler e editar precisam apresentar os MESMOS grupos com a mesma
-// aparência — quando cada lado tinha sua própria cópia, era só questão de tempo
-// até divergirem.
+// It is global because reading and editing must present the SAME groups with
+// the same look — when each side had its own copy, it was only a matter of
+// time before they diverged.
 //
-// Em Inter, não em Geist Mono. O sistema lista eyebrow como papel do mono, mas
-// ali o mono rotula DADO (tag, número grande); aqui é cabeçalho de estrutura, e
-// mono num cabeçalho é o erro clássico que o guia descreve.
+// In Inter, not Geist Mono. The system lists eyebrow as a mono role, but there
+// mono labels DATA (tag, big number); here it is a structural header, and mono
+// on a header is the classic error the guide describes.
 //
-// Só tipografia: o ritmo vertical é do contexto, porque a distância que separa
-// um grupo do anterior depende de como aquele container empilha.
+// Typography only: vertical rhythm belongs to the context, because the
+// distance separating a group from the previous one depends on how that
+// container stacks.
 .section-title {
   margin: 0;
   color: var(--color-text-muted);
@@ -578,13 +580,13 @@ h5 {
   text-transform: uppercase;
 }
 
-// Estado de carregamento das telas internas.
+// Loading state for internal screens.
 //
-// Sem ele a página renderizava NADA enquanto os dados não chegavam, e um main
-// vazio é indistinguível de "não há dados" — tanto para quem lê a tela quanto
-// para um agente que raspe o DOM cedo demais. O `aria-busy` fica no container
-// da página, que sempre existe: uma região viva criada junto com o conteúdo
-// costuma não ser anunciada.
+// Without it the page rendered NOTHING while data had not arrived, and an
+// empty main is indistinguishable from "no data" — both for someone reading
+// the screen and for an agent scraping the DOM too early. `aria-busy` sits on
+// the page container, which always exists: a live region created together
+// with the content is often not announced.
 .page-status {
   display: flex;
   align-items: center;
@@ -750,13 +752,13 @@ h5 {
   border-radius: var(--radius-sm);
 }
 
-// Dentro de um container que ROLA, o anel para fora é recortado — e um foco
-// recortado é um foco que não se vê. `overflow-x: auto` ainda faz o `overflow-y`
-// virar `auto` junto, então o corte acontece nos quatro lados, não só nas
-// laterais. Nestes escopos o anel desenha para dentro.
+// Inside a SCROLLING container, an outward ring gets clipped — and a clipped
+// focus is a focus nobody sees. `overflow-x: auto` also turns `overflow-y` into
+// `auto`, so clipping happens on all four sides, not just the edges. In these
+// scopes the ring draws inward.
 //
-// Vale para os focáveis reais de cada um: o `.mat-sort-header-container` (que é
-// quem carrega `role="button"`, não o `th`) e os botões de ação das linhas.
+// Applies to the real focusables of each: the `.mat-sort-header-container`
+// (which carries `role="button"`, not the `th`) and the row action buttons.
 .table-shell :focus-visible,
 .section-tabs :focus-visible {
   outline-offset: -2px;
@@ -806,20 +808,20 @@ h5 {
   line-height: var(--lh-base);
 }
 
-// Unidade mora no CAMPO, não no rótulo: o rótulo diz o que o dado É, a unidade
-// diz em que ele é medido. Fica em tinta secundária para não competir com o
-// valor digitado.
+// The unit lives in the FIELD, not the label: the label says what the data IS,
+// the unit says what it is measured in. Muted ink so it does not compete with
+// the typed value.
 .field-affix {
   color: var(--color-text-muted);
   font-size: var(--fs-body-sm);
   white-space: nowrap;
 }
 
-// Valor e unidade precisam ficar ADJACENTES. Com prefixo (R$) o número segue à
-// esquerda, logo depois dele. Com sufixo (%) o número vai para a direita, senão
-// sobra um vão entre o valor e a unidade — "72 ......... %" não lê como um
-// número percentual. Por isso o alinhamento difere: cada um encosta no seu
-// afixo. Tabular para os dígitos não dançarem enquanto se digita.
+// Value and unit must stay ADJACENT. With a prefix (R$) the number stays left,
+// right after it. With a suffix (%) the number goes right, otherwise a gap is
+// left between value and unit — "72 ......... %" does not read as a
+// percentage. That is why alignment differs: each one hugs its affix. Tabular
+// so digits do not jitter while typing.
 .mat-mdc-form-field:has(.field-affix) input {
   font-variant-numeric: tabular-nums;
 }
@@ -828,11 +830,11 @@ h5 {
   text-align: end;
 }
 
-// O spin button nativo não pertence ao sistema: ele desenha um controle que a
-// marca não tem, encosta no sufixo — "▲▼ %" divide a leitura da unidade — e é a
-// porta pela qual a roda do mouse altera um valor sem intenção. Escondê-lo aqui
-// vale para os dois formulários de indicador de uma vez; a digitação e as setas
-// do teclado, que é como o número realmente é informado, seguem intactas.
+// The native spin button does not belong to the system: it draws a control the
+// brand does not have, crowds the suffix — "▲▼ %" splits the reading of the
+// unit — and is the door through which the mouse wheel changes a value
+// unintentionally. Hiding it here covers both indicator forms at once; typing
+// and keyboard arrows, which is how the number is actually entered, stay intact.
 input[type='number'] {
   appearance: textfield;
 
@@ -996,14 +998,14 @@ input[type='number'] {
 // =============================================================
 // OVERLAYS — menu, select, datepicker, tooltip, snackbar
 //
-// O CDK monta overlay em `<body>`, fora de `<app-root>`, então nenhuma regra
-// escopada em container do app os alcança — foi por isso que escaparam do
-// redesign. Aqui eles recebem o mesmo tratamento de painel do resto: superfície
-// `--color-surface-2`, filete de 1px, canto de 8px e a sombra do nosso token.
+// The CDK mounts overlays on `<body>`, outside `<app-root>`, so no rule scoped
+// to an app container reaches them — that is why they escaped the redesign.
+// Here they get the same panel treatment as the rest: `--color-surface-2`
+// surface, 1px hairline, 8px corner and our token's shadow.
 //
-// A sombra do Material é uma elevação MDC de TRÊS camadas escrita direto no
-// componente, que ignora `--mat-sys-level*`. Por isso a ponte de elevação não
-// bastou e o valor precisa ser sobrescrito aqui.
+// Material's shadow is a THREE-layer MDC elevation written directly in the
+// component, which ignores `--mat-sys-level*`. That is why the elevation bridge
+// was not enough and the value must be overridden here.
 // =============================================================
 .cdk-overlay-pane {
   .mat-mdc-menu-panel {
@@ -1019,8 +1021,8 @@ input[type='number'] {
     box-shadow: var(--shadow-md);
   }
 
-  // O token de fonte do item de menu vem vazio do Material, e sem ele o item
-  // cai no default do navegador (Arial). Definido explicitamente.
+  // Material ships the menu item font token empty, and without it the item
+  // falls back to the browser default (Arial). Set explicitly.
   .mat-mdc-menu-item {
     --mat-menu-item-label-text-font: var(--font-body);
     --mat-menu-item-label-text-size: var(--fs-body-sm);
@@ -1043,8 +1045,9 @@ input[type='number'] {
     }
   }
 
-  // Ação destrutiva: separada por um filete para não ser clicada por engano,
-  // e no único vermelho semântico. Nunca só pela cor — o rótulo diz "Excluir".
+  // Destructive action: separated by a hairline so it is not clicked by
+  // mistake, and in the only semantic red. Never color alone — the label says
+  // "Excluir".
   .menu-item-danger {
     margin-top: var(--space-2xs);
     padding-top: var(--space-2xs);
@@ -1066,7 +1069,7 @@ input[type='number'] {
       background-color: var(--color-hover);
     }
 
-    // Selecionado usa o acento FUNCIONAL, que é o papel do roxo.
+    // Selected uses the FUNCTIONAL accent, which is purple's role.
     &.mdc-list-item--selected {
       background-color: var(--color-info-bg);
       color: var(--color-info);
@@ -1074,10 +1077,10 @@ input[type='number'] {
   }
 }
 
-// Enquanto o painel está aberto, o GATILHO fica marcado. Sem isso a referência
-// se perde — num quadro onde todo card tem o mesmo "⋯", nada indica qual deles
-// abriu o menu. O estado vem de `aria-expanded`, então o visual não pode
-// divergir do que a tecnologia assistiva recebe.
+// While the panel is open, the TRIGGER stays marked. Without it the reference
+// is lost — on a board where every card has the same "⋯", nothing shows which
+// one opened the menu. The state comes from `aria-expanded`, so the visuals
+// cannot diverge from what assistive technology receives.
 .mat-mdc-menu-trigger[aria-expanded='true'] {
   background-color: var(--color-hover);
   color: var(--color-text);
@@ -1087,7 +1090,7 @@ input[type='number'] {
   }
 }
 
-// Tooltip: tinta invertida, como um balão de ajuda deve ser.
+// Tooltip: inverted ink, as a help bubble should be.
 .mat-mdc-tooltip .mdc-tooltip__surface {
   background-color: var(--color-text);
   color: var(--color-bg);
@@ -1106,14 +1109,14 @@ input[type='number'] {
 }
 
 // =============================================================
-// FORMULÁRIO PÚBLICO — /report e /user-invite-register
+// PUBLIC FORM — /report and /user-invite-register
 //
-// Páginas sem o chrome do app: não há sidebar para carregar a marca, então elas
-// ganham um cabeçalho próprio com o logo (mesmo problema que o /login tinha).
+// Pages without the app chrome: there is no sidebar to carry the brand, so
+// they get their own header with the logo (same problem /login had).
 //
-// O corpo segue o modelo de ficha do px-operations: seções NUMERADAS, cada uma
-// com título e uma dica curta, separadas por filete. Numerar dá noção de
-// progresso num formulário longo preenchido por quem é de fora do produto.
+// The body follows the px-operations form-sheet model: NUMBERED sections, each
+// with a title and a short hint, separated by a hairline. Numbering gives a
+// sense of progress in a long form filled in by people outside the product.
 // =============================================================
 .public-top {
   background-color: var(--color-bg);
@@ -1186,9 +1189,9 @@ input[type='number'] {
   font-size: var(--fs-body-sm);
 }
 
-// Seção numerada. É um `<fieldset>`: agrupa controles relacionados e leva
-// `aria-labelledby`/`aria-describedby` para o título e a dica. Precisa zerar
-// borda e margem, que o user-agent aplica.
+// Numbered section. It is a `<fieldset>`: groups related controls and carries
+// `aria-labelledby`/`aria-describedby` for the title and hint. Border and
+// margin, applied by the user agent, must be reset.
 .q {
   display: flex;
   flex-direction: column;
@@ -1207,7 +1210,7 @@ input[type='number'] {
   margin-bottom: var(--space-lg);
 }
 
-// O número é decorativo — Geist Mono, o papel que a marca reserva para ele.
+// The number is decorative — Geist Mono, the role the brand reserves for it.
 .q-num {
   font-family: var(--font-mono);
   font-size: var(--fs-decoration-xs);
@@ -1234,10 +1237,10 @@ input[type='number'] {
   color: var(--color-text-muted);
 }
 
-// ---------- Estados de página pública (carregando, erro, sucesso) ----------
-// Mesma moldura do resto: painel com filete e canto de 8px. O ícone vai num
-// disco tingido, no par tom+tinta já validado — um ícone de 64px solto numa
-// página em branco não é um estado, é um vazio.
+// ---------- Public page states (loading, error, success) ----------
+// Same frame as the rest: panel with hairline and 8px corner. The icon sits in
+// a tinted disc, using the already validated tone+tint pair — a loose 64px
+// icon on a blank page is not a state, it is a void.
 .status-page {
   display: flex;
   align-items: center;
@@ -1301,12 +1304,12 @@ input[type='number'] {
   font-size: var(--fs-body-sm);
 }
 
-// ---------- Linha de campos ----------
-// `gap` no grid vale para as duas direções, e era isso que quebrava o ritmo no
-// mobile: ao colapsar, a linha separava os campos por 16px enquanto o container
-// usava 4px — o mesmo formulário com dois ritmos. Separando os eixos, o
-// vertical acompanha o container (o subscript do campo já dá o respiro) e o
-// horizontal fica maior, que é o que as colunas precisam para não colarem.
+// ---------- Field row ----------
+// `gap` on a grid applies to both directions, and that is what broke the rhythm
+// on mobile: when collapsed, the row separated fields by 16px while the
+// container used 4px — the same form with two rhythms. Splitting the axes, the
+// vertical follows the container (the field subscript already gives breathing
+// room) and the horizontal is larger, which is what columns need not to stick.
 .form-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
@@ -1314,8 +1317,8 @@ input[type='number'] {
   column-gap: var(--space-md);
 }
 
-// Ritmo único de formulário. Definido uma vez para as telas e os diálogos não
-// divergirem — eram cinco valores diferentes espalhados.
+// Single form rhythm. Defined once so screens and dialogs do not diverge —
+// there used to be five different values scattered around.
 .report-form,
 .invite-form,
 .dialog-form {
@@ -1331,10 +1334,10 @@ input[type='number'] {
   padding-top: var(--space-xs);
 }
 
-// ---------- Ações do formulário ----------
-// Mobile-first: o botão ocupa a linha inteira por padrão e só encolhe para
-// `max-content` quando há largura. Um alvo de largura total é mais fácil de
-// acertar com o polegar, e é o último passo do formulário.
+// ---------- Form actions ----------
+// Mobile-first: the button takes the full row by default and only shrinks to
+// `max-content` when there is room. A full-width target is easier to hit with
+// a thumb, and it is the last step of the form.
 .form-actions {
   display: flex;
   justify-content: flex-end;
@@ -1351,16 +1354,17 @@ input[type='number'] {
 }
 
 // =============================================================
-// PILL -- primitiva compartilhada
+// PILL -- shared primitive
 //
-// Rótulo de ESTADO estático: sem hover, sem ponteiro, nunca vira ação. Divide a
-// forma com `.tag` (mesma borda, peso e padding) para o app ter um só
-// tratamento de rótulo tingido.
+// Static STATE label: no hover, no pointer, never becomes an action. Shares its
+// shape with `.tag` (same border, weight and padding) so the app has a single
+// tinted-label treatment.
 //
-// Cada tom pareia uma cor de texto sólida com sua tinta pré-calculada. As
-// tintas são sólidas de propósito (nunca `color-mix`): fundo translúcido faz o
-// audit ler o backdrop em vez da tinta, e é o par que sustenta os 4.5:1 nos
-// dois temas. Estado nunca é só cor — o rótulo escrito carrega o significado.
+// Each tone pairs a solid text color with its precomputed tint. Tints are
+// solid on purpose (never `color-mix`): a translucent background makes the
+// audit read the backdrop instead of the tint, and the pair is what holds the
+// 4.5:1 in both themes. State is never color alone — the written label carries
+// the meaning.
 // =============================================================
 .pill {
   display: inline-flex;
@@ -1405,8 +1409,8 @@ input[type='number'] {
   color: var(--color-info);
 }
 
-// Neutro para estados que NÃO são problema. "Inativo" não é erro — pintá-lo de
-// vermelho exagera o que o dado diz.
+// Neutral for states that are NOT a problem. "Inativo" is not an error —
+// painting it red overstates what the data says.
 .pill--neutral {
   background-color: var(--color-surface);
   color: var(--color-text-muted);

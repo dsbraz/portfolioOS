@@ -227,7 +227,7 @@ async def test_should_raise_when_period_is_in_the_future(use_case):
 async def test_exposes_last_reported_period_per_startup(
     use_case, startup_repo, indicator_repo, meeting_repo
 ):
-    """O ultimo reporte permite distinguir 'nao reportou este mes' de 'zerou'."""
+    """The last report tells 'did not report this month' apart from 'reported zero'."""
     reported = _make_startup()
     stale = _make_startup()
     never = _make_startup()
@@ -258,8 +258,8 @@ async def test_exposes_last_reported_period_per_startup(
 async def test_last_reported_period_is_bounded_by_the_selected_period(
     use_case, startup_repo, indicator_repo, meeting_repo
 ):
-    """Olhando Fev, um reporte de Jul nao existe ainda — o repositorio recebe o
-    periodo consultado justamente para nao devolver o futuro."""
+    """Viewed from Feb, a Jul report does not exist yet — the repository receives
+    the queried period precisely so it does not return the future."""
     startup = _make_startup()
     startup_repo.get_all.return_value = ([startup], 1)
     indicator_repo.get_by_startups_and_period.return_value = {}

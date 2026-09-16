@@ -3,8 +3,8 @@
 } @else {
   <a class="skip-link" href="#main-content">Pular para o conteúdo</a>
   <mat-sidenav-container class="app-container">
-    <!-- `openedChange` fecha o ciclo: a gaveta também se fecha sozinha (backdrop,
-         Escape), e sem isso o sinal ficava preso em "aberta". -->
+    <!-- `openedChange` closes the loop: the drawer also closes on its own (backdrop,
+         Escape), and without it the signal got stuck at "open". -->
     <mat-sidenav
       [mode]="sidenavMode()"
       [opened]="sidenavOpened()"

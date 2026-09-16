@@ -1,10 +1,11 @@
 // Login.
 //
-// Mesmo registro do resto do app: superfície clara, filete de 1px, canto de 8px.
-// A faixa escura da marca é um recurso de SITE — serve para dar ritmo entre
-// seções de uma página que rola. Numa tela de app ela vira uma lâmina preta sem
-// função, e no tema escuro nem se distingue do fundo. A marca entra aqui pelo
-// logo e pelo acento roxo no foco, que é o contrato do design system.
+// Same register as the rest of the app: light surface, 1px hairline, 8px corner.
+// The brand's dark band is a WEBSITE device — it gives rhythm between sections
+// of a scrolling page. On an app screen it becomes a purposeless black slab, and
+// in the dark theme it is not even distinguishable from the background. The
+// brand comes in here through the logo and the purple focus accent, which is
+// the design system contract.
 
 .login-page {
   display: flex;
@@ -24,8 +25,8 @@
   border-radius: var(--radius-md);
 }
 
-// Duas peças desenhadas, trocadas pelo mesmo sinal dos tokens — o `<picture
-// media>` só enxerga `prefers-color-scheme` e dessincronizaria do toggle.
+// Two crafted assets, swapped by the same signal as the tokens — `<picture
+// media>` only sees `prefers-color-scheme` and would desync from the toggle.
 .login-logo-on-light,
 .login-logo-on-dark {
   height: 1.75rem;
@@ -88,8 +89,8 @@ form {
   height: 2.75rem;
 }
 
-// Tinta sólida, não `color-mix`: uma superfície que CARREGA texto precisa do
-// par pré-calculado para o contraste se sustentar.
+// Solid tint, not `color-mix`: a surface that CARRIES text needs the
+// precomputed pair for the contrast to hold.
 .error-banner {
   display: flex;
   align-items: center;

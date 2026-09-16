@@ -5,8 +5,8 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MonthlyIndicator } from '../../../models/monthly-indicator.model';
 import { IndicatorFormDialog } from './indicator-form-dialog';
 
-describe('IndicatorFormDialog em modo leitura', () => {
-  const indicador = {
+describe('IndicatorFormDialog in read mode', () => {
+  const indicator = {
     month: 7,
     year: 2026,
     total_revenue: 767776.43,
@@ -29,7 +29,7 @@ describe('IndicatorFormDialog em modo leitura', () => {
       providers: [
         provideNoopAnimations(),
         { provide: MatDialogRef, useValue: { close: vi.fn() } },
-        { provide: MAT_DIALOG_DATA, useValue: { indicator: indicador, readonly: true } },
+        { provide: MAT_DIALOG_DATA, useValue: { indicator, readonly: true } },
       ],
     }).compileComponents();
 
@@ -39,48 +39,48 @@ describe('IndicatorFormDialog em modo leitura', () => {
     el = fixture.nativeElement;
   });
 
-  // O ponto da mudança. Antes o modo leitura era o formulário com
-  // `form.disable()`, e o valor herdava a cor de controle inativo: medi 2,46:1
-  // no tema claro, contra 18,7:1 do rótulo ao lado. A WCAG isenta componentes
-  // inativos, então a auditoria não acusava — mas o dado era o conteúdo inteiro
-  // do diálogo.
+  // The point of the change. Read mode used to be the form with
+  // `form.disable()`, and the value inherited the inactive-control color:
+  // measured 2.46:1 in the light theme, against 18.7:1 for the label beside it.
+  // WCAG exempts inactive components, so the audit did not flag it — but the
+  // data was the entire content of the dialog.
   it('should render the record as text instead of disabled form controls', () => {
     expect(el.querySelector('app-read-view')).toBeTruthy();
     expect(el.querySelector('form')).toBeNull();
     expect(el.querySelectorAll('input, textarea, mat-select').length).toBe(0);
   });
 
-  // Ler e editar precisam apresentar o registro com os mesmos grupos: são as
-  // seções que o modo de edição já tem.
+  // Reading and editing must present the record with the same groups: the
+  // sections the edit mode already has.
   it('should keep the quantitative and qualitative sections apart', () => {
-    const titulos = [...el.querySelectorAll('h3')].map(h => h.textContent?.trim());
-    expect(titulos).toEqual(['Quantitativos', 'Qualitativos']);
+    const titles = [...el.querySelectorAll('h3')].map(h => h.textContent?.trim());
+    expect(titles).toEqual(['Quantitativos', 'Qualitativos']);
 
-    const listas = el.querySelectorAll('dl');
-    // Período solto no topo, depois os dois grupos.
-    expect(listas.length).toBe(3);
-    expect(listas[1].textContent).toContain('Receita do mês');
-    expect(listas[2].textContent).toContain('Conquistas do mês');
+    const lists = el.querySelectorAll('dl');
+    // Standalone period at the top, then the two groups.
+    expect(lists.length).toBe(3);
+    expect(lists[1].textContent).toContain('Receita do mês');
+    expect(lists[2].textContent).toContain('Conquistas do mês');
   });
 
   it('should show the formatted values', () => {
-    const texto = el.textContent ?? '';
-    expect(texto).toContain('Jul/2026');
-    expect(texto).toContain('767.776,43');
-    expect(texto).toContain('72%');
-    expect(texto).toContain('Fechamos o contrato com a rede.');
+    const text = el.textContent ?? '';
+    expect(text).toContain('Jul/2026');
+    expect(text).toContain('767.776,43');
+    expect(text).toContain('72%');
+    expect(text).toContain('Fechamos o contrato com a rede.');
   });
 
-  // Nulo e texto em branco viram o mesmo "não informado": um textarea nunca
-  // preenchido chega como string vazia e renderizaria um valor vazio.
+  // Null and blank text become the same "not provided": a textarea never
+  // filled in arrives as an empty string and would render an empty value.
   it('should mark absent values as such, including blank text', () => {
-    const vazios = [...el.querySelectorAll('.read-value--empty')];
-    expect(vazios.length).toBe(3); // margem bruta, desafios, comentários
-    expect(vazios.every(v => v.querySelector('.visually-hidden')?.textContent?.trim() === 'Não informado')).toBe(true);
+    const empties = [...el.querySelectorAll('.read-value--empty')];
+    expect(empties.length).toBe(3); // gross margin, challenges, comments
+    expect(empties.every(v => v.querySelector('.visually-hidden')?.textContent?.trim() === 'Não informado')).toBe(true);
   });
 
-  // Zero é dado. Um `||` no lugar de `== null` nos formatadores faria o mês de
-  // caixa zerado — o mais importante de todos — sumir da tela.
+  // Zero is data. A `||` instead of `== null` in the formatters would make the
+  // month with zero cash — the most important one of all — vanish from the screen.
   it('should show a zero value instead of hiding it', async () => {
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
@@ -90,15 +90,15 @@ describe('IndicatorFormDialog em modo leitura', () => {
         { provide: MatDialogRef, useValue: { close: vi.fn() } },
         {
           provide: MAT_DIALOG_DATA,
-          useValue: { indicator: { ...indicador, cash_balance: 0 }, readonly: true },
+          useValue: { indicator: { ...indicator, cash_balance: 0 }, readonly: true },
         },
       ],
     }).compileComponents();
 
-    const zerado = TestBed.createComponent(IndicatorFormDialog);
-    zerado.detectChanges();
-    await zerado.whenStable();
-    expect((zerado.nativeElement as HTMLElement).textContent).toContain('0,00');
+    const zeroed = TestBed.createComponent(IndicatorFormDialog);
+    zeroed.detectChanges();
+    await zeroed.whenStable();
+    expect((zeroed.nativeElement as HTMLElement).textContent).toContain('0,00');
   });
 });
 
@@ -136,14 +136,14 @@ describe('IndicatorFormDialog', () => {
     );
   });
 
-  // Regressão: um `input[type=number]` focado tem seu valor alterado pela roda
-  // do mouse. Rolar a página sobre o formulário reescrevia um indicador em
-  // silêncio — e o campo já preenchido é justamente o que ninguém relê.
+  // Regression: a focused `input[type=number]` has its value changed by the
+  // mouse wheel. Scrolling the page over the form silently rewrote an
+  // indicator — and an already-filled field is exactly what nobody rereads.
   it('should release focus from number inputs on wheel, so scrolling cannot change a value', () => {
-    const numericos = fixture.nativeElement.querySelectorAll('input[type="number"]');
-    expect(numericos.length).toBeGreaterThan(0);
+    const numberInputs = fixture.nativeElement.querySelectorAll('input[type="number"]');
+    expect(numberInputs.length).toBeGreaterThan(0);
 
-    for (const input of numericos) {
+    for (const input of numberInputs) {
       input.focus();
       expect(document.activeElement).toBe(input);
 

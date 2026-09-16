@@ -7,7 +7,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { of } from 'rxjs';
 import { App } from './app';
 
-/** Viewport compacta: a gaveta vira overlay sobre o conteúdo. */
+/** Compact viewport: the drawer becomes an overlay over the content. */
 function compactObserver(): BreakpointObserver {
   return {
     observe: () => of({ matches: true, breakpoints: {} }),
@@ -15,7 +15,7 @@ function compactObserver(): BreakpointObserver {
   } as unknown as BreakpointObserver;
 }
 
-describe('App em viewport compacta', () => {
+describe('App on a compact viewport', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
@@ -32,9 +32,10 @@ describe('App em viewport compacta', () => {
     expect(fixture.componentInstance.sidenavOpened()).toBe(false);
   });
 
-  // Regressão: a barra sumia ao abrir a gaveta. Aqui a gaveta é um overlay e
-  // fica POR CIMA dela, então esconder não escondia nada de fato — apenas tirava
-  // do fluxo um bloco que ocupa altura, refluindo o conteúdo a cada abre/fecha.
+  // Regression: the bar disappeared when the drawer opened. Here the drawer is
+  // an overlay that sits ON TOP of it, so hiding it hid nothing in practice — it
+  // only pulled a block with height out of the flow, reflowing the content on
+  // every open/close.
   it('should keep the open bar mounted while the drawer is open', async () => {
     const fixture = TestBed.createComponent(App);
     const app = fixture.componentInstance;
@@ -96,9 +97,9 @@ describe('App', () => {
     expect(toggleBtn).toBeTruthy();
   });
 
-  // Regressão: um `effect` reagindo a toda execução sobrescrevia o toggle
-  // manual — a sidebar reabria sozinha no flush seguinte. Ele só pode agir na
-  // TRANSIÇÃO de breakpoint.
+  // Regression: an `effect` reacting on every run overwrote the manual toggle —
+  // the sidebar reopened by itself on the next flush. It may only act on a
+  // breakpoint TRANSITION.
   it('should keep the manual toggle after change detection', async () => {
     const fixture = TestBed.createComponent(App);
     const app = fixture.componentInstance;
@@ -112,10 +113,10 @@ describe('App', () => {
     expect(app.sidenavOpened()).toBe(false);
   });
 
-  // Regressão: a barra rolava para fora da tela junto com o conteúdo. Com a
-  // gaveta fechada ela é o único caminho de volta para a navegação — saindo da
-  // tela, o app fica sem navegar a partir do primeiro scroll, e no mobile a
-  // gaveta nasce fechada, então isso valia para todas as páginas.
+  // Regression: the bar scrolled off screen along with the content. With the
+  // drawer closed it is the only way back to navigation — once off screen, the
+  // app loses navigation from the first scroll, and on mobile the drawer starts
+  // closed, so this applied to every page.
   it('should keep the open bar pinned while the content scrolls', async () => {
     const fixture = TestBed.createComponent(App);
     const app = fixture.componentInstance;
@@ -128,12 +129,12 @@ describe('App', () => {
     expect(getComputedStyle(bar).position).toBe('sticky');
   });
 
-  // Regressão: `[opened]` é binding de MÃO ÚNICA. Fechando a gaveta pelo
-  // backdrop ou pelo Escape, o Material muda o próprio estado sem tocar no
-  // sinal. O sinal seguia dizendo "aberta", a barra — que só existe quando ele
-  // diz "fechada" — não voltava, e o app ficava sem nenhum caminho para a
-  // navegação. No mobile, onde fechar pelo backdrop é o gesto natural, bastava
-  // abrir e fechar o menu uma vez para perder a navegação.
+  // Regression: `[opened]` is a ONE-WAY binding. When the drawer is closed via
+  // the backdrop or Escape, Material changes its own state without touching the
+  // signal. The signal kept saying "open", the bar — which only exists when it
+  // says "closed" — never came back, and the app was left with no path to
+  // navigation. On mobile, where closing via the backdrop is the natural
+  // gesture, opening and closing the menu once was enough to lose navigation.
   it('should restore the open bar when the drawer closes on its own', async () => {
     const fixture = TestBed.createComponent(App);
     const app = fixture.componentInstance;
@@ -144,7 +145,7 @@ describe('App', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.sidenav-open-bar')).toBeNull();
 
-    // O que backdrop e Escape disparam por dentro.
+    // What backdrop and Escape fire internally.
     fixture.debugElement
       .query(By.directive(MatSidenav))
       .triggerEventHandler('openedChange', false);
@@ -155,8 +156,8 @@ describe('App', () => {
     expect(fixture.nativeElement.querySelector('.sidenav-open-bar')).toBeTruthy();
   });
 
-  // A outra metade da regra: acoplada, a sidebar já está à vista e a barra
-  // seria repetição.
+  // The other half of the rule: when docked, the sidebar is already in view and
+  // the bar would be redundant.
   it('should hide the open bar while the sidebar is docked open', async () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
