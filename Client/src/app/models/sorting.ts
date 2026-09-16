@@ -54,11 +54,11 @@ export function sortRows<T>(
     // Missing values go last IN BOTH DIRECTIONS. Letting null take part in the
     // inversion would bring it to the top when descending, and a screen full of "—"
     // before the first data point is not what anyone wants to see when sorting.
-    const vazioA = a === null || a === undefined || a === '';
-    const vazioB = b === null || b === undefined || b === '';
-    if (vazioA && vazioB) return 0;
-    if (vazioA) return 1;
-    if (vazioB) return -1;
+    const emptyA = a === null || a === undefined || a === '';
+    const emptyB = b === null || b === undefined || b === '';
+    if (emptyA && emptyB) return 0;
+    if (emptyA) return 1;
+    if (emptyB) return -1;
 
     const numA = asNumber(a);
     const numB = asNumber(b);

@@ -95,11 +95,11 @@ export default class ReportForm implements OnInit {
   }
 
   private focusFirstInvalid(): void {
-    const alvo = this.host.nativeElement.querySelector<HTMLElement>(
+    const target = this.host.nativeElement.querySelector<HTMLElement>(
       '.ng-invalid[formControlName], .mat-mdc-form-field.mat-form-field-invalid input, .mat-mdc-form-field.mat-form-field-invalid textarea',
     );
-    alvo?.focus();
-    alvo?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    target?.focus();
+    target?.scrollIntoView({ block: 'center', behavior: 'smooth' });
   }
 
   onSubmit(): void {

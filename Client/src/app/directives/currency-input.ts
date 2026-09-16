@@ -57,24 +57,24 @@ export class CurrencyInput implements ControlValueAccessor {
     const input = this.el.nativeElement;
     // Each "-" flips the sign, wherever it lands: the cursor sits at the end, so
     // a "-" typed after the number arrives last, and typing it again undoes it.
-    const negativo = (input.value.match(/-/g)?.length ?? 0) % 2 === 1;
-    const digitos = input.value.replace(/\D/g, '');
+    const isNegative = (input.value.match(/-/g)?.length ?? 0) % 2 === 1;
+    const digits = input.value.replace(/\D/g, '');
 
-    if (!digitos) {
+    if (!digits) {
       // Keep the sign while there is no digit yet. Clearing everything here dropped
       // the "-" the moment it was typed, and the burn field — the only one that is
       // usually negative — could never become negative.
-      input.value = negativo ? '-' : '';
+      input.value = isNegative ? '-' : '';
       this.onChange(null);
       return;
     }
 
-    const valor = (negativo ? -1 : 1) * (Number(digitos) / 100);
-    input.value = FORMATTER.format(valor);
+    const value = (isNegative ? -1 : 1) * (Number(digits) / 100);
+    input.value = FORMATTER.format(value);
     // Move the cursor to the end: with cents-based input the new digit always
     // lands on the right, so that is where the cursor should go.
     input.setSelectionRange(input.value.length, input.value.length);
-    this.onChange(valor);
+    this.onChange(value);
   }
 
   @HostListener('blur')

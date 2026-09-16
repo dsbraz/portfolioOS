@@ -45,9 +45,9 @@ export class ThemeService {
 
   /** Cycles system -> light -> dark -> system. */
   cycle(): void {
-    const ordem: ThemePreference[] = ['system', 'light', 'dark'];
-    const proximo = ordem[(ordem.indexOf(this.preference()) + 1) % ordem.length];
-    this.set(proximo);
+    const order: ThemePreference[] = ['system', 'light', 'dark'];
+    const next = order[(order.indexOf(this.preference()) + 1) % order.length];
+    this.set(next);
   }
 
   set(preference: ThemePreference): void {

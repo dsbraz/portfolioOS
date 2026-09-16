@@ -131,10 +131,10 @@ export class Portfolio implements OnInit {
     // Since `last_reported` is capped at the screen's period, matching it is exact
     // proof that the startup reported. Inferring from null fields would be a
     // heuristic — a blank report would fall into it and show up as missing.
-    const reportou =
+    const hasReported =
       item.last_reported_year === this.selectedYear() &&
       item.last_reported_month === this.selectedMonth();
-    if (reportou) return null;
+    if (hasReported) return null;
 
     if (item.last_reported_year === null || item.last_reported_month === null) {
       return 'Nunca reportou';

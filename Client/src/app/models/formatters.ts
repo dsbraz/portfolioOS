@@ -9,7 +9,7 @@
 
 import { MONTH_LABELS } from './monthly-indicator.model';
 
-const MOEDA = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+const CURRENCY = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
 const DECIMAL = new Intl.NumberFormat('pt-BR', {
   minimumFractionDigits: 0,
@@ -18,7 +18,7 @@ const DECIMAL = new Intl.NumberFormat('pt-BR', {
 
 export function formatCurrencyBRL(value: number | null | undefined): string | null {
   if (value == null) return null;
-  return MOEDA.format(value);
+  return CURRENCY.format(value);
 }
 
 export function formatPercent(value: number | null | undefined): string | null {
