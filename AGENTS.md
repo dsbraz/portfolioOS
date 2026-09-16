@@ -131,6 +131,8 @@ duplicated and drifted.
 | `.field` + `.field-label` | `styles.scss` | The boxed form field: a static label ABOVE the box, never a Material floating label. `.field-affix` carries the unit (`R$`, `%`). |
 | `.section-title` | `styles.scss` | Section eyebrow. Typography only — the vertical rhythm belongs to the context that stacks it. |
 | `.page-status` | `styles.scss` | Loading / error block on internal pages. |
+| `.page-head` + `-text`/`-title`/`-sub`/`-actions` | `styles.scss` | Internal page header. Pages keep only their deltas locally. |
+| `.table-shell` (+ `--card`) + `.data-table` | `styles.scss` | Scrollable table region and the `mat-table` body rules (header, numeric cells, zebra, `.clickable-row`). `--card` adds panel chrome when the table is not inside one. |
 | `.pill`, `.tag` | `styles.scss` | Status and label (see Component families). |
 | `app-dialog-header` | `components/dialog-header/` | Every dialog title. Keeps `mat-dialog-title` on the `<h2>` so Material's `aria-labelledby` wiring survives, and adds the close button. |
 | `app-read-view` | `components/read-view/` | Read-only view of a record: `ReadSection[]` of label/value pairs rendered as `dl`/`dt`/`dd`. |

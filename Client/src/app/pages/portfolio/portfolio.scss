@@ -12,45 +12,6 @@
   padding: var(--content-padding);
 }
 
-// ---------- Page head ----------
-.page-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--space-md);
-  margin-bottom: var(--panel-gap);
-}
-
-.page-head-text {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2xs);
-  min-width: 0;
-}
-
-.page-head-title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--fs-heading-md);
-  font-weight: var(--fw-medium);
-  letter-spacing: var(--ls-tight);
-  line-height: var(--lh-tight);
-}
-
-.page-head-sub {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--fs-body-sm);
-}
-
-.page-head-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-xs);
-  margin-inline-start: auto;
-}
-
 .period-navigation {
   display: inline-flex;
   align-items: center;
@@ -99,86 +60,19 @@
 }
 
 // ---------- Table ----------
-.table-shell {
-  width: 100%;
-  overflow-x: auto;
-  background-color: var(--color-surface-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-
-  &:focus-visible {
-    outline: 2px solid var(--color-focus);
-    outline-offset: -2px;
-  }
-}
-
+// Base rules come from the global `.data-table`; only the deltas live here.
 .monitoring-table {
-  width: 100%;
   min-width: 58rem;
-  background: transparent;
 
-  th,
-  td {
-    padding: var(--space-sm) var(--space-md);
-    border-bottom: 1px solid var(--color-border);
-    text-align: start;
-    white-space: nowrap;
-  }
-
-  // Header is Inter, small and semibold -- NOT mono, NOT uppercase. A table
-  // header is information, so it belongs to the body face.
-  thead th,
   th.mat-mdc-header-cell {
     position: sticky;
     top: 0;
     z-index: 1;
-    background-color: var(--color-surface);
-    color: var(--color-text-muted);
-    font-family: var(--font-body);
-    font-size: var(--fs-body-xs);
-    font-weight: var(--fw-semibold);
     letter-spacing: var(--ls-normal);
-    text-transform: none;
-  }
-
-  td.mat-mdc-cell {
-    color: var(--color-text);
-    font-family: var(--font-body);
-    font-size: var(--fs-body-sm);
-  }
-
-  // Numeric columns: right-aligned, tabular figures, mono. This is the one
-  // place mono earns its way into a table -- fixed-width digits are what make
-  // amounts of different lengths line up as a column instead of ragged text.
-  // The HEADER stays Inter; mono on a table header is the classic error.
-  .is-num {
-    text-align: end;
-    font-variant-numeric: tabular-nums;
   }
 
   td.is-num {
-    font-family: var(--font-mono);
-    font-size: var(--fs-body-xs);
     letter-spacing: var(--ls-normal);
-  }
-
-  tr.mat-mdc-row {
-    height: var(--table-row-h);
-    background-color: transparent;
-    transition: background-color var(--transition-fast);
-
-    &:nth-child(even) {
-      background-color: var(--color-surface);
-    }
-
-    // Declared after the zebra stripe so hover wins at equal specificity.
-    &.clickable-row {
-      cursor: pointer;
-
-      &:hover {
-        background-color: var(--color-hover);
-      }
-    }
   }
 }
 
@@ -249,18 +143,6 @@
   p {
     color: var(--color-text-muted);
     margin: 0;
-  }
-}
-
-@media (max-width: 768px) {
-  .page-head-actions {
-    margin-inline-start: 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .monitoring-table tr.mat-mdc-row {
-    transition: none;
   }
 }
 

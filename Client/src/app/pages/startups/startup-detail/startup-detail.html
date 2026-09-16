@@ -150,7 +150,7 @@
           </div>
       } @else {
         <div class="table-shell" tabindex="0" role="region" aria-label="Indicadores mensais da startup (rolável)">
-          <table mat-table [dataSource]="sortedIndicators()" class="section-table"
+          <table mat-table [dataSource]="sortedIndicators()" class="data-table"
                  matSort (matSortChange)="indicatorSort.set($event)">
             <caption class="visually-hidden">Indicadores mensais da startup, com período, receita, caixa, EBITDA/burn e headcount.</caption>
           <ng-container matColumnDef="period">
@@ -218,7 +218,7 @@
           </div>
       } @else {
         <div class="table-shell" tabindex="0" role="region" aria-label="Reuniões de conselho da startup (rolável)">
-          <table mat-table [dataSource]="sortedMeetings()" class="section-table"
+          <table mat-table [dataSource]="sortedMeetings()" class="data-table"
                  matSort (matSortChange)="meetingSort.set($event)">
             <caption class="visually-hidden">Reuniões de conselho da startup, com data e resumo.</caption>
           <ng-container matColumnDef="meeting_date">
@@ -274,7 +274,7 @@
           </div>
       } @else {
         <div class="table-shell" tabindex="0" role="region" aria-label="Executivos da startup (rolável)">
-          <table mat-table [dataSource]="sortedExecutives()" class="section-table"
+          <table mat-table [dataSource]="sortedExecutives()" class="data-table"
                  matSort (matSortChange)="executiveSort.set($event)">
             <caption class="visually-hidden">Executivos da startup, com nome, cargo e e-mail.</caption>
           <ng-container matColumnDef="name">

@@ -32,8 +32,8 @@
       </button>
     </div>
   } @else {
-    <div class="table-shell" tabindex="0" role="region" aria-label="Tabela de usuários (rolável)">
-      <table mat-table [dataSource]="sortedUsers()" class="users-table"
+    <div class="table-shell table-shell--card" tabindex="0" role="region" aria-label="Tabela de usuários (rolável)">
+      <table mat-table [dataSource]="sortedUsers()" class="data-table"
              matSort (matSortChange)="sort.set($event)">
         <caption class="visually-hidden">
           Usuários com acesso ao painel, com e-mail, situação e data de criação.

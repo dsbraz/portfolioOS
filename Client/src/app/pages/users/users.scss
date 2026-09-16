@@ -7,102 +7,6 @@
   padding: var(--content-padding);
 }
 
-// ---------- Page head ----------
-.page-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--space-md);
-  margin-bottom: var(--panel-gap);
-}
-
-.page-head-text {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2xs);
-  min-width: 0;
-}
-
-.page-head-title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--fs-heading-md);
-  font-weight: var(--fw-medium);
-  letter-spacing: var(--ls-tight);
-  line-height: var(--lh-tight);
-}
-
-.page-head-sub {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--fs-body-sm);
-}
-
-.page-head-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-xs);
-  margin-inline-start: auto;
-}
-
-// ---------- Tabela ----------
-.table-shell {
-  width: 100%;
-  overflow-x: auto;
-  background-color: var(--color-surface-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-
-  &:focus-visible {
-    outline: 2px solid var(--color-focus);
-    outline-offset: -2px;
-  }
-}
-
-.users-table {
-  width: 100%;
-  background: transparent;
-
-  th,
-  td {
-    padding: var(--space-sm) var(--space-md);
-    border-bottom: 1px solid var(--color-border);
-    text-align: start;
-    white-space: nowrap;
-  }
-
-  // Header é Inter, pequeno e semibold — NÃO caixa alta. Cabeçalho de tabela é
-  // informação, então pertence à face de corpo.
-  th.mat-mdc-header-cell {
-    background-color: var(--color-surface);
-    color: var(--color-text-muted);
-    font-family: var(--font-body);
-    font-size: var(--fs-body-xs);
-    font-weight: var(--fw-semibold);
-    text-transform: none;
-  }
-
-  td.mat-mdc-cell {
-    color: var(--color-text);
-    font-family: var(--font-body);
-    font-size: var(--fs-body-sm);
-  }
-
-  // Data é número: tabular para as colunas alinharem entre linhas.
-  .is-num {
-    font-variant-numeric: tabular-nums;
-  }
-
-  tr.mat-mdc-row {
-    height: var(--table-row-h);
-
-    &:nth-child(even) {
-      background-color: var(--color-surface);
-    }
-  }
-}
-
 .user-cell {
   display: flex;
   align-items: center;
@@ -165,12 +69,6 @@ tr:hover .row-edit-btn,
     margin: 0 0 var(--space-xs);
     color: var(--color-text-muted);
     font-size: var(--fs-body-sm);
-  }
-}
-
-@media (max-width: 768px) {
-  .page-head-actions {
-    margin-inline-start: 0;
   }
 }
 

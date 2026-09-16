@@ -25,42 +25,9 @@
 }
 
 // ---------- Page head ----------
+// Base rules come from the global `.page-head`.
 .page-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--space-md);
-  margin-bottom: var(--panel-gap);
   flex-shrink: 0;
-}
-
-.page-head-text {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2xs);
-  min-width: 0;
-}
-
-.page-head-title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--fs-heading-md);
-  font-weight: var(--fw-medium);
-  letter-spacing: var(--ls-tight);
-  line-height: var(--lh-tight);
-}
-
-.page-head-sub {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--fs-body-sm);
-}
-
-.page-head-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  margin-inline-start: auto;
 }
 
 // ---------- Quadro ----------
