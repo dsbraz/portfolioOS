@@ -720,12 +720,12 @@ input[type='number'] {
 
   // Shape and fill
   --mat-sys-corner-extra-small: var(--radius-md);
-  --mdc-outlined-text-field-outline-color: var(--color-border);
-  --mdc-outlined-text-field-hover-outline-color: var(--color-gray-500);
-  --mdc-outlined-text-field-input-text-color: var(--color-text);
-  --mdc-outlined-text-field-label-text-color: var(--color-text-muted);
-  --mdc-outlined-text-field-error-outline-color: var(--color-danger);
-  --mdc-outlined-text-field-error-label-text-color: var(--color-danger);
+  --mat-form-field-outlined-outline-color: var(--color-border);
+  --mat-form-field-outlined-hover-outline-color: var(--color-gray-500);
+  --mat-form-field-outlined-input-text-color: var(--color-text);
+  --mat-form-field-outlined-label-text-color: var(--color-text-muted);
+  --mat-form-field-outlined-error-outline-color: var(--color-danger);
+  --mat-form-field-outlined-error-label-text-color: var(--color-danger);
 
   // With no label inside the box, the control finally sits at the brand's
   // single control height. Note the switch: WITH a floating label the outlined
@@ -769,15 +769,15 @@ input[type='number'] {
 .mat-mdc-checkbox,
 .mat-mdc-radio-button,
 .mat-mdc-slide-toggle {
-  --mdc-checkbox-selected-icon-color: var(--color-accent);
-  --mdc-checkbox-selected-focus-icon-color: var(--color-accent);
-  --mdc-checkbox-selected-hover-icon-color: var(--color-accent);
-  --mdc-checkbox-selected-pressed-icon-color: var(--color-accent);
-  --mdc-radio-selected-icon-color: var(--color-accent);
-  --mdc-radio-selected-focus-icon-color: var(--color-accent);
-  --mdc-radio-selected-hover-icon-color: var(--color-accent);
-  --mdc-switch-selected-handle-color: var(--color-accent);
-  --mdc-switch-selected-track-color: color-mix(in srgb, var(--color-accent) 45%, transparent);
+  --mat-checkbox-selected-icon-color: var(--color-accent);
+  --mat-checkbox-selected-focus-icon-color: var(--color-accent);
+  --mat-checkbox-selected-hover-icon-color: var(--color-accent);
+  --mat-checkbox-selected-pressed-icon-color: var(--color-accent);
+  --mat-radio-selected-icon-color: var(--color-accent);
+  --mat-radio-selected-focus-icon-color: var(--color-accent);
+  --mat-radio-selected-hover-icon-color: var(--color-accent);
+  --mat-slide-toggle-selected-handle-color: var(--color-accent);
+  --mat-slide-toggle-selected-track-color: color-mix(in srgb, var(--color-accent) 45%, transparent);
 }
 
 // =============================================================
@@ -813,7 +813,7 @@ input[type='number'] {
   // component token has no effect here. Same shape as the sidenav leak: the
   // brand keeps panels at 8px, so the dialog is re-pointed in its own scope.
   --mat-sys-corner-extra-large: var(--radius-md);
-  --mdc-dialog-container-color: var(--color-surface-2);
+  --mat-dialog-container-color: var(--color-surface-2);
 
   .mat-mdc-dialog-surface {
     border: 1px solid var(--color-border);
@@ -955,11 +955,11 @@ input[type='number'] {
 }
 
 .mat-mdc-snack-bar-container {
-  --mdc-snackbar-container-color: var(--color-text);
-  --mdc-snackbar-supporting-text-color: var(--color-bg);
-  --mdc-snackbar-supporting-text-font: var(--font-body);
-  --mdc-snackbar-supporting-text-size: var(--fs-body-sm);
-  --mdc-snackbar-container-shape: var(--radius-md);
+  --mat-snack-bar-container-color: var(--color-text);
+  --mat-snack-bar-supporting-text-color: var(--color-bg);
+  --mat-snack-bar-supporting-text-font: var(--font-body);
+  --mat-snack-bar-supporting-text-size: var(--fs-body-sm);
+  --mat-snack-bar-container-shape: var(--radius-md);
   --mat-snack-bar-button-color: var(--color-bg);
 }
 
