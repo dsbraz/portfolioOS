@@ -268,6 +268,6 @@ async def test_last_reported_period_is_bounded_by_the_selected_period(
 
     await use_case.execute(2, 2026)
 
-    indicator_repo.get_last_reported_period_by_startups.assert_awaited_once()
-    args = indicator_repo.get_last_reported_period_by_startups.await_args
-    assert args.args[1:] == (2, 2026) or args.kwargs.get("month") == 2
+    indicator_repo.get_last_reported_period_by_startups.assert_awaited_once_with(
+        [startup.id], 2, 2026
+    )
