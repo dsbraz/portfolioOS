@@ -62,6 +62,11 @@ const modelFiles = import.meta.glob('/src/app/models/*.ts', {
   eager: true,
 }) as Record<string, any>;
 
+const directiveFiles = import.meta.glob(
+  ['/src/app/directives/*.ts', '!/src/app/directives/*.spec.ts'],
+  { query: '?raw', eager: true },
+) as Record<string, any>;
+
 const guardFiles = import.meta.glob(
   ['/src/app/guards/*.ts', '!/src/app/guards/*.spec.ts'],
   { query: '?raw', eager: true },
@@ -89,6 +94,7 @@ describe('Architecture boundaries', () => {
       services: serviceFiles,
       components: componentFiles,
       models: modelFiles,
+      directives: directiveFiles,
       guards: guardFiles,
       interceptors: interceptorFiles,
     };
@@ -111,6 +117,15 @@ describe('Architecture boundaries', () => {
     const violations = findViolations(toRawMap(modelFiles), [
       '/services/',
       '/pages/',
+      '/components/',
+    ]);
+    expect(violations, formatViolations(violations)).toEqual([]);
+  });
+
+  it('directives must not import from pages, services, or components', () => {
+    const violations = findViolations(toRawMap(directiveFiles), [
+      '/pages/',
+      '/services/',
       '/components/',
     ]);
     expect(violations, formatViolations(violations)).toEqual([]);
