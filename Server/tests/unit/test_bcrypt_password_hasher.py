@@ -1,23 +1,16 @@
-import subprocess
-import sys
-
 import pytest
 
 from app.infrastructure.bcrypt_password_hasher import BcryptPasswordHasher
 
 
-def test_first_use_does_not_log_backend_errors():
-    result = subprocess.run(
-        [sys.executable, "-c", (
-            "from app.infrastructure.bcrypt_password_hasher import BcryptPasswordHasher; "
-            "hasher = BcryptPasswordHasher(); "
-            "assert hasher.verify('password', hasher.hash('password'))"
-        )],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    assert result.stderr == ""
+def test_long_password_is_truncated_to_72_bytes():
+    # bcrypt only reads 72 bytes. Passlib and bcrypt 4 truncated silently;
+    # bcrypt 5 raises instead, which would lock out existing long passwords.
+    hasher = BcryptPasswordHasher()
+    hashed = hasher.hash("a" * 80)
+    assert hasher.verify("a" * 72, hashed)
+    assert hasher.verify("a" * 100, hasher.hash("a" * 72))
+    assert not hasher.verify("a" * 71, hashed)
 
 
 @pytest.mark.parametrize("prefix", ["2a", "2b", "2y"])

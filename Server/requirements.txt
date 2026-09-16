@@ -5,7 +5,7 @@ asyncpg
 alembic
 pydantic-settings
 python-jose[cryptography]
-bcrypt<5
+bcrypt
 python-multipart
 email-validator
 gunicorn
