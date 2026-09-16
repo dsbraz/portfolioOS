@@ -60,8 +60,8 @@ export function sortRows<T>(
     if (vazioA) return 1;
     if (vazioB) return -1;
 
-    const numA = typeof a === 'boolean' ? null : asNumber(a);
-    const numB = typeof b === 'boolean' ? null : asNumber(b);
+    const numA = asNumber(a);
+    const numB = asNumber(b);
     if (numA !== null && numB !== null) return (numA - numB) * factor;
 
     return COLLATOR.compare(String(a), String(b)) * factor;

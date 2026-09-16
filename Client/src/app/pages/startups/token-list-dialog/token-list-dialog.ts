@@ -7,7 +7,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { MonthlyIndicatorToken } from '../../../models/monthly-indicator-token.model';
-import { MONTH_LABELS } from '../../../models/monthly-indicator.model';
+import { formatPeriod } from '../../../models/formatters';
 
 export interface TokenListDialogData {
   tokens: MonthlyIndicatorToken[];
@@ -32,7 +32,7 @@ export interface TokenListDialogData {
         <table mat-table [dataSource]="data.tokens" class="token-table">
           <ng-container matColumnDef="period">
             <th mat-header-cell *matHeaderCellDef>Periodo</th>
-            <td mat-cell *matCellDef="let t">{{ monthLabels[t.month] }}/{{ t.year }}</td>
+            <td mat-cell *matCellDef="let t">{{ formatPeriod(t.month, t.year) }}</td>
           </ng-container>
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef></th>
@@ -65,7 +65,7 @@ export interface TokenListDialogData {
 export class TokenListDialog {
   readonly data = inject<TokenListDialogData>(MAT_DIALOG_DATA);
   private readonly snackBar = inject(MatSnackBar);
-  readonly monthLabels = MONTH_LABELS;
+  readonly formatPeriod = formatPeriod;
   readonly columns = ['period', 'actions'];
 
   copyLink(token: MonthlyIndicatorToken): void {

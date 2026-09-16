@@ -1,27 +1,19 @@
-import { Component, ElementRef, computed, inject, OnInit, signal, viewChild, viewChildren } from '@angular/core';
+import { Component, ElementRef, computed, inject, OnInit, signal, viewChildren } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatCardModule } from '@angular/material/card';
-import { MatDatepicker, MatDatepickerModule } from '@angular/material/datepicker';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSortModule } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
-import { MatExpansionModule } from '@angular/material/expansion';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { forkJoin } from 'rxjs';
 
-import { Startup, StartupStatus, STARTUP_STATUS_CONFIG } from '../../../models/startup.model';
-import { MonthlyIndicator, MONTH_LABELS } from '../../../models/monthly-indicator.model';
-import { formatCurrencyBRL } from '../../../models/formatters';
+import { Startup } from '../../../models/startup.model';
+import { MonthlyIndicator } from '../../../models/monthly-indicator.model';
+import { formatCurrencyBRL, formatPeriod } from '../../../models/formatters';
 import { SortState, applySort } from '../../../models/sorting';
 import { participationValue } from '../../../models/participation';
 import { BoardMeeting } from '../../../models/board-meeting.model';
@@ -65,22 +57,14 @@ import { KpiCard } from '../../../components/kpi-card/kpi-card';
   imports: [
     KpiCard,
     DatePipe,
-    FormsModule,
     MatButtonModule,
     MatIconModule,
-    MatCardModule,
-    MatDatepickerModule,
     MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatNativeDateModule,
     MatSnackBarModule,
     MatProgressSpinnerModule,
     MatSortModule,
     MatTableModule,
-    MatExpansionModule,
     MatMenuModule,
-    MatTooltipModule,
     StatusBadge,
   ],
   templateUrl: './startup-detail.html',
@@ -103,8 +87,7 @@ export class StartupDetail implements OnInit {
   readonly executives = signal<Executive[]>([]);
   readonly tokens = signal<MonthlyIndicatorToken[]>([]);
   readonly loading = signal(false);
-  readonly monthLabels = MONTH_LABELS;
-  readonly statusConfig = STARTUP_STATUS_CONFIG;
+  readonly formatPeriod = formatPeriod;
 
   private startupId = '';
 

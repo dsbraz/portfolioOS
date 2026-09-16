@@ -68,11 +68,11 @@
       <app-kpi-card
         label="Receita Total"
         [value]="formatCurrency(latestIndicator?.total_revenue ?? 0)"
-        [subtitle]="latestIndicator ? 'Ref.: ' + monthLabels[latestIndicator.month] + '/' + latestIndicator.year : ''"
+        [subtitle]="latestIndicator ? 'Ref.: ' + formatPeriod(latestIndicator.month, latestIndicator.year) : ''"
       />
       <app-kpi-card
         label="Total da Participação"
-        [value]="totalParticipation != null ? formatCurrency(totalParticipation) : '-'"
+        [value]="formatCurrency(totalParticipation)"
       />
       <app-kpi-card
         label="Saldo em Caixa"
@@ -155,7 +155,7 @@
             <caption class="visually-hidden">Indicadores mensais da startup, com período, receita, caixa, EBITDA/burn e headcount.</caption>
           <ng-container matColumnDef="period">
             <th mat-header-cell *matHeaderCellDef mat-sort-header="period" scope="col">Período</th>
-            <td mat-cell *matCellDef="let ind">{{ monthLabels[ind.month] }}/{{ ind.year }}</td>
+            <td mat-cell *matCellDef="let ind">{{ formatPeriod(ind.month, ind.year) }}</td>
           </ng-container>
           <ng-container matColumnDef="total_revenue">
             <th mat-header-cell *matHeaderCellDef mat-sort-header="total_revenue" arrowPosition="before" scope="col" class="is-num">Receita</th>
@@ -179,7 +179,7 @@
               <button
                 mat-icon-button
                 [matMenuTriggerFor]="indMenu"
-                [attr.aria-label]="'Ações do indicador de ' + monthLabels[ind.month] + '/' + ind.year"
+                [attr.aria-label]="'Ações do indicador de ' + formatPeriod(ind.month, ind.year)"
                 (click)="$event.stopPropagation()">
                 <mat-icon>more_vert</mat-icon>
               </button>

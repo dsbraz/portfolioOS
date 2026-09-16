@@ -170,6 +170,15 @@
     &:nth-child(even) {
       background-color: var(--color-surface);
     }
+
+    // Declared after the zebra stripe so hover wins at equal specificity.
+    &.clickable-row {
+      cursor: pointer;
+
+      &:hover {
+        background-color: var(--color-hover);
+      }
+    }
   }
 }
 
@@ -211,14 +220,6 @@
 .startup-setor {
   font-size: var(--fs-body-xs);
   color: var(--color-text-muted);
-}
-
-.clickable-row {
-  cursor: pointer;
-
-  &:hover {
-    background-color: var(--color-hover) !important;
-  }
 }
 
 // ---------- Empty state ----------

@@ -1,15 +1,3 @@
-.startup-form {
-  display: flex;
-  flex-direction: column;
-  min-width: min(25rem, 100%);
-  padding-top: 8px;
+.field-stake {
+  flex: 0 0 180px;
 }
-
-.field {
-  width: 100%;
-}
-
-  .field-stake {
-    flex: 0 0 180px;
-  }
-

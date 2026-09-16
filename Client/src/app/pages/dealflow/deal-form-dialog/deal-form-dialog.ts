@@ -32,7 +32,6 @@ import { DialogHeader } from '../../../components/dialog-header/dialog-header';
     MatButtonModule,
   ],
   templateUrl: './deal-form-dialog.html',
-  styleUrl: './deal-form-dialog.scss',
 })
 export class DealFormDialog implements OnInit {
   private readonly fb = inject(FormBuilder);

@@ -656,6 +656,7 @@ h5 {
 .field {
   display: grid;
   gap: var(--space-2xs);
+  width: 100%;
 }
 
 .field-label {
@@ -1175,16 +1176,17 @@ input[type='number'] {
 // divergirem — eram cinco valores diferentes espalhados.
 .report-form,
 .invite-form,
-.startup-form,
-.indicator-form,
-.meeting-form,
-.executive-form,
-.deal-form,
-.user-form,
-.token-form {
+.dialog-form {
   display: flex;
   flex-direction: column;
   gap: var(--form-gap);
+}
+
+// Form inside a dialog: a readable minimum width, and a small gap under the
+// header. Dialogs that need another width override only `min-width`.
+.dialog-form {
+  min-width: min(25rem, 100%);
+  padding-top: var(--space-xs);
 }
 
 // ---------- Ações do formulário ----------

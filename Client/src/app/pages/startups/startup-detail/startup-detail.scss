@@ -111,11 +111,6 @@ app-status-badge {
   margin-inline-start: auto;
 }
 
-.danger-btn {
-  --mdc-outlined-button-label-text-color: var(--color-danger);
-  color: var(--color-danger);
-}
-
 // ---------- KPIs ----------
 .kpi-grid {
   display: grid;
@@ -350,13 +345,14 @@ app-status-badge {
     &:nth-child(even) {
       background-color: var(--color-surface);
     }
-  }
 
-  .clickable-row {
-    cursor: pointer;
+    // Declared after the zebra stripe so hover wins at equal specificity.
+    &.clickable-row {
+      cursor: pointer;
 
-    &:hover {
-      background-color: var(--color-hover) !important;
+      &:hover {
+        background-color: var(--color-hover);
+      }
     }
   }
 }
@@ -392,20 +388,8 @@ app-status-badge {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .editable,
-  .status-trigger,
   .section-table tr.mat-mdc-row {
     transition: none;
-  }
-}
-
-// Destructive item in the overflow menu — the only place the danger tone shows
-// up in the header, so it never competes with the routine actions.
-.menu-item-danger {
-  color: var(--color-danger);
-
-  .mat-icon {
-    color: var(--color-danger);
   }
 }
 

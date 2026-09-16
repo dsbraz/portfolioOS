@@ -7,7 +7,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSortModule, Sort } from '@angular/material/sort';
+import { MatSortModule } from '@angular/material/sort';
 
 import {
   PortfolioSummary,
@@ -15,12 +15,11 @@ import {
   StartupSummary,
 } from '../../models/portfolio.model';
 import { KpiCardTone } from '../../components/kpi-card/kpi-card';
-import { MONTH_LABELS } from '../../models/monthly-indicator.model';
 import { participationValue } from '../../models/participation';
 import { PortfolioService } from '../../services/portfolio.service';
 import { StartupService } from '../../services/startup.service';
 import { StatusBadge } from '../../components/status-badge/status-badge';
-import { formatCurrencyBRL } from '../../models/formatters';
+import { formatCurrencyBRL, formatPeriod } from '../../models/formatters';
 import { SortState, applySort } from '../../models/sorting';
 import { STARTUP_STATUS_SEVERITY } from '../../models/startup.model';
 import { KpiCard } from '../../components/kpi-card/kpi-card';
@@ -62,7 +61,6 @@ export class Portfolio implements OnInit {
   readonly loading = signal(false);
   readonly selectedMonth = signal(this.defaultPeriod.month);
   readonly selectedYear = signal(this.defaultPeriod.year);
-  readonly monthLabels = MONTH_LABELS;
 
   readonly displayedColumns = [
     'name',
@@ -137,7 +135,7 @@ export class Portfolio implements OnInit {
     if (item.last_reported_year === null || item.last_reported_month === null) {
       return 'Nunca reportou';
     }
-    return `Último: ${this.monthLabels[item.last_reported_month]}/${item.last_reported_year}`;
+    return `Último: ${formatPeriod(item.last_reported_month, item.last_reported_year)}`;
   }
 
   navigateToStartup(item: StartupSummary): void {
@@ -182,7 +180,7 @@ export class Portfolio implements OnInit {
   }
 
   selectedPeriodLabel(): string {
-    return `${this.monthLabels[this.selectedMonth()]}/${this.selectedYear()}`;
+    return formatPeriod(this.selectedMonth(), this.selectedYear());
   }
 
   goToPreviousMonth(): void {

@@ -24,38 +24,6 @@
   background-color: var(--color-bg);
 }
 
-// Estados (carregando, erro, sucesso) continuam centrados na viewport.
-.invite-center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-  min-height: 100vh;
-  padding: var(--space-lg);
-  text-align: center;
-}
-
-.field,
 button {
   width: 100%;
-}
-
-.error-icon {
-  color: var(--color-danger);
-  width: var(--fs-decoration-xl);
-  height: var(--fs-decoration-xl);
-  font-size: 48px;
-}
-
-.error-text,
-.success-text {
-  color: var(--color-text-muted);
-}
-
-.success-icon {
-  color: var(--app-status-healthy);
-  width: var(--fs-decoration-3xl);
-  height: var(--fs-decoration-3xl);
-  font-size: 64px;
 }
