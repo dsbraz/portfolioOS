@@ -854,8 +854,11 @@ input[type='number'] {
 
   // Shape and fill
   --mat-sys-corner-extra-small: var(--radius-md);
-  --mat-form-field-outlined-outline-color: var(--color-border);
-  --mat-form-field-outlined-hover-outline-color: var(--color-gray-500);
+  // The field boundary is what identifies the control, so it needs the 3:1 of
+  // WCAG 1.4.11: `--color-border` (a divider tone) is far below that, while
+  // gray-500 reaches 3.32:1 on white. Hover steps up to the text ink.
+  --mat-form-field-outlined-outline-color: var(--color-gray-500);
+  --mat-form-field-outlined-hover-outline-color: var(--color-text);
   --mat-form-field-outlined-input-text-color: var(--color-text);
   --mat-form-field-outlined-label-text-color: var(--color-text-muted);
   --mat-form-field-outlined-error-outline-color: var(--color-danger);

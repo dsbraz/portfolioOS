@@ -77,3 +77,9 @@ tr:hover .row-edit-btn,
     transition: none;
   }
 }
+
+// A date is not an amount: keep the body face and start alignment, only with
+// tabular figures so the rows line up.
+.date-cell {
+  font-variant-numeric: tabular-nums;
+}
