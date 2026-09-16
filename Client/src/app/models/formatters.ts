@@ -16,6 +16,11 @@ const DECIMAL = new Intl.NumberFormat('pt-BR', {
   maximumFractionDigits: 2,
 });
 
+const DATE_TIME = new Intl.DateTimeFormat('pt-BR', {
+  dateStyle: 'short',
+  timeStyle: 'short',
+});
+
 export function formatCurrencyBRL(value: number | null | undefined): string | null {
   if (value == null) return null;
   return MOEDA.format(value);
@@ -44,4 +49,12 @@ export function formatIsoDate(value: string | null | undefined): string | null {
   const date = new Date(`${value}T00:00:00`);
   if (Number.isNaN(date.getTime())) return null;
   return date.toLocaleDateString('pt-BR');
+}
+
+/** ISO timestamp as `dd/MM/yyyy, HH:mm` in the user's local timezone. */
+export function formatDateTime(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return DATE_TIME.format(date);
 }

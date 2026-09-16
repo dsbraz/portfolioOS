@@ -1,4 +1,10 @@
-import { formatCurrencyBRL, formatIsoDate, formatInteger, formatPercent } from './formatters';
+import {
+  formatCurrencyBRL,
+  formatDateTime,
+  formatIsoDate,
+  formatInteger,
+  formatPercent,
+} from './formatters';
 
 // `Intl` separa o símbolo do número com espaço NÃO SEPARÁVEL (U+00A0), para que
 // "R$" nunca fique órfão no fim da linha. Escrever um espaço comum aqui faria o
@@ -29,12 +35,27 @@ describe('formatters', () => {
     expect(formatIsoDate('2026-07-01')).toBe('01/07/2026');
   });
 
+  // A timestamp without an offset is read as local time, so this assertion
+  // does not depend on the timezone the tests run in.
+  it('should format a timestamp as short date and time in pt-BR', () => {
+    expect(formatDateTime('2026-07-01T14:30:00')).toBe('01/07/2026, 14:30');
+  });
+
+  // `Intl.DateTimeFormat#format` throws `RangeError` on an invalid date, which
+  // would take down the whole table instead of a single cell.
+  it('should return null for an unparseable timestamp instead of throwing', () => {
+    expect(formatDateTime('not-a-date')).toBeNull();
+  });
+
   it('should return null for absent values so the caller decides how to show it', () => {
     expect(formatCurrencyBRL(null)).toBeNull();
     expect(formatPercent(null)).toBeNull();
     expect(formatInteger(null)).toBeNull();
     expect(formatIsoDate(null)).toBeNull();
     expect(formatIsoDate('')).toBeNull();
+    expect(formatDateTime(null)).toBeNull();
+    expect(formatDateTime(undefined)).toBeNull();
+    expect(formatDateTime('')).toBeNull();
   });
 
   // Zero é dado, não ausência. Um `!value` no lugar de `== null` faria a receita

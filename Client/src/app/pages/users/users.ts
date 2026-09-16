@@ -9,6 +9,7 @@ import { MatSortModule } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 
 import { UserResponse } from '../../models/auth.model';
+import { formatDateTime } from '../../models/formatters';
 import { SortState, applySort } from '../../models/sorting';
 import { AuthService } from '../../services/auth.service';
 import { UserInviteService } from '../../services/user-invite.service';
@@ -45,6 +46,8 @@ export class Users implements OnInit {
   /** Distinguishes "not loaded yet / failed" from "loaded, no users". */
   readonly hasLoaded = signal(false);
   readonly displayedColumns = ['username', 'email', 'is_active', 'created_at', 'actions'];
+
+  readonly formatDateTime = formatDateTime;
 
   readonly sort = signal<SortState>({ active: '', direction: '' });
 
@@ -124,12 +127,5 @@ export class Users implements OnInit {
         });
       },
     });
-  }
-
-  formatDate(dateStr: string): string {
-    return new Intl.DateTimeFormat('pt-BR', {
-      dateStyle: 'short',
-      timeStyle: 'short',
-    }).format(new Date(dateStr));
   }
 }
