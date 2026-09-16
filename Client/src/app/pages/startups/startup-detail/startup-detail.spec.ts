@@ -1,6 +1,6 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { NEVER, of } from 'rxjs';
+import { NEVER, Observable, delay, of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -302,5 +302,129 @@ describe('StartupDetail (sorting)', () => {
     component.indicators.set(rows);
 
     expect(component.sortedIndicators().map(i => i.month)).toEqual([2, 1]);
+  });
+});
+
+describe('StartupDetail (refresh after a change)', () => {
+  const startup: Startup = {
+    id: 's1',
+    name: 'Acme',
+    site: null,
+    logo_url: null,
+    status: StartupStatus.HEALTHY,
+    sector: 'Fintech',
+    investment_date: '2025-01-01',
+    equity_stake: 5,
+    notes: null,
+    created_at: '2025-01-01T00:00:00Z',
+    updated_at: '2025-01-01T00:00:00Z',
+  };
+
+  const indicator = (id: string, month: number, revenue: number): MonthlyIndicator => ({
+    id,
+    startup_id: 's1',
+    month,
+    year: 2026,
+    total_revenue: revenue,
+    recurring_revenue_pct: null,
+    gross_margin_pct: null,
+    cash_balance: null,
+    headcount: null,
+    ebitda_burn: null,
+    achievements: null,
+    challenges: null,
+    comments: null,
+    created_at: '',
+    updated_at: '',
+  });
+
+  const list = (items: unknown[]) => ({ items, total: items.length });
+
+  /** Reloads with responses that arrive a tick later, as a real request does,
+   *  so the template renders the loading state in between. */
+  const reloadAsync = async (fixture: ComponentFixture<StartupDetail>) => {
+    respond = (value) => of(value()).pipe(delay(1));
+    fixture.componentInstance.loadAll();
+    fixture.detectChanges();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    fixture.detectChanges();
+  };
+
+  // Every reload returns NEW object instances, like the real API does.
+  let respond: <T>(value: () => T) => Observable<T>;
+
+  const mount = async () => {
+    respond = (value) => of(value());
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [StartupDetail],
+      providers: [
+        provideNoopAnimations(),
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => 's1' } } } },
+        { provide: Router, useValue: {} },
+        { provide: MatDialog, useValue: {} },
+        { provide: MatSnackBar, useValue: { open: vi.fn() } },
+        { provide: StartupService, useValue: { getById: () => respond(() => ({ ...startup })) } },
+        {
+          provide: MonthlyIndicatorService,
+          useValue: {
+            list: () => respond(() => list([indicator('i1', 7, 1000), indicator('i2', 6, 3000)])),
+          },
+        },
+        { provide: BoardMeetingService, useValue: { list: () => respond(() => list([])) } },
+        { provide: ExecutiveService, useValue: { list: () => respond(() => list([])) } },
+        { provide: MonthlyIndicatorTokenService, useValue: { list: () => respond(() => list([])) } },
+      ],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(StartupDetail);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    return fixture;
+  };
+
+  // Regression: every create/edit/delete called `loadAll()`, which swapped the
+  // whole page for a spinner — tabs, tables and menus were destroyed, keyboard
+  // focus fell to the top of the page and the sort arrows were reset.
+  it('should keep the page mounted and busy while refreshing', async () => {
+    const fixture = await mount();
+    const el = fixture.nativeElement as HTMLElement;
+
+    respond = () => NEVER;
+    fixture.componentInstance.loadAll();
+    fixture.detectChanges();
+
+    expect(el.querySelector('h1')?.textContent).toContain('Acme');
+    expect(el.querySelector('[role="tabpanel"]')).toBeTruthy();
+    expect(el.querySelector('[aria-busy="true"]')).toBeTruthy();
+  });
+
+  it('should keep the row action button that opened a dialog in the DOM', async () => {
+    const fixture = await mount();
+    const el = fixture.nativeElement as HTMLElement;
+    const before = el.querySelector('td button[mat-icon-button]');
+
+    await reloadAsync(fixture);
+
+    // Same node: `restoreFocus` returns focus to it when the dialog closes.
+    expect(el.querySelector('td button[mat-icon-button]')).toBe(before);
+    expect(before?.isConnected).toBe(true);
+  });
+
+  it('should keep the active sort header after refreshing', async () => {
+    const fixture = await mount();
+    const el = fixture.nativeElement as HTMLElement;
+    const revenueHeader = () =>
+      [...el.querySelectorAll('th')].find((th) => th.textContent?.includes('Receita'))!;
+
+    (revenueHeader().querySelector('.mat-sort-header-container') as HTMLElement).click();
+    fixture.detectChanges();
+    const sorted = revenueHeader().getAttribute('aria-sort');
+    expect(sorted).toBe('ascending');
+
+    await reloadAsync(fixture);
+
+    expect(revenueHeader().getAttribute('aria-sort')).toBe(sorted);
   });
 });

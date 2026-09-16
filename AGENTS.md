@@ -161,13 +161,19 @@ loading is indistinguishable from "there is no data" — for a person and for an
 reading the DOM.
 
 ```
-@if (loading())      → .page-status role="status" + "Carregando…"
-@else if (data)      → content (which may itself be an empty state with text)
-@else                → .page-status with the failure message
+@if (loading() && !data) → .page-status role="status" + "Carregando…"
+@else if (data)          → content (which may itself be an empty state with text)
+@else                    → .page-status with the failure message
 ```
 
 `aria-busy` goes on the page container, which always exists. A live region created
 together with its content is usually not announced.
+
+Only the FIRST load shows the spinner. A refresh (after a create/edit/delete, or a
+period change) keeps the content mounted with `aria-busy="true"`: swapping the page for
+a spinner destroys tables, menus and sort headers and drops keyboard focus. Give tables
+a `trackBy` by id so reloaded rows keep their DOM nodes. If a refresh fails and the data
+no longer matches what the screen claims (e.g. another period), clear it.
 
 ### Responsiveness
 - **Intrinsic first.** `repeat(auto-fit, minmax(Xrem, 1fr))` over breakpoints. Set
@@ -218,9 +224,12 @@ The app is read by assistive tech and by agents. Both use the same contract.
 - Dark mode responds to both `[data-theme="dark"]` and `prefers-color-scheme`. Anything
   that switches with the theme (including image assets) must follow that same signal —
   `<picture media>` alone desyncs the moment an explicit toggle exists.
-- The theme has **three** states (`ThemeService`): `system | light | dark`. `system` must
-  leave `data-theme` OFF the root — stamping it always disables the
-  `prefers-color-scheme` branch and the app stops reacting to the OS.
+- The theme has **three** states (`ThemeService`): `system | light | dark`. JS always
+  stamps the RESOLVED theme on the root (`data-theme="light|dark"`), both in the
+  `index.html` bootstrap script (before first paint) and in `ThemeService`. In `system`,
+  live OS changes come from the service's `matchMedia` listener, which re-stamps the
+  root. The `prefers-color-scheme` CSS branch is only a no-JS fallback — do not remove
+  the listener or stop stamping the root.
 - **Material injects its component styles AFTER `styles.scss`**, so an equal-specificity
   rule loses. Redefining a **custom property in scope** wins where out-specifying does
   not:

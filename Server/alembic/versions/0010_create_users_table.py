@@ -6,17 +6,19 @@ Create Date: 2026-02-19
 
 """
 
-from collections.abc import Sequence
-
-import bcrypt
-import sqlalchemy as sa
+from typing import Sequence, Union
 
 from alembic import op
+from passlib.context import CryptContext
+import sqlalchemy as sa
+
 
 revision: str = "0010"
-down_revision: str | None = "0009"
-branch_labels: str | Sequence[str] | None = None
-depends_on: str | Sequence[str] | None = None
+down_revision: Union[str, None] = "0009"
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def upgrade() -> None:
@@ -71,9 +73,7 @@ def upgrade() -> None:
             {
                 "username": "admin",
                 "email": "admin@portfolio.local",
-                "hashed_password": bcrypt.hashpw(
-                    b"admin123", bcrypt.gensalt(rounds=12)
-                ).decode("ascii"),
+                "hashed_password": pwd_context.hash("admin123"),
             }
         ],
     )

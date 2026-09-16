@@ -1,4 +1,4 @@
-<div class="users-page">
+<div class="users-page" [attr.aria-busy]="loading() ? 'true' : null">
   <header class="page-head">
     <div class="page-head-text">
       <h1 class="page-head-title">Usuários</h1>
@@ -21,7 +21,16 @@
     </div>
   </header>
 
-  @if (users().length === 0 && !loading()) {
+  @if (!hasLoaded()) {
+    <div class="page-status" role="status">
+      @if (loading()) {
+        <mat-spinner diameter="24" aria-hidden="true" />
+        <span>Carregando usuários…</span>
+      } @else {
+        <span>Não foi possível carregar os usuários.</span>
+      }
+    </div>
+  } @else if (users().length === 0) {
     <div class="empty-state">
       <mat-icon class="empty-icon" aria-hidden="true">group</mat-icon>
       <h2>Nenhum usuário cadastrado</h2>

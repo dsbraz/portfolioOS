@@ -55,7 +55,9 @@ export class CurrencyInput implements ControlValueAccessor {
   @HostListener('input')
   onInput(): void {
     const input = this.el.nativeElement;
-    const negativo = input.value.trim().startsWith('-');
+    // Each "-" flips the sign, wherever it lands: the cursor sits at the end, so
+    // a "-" typed after the number arrives last, and typing it again undoes it.
+    const negativo = (input.value.match(/-/g)?.length ?? 0) % 2 === 1;
     const digitos = input.value.replace(/\D/g, '');
 
     if (!digitos) {

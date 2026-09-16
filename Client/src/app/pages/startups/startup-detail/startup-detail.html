@@ -1,4 +1,4 @@
-@if (loading()) {
+@if (loading() && !startup()) {
   <div class="detail-page" aria-busy="true">
     <div class="page-status" role="status">
       <mat-spinner diameter="24" aria-hidden="true" />
@@ -6,7 +6,9 @@
     </div>
   </div>
 } @else if (startup(); as s) {
-  <div class="detail-page">
+  <!-- Refreshes after a change keep the page mounted: tearing it down lost
+       focus, scroll and the sort headers. Only the first load shows the spinner. -->
+  <div class="detail-page" [attr.aria-busy]="loading() ? 'true' : null">
     <header class="page-head">
       <!-- Identity: logo, name, website and STATE. The status describes the startup,
            so it lives here and not next to the actions. -->
@@ -150,7 +152,7 @@
           </div>
       } @else {
         <div class="table-shell" tabindex="0" role="region" aria-label="Indicadores mensais da startup (rolável)">
-          <table mat-table [dataSource]="sortedIndicators()" class="data-table"
+          <table mat-table [dataSource]="sortedIndicators()" [trackBy]="trackById" class="data-table"
                  matSort (matSortChange)="indicatorSort.set($event)">
             <caption class="visually-hidden">Indicadores mensais da startup, com período, receita, caixa, EBITDA/burn e headcount.</caption>
           <ng-container matColumnDef="period">
@@ -218,7 +220,7 @@
           </div>
       } @else {
         <div class="table-shell" tabindex="0" role="region" aria-label="Reuniões de conselho da startup (rolável)">
-          <table mat-table [dataSource]="sortedMeetings()" class="data-table"
+          <table mat-table [dataSource]="sortedMeetings()" [trackBy]="trackById" class="data-table"
                  matSort (matSortChange)="meetingSort.set($event)">
             <caption class="visually-hidden">Reuniões de conselho da startup, com data e resumo.</caption>
           <ng-container matColumnDef="meeting_date">
@@ -274,7 +276,7 @@
           </div>
       } @else {
         <div class="table-shell" tabindex="0" role="region" aria-label="Executivos da startup (rolável)">
-          <table mat-table [dataSource]="sortedExecutives()" class="data-table"
+          <table mat-table [dataSource]="sortedExecutives()" [trackBy]="trackById" class="data-table"
                  matSort (matSortChange)="executiveSort.set($event)">
             <caption class="visually-hidden">Executivos da startup, com nome, cargo e e-mail.</caption>
           <ng-container matColumnDef="name">
