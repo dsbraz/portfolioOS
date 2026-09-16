@@ -44,6 +44,7 @@ export class Users implements OnInit {
   readonly loading = signal(false);
   /** Distinguishes "not loaded yet / failed" from "loaded, no users". */
   readonly hasLoaded = signal(false);
+  readonly trackById = (_: number, user: UserResponse) => user.id;
   readonly displayedColumns = ['username', 'email', 'is_active', 'created_at', 'actions'];
 
   readonly sort = signal<SortState>({ active: '', direction: '' });

@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, ParamMap, Router, convertToParamMap } from '@angular/router';
-import { BehaviorSubject, NEVER, Observable, of, throwError } from 'rxjs';
+import { BehaviorSubject, NEVER, Observable, Subject, of, throwError } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
@@ -381,22 +381,33 @@ describe('Portfolio (estado do reporte na coluna de status)', () => {
 });
 
 describe('Portfolio (refresh when the period changes)', () => {
-  const summary = (): PortfolioSummary =>
+  const summary = (name: string): PortfolioSummary =>
     ({
-      total_startups: 0,
+      total_startups: 1,
       revenue: 0,
       revenue_variation_pct: null,
       revenue_variation_direction: 'neutral',
-      health: { healthy: 0, warning: 0, critical: 0 },
+      health: { healthy: 1, warning: 0, critical: 0 },
       monthly_report_pct: 0,
       routines_up_to_date_pct: 0,
-      startups: [],
-    }) as PortfolioSummary;
+      startups: [
+        {
+          startup: { id: 'a', name, status: 'saudavel', equity_stake: null },
+          total_revenue: 1000,
+          cash_balance: null,
+          ebitda_burn: null,
+          headcount: null,
+          accumulated_revenue_ytd: null,
+          last_reported_month: 7,
+          last_reported_year: 2026,
+        },
+      ],
+    }) as unknown as PortfolioSummary;
 
-  let getSummary: () => Observable<PortfolioSummary>;
+  let getSummary: (month: number, year: number) => Observable<PortfolioSummary>;
 
   const mount = async () => {
-    getSummary = () => of(summary());
+    getSummary = () => of(summary('Alpha'));
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
       imports: [Portfolio],
@@ -409,7 +420,10 @@ describe('Portfolio (refresh when the period changes)', () => {
         { provide: Router, useValue: { navigate: vi.fn().mockResolvedValue(true) } },
         { provide: MatDialog, useValue: { open: vi.fn() } },
         { provide: MatSnackBar, useValue: { open: vi.fn() } },
-        { provide: PortfolioService, useValue: { getSummary: () => getSummary() } },
+        {
+          provide: PortfolioService,
+          useValue: { getSummary: (month: number, year: number) => getSummary(month, year) },
+        },
         { provide: StartupService, useValue: { create: vi.fn() } },
       ],
     }).compileComponents();
@@ -421,23 +435,46 @@ describe('Portfolio (refresh when the period changes)', () => {
     return fixture;
   };
 
-  // Regression: changing the month swapped the content for a spinner, which
-  // reset the table's sort header while the rows stayed sorted.
-  it('should keep the content mounted and busy while the next period loads', async () => {
+  const reloadPeriod = (fixture: ComponentFixture<Portfolio>, month: number) => {
+    fixture.componentInstance.selectedMonth.set(month);
+    fixture.componentInstance.loadSummary();
+    fixture.detectChanges();
+  };
+
+  // Regression: a refresh swapped the content for a spinner, which reset the
+  // table's sort header while the rows stayed sorted.
+  it('should keep the rows and the sort header when the same period refreshes', async () => {
     const fixture = await mount();
     const el = fixture.nativeElement as HTMLElement;
+    const row = el.querySelector('tr.mat-mdc-row');
+    const nameHeader = el.querySelector('th .mat-sort-header-container') as HTMLElement;
+    nameHeader.click();
+    fixture.detectChanges();
+    const sort = nameHeader.closest('th')!.getAttribute('aria-sort');
+    expect(sort).toBe('ascending');
 
     getSummary = () => NEVER;
     fixture.componentInstance.loadSummary();
     fixture.detectChanges();
 
-    expect(el.textContent).toContain('Nenhuma startup cadastrada');
     expect(el.querySelector('[aria-busy="true"]')).toBeTruthy();
+    expect(el.querySelector('tr.mat-mdc-row')).toBe(row);
+    expect(el.querySelector('th[aria-sort="ascending"]')).toBeTruthy();
   });
 
-  // Keeping the previous content must not turn a failed load into the previous
-  // period's numbers shown under the new period's label.
-  it('should not keep the previous period on screen when the refresh fails', async () => {
+  // Another period's numbers must never show under the new period's label.
+  it('should show loading, not the previous period, while another period loads', async () => {
+    const fixture = await mount();
+    const el = fixture.nativeElement as HTMLElement;
+
+    getSummary = () => NEVER;
+    reloadPeriod(fixture, 6);
+
+    expect(el.textContent).not.toContain('Alpha');
+    expect(el.querySelector('[role="status"]')?.textContent).toContain('Carregando');
+  });
+
+  it('should keep valid data when refreshing the same period fails', async () => {
     const fixture = await mount();
     const el = fixture.nativeElement as HTMLElement;
 
@@ -445,7 +482,37 @@ describe('Portfolio (refresh when the period changes)', () => {
     fixture.componentInstance.loadSummary();
     fixture.detectChanges();
 
-    expect(el.textContent).not.toContain('Nenhuma startup cadastrada');
+    expect(el.textContent).toContain('Alpha');
+  });
+
+  it('should show the failure when another period fails to load', async () => {
+    const fixture = await mount();
+    const el = fixture.nativeElement as HTMLElement;
+
+    getSummary = () => throwError(() => ({ error: { detail: 'falhou' } }));
+    reloadPeriod(fixture, 6);
+
+    expect(el.textContent).not.toContain('Alpha');
     expect(el.querySelector('[role="status"]')?.textContent).toContain('Não foi possível');
+  });
+
+  // Clicking "previous month" twice: the older request must not land last and
+  // leave its numbers under the newer period's label.
+  it('should ignore a response for a period that is no longer selected', async () => {
+    const fixture = await mount();
+    const el = fixture.nativeElement as HTMLElement;
+    const june = new Subject<PortfolioSummary>();
+    const may = new Subject<PortfolioSummary>();
+    getSummary = (month) => (month === 6 ? june : may);
+
+    reloadPeriod(fixture, 6);
+    reloadPeriod(fixture, 5);
+    june.next(summary('Junho'));
+    fixture.detectChanges();
+
+    expect(el.textContent).not.toContain('Junho');
+    may.next(summary('Maio'));
+    fixture.detectChanges();
+    expect(el.textContent).toContain('Maio');
   });
 });

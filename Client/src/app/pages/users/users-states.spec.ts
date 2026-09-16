@@ -54,3 +54,33 @@ describe('Users (loading, content and error states)', () => {
     expect(el.querySelector('[role="status"]')?.textContent).toContain('Não foi possível');
   });
 });
+
+describe('Users (refresh after a change)', () => {
+  const user = { id: 'u1', username: 'admin', email: 'a@x.com', is_active: true, created_at: '2026-07-01T14:30:00', updated_at: '' };
+
+  // After the edit dialog closes the list reloads with new objects. Without
+  // tracking by id the row — and the edit button focus returns to — is recreated.
+  it('should keep the row edit button in the DOM when the list reloads', async () => {
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [Users],
+      providers: [
+        provideNoopAnimations(),
+        { provide: MatDialog, useValue: { open: vi.fn() } },
+        { provide: MatSnackBar, useValue: { open: vi.fn() } },
+        { provide: AuthService, useValue: { listUsers: () => of({ items: [{ ...user }], total: 1 }) } },
+        { provide: UserInviteService, useValue: { listActiveInvites: () => of([]) } },
+      ],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(Users);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const before = el.querySelector('td button');
+    expect(before).toBeTruthy();
+
+    fixture.componentInstance.loadUsers();
+    fixture.detectChanges();
+
+    expect(el.querySelector('td button')).toBe(before);
+  });
+});

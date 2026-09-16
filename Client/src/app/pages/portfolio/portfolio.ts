@@ -8,6 +8,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSortModule } from '@angular/material/sort';
+import { Subscription } from 'rxjs';
 
 import {
   PortfolioSummary,
@@ -58,6 +59,8 @@ export class Portfolio implements OnInit {
   private readonly defaultPeriod = this.getPreviousPeriod(this.today.getMonth() + 1, this.today.getFullYear());
 
   readonly summaryByPeriod = signal<PortfolioSummary | null>(null);
+  private loadedPeriod: { month: number; year: number } | null = null;
+  private summaryRequest?: Subscription;
   readonly loading = signal(false);
   readonly trackById = (_: number, row: StartupSummary) => row.startup.id;
   readonly selectedMonth = signal(this.defaultPeriod.month);
@@ -102,17 +105,26 @@ export class Portfolio implements OnInit {
   }
 
   loadSummary(): void {
+    const month = this.selectedMonth();
+    const year = this.selectedYear();
+
+    // Another period's numbers must never show under this period's label, so
+    // the content only stays mounted while refreshing the SAME period.
+    if (this.loadedPeriod?.month !== month || this.loadedPeriod?.year !== year) {
+      this.summaryByPeriod.set(null);
+    }
+
     this.loading.set(true);
-    this.monitoringService.getSummary(this.selectedMonth(), this.selectedYear()).subscribe({
+    // A slower response for a period that is no longer selected must not land last.
+    this.summaryRequest?.unsubscribe();
+    this.summaryRequest = this.monitoringService.getSummary(month, year).subscribe({
       next: (data) => {
         this.summaryByPeriod.set(data);
+        this.loadedPeriod = { month, year };
         this.loading.set(false);
       },
       error: (err) => {
         this.snackBar.open(err.error?.detail || 'Erro ao carregar monitoramento', 'Fechar', { duration: 3000 });
-        // The previous period stays mounted while loading; on failure it must go,
-        // or its numbers would show under the new period's label.
-        this.summaryByPeriod.set(null);
         this.loading.set(false);
       },
     });
