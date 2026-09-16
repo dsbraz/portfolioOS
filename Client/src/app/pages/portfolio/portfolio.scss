@@ -29,15 +29,15 @@
 // ---------- KPIs ----------
 .kpi-grid {
   display: grid;
-  // Intrínseca, não por breakpoint: `repeat(N, minmax(0, 1fr))` obrigava N
-  // colunas e deixava cada uma encolher ABAIXO do conteúdo — daí o número
-  // cortado pela borda do card. Aqui o piso de 13.5rem é medido, não estimado:
-  // é a largura em que o valor mais largo cabe no menor tamanho de fonte. Quando
-  // não couberem N lado a lado, a grade quebra a linha em vez de espremer.
+  // Intrinsic, not by breakpoint: `repeat(N, minmax(0, 1fr))` forced N columns
+  // and let each shrink BELOW its content — hence the number clipped by the
+  // card border. Here the 13.5rem floor is measured, not estimated: it is the
+  // width at which the widest value fits at the smallest font size. When N do
+  // not fit side by side, the grid wraps instead of squeezing.
   grid-template-columns: repeat(auto-fit, minmax(13.5rem, 1fr));
   gap: var(--tile-gap);
-  // A margem segue em --panel-gap de propósito: é ela que separa a faixa da
-  // região seguinte, e o contraste com o gap interno é o que agrupa os tiles.
+  // The margin stays at --panel-gap on purpose: it separates the strip from the
+  // next region, and the contrast with the inner gap is what groups the tiles.
   margin-bottom: var(--panel-gap);
 }
 
@@ -146,8 +146,8 @@
   }
 }
 
-// Célula de status: julgamento em cima, fato do período embaixo. Mesma
-// densidade de duas linhas que a coluna "Startup" já usa (nome + setor).
+// Status cell: judgment on top, the period's fact below. Same two-line density
+// the "Startup" column already uses (name + sector).
 .status-cell {
   display: flex;
   flex-direction: column;
@@ -155,8 +155,8 @@
   gap: var(--space-2xs);
 }
 
-// Discreta de propósito: é uma nota de contexto, não um segundo estado. Quem
-// escaneia a tabela procura o pill; esta linha responde depois que o olho parou.
+// Understated on purpose: it is a context note, not a second state. Someone
+// scanning the table looks for the pill; this line answers once the eye stops.
 .status-note {
   color: var(--color-text-muted);
   font-family: var(--font-body);

@@ -10,8 +10,8 @@ describe('ThemeService', () => {
   const hadMatchMedia = 'matchMedia' in window;
   const originalMatchMedia = window.matchMedia;
 
-  /** `matchMedia` falso que guarda o listener, para simular o SO trocando de
-   *  tema com a página aberta. */
+  /** Fake `matchMedia` that stores the listener, to simulate the OS switching
+   *  theme while the page is open. */
   const stubMatchMedia = () => {
     window.matchMedia = ((query: string) =>
       ({

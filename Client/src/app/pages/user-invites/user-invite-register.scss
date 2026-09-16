@@ -16,9 +16,9 @@
   justify-content: flex-end;
 }
 
-// Coluna simples: cabeçalho de marca no topo, formulário abaixo. A
-// centralização anterior transformava header e conteúdo em itens flex lado a
-// lado assim que a página deixou de ser um card único.
+// Simple column: brand header on top, form below. The previous centering turned
+// header and content into side-by-side flex items as soon as the page stopped
+// being a single card.
 .invite-page {
   min-height: 100vh;
   background-color: var(--color-bg);

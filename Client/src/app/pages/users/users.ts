@@ -53,9 +53,9 @@ export class Users implements OnInit {
     applySort(this.users(), this.sort(), {
       username: (user) => user.username,
       email: (user) => user.email,
-      // Booleano vira número para ter ordem: ascendente traz Inativo primeiro.
+      // Boolean becomes a number to get an order: ascending puts Inativo first.
       is_active: (user) => (user.is_active ? 1 : 0),
-      // Timestamp ISO ordena corretamente como texto.
+      // An ISO timestamp sorts correctly as text.
       created_at: (user) => user.created_at,
     }),
   );

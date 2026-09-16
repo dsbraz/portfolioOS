@@ -1,5 +1,5 @@
-// Usuários — mesma composição das outras telas: `page-head` pequeno, tabela
-// dentro de um `table-shell` com filete de 1px e canto de 8px.
+// Usuários — same composition as the other screens: small `page-head`, table
+// inside a `table-shell` with a 1px hairline and 8px corner.
 
 .users-page {
   max-width: var(--content-max);
@@ -24,10 +24,10 @@
   font-weight: var(--fw-medium);
 }
 
-// A ação de editar era `opacity: 0` até o hover. Isso a deixava invisível ao
-// receber foco por teclado e inalcançável em touch, onde hover não existe — e
-// é a única forma de editar um usuário. Agora está sempre visível, apenas
-// discreta, escurecendo na linha sob o cursor.
+// The edit action was `opacity: 0` until hover. That made it invisible when
+// focused by keyboard and unreachable on touch, where hover does not exist —
+// and it is the only way to edit a user. Now it is always visible, just
+// understated, darkening on the row under the cursor.
 .row-edit-btn {
   color: var(--color-text-muted);
   transition: color var(--transition-fast);
@@ -38,8 +38,8 @@ tr:hover .row-edit-btn,
   color: var(--color-text);
 }
 
-// ---------- Estado vazio ----------
-// Carrega a própria ação: é o momento em que ela é mais necessária.
+// ---------- Empty state ----------
+// Carries its own action: this is the moment it is most needed.
 .empty-state {
   display: flex;
   flex-direction: column;
