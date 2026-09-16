@@ -86,14 +86,31 @@ def test_domain_must_not_import_upper_layers():
 # -- Repository layer ----------------------------------------------------------
 
 
-def test_repositories_must_not_import_controllers_or_application():
-    forbidden = ("app.controllers", "app.application")
+ADAPTER_FORBIDDEN_IMPORTS = ("app.controllers", "app.application", "fastapi")
+
+
+def test_repositories_must_not_import_controllers_application_or_fastapi():
     violations = [
         (f, m)
         for f, m in _collect_imports(APP_ROOT / "repositories")
-        if any(m.startswith(fb) for fb in forbidden)
+        if any(m.startswith(fb) for fb in ADAPTER_FORBIDDEN_IMPORTS)
     ]
     assert violations == [], (
-        "Repositories must not import from controllers or application:\n"
+        "Repositories must not import from controllers, application or fastapi:\n"
+        + "\n".join(f"  {f}: {m}" for f, m in violations)
+    )
+
+
+# -- Infrastructure layer ------------------------------------------------------
+
+
+def test_infrastructure_must_not_import_controllers_application_or_fastapi():
+    violations = [
+        (f, m)
+        for f, m in _collect_imports(APP_ROOT / "infrastructure")
+        if any(m.startswith(fb) for fb in ADAPTER_FORBIDDEN_IMPORTS)
+    ]
+    assert violations == [], (
+        "Infrastructure must not import from controllers, application or fastapi:\n"
         + "\n".join(f"  {f}: {m}" for f, m in violations)
     )
