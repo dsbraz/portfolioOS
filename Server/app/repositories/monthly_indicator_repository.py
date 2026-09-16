@@ -1,7 +1,7 @@
 import uuid
 from decimal import Decimal
 
-from sqlalchemy import Integer, cast, func, select
+from sqlalchemy import ColumnElement, Integer, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.models.monthly_indicator import MonthlyIndicator
@@ -9,8 +9,10 @@ from app.domain.models.monthly_indicator_token import MonthlyIndicatorToken
 from app.domain.models.period import Period
 
 
-def period_expression():
+def year_month_key_expression() -> ColumnElement[int]:
     """`ano * 100 + mes` como inteiro comparavel e ordenavel (202607).
+
+    SQL counterpart of `Period.key`; results are decoded with `Period.from_key`.
 
     Dispensa comparar dois campos e evita o classico de Dez/2025 vencer
     Jan/2026 por ter mes maior.
@@ -110,7 +112,7 @@ class MonthlyIndicatorRepository:
         if not startup_ids:
             return {}
 
-        period = period_expression()
+        period = year_month_key_expression()
 
         result = await self._session.execute(
             select(MonthlyIndicator.startup_id, func.max(period))

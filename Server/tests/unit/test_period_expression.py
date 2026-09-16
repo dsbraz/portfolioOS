@@ -1,6 +1,6 @@
 from sqlalchemy import Integer, SmallInteger
 
-from app.repositories.monthly_indicator_repository import period_expression
+from app.repositories.monthly_indicator_repository import year_month_key_expression
 
 
 def test_period_comparison_binds_a_32_bit_integer():
@@ -14,13 +14,20 @@ def test_period_comparison_binds_a_32_bit_integer():
     parametro nem valida a faixa de SMALLINT. Este teste olha o tipo inferido,
     e por isso vale em qualquer banco.
     """
-    comparison = period_expression() <= 202607
+    comparison = year_month_key_expression() <= 202607
 
     assert isinstance(comparison.right.type, Integer)
     # SmallInteger herda de Integer, entao a checagem acima sozinha passaria.
     assert not isinstance(comparison.right.type, SmallInteger)
 
 
-def test_period_expression_orders_across_the_year_boundary():
-    """Dez/2025 (202512) tem de vir ANTES de Jan/2026 (202601)."""
-    assert 2025 * 100 + 12 < 2026 * 100 + 1
+def test_year_month_key_expression_compiles_to_year_times_100_plus_month():
+    """Must match `Period.key`, which decodes the query result."""
+    sql = str(
+        year_month_key_expression().compile(compile_kwargs={"literal_binds": True})
+    )
+
+    assert sql == (
+        "CAST(monthly_indicators.year AS INTEGER) * 100"
+        " + CAST(monthly_indicators.month AS INTEGER)"
+    )
