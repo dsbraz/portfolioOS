@@ -7,18 +7,18 @@ const FORMATTER = new Intl.NumberFormat('pt-BR', {
 });
 
 /**
- * Máscara de moeda em pt-BR.
+ * pt-BR currency mask.
  *
- * O campo EXIBE `1.250.000,00` e o controle guarda `1250000` — a formatação é
- * de apresentação, o formulário continua enviando número.
+ * The field DISPLAYS `1.250.000,00` and the control stores `1250000` — formatting
+ * is presentational, the form still submits a number.
  *
- * Trata a digitação como CENTAVOS: cada dígito entra pela direita e os dois
- * últimos são a fração. É o que dispensa o usuário de posicionar o cursor entre
- * separadores, que é onde máscaras ingênuas quebram.
+ * Treats typing as CENTS: each digit enters from the right and the last two are
+ * the fraction. That spares the user from placing the cursor between separators,
+ * which is where naive masks break.
  *
- * Exige `type="text"` com `inputmode="decimal"`: um `type="number"` não aceita
- * separador de milhar no valor exibido — e, de quebra, deixa de ter o problema
- * da roda do mouse alterando o número.
+ * Requires `type="text"` with `inputmode="decimal"`: a `type="number"` does not
+ * accept a thousands separator in the displayed value — and, as a bonus, avoids
+ * the mouse wheel changing the number.
  */
 @Directive({
   selector: 'input[appCurrencyInput]',
@@ -59,9 +59,9 @@ export class CurrencyInput implements ControlValueAccessor {
     const digitos = input.value.replace(/\D/g, '');
 
     if (!digitos) {
-      // Preserva o sinal quando ainda não há dígito. Limpar tudo aqui descartava
-      // o "-" no instante em que ele era digitado, e o campo de burn — o único
-      // que costuma ser negativo — nunca conseguia ficar negativo.
+      // Keep the sign while there is no digit yet. Clearing everything here dropped
+      // the "-" the moment it was typed, and the burn field — the only one that is
+      // usually negative — could never become negative.
       input.value = negativo ? '-' : '';
       this.onChange(null);
       return;
@@ -69,8 +69,8 @@ export class CurrencyInput implements ControlValueAccessor {
 
     const valor = (negativo ? -1 : 1) * (Number(digitos) / 100);
     input.value = FORMATTER.format(valor);
-    // O cursor vai para o fim: com entrada por centavos o dígito novo sempre
-    // aterrissa à direita, então é para lá que o cursor deve seguir.
+    // Move the cursor to the end: with cents-based input the new digit always
+    // lands on the right, so that is where the cursor should go.
     input.setSelectionRange(input.value.length, input.value.length);
     this.onChange(valor);
   }

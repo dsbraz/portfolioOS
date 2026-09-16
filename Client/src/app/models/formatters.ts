@@ -1,10 +1,10 @@
 /**
- * Formatação de apresentação, compartilhada entre páginas e diálogos.
+ * Presentation formatting, shared across pages and dialogs.
  *
- * Retornam `null` para valor ausente em vez de um traço: quem exibe decide como
- * representar o vazio — uma tabela usa "-", a vista de leitura usa um traço com
- * texto alternativo para leitor de tela. Embutir o símbolo aqui tiraria essa
- * escolha de quem tem o contexto.
+ * They return `null` for a missing value instead of a dash: the caller decides how
+ * to represent emptiness — a table uses "-", the read view uses a dash with
+ * alternative text for screen readers. Baking the symbol in here would take that
+ * choice away from whoever has the context.
  */
 
 import { MONTH_LABELS } from './monthly-indicator.model';
@@ -31,16 +31,16 @@ export function formatInteger(value: number | null | undefined): string | null {
   return DECIMAL.format(value);
 }
 
-/** Período de referência como `Mmm/AAAA` (ex.: `Jan/2026`). */
+/** Reference period as `Mmm/YYYY` (e.g. `Jan/2026`). */
 export function formatPeriod(month: number, year: number): string {
   return `${MONTH_LABELS[month]}/${year}`;
 }
 
-/** Data ISO (`YYYY-MM-DD`) para `dd/MM/yyyy`. */
+/** ISO date (`YYYY-MM-DD`) to `dd/MM/yyyy`. */
 export function formatIsoDate(value: string | null | undefined): string | null {
   if (!value) return null;
-  // `T00:00:00` mantém a data no fuso local: sem isso o ISO puro é lido como
-  // UTC e a data volta um dia em fusos negativos, que é o caso do Brasil.
+  // `T00:00:00` keeps the date in the local time zone: without it the bare ISO is
+  // read as UTC and the date shifts back a day in negative offsets, as in Brazil.
   const date = new Date(`${value}T00:00:00`);
   if (Number.isNaN(date.getTime())) return null;
   return date.toLocaleDateString('pt-BR');

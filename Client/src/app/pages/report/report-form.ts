@@ -105,10 +105,10 @@ export default class ReportForm implements OnInit {
   onSubmit(): void {
     if (this.submitting()) return;
 
-    // Botão desabilitado enquanto inválido não diz ao usuário o QUE está
-    // errado — ele só não funciona. Com campos opcionais e validação de faixa,
-    // um valor fora do limite travava o envio sem apontar o campo. Agora o
-    // envio revela os erros e leva o foco para o primeiro deles.
+    // A button disabled while invalid does not tell the user WHAT is wrong —
+    // it just does not work. With optional fields and range validation, an
+    // out-of-range value blocked submission without pointing at the field. Now
+    // submitting reveals the errors and moves focus to the first one.
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.focusFirstInvalid();

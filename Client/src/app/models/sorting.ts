@@ -1,13 +1,13 @@
 /**
- * Ordenação de tabelas.
+ * Table sorting.
  *
- * Vive aqui, e não em cada página, porque as regras difíceis são as mesmas em
- * todas as tabelas: número que chega como string, ausência que não pode ser
- * tratada como zero, e texto em pt-BR com acento.
+ * Lives here, not in each page, because the hard rules are the same for every
+ * table: numbers that arrive as strings, missing values that must not be
+ * treated as zero, and accented pt-BR text.
  *
- * Não depende do Angular Material de propósito — o `Sort` do Material é
- * estruturalmente compatível com `SortState`, então dá para passar o evento
- * direto, mas a comparação continua testável sem framework.
+ * Deliberately independent of Angular Material — Material's `Sort` is
+ * structurally compatible with `SortState`, so the event can be passed
+ * directly, while the comparison stays testable without a framework.
  */
 
 export type SortDirection = 'asc' | 'desc' | '';
@@ -17,19 +17,19 @@ export interface SortState {
   direction: SortDirection;
 }
 
-/** Valor comparável de uma linha para uma coluna. */
+/** Comparable value of a row for a column. */
 export type SortAccessor<T> = (row: T) => string | number | null | undefined;
 
 const COLLATOR = new Intl.Collator('pt-BR', {
-  // `numeric` faz "Startup 10" vir depois de "Startup 9"; `sensitivity: base`
-  // ignora acento e caixa, senão "Ávila" cairia depois de "Zago".
+  // `numeric` puts "Startup 10" after "Startup 9"; `sensitivity: base`
+  // ignores accents and case, otherwise "Ávila" would land after "Zago".
   numeric: true,
   sensitivity: 'base',
 });
 
 /**
- * A API serializa `Decimal` como string JSON — `"767776.43"`, não `767776.43`.
- * Comparar isso como texto ordenaria "9" depois de "10".
+ * The API serializes `Decimal` as a JSON string — `"767776.43"`, not `767776.43`.
+ * Comparing that as text would sort "9" after "10".
  */
 function asNumber(value: string | number): number | null {
   const parsed = typeof value === 'number' ? value : Number(value);
@@ -45,15 +45,15 @@ export function sortRows<T>(
 
   const factor = direction === 'asc' ? 1 : -1;
 
-  // Cópia antes de ordenar: `sort` muda o array no lugar, e estes vêm de
-  // signals — ordenar o original reescreveria o estado sem avisar ninguém.
+  // Copy before sorting: `sort` mutates the array in place, and these come from
+  // signals — sorting the original would rewrite state without notifying anyone.
   return [...rows].sort((rowA, rowB) => {
     const a = accessor(rowA);
     const b = accessor(rowB);
 
-    // Ausência vai para o fim NOS DOIS SENTIDOS. Deixar o nulo participar da
-    // inversão o traria para o topo no descendente, e uma tela cheia de "—"
-    // antes do primeiro dado não é o que ninguém quer ver ao ordenar.
+    // Missing values go last IN BOTH DIRECTIONS. Letting null take part in the
+    // inversion would bring it to the top when descending, and a screen full of "—"
+    // before the first data point is not what anyone wants to see when sorting.
     const vazioA = a === null || a === undefined || a === '';
     const vazioB = b === null || b === undefined || b === '';
     if (vazioA && vazioB) return 0;
@@ -69,8 +69,8 @@ export function sortRows<T>(
 }
 
 /**
- * Aplica o estado de ordenação usando o acessor registrado para a coluna ativa.
- * Coluna sem acessor mantém a ordem original — é o caso da coluna de ações.
+ * Applies the sort state using the accessor registered for the active column.
+ * A column without an accessor keeps the original order — e.g. the actions column.
  */
 export function applySort<T>(
   rows: readonly T[],

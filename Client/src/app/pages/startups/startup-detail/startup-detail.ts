@@ -93,7 +93,7 @@ export class StartupDetail implements OnInit {
 
   readonly tabButtons = viewChildren<ElementRef<HTMLButtonElement>>('tabBtn');
 
-  /** Seções da página. A ordem define a navegação por setas do tablist. */
+  /** Page sections. The order defines the tablist's arrow-key navigation. */
   readonly sections = [
     { id: 'indicadores' as const, label: 'Indicadores Mensais' },
     { id: 'reunioes' as const, label: 'Reuniões de Conselho' },
@@ -140,8 +140,8 @@ export class StartupDetail implements OnInit {
   readonly executiveSort = signal<SortState>({ active: '', direction: '' });
 
   /**
-   * "Período" mostra `Jul/2026`, mas ordena por ano e mês. Comparar o texto
-   * poria Ago antes de Jul, e 2025 no meio de 2026.
+   * "Período" shows `Jul/2026`, but sorts by year and month. Comparing the text
+   * would put Ago before Jul, and 2025 in the middle of 2026.
    */
   readonly sortedIndicators = computed(() =>
     applySort(this.indicators(), this.indicatorSort(), {
@@ -155,7 +155,7 @@ export class StartupDetail implements OnInit {
 
   readonly sortedMeetings = computed(() =>
     applySort(this.meetings(), this.meetingSort(), {
-      // Data ISO (`YYYY-MM-DD`) já ordena corretamente como texto.
+      // An ISO date (`YYYY-MM-DD`) already sorts correctly as text.
       meeting_date: (m) => m.meeting_date,
       summary: (m) => m.summary,
     }),

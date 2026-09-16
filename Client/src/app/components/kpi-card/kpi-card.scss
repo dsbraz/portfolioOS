@@ -54,12 +54,12 @@
 // `--fs-stat` stays the ceiling, so a short value looks exactly like the
 // original dashboard; a long currency value scales down to fit its card
 // instead of colliding with the padding.
-// O PISO importa tanto quanto o teto. Medido: no piso anterior de 1.25rem, o
-// valor mais largo do painel ("R$ 9.861.856,72") ocupa 180px em Geist Mono, e
-// com o padding o card precisava de 228px. Numa coluna mais estreita que isso o
-// piso passava a ser maior do que cabia, e o número era cortado pela borda —
-// `clamp` não protege quando o mínimo é o problema. 1.125rem baixa a exigência
-// para 210px, que é o que a grade intrínseca garante.
+// The FLOOR matters as much as the ceiling. Measured: at the previous 1.25rem
+// floor, the widest value on the dashboard ("R$ 9.861.856,72") takes 180px in
+// Geist Mono, and with padding the card needed 228px. In a column narrower than
+// that the floor became larger than what fit, and the number was clipped by the
+// border — `clamp` does not help when the minimum is the problem. 1.125rem
+// lowers the requirement to 210px, which is what the intrinsic grid guarantees.
 .kpi-value {
   color: var(--color-text);
   font-family: var(--font-mono);
