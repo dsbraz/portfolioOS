@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from app.application.portfolio.get_portfolio_summary import GetPortfolioSummary
+from app.domain.models.period import Period
 from app.domain.models.startup import StartupStatus
 
 
@@ -239,8 +240,8 @@ async def test_exposes_last_reported_period_per_startup(
     indicator.headcount = None
     indicator_repo.get_by_startups_and_period.return_value = {reported.id: indicator}
     indicator_repo.get_last_reported_period_by_startups.return_value = {
-        reported.id: (2026, 7),
-        stale.id: (2026, 4),
+        reported.id: Period(year=2026, month=7),
+        stale.id: Period(year=2026, month=4),
     }
     meeting_repo.get_startup_ids_with_recent_meetings.return_value = set()
 

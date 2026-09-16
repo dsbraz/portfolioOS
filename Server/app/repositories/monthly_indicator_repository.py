@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.models.monthly_indicator import MonthlyIndicator
 from app.domain.models.monthly_indicator_token import MonthlyIndicatorToken
+from app.domain.models.period import Period
 
 
 def period_expression():
@@ -97,14 +98,14 @@ class MonthlyIndicatorRepository:
 
     async def get_last_reported_period_by_startups(
         self, startup_ids: list[uuid.UUID], month: int, year: int
-    ) -> dict[uuid.UUID, tuple[int, int]]:
+    ) -> dict[uuid.UUID, Period]:
         """Ultimo periodo reportado por startup, ATE o periodo consultado.
 
         O limite superior importa: olhando Fev/2026, um reporte de Jul/2026 e
         futuro em relacao ao recorte da tela, e exibi-lo diria que a startup
         reportou algo que, naquele contexto, ainda nao aconteceu.
 
-        Retorna `(ano, mes)`; startups sem nenhum reporte ficam fora do dict.
+        Startups sem nenhum reporte ficam fora do dict.
         """
         if not startup_ids:
             return {}
@@ -115,12 +116,12 @@ class MonthlyIndicatorRepository:
             select(MonthlyIndicator.startup_id, func.max(period))
             .where(
                 MonthlyIndicator.startup_id.in_(startup_ids),
-                period <= year * 100 + month,
+                period <= Period(year=year, month=month).key,
             )
             .group_by(MonthlyIndicator.startup_id)
         )
 
-        return {row[0]: (row[1] // 100, row[1] % 100) for row in result.all()}
+        return {row[0]: Period.from_key(row[1]) for row in result.all()}
 
     async def get_accumulated_revenue_by_startups(
         self, startup_ids: list[uuid.UUID], month: int, year: int

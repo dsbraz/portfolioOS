@@ -7,6 +7,7 @@ from app.application.portfolio.readmodels import (
     PortfolioSummary,
     StartupSummary,
 )
+from app.domain.models.period import Period
 from app.domain.models.startup import StartupStatus
 from app.domain.validators import validate_period_not_future
 from app.repositories.board_meeting_repository import BoardMeetingRepository
@@ -32,7 +33,7 @@ class GetPortfolioSummary:
     async def execute(
         self, month: int | None = None, year: int | None = None
     ) -> PortfolioSummary:
-        selected_month, selected_year = self._resolve_period(month, year)
+        selected = self._resolve_period(month, year)
 
         startups, total = await self._startup_repo.get_all()
 
@@ -49,25 +50,23 @@ class GetPortfolioSummary:
             )
 
         startup_ids = [s.id for s in startups]
-        previous_month, previous_year = self._get_previous_period(
-            selected_month, selected_year
-        )
+        previous = selected.previous()
         indicators_by_period = await self._indicator_repo.get_by_startups_and_period(
-            startup_ids, selected_month, selected_year
+            startup_ids, selected.month, selected.year
         )
         previous_indicators_by_period = (
             await self._indicator_repo.get_by_startups_and_period(
-                startup_ids, previous_month, previous_year
+                startup_ids, previous.month, previous.year
             )
         )
         accumulated_revenue_by_startup = (
             await self._indicator_repo.get_accumulated_revenue_by_startups(
-                startup_ids, selected_month, selected_year
+                startup_ids, selected.month, selected.year
             )
         )
         last_reported_by_startup = (
             await self._indicator_repo.get_last_reported_period_by_startups(
-                startup_ids, selected_month, selected_year
+                startup_ids, selected.month, selected.year
             )
         )
 
@@ -100,13 +99,13 @@ class GetPortfolioSummary:
         report_pct = (startups_with_report / total) * 100
 
         today = date.today()
-        if selected_month == today.month and selected_year == today.year:
+        if selected == Period(year=today.year, month=today.month):
             routines_reference_date = today
         else:
             routines_reference_date = date(
-                selected_year,
-                selected_month,
-                calendar.monthrange(selected_year, selected_month)[1],
+                selected.year,
+                selected.month,
+                calendar.monthrange(selected.year, selected.month)[1],
             )
 
         ids_with_meetings = (
@@ -130,8 +129,8 @@ class GetPortfolioSummary:
                     ebitda_burn=ind.ebitda_burn if ind else None,
                     headcount=ind.headcount if ind else None,
                     accumulated_revenue_ytd=accumulated_revenue_by_startup.get(s.id),
-                    last_reported_year=last_reported[0] if last_reported else None,
-                    last_reported_month=last_reported[1] if last_reported else None,
+                    last_reported_year=last_reported.year if last_reported else None,
+                    last_reported_month=last_reported.month if last_reported else None,
                 )
             )
 
@@ -148,10 +147,10 @@ class GetPortfolioSummary:
             startups=monitoring_items,
         )
 
-    def _resolve_period(self, month: int | None, year: int | None) -> tuple[int, int]:
+    def _resolve_period(self, month: int | None, year: int | None) -> Period:
         if month is None and year is None:
             today = date.today()
-            return today.month, today.year
+            return Period(year=today.year, month=today.month)
 
         if month is None or year is None:
             raise ValueError("Mes e ano devem ser informados juntos")
@@ -160,12 +159,7 @@ class GetPortfolioSummary:
             raise ValueError("Mes deve estar entre 1 e 12")
 
         validate_period_not_future(month, year)
-        return month, year
-
-    def _get_previous_period(self, month: int, year: int) -> tuple[int, int]:
-        if month == 1:
-            return 12, year - 1
-        return month - 1, year
+        return Period(year=year, month=month)
 
     def _calculate_revenue_variation(
         self, current_revenue: Decimal, previous_revenue: Decimal
