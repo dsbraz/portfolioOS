@@ -1,57 +1,115 @@
-.login-container {
+// Login.
+//
+// Mesmo registro do resto do app: superfície clara, filete de 1px, canto de 8px.
+// A faixa escura da marca é um recurso de SITE — serve para dar ritmo entre
+// seções de uma página que rola. Numa tela de app ela vira uma lâmina preta sem
+// função, e no tema escuro nem se distingue do fundo. A marca entra aqui pelo
+// logo e pelo acento roxo no foco, que é o contrato do design system.
+
+.login-page {
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: var(--mat-sys-surface);
+  padding: var(--space-xl) var(--content-padding);
+  background-color: var(--color-surface);
 }
 
 .login-card {
   width: 100%;
-  max-width: 400px;
-  padding: 24px;
+  max-width: 24rem;
+  padding: var(--space-2xl);
+  background-color: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
 
-  mat-card-title {
-    font: var(--mat-sys-headline-medium);
+// Duas peças desenhadas, trocadas pelo mesmo sinal dos tokens — o `<picture
+// media>` só enxerga `prefers-color-scheme` e dessincronizaria do toggle.
+.login-logo-on-light,
+.login-logo-on-dark {
+  height: 1.75rem;
+  width: auto;
+}
+
+.login-logo-on-dark {
+  display: none;
+}
+
+@mixin logo-dark {
+  .login-logo-on-light {
+    display: none;
   }
 
-  mat-card-subtitle {
-    margin-top: 4px;
+  .login-logo-on-dark {
+    display: block;
   }
+}
+
+:host-context(:root[data-theme='dark']) {
+  @include logo-dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :host-context(:root:not([data-theme='light'])) {
+    @include logo-dark;
+  }
+}
+
+.login-intro {
+  margin-top: var(--space-xl);
+}
+
+.login-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-heading-lg);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+  color: var(--color-text);
+}
+
+.login-subtitle {
+  margin: var(--space-2xs) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--fs-body-sm);
 }
 
 form {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-top: 16px;
-
-  mat-form-field {
-    width: 100%;
-  }
-
-  button[type="submit"] {
-    margin-top: 8px;
-    height: 48px;
-    font: var(--mat-sys-label-large);
-  }
+  gap: var(--space-md);
+  margin-top: var(--space-xl);
 }
 
+.login-submit {
+  margin-top: var(--space-xs);
+  height: 2.75rem;
+}
+
+// Tinta sólida, não `color-mix`: uma superfície que CARREGA texto precisa do
+// par pré-calculado para o contraste se sustentar.
 .error-banner {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--mat-sys-error) 12%, transparent);
-  color: var(--mat-sys-error);
-  font: var(--mat-sys-body-medium);
-  margin-bottom: 8px;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger);
+  font-size: var(--fs-body-sm);
 
   mat-icon {
     flex-shrink: 0;
-    font-size: 20px;
-    width: 20px;
-    height: 20px;
+    width: var(--icon-md);
+    height: var(--icon-md);
+    font-size: var(--icon-md);
+  }
+}
+
+@media (max-width: 30em) {
+  .login-card {
+    padding: var(--space-lg);
   }
 }

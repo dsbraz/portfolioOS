@@ -1,125 +1,106 @@
-.kpi-card {
+// KPI card — ported from `BrqKpiCard` in the px-operations redesign.
+//
+// A vertical stack (label / value / footnote), not an icon chip beside a column.
+// The decorative icon is gone on purpose: at dashboard density it cost height
+// and added nothing the label did not already say.
+//
+// Typography follows the brand's three-family split: the VALUE is a big-number
+// in Geist Mono (the decorative role), the label and footnote are Inter, because
+// they carry information. Mono on the label instead of the number is the
+// classic mistake.
+
+:host {
+  display: block;
   height: 100%;
 }
 
-mat-card-content {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 20px !important;
-  height: 100%;
-  box-sizing: border-box;
-}
-
-:host(.compact) {
-  mat-card-content {
-    padding: 12px 16px !important;
-    gap: 12px;
-  }
-
-  .kpi-icon-wrapper {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-
-    mat-icon {
-      font-size: 20px;
-      width: 20px;
-      height: 20px;
-    }
-  }
-
-  .kpi-label {
-    font-size: 11px;
-  }
-
-  .kpi-value {
-    font-size: 20px;
-  }
-
-  .kpi-subtitle {
-    font-size: 11px;
-  }
-}
-
-.kpi-icon-wrapper {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: var(--mat-sys-primary-container);
-  color: var(--mat-sys-on-primary-container);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-
-  mat-icon {
-    font-size: 24px;
-    width: 24px;
-    height: 24px;
-  }
-}
-
-.kpi-icon-positive {
-  background: color-mix(in srgb, var(--app-status-healthy) 16%, transparent);
-  color: var(--app-status-healthy);
-}
-
-.kpi-icon-negative {
-  background: color-mix(in srgb, var(--app-status-critical) 16%, transparent);
-  color: var(--app-status-critical);
-}
-
-.kpi-icon-neutral {
-  background: color-mix(in srgb, var(--mat-sys-on-surface-variant) 12%, transparent);
-  color: var(--mat-sys-on-surface-variant);
-}
-
-.kpi-info {
+.kpi {
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  gap: var(--space-xs);
+  height: 100%;
+  padding: var(--space-lg);
+  background-color: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-sizing: border-box;
+  // Lets the value size itself against the CARD, not the viewport — this app's
+  // KPIs are BRL amounts with centavos, much longer than the percentages the
+  // original dashboard was tuned for.
+  container-type: inline-size;
+}
+
+:host(.compact) .kpi {
+  padding: var(--space-md);
+  gap: var(--space-2xs);
 }
 
 .kpi-label {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--mat-sys-on-surface-variant);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: var(--fs-body-xs);
+  font-weight: var(--fw-medium);
 }
 
+.kpi-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+// Big-number: the one place mono belongs.
+// `--fs-stat` stays the ceiling, so a short value looks exactly like the
+// original dashboard; a long currency value scales down to fit its card
+// instead of colliding with the padding.
+// O PISO importa tanto quanto o teto. Medido: no piso anterior de 1.25rem, o
+// valor mais largo do painel ("R$ 9.861.856,72") ocupa 180px em Geist Mono, e
+// com o padding o card precisava de 228px. Numa coluna mais estreita que isso o
+// piso passava a ser maior do que cabia, e o número era cortado pela borda —
+// `clamp` não protege quando o mínimo é o problema. 1.125rem baixa a exigência
+// para 210px, que é o que a grade intrínseca garante.
 .kpi-value {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--mat-sys-on-surface);
-  line-height: 1.2;
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: clamp(1.125rem, 9cqi, var(--fs-stat));
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-tight);
 }
 
-.kpi-subtitle {
-  font-size: 12px;
-  color: var(--mat-sys-on-surface-variant);
-  margin-top: 2px;
+:host(.compact) .kpi-value {
+  font-size: var(--fs-body-lg);
+}
+
+// Sits directly under the value, as in the original dashboard — NOT pushed to
+// the card bottom. Bottom-aligning makes a two-line footnote start higher than
+// its one-line neighbours, breaking the top edge the eye actually tracks.
+.kpi-foot {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-2xs);
+  margin: 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: var(--fs-body-xs);
+  line-height: var(--lh-loose);
 }
 
-.kpi-subtitle-icon {
-  width: 14px;
-  height: 14px;
-  font-size: 14px;
+// The tone colors the footnote, so it always keeps its icon alongside —
+// a trend must never be signalled by color alone.
+.kpi-foot-positive {
+  color: var(--color-good);
 }
 
-.kpi-subtitle-positive {
-  color: var(--app-status-healthy);
+.kpi-foot-negative {
+  color: var(--color-danger);
 }
 
-.kpi-subtitle-negative {
-  color: var(--app-status-critical);
-}
-
-.kpi-subtitle-neutral {
-  color: var(--mat-sys-on-surface-variant);
+.kpi-foot-icon {
+  flex: none;
+  width: 0.875rem;
+  height: 0.875rem;
+  font-size: 0.875rem;
+  line-height: 1;
 }

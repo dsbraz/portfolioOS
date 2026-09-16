@@ -65,6 +65,11 @@ class GetPortfolioSummary:
                 startup_ids, selected_month, selected_year
             )
         )
+        last_reported_by_startup = (
+            await self._indicator_repo.get_last_reported_period_by_startups(
+                startup_ids, selected_month, selected_year
+            )
+        )
 
         healthy = warning = critical = 0
         for s in startups:
@@ -116,6 +121,7 @@ class GetPortfolioSummary:
         monitoring_items = []
         for s in startups:
             ind = indicators_by_period.get(s.id)
+            last_reported = last_reported_by_startup.get(s.id)
             monitoring_items.append(
                 StartupSummary(
                     startup=s,
@@ -124,6 +130,8 @@ class GetPortfolioSummary:
                     ebitda_burn=ind.ebitda_burn if ind else None,
                     headcount=ind.headcount if ind else None,
                     accumulated_revenue_ytd=accumulated_revenue_by_startup.get(s.id),
+                    last_reported_year=last_reported[0] if last_reported else None,
+                    last_reported_month=last_reported[1] if last_reported else None,
                 )
             )
 

@@ -1,0 +1,15 @@
+<header class="dialog-header">
+  <div class="dialog-header-text">
+    <h2 mat-dialog-title class="dialog-title">{{ title() }}</h2>
+    @if (description()) {
+      <p class="dialog-description">{{ description() }}</p>
+    }
+  </div>
+  <button
+    type="button"
+    class="dialog-close"
+    mat-dialog-close
+    aria-label="Fechar diálogo">
+    <mat-icon class="dialog-close-icon">close</mat-icon>
+  </button>
+</header>

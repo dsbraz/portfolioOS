@@ -187,3 +187,58 @@ async def test_monitoring_summary_should_return_400_with_future_period(client):
     )
     assert resp.status_code == 400
     assert "nao pode ser no futuro" in resp.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_last_reported_period_ignores_reports_after_the_selected_month(client):
+    """Olhando Mar, um reporte de Mai ainda nao aconteceu naquele recorte."""
+    startup_resp = await client.post(
+        "/api/startups",
+        json={
+            "name": "Startup Reporte",
+            "sector": "saas",
+            "investment_date": "2024-01-01",
+        },
+    )
+    startup_id = startup_resp.json()["id"]
+
+    # Dez/2025 vence Jan/2026 numa comparacao ingenua por mes.
+    await client.post(
+        f"/api/startups/{startup_id}/monthly-indicators",
+        json={"month": 12, "year": 2025, "total_revenue": 100},
+    )
+    await client.post(
+        f"/api/startups/{startup_id}/monthly-indicators",
+        json={"month": 1, "year": 2026, "total_revenue": 200},
+    )
+    await client.post(
+        f"/api/startups/{startup_id}/monthly-indicators",
+        json={"month": 5, "year": 2026, "total_revenue": 300},
+    )
+
+    resp = await client.get("/api/portfolio/summary?month=3&year=2026")
+    assert resp.status_code == 200
+    item = resp.json()["startups"][0]
+
+    # Nao reportou em Mar; o ultimo ate ali foi Jan/2026, nao Mai nem Dez.
+    assert item["total_revenue"] is None
+    assert item["last_reported_year"] == 2026
+    assert item["last_reported_month"] == 1
+
+
+@pytest.mark.asyncio
+async def test_last_reported_period_is_null_when_the_startup_never_reported(client):
+    await client.post(
+        "/api/startups",
+        json={
+            "name": "Startup Silenciosa",
+            "sector": "saas",
+            "investment_date": "2024-01-01",
+        },
+    )
+
+    resp = await client.get("/api/portfolio/summary?month=3&year=2026")
+    item = resp.json()["startups"][0]
+
+    assert item["last_reported_year"] is None
+    assert item["last_reported_month"] is None

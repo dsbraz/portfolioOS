@@ -18,9 +18,12 @@ export interface DealFormDialogData {
   defaultStage?: DealStage;
 }
 
+import { DialogHeader } from '../../../components/dialog-header/dialog-header';
+
 @Component({
   selector: 'app-deal-form-dialog',
   imports: [
+    DialogHeader,
     ReactiveFormsModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -29,7 +32,6 @@ export interface DealFormDialogData {
     MatButtonModule,
   ],
   templateUrl: './deal-form-dialog.html',
-  styleUrl: './deal-form-dialog.scss',
 })
 export class DealFormDialog implements OnInit {
   private readonly fb = inject(FormBuilder);

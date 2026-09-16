@@ -1,0 +1,68 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  // Entre seções, mais respiro do que entre pares da mesma seção: é a diferença
+  // que faz o grupo ler como grupo.
+  gap: var(--space-lg);
+}
+
+// Tipografia vem do `.section-title` global — a mesma do modo de edição, para
+// que ler e editar apresentem os grupos com a mesma aparência. Aqui só o ritmo:
+// o respiro acima já vem do `gap` do :host, então basta o de baixo.
+.read-section-title {
+  margin-block-end: var(--space-xs);
+}
+
+// Colunas intrínsecas: os pares se acomodam pela largura disponível, sem
+// breakpoint. Em diálogo estreito vira uma coluna só.
+.read-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--space-md);
+  margin: 0;
+}
+
+.read-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  min-width: 0;
+}
+
+// Texto corrido ocupa a linha inteira: numa coluna estreita ele vira uma fita
+// de duas palavras por linha.
+.read-item--long {
+  grid-column: 1 / -1;
+}
+
+.read-label {
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: var(--fs-body-xs);
+  font-weight: var(--fw-medium);
+}
+
+// Tinta cheia: isto é o dado, não cromo. Era exatamente o que o campo
+// desabilitado tirava — o rótulo ficava legível e o valor não.
+.read-value {
+  margin: 0;
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-base);
+  // Preserva as quebras que a pessoa digitou no textarea.
+  white-space: pre-wrap;
+  // URLs e e-mails longos não têm espaço onde quebrar e estouram a coluna.
+  overflow-wrap: anywhere;
+}
+
+// Mono tabular pelo mesmo motivo das colunas numéricas da tabela: dígitos de
+// largura fixa alinham valores de comprimentos diferentes.
+.read-value--num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.read-value--empty {
+  color: var(--color-text-muted);
+}

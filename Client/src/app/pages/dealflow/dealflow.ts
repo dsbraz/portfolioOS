@@ -6,7 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatChipsModule } from '@angular/material/chips';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import {
   Deal,
@@ -28,7 +28,7 @@ import {
     MatMenuModule,
     MatDialogModule,
     MatSnackBarModule,
-    MatChipsModule,
+    MatProgressSpinnerModule,
     CdkDropList,
     CdkDrag,
   ],
@@ -42,6 +42,8 @@ export class Dealflow implements OnInit {
 
   readonly deals = signal<Deal[]>([]);
   readonly loading = signal(false);
+  /** Distinguishes "not loaded yet / failed" from "loaded, no deals". */
+  readonly hasLoaded = signal(false);
   readonly dealsByStage = signal<Record<string, Deal[]>>({});
 
   readonly stages = Object.values(DealStage);
@@ -60,6 +62,7 @@ export class Dealflow implements OnInit {
       next: (response) => {
         this.deals.set(response.items);
         this.groupDealsByStage(response.items);
+        this.hasLoaded.set(true);
         this.loading.set(false);
       },
       error: (err) => {

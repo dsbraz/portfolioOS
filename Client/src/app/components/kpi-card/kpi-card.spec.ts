@@ -7,7 +7,6 @@ import { KpiCard } from './kpi-card';
   imports: [KpiCard],
   template: `
     <app-kpi-card
-      [icon]="icon"
       [label]="label"
       [value]="value"
       [subtitle]="subtitle"
@@ -17,7 +16,6 @@ import { KpiCard } from './kpi-card';
   `,
 })
 class TestHost {
-  icon = 'business';
   label = 'Total Startups';
   value = '12';
   subtitle = 'No portfolio';
@@ -48,14 +46,16 @@ describe('KpiCard', () => {
     expect(el.textContent).toContain('No portfolio');
   });
 
-  it('should render supporting icon when provided', () => {
-    const icon = fixture.nativeElement.querySelector('.kpi-subtitle-icon') as HTMLElement | null;
-    expect(icon).not.toBeNull();
-    expect(icon?.textContent).toContain('trending_up');
+  it('should apply the tone to the footnote', () => {
+    const foot = fixture.nativeElement.querySelector('.kpi-foot') as HTMLElement | null;
+    expect(foot?.classList.contains('kpi-foot-positive')).toBe(true);
   });
 
-  it('should apply positive tone class to icon wrapper', () => {
-    const iconWrapper = fixture.nativeElement.querySelector('.kpi-icon-wrapper') as HTMLElement | null;
-    expect(iconWrapper?.classList.contains('kpi-icon-positive')).toBe(true);
+  // A tone-colored footnote must keep its icon: the brand never signals state
+  // with color alone.
+  it('should pair a toned footnote with its supporting icon', () => {
+    const icon = fixture.nativeElement.querySelector('.kpi-foot-icon') as HTMLElement | null;
+    expect(icon).not.toBeNull();
+    expect(icon?.textContent).toContain('trending_up');
   });
 });

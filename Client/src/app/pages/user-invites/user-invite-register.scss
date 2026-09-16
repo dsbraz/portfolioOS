@@ -1,52 +1,29 @@
-.invite-page {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 24px 16px;
-  background: var(--mat-sys-surface);
-}
-
-.invite-center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  text-align: center;
-}
-
-.invite-card {
-  width: 100%;
-  max-width: 460px;
+.invite-container {
+  max-width: 30rem;
+  margin-inline: auto;
+  padding-inline: var(--content-padding);
+  padding-bottom: var(--space-3xl);
 }
 
 .invite-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: 8px;
+  padding-block: var(--space-xl);
 }
 
-mat-form-field,
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+// Coluna simples: cabeçalho de marca no topo, formulário abaixo. A
+// centralização anterior transformava header e conteúdo em itens flex lado a
+// lado assim que a página deixou de ser um card único.
+.invite-page {
+  min-height: 100vh;
+  background-color: var(--color-bg);
+}
+
 button {
   width: 100%;
-}
-
-.error-icon {
-  color: var(--mat-sys-error);
-  width: 48px;
-  height: 48px;
-  font-size: 48px;
-}
-
-.error-text,
-.success-text {
-  color: var(--mat-sys-on-surface-variant);
-}
-
-.success-icon {
-  color: var(--app-status-healthy);
-  width: 64px;
-  height: 64px;
-  font-size: 64px;
 }

@@ -1,11 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, ParamMap, Router, convertToParamMap } from '@angular/router';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, NEVER, Observable, Subject, of, throwError } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { Portfolio } from './portfolio';
+import { PortfolioSummary } from '../../models/portfolio.model';
 import { PortfolioService } from '../../services/portfolio.service';
 import { StartupService } from '../../services/startup.service';
 
@@ -190,5 +191,328 @@ describe('Portfolio', () => {
     expect(component.revenueCardTone()).toBe('neutral');
     expect(component.revenueTrendIcon()).toBe('trending_flat');
     expect(component.revenueVariationLabel()).toBe('Sem base');
+  });
+});
+
+describe('Portfolio (estado de carregamento)', () => {
+  // Regressão: sem ramo de carregamento a página renderizava um container
+  // vazio, indistinguível de "nenhuma startup cadastrada".
+  const montar = async (pendente: boolean) => {
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [Portfolio],
+      providers: [
+        provideNoopAnimations(),
+        {
+          provide: ActivatedRoute,
+          useValue: { queryParamMap: of(convertToParamMap({ month: '7', year: '2026' })) },
+        },
+        { provide: Router, useValue: { navigate: vi.fn().mockResolvedValue(true) } },
+        { provide: MatDialog, useValue: { open: vi.fn() } },
+        { provide: MatSnackBar, useValue: { open: vi.fn() } },
+        {
+          provide: PortfolioService,
+          useValue: {
+            getSummary: () =>
+              pendente
+                ? NEVER
+                : of({
+                    total_startups: 0,
+                    revenue: 0,
+                    revenue_variation_pct: null,
+                    revenue_variation_direction: 'neutral',
+                    health: { healthy: 0, warning: 0, critical: 0 },
+                    monthly_report_pct: 0,
+                    routines_up_to_date_pct: 0,
+                    startups: [],
+                  } as PortfolioSummary),
+          },
+        },
+        { provide: StartupService, useValue: { create: vi.fn() } },
+      ],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(Portfolio);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
+  };
+
+  it('should announce that it is loading instead of rendering an empty page', async () => {
+    const el = await montar(true);
+    expect(el.querySelector('[aria-busy="true"]')).toBeTruthy();
+    expect(el.querySelector('[role="status"]')?.textContent).toContain('Carregando');
+  });
+
+  it('should drop the busy state and show the empty state once loaded', async () => {
+    const el = await montar(false);
+    expect(el.querySelector('[aria-busy="true"]')).toBeNull();
+    expect(el.textContent).toContain('Nenhuma startup cadastrada');
+  });
+});
+
+describe('Portfolio (ordenação)', () => {
+  const criar = async (startups: unknown[]) => {
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [Portfolio],
+      providers: [
+        provideNoopAnimations(),
+        { provide: ActivatedRoute, useValue: { queryParamMap: of(convertToParamMap({ month: '7', year: '2026' })) } },
+        { provide: Router, useValue: { navigate: vi.fn().mockResolvedValue(true) } },
+        { provide: MatDialog, useValue: { open: vi.fn() } },
+        { provide: MatSnackBar, useValue: { open: vi.fn() } },
+        {
+          provide: PortfolioService,
+          useValue: {
+            getSummary: () => of({
+              total_startups: startups.length, revenue: 0,
+              revenue_variation_pct: null, revenue_variation_direction: 'neutral',
+              health: { healthy: 0, warning: 0, critical: 0 },
+              monthly_report_pct: 0, routines_up_to_date_pct: 0,
+              startups,
+            } as unknown as PortfolioSummary),
+          },
+        },
+        { provide: StartupService, useValue: { create: vi.fn() } },
+      ],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(Portfolio);
+    fixture.detectChanges();
+    return fixture.componentInstance;
+  };
+
+  const item = (name: string, status: string, revenue: number | string | null) => ({
+    startup: { id: name, name, status, equity_stake: null },
+    total_revenue: revenue, cash_balance: null, ebitda_burn: null,
+    headcount: null, accumulated_revenue_ytd: null,
+  });
+
+  // A API serializa Decimal como string. Ordenar isso como texto poria
+  // "9.00" depois de "100.00".
+  it('should sort revenue numerically even when it arrives as a string', async () => {
+    const component = await criar([item('a', 'saudavel', '9.00'), item('b', 'saudavel', '100.00'), item('c', 'saudavel', '20.00')]);
+    component.sort.set({ active: 'total_revenue', direction: 'asc' });
+
+    expect(component.sortedStartups().map(i => i.startup.name)).toEqual(['a', 'c', 'b']);
+  });
+
+  // Status é ORDINAL: por rótulo daria "Atenção, Crítico, Saudável", que não
+  // descreve nada. Crescente traz o mais saudável primeiro.
+  it('should sort status by severity, not by label', async () => {
+    const component = await criar([item('c', 'critico', 1), item('s', 'saudavel', 1), item('a', 'atencao', 1)]);
+    component.sort.set({ active: 'status', direction: 'asc' });
+
+    expect(component.sortedStartups().map(i => i.startup.name)).toEqual(['s', 'a', 'c']);
+  });
+
+  // Sem collator pt-BR, "Ávila" cairia depois de "Zago".
+  it('should sort names ignoring accents', async () => {
+    const component = await criar([item('Zago', 'saudavel', 1), item('Ávila', 'saudavel', 1), item('Grão Verde', 'saudavel', 1)]);
+    component.sort.set({ active: 'name', direction: 'asc' });
+
+    expect(component.sortedStartups().map(i => i.startup.name)).toEqual(['Ávila', 'Grão Verde', 'Zago']);
+  });
+});
+
+describe('Portfolio (estado do reporte na coluna de status)', () => {
+  const item = (name: string, ultimoAno: number | null, ultimoMes: number | null) => ({
+    startup: { id: name, name, status: 'saudavel', equity_stake: null },
+    total_revenue: null, cash_balance: null, ebitda_burn: null,
+    headcount: null, accumulated_revenue_ytd: null,
+    last_reported_year: ultimoAno, last_reported_month: ultimoMes,
+  });
+
+  const montar = async () => {
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [Portfolio],
+      providers: [
+        provideNoopAnimations(),
+        { provide: ActivatedRoute, useValue: { queryParamMap: of(convertToParamMap({ month: '7', year: '2026' })) } },
+        { provide: Router, useValue: { navigate: vi.fn().mockResolvedValue(true) } },
+        { provide: MatDialog, useValue: { open: vi.fn() } },
+        { provide: MatSnackBar, useValue: { open: vi.fn() } },
+        {
+          provide: PortfolioService,
+          useValue: {
+            getSummary: () => of({
+              total_startups: 0, revenue: 0,
+              revenue_variation_pct: null, revenue_variation_direction: 'neutral',
+              health: { healthy: 0, warning: 0, critical: 0 },
+              monthly_report_pct: 0, routines_up_to_date_pct: 0, startups: [],
+            } as unknown as PortfolioSummary),
+          },
+        },
+        { provide: StartupService, useValue: { create: vi.fn() } },
+      ],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(Portfolio);
+    fixture.detectChanges();
+    return fixture.componentInstance;
+  };
+
+  // Reportou no período: a linha inteira JÁ é o relatório dela, e repetir a
+  // data seria ruído numa tabela onde só o que destoa merece tinta.
+  it('should stay silent when the startup reported in the selected period', async () => {
+    const component = await montar();
+    expect(component.reportLabel(item('a', 2026, 7) as never)).toBeNull();
+  });
+
+  it('should name the last reported period when the month is missing', async () => {
+    const component = await montar();
+    expect(component.reportLabel(item('a', 2026, 4) as never)).toBe('Último: Abr/2026');
+  });
+
+  it('should say so when the startup never reported', async () => {
+    const component = await montar();
+    expect(component.reportLabel(item('a', null, null) as never)).toBe('Nunca reportou');
+  });
+
+  // Regressão: deduzir "reportou" pelos campos nulos é heurística — um
+  // relatório enviado em branco cairia nela e apareceria como ausente.
+  it('should treat a blank report as reported', async () => {
+    const component = await montar();
+    const branco = { ...item('a', 2026, 7), total_revenue: null, headcount: null };
+    expect(component.reportLabel(branco as never)).toBeNull();
+  });
+});
+
+describe('Portfolio (refresh when the period changes)', () => {
+  const summary = (name: string): PortfolioSummary =>
+    ({
+      total_startups: 1,
+      revenue: 0,
+      revenue_variation_pct: null,
+      revenue_variation_direction: 'neutral',
+      health: { healthy: 1, warning: 0, critical: 0 },
+      monthly_report_pct: 0,
+      routines_up_to_date_pct: 0,
+      startups: [
+        {
+          startup: { id: 'a', name, status: 'saudavel', equity_stake: null },
+          total_revenue: 1000,
+          cash_balance: null,
+          ebitda_burn: null,
+          headcount: null,
+          accumulated_revenue_ytd: null,
+          last_reported_month: 7,
+          last_reported_year: 2026,
+        },
+      ],
+    }) as unknown as PortfolioSummary;
+
+  let getSummary: (month: number, year: number) => Observable<PortfolioSummary>;
+
+  const mount = async () => {
+    getSummary = () => of(summary('Alpha'));
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [Portfolio],
+      providers: [
+        provideNoopAnimations(),
+        {
+          provide: ActivatedRoute,
+          useValue: { queryParamMap: of(convertToParamMap({ month: '7', year: '2026' })) },
+        },
+        { provide: Router, useValue: { navigate: vi.fn().mockResolvedValue(true) } },
+        { provide: MatDialog, useValue: { open: vi.fn() } },
+        { provide: MatSnackBar, useValue: { open: vi.fn() } },
+        {
+          provide: PortfolioService,
+          useValue: { getSummary: (month: number, year: number) => getSummary(month, year) },
+        },
+        { provide: StartupService, useValue: { create: vi.fn() } },
+      ],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(Portfolio);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    return fixture;
+  };
+
+  const reloadPeriod = (fixture: ComponentFixture<Portfolio>, month: number) => {
+    fixture.componentInstance.selectedMonth.set(month);
+    fixture.componentInstance.loadSummary();
+    fixture.detectChanges();
+  };
+
+  // Regression: a refresh swapped the content for a spinner, which reset the
+  // table's sort header while the rows stayed sorted.
+  it('should keep the rows and the sort header when the same period refreshes', async () => {
+    const fixture = await mount();
+    const el = fixture.nativeElement as HTMLElement;
+    const row = el.querySelector('tr.mat-mdc-row');
+    const nameHeader = el.querySelector('th .mat-sort-header-container') as HTMLElement;
+    nameHeader.click();
+    fixture.detectChanges();
+    const sort = nameHeader.closest('th')!.getAttribute('aria-sort');
+    expect(sort).toBe('ascending');
+
+    getSummary = () => NEVER;
+    fixture.componentInstance.loadSummary();
+    fixture.detectChanges();
+
+    expect(el.querySelector('[aria-busy="true"]')).toBeTruthy();
+    expect(el.querySelector('tr.mat-mdc-row')).toBe(row);
+    expect(el.querySelector('th[aria-sort="ascending"]')).toBeTruthy();
+  });
+
+  // Another period's numbers must never show under the new period's label.
+  it('should show loading, not the previous period, while another period loads', async () => {
+    const fixture = await mount();
+    const el = fixture.nativeElement as HTMLElement;
+
+    getSummary = () => NEVER;
+    reloadPeriod(fixture, 6);
+
+    expect(el.textContent).not.toContain('Alpha');
+    expect(el.querySelector('[role="status"]')?.textContent).toContain('Carregando');
+  });
+
+  it('should keep valid data when refreshing the same period fails', async () => {
+    const fixture = await mount();
+    const el = fixture.nativeElement as HTMLElement;
+
+    getSummary = () => throwError(() => ({ error: { detail: 'falhou' } }));
+    fixture.componentInstance.loadSummary();
+    fixture.detectChanges();
+
+    expect(el.textContent).toContain('Alpha');
+  });
+
+  it('should show the failure when another period fails to load', async () => {
+    const fixture = await mount();
+    const el = fixture.nativeElement as HTMLElement;
+
+    getSummary = () => throwError(() => ({ error: { detail: 'falhou' } }));
+    reloadPeriod(fixture, 6);
+
+    expect(el.textContent).not.toContain('Alpha');
+    expect(el.querySelector('[role="status"]')?.textContent).toContain('Não foi possível');
+  });
+
+  // Clicking "previous month" twice: the older request must not land last and
+  // leave its numbers under the newer period's label.
+  it('should ignore a response for a period that is no longer selected', async () => {
+    const fixture = await mount();
+    const el = fixture.nativeElement as HTMLElement;
+    const june = new Subject<PortfolioSummary>();
+    const may = new Subject<PortfolioSummary>();
+    getSummary = (month) => (month === 6 ? june : may);
+
+    reloadPeriod(fixture, 6);
+    reloadPeriod(fixture, 5);
+    june.next(summary('Junho'));
+    fixture.detectChanges();
+
+    expect(el.textContent).not.toContain('Junho');
+    may.next(summary('Maio'));
+    fixture.detectChanges();
+    expect(el.textContent).toContain('Maio');
   });
 });

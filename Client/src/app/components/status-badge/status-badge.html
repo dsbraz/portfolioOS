@@ -1,7 +1,1 @@
-<mat-chip
-  [style.--_badge-color]="config().color"
-  highlighted
->
-  <mat-icon matChipAvatar>{{ config().icon }}</mat-icon>
-  {{ config().label }}
-</mat-chip>
+<span class="pill pill--{{ config().tone }}">{{ config().label }}</span>

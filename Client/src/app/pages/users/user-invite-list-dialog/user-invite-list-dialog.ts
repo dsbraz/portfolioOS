@@ -42,7 +42,10 @@ export interface UserInviteListDialogData {
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef></th>
             <td mat-cell *matCellDef="let invite">
-              <button mat-icon-button (click)="copyLink(invite.token)">
+              <button
+                mat-icon-button
+                [attr.aria-label]="'Copiar link do convite de ' + invite.email"
+                (click)="copyLink(invite.token)">
                 <mat-icon>content_copy</mat-icon>
               </button>
             </td>

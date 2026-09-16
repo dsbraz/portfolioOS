@@ -1,10 +1,6 @@
+// Status da startup — usa a primitiva `.pill` global (ver `styles.scss`).
+// Aqui fica apenas o que é do componente.
+
 :host {
   display: inline-block;
-}
-
-mat-chip {
-  --mdc-chip-label-text-color: var(--_badge-color);
-  background-color: color-mix(in srgb, var(--_badge-color) 10%, transparent);
-  font-weight: 500;
-  font-size: 12px;
 }

@@ -45,6 +45,8 @@ async def get_portfolio_summary(
                 ebitda_burn=item.ebitda_burn,
                 headcount=item.headcount,
                 accumulated_revenue_ytd=item.accumulated_revenue_ytd,
+                last_reported_month=item.last_reported_month,
+                last_reported_year=item.last_reported_year,
             )
             for item in summary.startups
         ],

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -6,6 +6,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSortModule } from '@angular/material/sort';
+import { Subscription } from 'rxjs';
 
 import {
   PortfolioSummary,
@@ -13,11 +16,13 @@ import {
   StartupSummary,
 } from '../../models/portfolio.model';
 import { KpiCardTone } from '../../components/kpi-card/kpi-card';
-import { MONTH_LABELS } from '../../models/monthly-indicator.model';
 import { participationValue } from '../../models/participation';
 import { PortfolioService } from '../../services/portfolio.service';
 import { StartupService } from '../../services/startup.service';
 import { StatusBadge } from '../../components/status-badge/status-badge';
+import { formatCurrencyBRL, formatPeriod } from '../../models/formatters';
+import { SortState, applySort } from '../../models/sorting';
+import { STARTUP_STATUS_SEVERITY } from '../../models/startup.model';
 import { KpiCard } from '../../components/kpi-card/kpi-card';
 import { HealthBar } from '../../components/health-bar/health-bar';
 import {
@@ -34,6 +39,8 @@ import {
     MatCardModule,
     MatDialogModule,
     MatSnackBarModule,
+    MatProgressSpinnerModule,
+    MatSortModule,
     StatusBadge,
     KpiCard,
     HealthBar,
@@ -52,10 +59,12 @@ export class Portfolio implements OnInit {
   private readonly defaultPeriod = this.getPreviousPeriod(this.today.getMonth() + 1, this.today.getFullYear());
 
   readonly summaryByPeriod = signal<PortfolioSummary | null>(null);
+  private loadedPeriod: { month: number; year: number } | null = null;
+  private summaryRequest?: Subscription;
   readonly loading = signal(false);
+  readonly trackById = (_: number, row: StartupSummary) => row.startup.id;
   readonly selectedMonth = signal(this.defaultPeriod.month);
   readonly selectedYear = signal(this.defaultPeriod.year);
-  readonly monthLabels = MONTH_LABELS;
 
   readonly displayedColumns = [
     'name',
@@ -65,6 +74,21 @@ export class Portfolio implements OnInit {
     'ebitda_burn',
     'headcount',
   ];
+
+  readonly sort = signal<SortState>({ active: '', direction: '' });
+
+  /** Cada coluna ordena pelo que ela É, não pelo texto que mostra: status pela
+   *  gravidade, dinheiro pelo número. Ver `models/sorting.ts`. */
+  readonly sortedStartups = computed(() =>
+    applySort(this.summaryByPeriod()?.startups ?? [], this.sort(), {
+      name: (item) => item.startup.name,
+      status: (item) => STARTUP_STATUS_SEVERITY[item.startup.status],
+      total_revenue: (item) => item.total_revenue,
+      cash_balance: (item) => item.cash_balance,
+      ebitda_burn: (item) => item.ebitda_burn,
+      headcount: (item) => item.headcount,
+    }),
+  );
 
   ngOnInit(): void {
     this.route.queryParamMap.subscribe((params) => {
@@ -81,10 +105,22 @@ export class Portfolio implements OnInit {
   }
 
   loadSummary(): void {
+    const month = this.selectedMonth();
+    const year = this.selectedYear();
+
+    // Another period's numbers must never show under this period's label, so
+    // the content only stays mounted while refreshing the SAME period.
+    if (this.loadedPeriod?.month !== month || this.loadedPeriod?.year !== year) {
+      this.summaryByPeriod.set(null);
+    }
+
     this.loading.set(true);
-    this.monitoringService.getSummary(this.selectedMonth(), this.selectedYear()).subscribe({
+    // A slower response for a period that is no longer selected must not land last.
+    this.summaryRequest?.unsubscribe();
+    this.summaryRequest = this.monitoringService.getSummary(month, year).subscribe({
       next: (data) => {
         this.summaryByPeriod.set(data);
+        this.loadedPeriod = { month, year };
         this.loading.set(false);
       },
       error: (err) => {
@@ -95,8 +131,27 @@ export class Portfolio implements OnInit {
   }
 
   formatCurrency(value: number | null): string {
-    if (value == null) return '-';
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+    return formatCurrencyBRL(value) ?? '-';
+  }
+
+  /**
+   * Estado do reporte NO PERÍODO da tela. Retorna `null` quando a startup
+   * reportou — aí a linha inteira já é o relatório dela, e repetir a data seria
+   * ruído numa tabela onde só o que destoa merece tinta.
+   */
+  reportLabel(item: StartupSummary): string | null {
+    // Como `last_reported` é limitado ao período da tela, bater com ele é a
+    // prova exata de que reportou. Deduzir por campos nulos seria heurística —
+    // um relatório enviado em branco cairia nela e apareceria como ausente.
+    const reportou =
+      item.last_reported_year === this.selectedYear() &&
+      item.last_reported_month === this.selectedMonth();
+    if (reportou) return null;
+
+    if (item.last_reported_year === null || item.last_reported_month === null) {
+      return 'Nunca reportou';
+    }
+    return `Último: ${formatPeriod(item.last_reported_month, item.last_reported_year)}`;
   }
 
   navigateToStartup(item: StartupSummary): void {
@@ -122,7 +177,7 @@ export class Portfolio implements OnInit {
     if (!summary || summary.revenue_variation_pct === null) return 'Sem base';
 
     const signal = summary.revenue_variation_pct > 0 ? '+' : '';
-    return `${signal}${summary.revenue_variation_pct.toFixed(1)}% vs mes anterior`;
+    return `${signal}${summary.revenue_variation_pct.toFixed(1)}% vs mês anterior`;
   }
 
   revenueTrendIcon(): string {
@@ -141,7 +196,7 @@ export class Portfolio implements OnInit {
   }
 
   selectedPeriodLabel(): string {
-    return `${this.monthLabels[this.selectedMonth()]}/${this.selectedYear()}`;
+    return formatPeriod(this.selectedMonth(), this.selectedYear());
   }
 
   goToPreviousMonth(): void {
