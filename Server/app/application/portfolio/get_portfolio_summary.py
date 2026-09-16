@@ -1,14 +1,18 @@
 import calendar
+import uuid
+from collections.abc import Iterable
 from datetime import date
 from decimal import Decimal
+from typing import Literal
 
 from app.application.portfolio.readmodels import (
     HealthDistribution,
     PortfolioSummary,
     StartupSummary,
 )
+from app.domain.models.monthly_indicator import MonthlyIndicator
 from app.domain.models.period import Period
-from app.domain.models.startup import StartupStatus
+from app.domain.models.startup import Startup, StartupStatus
 from app.domain.validators import validate_period_not_future
 from app.repositories.board_meeting_repository import BoardMeetingRepository
 from app.repositories.monthly_indicator_repository import (
@@ -17,6 +21,8 @@ from app.repositories.monthly_indicator_repository import (
 from app.repositories.startup_repository import StartupRepository
 
 MEETING_CUTOFF_DAYS = 90
+
+RevenueDirection = Literal["up", "down", "neutral"]
 
 
 class GetPortfolioSummary:
@@ -36,115 +42,50 @@ class GetPortfolioSummary:
         selected = self._resolve_period(month, year)
 
         startups, total = await self._startup_repo.get_all()
-
         if total == 0:
-            return PortfolioSummary(
-                total_startups=0,
-                revenue=Decimal("0"),
-                revenue_variation_pct=None,
-                revenue_variation_direction="neutral",
-                health=HealthDistribution(),
-                monthly_report_pct=0.0,
-                routines_up_to_date_pct=0.0,
-                startups=[],
-            )
+            return _empty_summary()
 
         startup_ids = [s.id for s in startups]
         previous = selected.previous()
-        indicators_by_period = await self._indicator_repo.get_by_startups_and_period(
+        indicators = await self._indicator_repo.get_by_startups_and_period(
             startup_ids, selected.month, selected.year
         )
-        previous_indicators_by_period = (
-            await self._indicator_repo.get_by_startups_and_period(
-                startup_ids, previous.month, previous.year
-            )
+        previous_indicators = await self._indicator_repo.get_by_startups_and_period(
+            startup_ids, previous.month, previous.year
         )
-        accumulated_revenue_by_startup = (
+        accumulated_revenue = (
             await self._indicator_repo.get_accumulated_revenue_by_startups(
                 startup_ids, selected.month, selected.year
             )
         )
-        last_reported_by_startup = (
-            await self._indicator_repo.get_last_reported_period_by_startups(
-                startup_ids, selected.month, selected.year
-            )
+        last_reported = await self._indicator_repo.get_last_reported_period_by_startups(
+            startup_ids, selected.month, selected.year
         )
-
-        healthy = warning = critical = 0
-        for s in startups:
-            if s.status == StartupStatus.HEALTHY:
-                healthy += 1
-            elif s.status == StartupStatus.WARNING:
-                warning += 1
-            elif s.status == StartupStatus.CRITICAL:
-                critical += 1
-
-        total_revenue = Decimal("0")
-        for ind in indicators_by_period.values():
-            if ind.total_revenue:
-                total_revenue += ind.total_revenue
-
-        previous_total_revenue = Decimal("0")
-        for ind in previous_indicators_by_period.values():
-            if ind.total_revenue:
-                previous_total_revenue += ind.total_revenue
-
-        revenue_variation_pct, revenue_variation_direction = (
-            self._calculate_revenue_variation(total_revenue, previous_total_revenue)
-        )
-
-        startups_with_report = sum(
-            1 for sid in startup_ids if indicators_by_period.get(sid)
-        )
-        report_pct = (startups_with_report / total) * 100
-
-        today = date.today()
-        if selected == Period(year=today.year, month=today.month):
-            routines_reference_date = today
-        else:
-            routines_reference_date = date(
-                selected.year,
-                selected.month,
-                calendar.monthrange(selected.year, selected.month)[1],
-            )
-
         ids_with_meetings = (
             await self._meeting_repo.get_startup_ids_with_recent_meetings(
                 startup_ids,
                 MEETING_CUTOFF_DAYS,
-                routines_reference_date,
+                _routines_reference_date(selected),
             )
         )
-        routines_pct = (len(ids_with_meetings) / total) * 100
 
-        monitoring_items = []
-        for s in startups:
-            ind = indicators_by_period.get(s.id)
-            last_reported = last_reported_by_startup.get(s.id)
-            monitoring_items.append(
-                StartupSummary(
-                    startup=s,
-                    total_revenue=ind.total_revenue if ind else None,
-                    cash_balance=ind.cash_balance if ind else None,
-                    ebitda_burn=ind.ebitda_burn if ind else None,
-                    headcount=ind.headcount if ind else None,
-                    accumulated_revenue_ytd=accumulated_revenue_by_startup.get(s.id),
-                    last_reported_year=last_reported.year if last_reported else None,
-                    last_reported_month=last_reported.month if last_reported else None,
-                )
-            )
+        revenue = _sum_revenue(indicators.values())
+        variation_pct, variation_direction = self._calculate_revenue_variation(
+            revenue, _sum_revenue(previous_indicators.values())
+        )
+        startups_with_report = sum(1 for sid in startup_ids if indicators.get(sid))
 
         return PortfolioSummary(
             total_startups=total,
-            revenue=total_revenue,
-            revenue_variation_pct=revenue_variation_pct,
-            revenue_variation_direction=revenue_variation_direction,
-            health=HealthDistribution(
-                healthy=healthy, warning=warning, critical=critical
+            revenue=revenue,
+            revenue_variation_pct=variation_pct,
+            revenue_variation_direction=variation_direction,
+            health=_health_distribution(startups),
+            monthly_report_pct=_percentage(startups_with_report, total),
+            routines_up_to_date_pct=_percentage(len(ids_with_meetings), total),
+            startups=_build_rows(
+                startups, indicators, accumulated_revenue, last_reported
             ),
-            monthly_report_pct=round(report_pct, 1),
-            routines_up_to_date_pct=round(routines_pct, 1),
-            startups=monitoring_items,
         )
 
     def _resolve_period(self, month: int | None, year: int | None) -> Period:
@@ -163,7 +104,7 @@ class GetPortfolioSummary:
 
     def _calculate_revenue_variation(
         self, current_revenue: Decimal, previous_revenue: Decimal
-    ) -> tuple[float | None, str]:
+    ) -> tuple[float | None, RevenueDirection]:
         if previous_revenue <= 0:
             return None, "neutral"
 
@@ -174,3 +115,80 @@ class GetPortfolioSummary:
         if rounded_variation < 0:
             return rounded_variation, "down"
         return rounded_variation, "neutral"
+
+
+def _empty_summary() -> PortfolioSummary:
+    return PortfolioSummary(
+        total_startups=0,
+        revenue=Decimal("0"),
+        revenue_variation_pct=None,
+        revenue_variation_direction="neutral",
+        health=HealthDistribution(),
+        monthly_report_pct=0.0,
+        routines_up_to_date_pct=0.0,
+        startups=[],
+    )
+
+
+def _health_distribution(startups: Iterable[Startup]) -> HealthDistribution:
+    statuses = [s.status for s in startups]
+    return HealthDistribution(
+        healthy=statuses.count(StartupStatus.HEALTHY),
+        warning=statuses.count(StartupStatus.WARNING),
+        critical=statuses.count(StartupStatus.CRITICAL),
+    )
+
+
+def _sum_revenue(indicators: Iterable[MonthlyIndicator]) -> Decimal:
+    return sum(
+        (ind.total_revenue for ind in indicators if ind.total_revenue),
+        Decimal("0"),
+    )
+
+
+def _percentage(part: int, total: int) -> float:
+    return round((part / total) * 100, 1)
+
+
+def _routines_reference_date(selected: Period) -> date:
+    """Today for the current month; otherwise the last day of the selected month."""
+    today = date.today()
+    if selected == Period(year=today.year, month=today.month):
+        return today
+    last_day = calendar.monthrange(selected.year, selected.month)[1]
+    return date(selected.year, selected.month, last_day)
+
+
+def _build_rows(
+    startups: Iterable[Startup],
+    indicators: dict[uuid.UUID, MonthlyIndicator],
+    accumulated_revenue: dict[uuid.UUID, Decimal],
+    last_reported: dict[uuid.UUID, Period],
+) -> list[StartupSummary]:
+    return [
+        _build_row(
+            s,
+            indicators.get(s.id),
+            accumulated_revenue.get(s.id),
+            last_reported.get(s.id),
+        )
+        for s in startups
+    ]
+
+
+def _build_row(
+    startup: Startup,
+    indicator: MonthlyIndicator | None,
+    accumulated_revenue_ytd: Decimal | None,
+    last_reported: Period | None,
+) -> StartupSummary:
+    return StartupSummary(
+        startup=startup,
+        total_revenue=indicator.total_revenue if indicator else None,
+        cash_balance=indicator.cash_balance if indicator else None,
+        ebitda_burn=indicator.ebitda_burn if indicator else None,
+        headcount=indicator.headcount if indicator else None,
+        accumulated_revenue_ytd=accumulated_revenue_ytd,
+        last_reported_year=last_reported.year if last_reported else None,
+        last_reported_month=last_reported.month if last_reported else None,
+    )

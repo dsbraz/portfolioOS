@@ -271,3 +271,55 @@ async def test_last_reported_period_is_bounded_by_the_selected_period(
     indicator_repo.get_last_reported_period_by_startups.assert_awaited_once_with(
         [startup.id], 2, 2026
     )
+
+
+@pytest.mark.asyncio
+async def test_report_and_routines_percentages_are_rounded_to_one_decimal(
+    use_case, startup_repo, indicator_repo, meeting_repo
+):
+    s1, s2, s3 = _make_startup(), _make_startup(), _make_startup()
+    startup_repo.get_all.return_value = ([s1, s2, s3], 3)
+    indicator = MagicMock(total_revenue=None)
+    indicator_repo.get_by_startups_and_period.return_value = {s1.id: indicator}
+    meeting_repo.get_startup_ids_with_recent_meetings.return_value = {s1.id, s2.id}
+
+    result = await use_case.execute(month=3, year=2026)
+
+    assert result.monthly_report_pct == 33.3
+    assert result.routines_up_to_date_pct == 66.7
+    # An indicator without revenue counts as reported but adds nothing.
+    assert result.revenue == Decimal(0)
+
+
+@pytest.mark.asyncio
+async def test_routines_reference_date_is_today_for_the_current_period(
+    use_case, startup_repo, indicator_repo, meeting_repo
+):
+    startup = _make_startup()
+    startup_repo.get_all.return_value = ([startup], 1)
+    indicator_repo.get_by_startups_and_period.return_value = {}
+    meeting_repo.get_startup_ids_with_recent_meetings.return_value = set()
+
+    await use_case.execute()
+
+    meeting_repo.get_startup_ids_with_recent_meetings.assert_awaited_once_with(
+        [startup.id],
+        90,
+        date.today(),  # noqa: DTZ011 -- mirrors the use case's local "today"
+    )
+
+
+@pytest.mark.asyncio
+async def test_routines_reference_date_is_last_day_of_a_past_leap_february(
+    use_case, startup_repo, indicator_repo, meeting_repo
+):
+    startup = _make_startup()
+    startup_repo.get_all.return_value = ([startup], 1)
+    indicator_repo.get_by_startups_and_period.return_value = {}
+    meeting_repo.get_startup_ids_with_recent_meetings.return_value = set()
+
+    await use_case.execute(month=2, year=2024)
+
+    meeting_repo.get_startup_ids_with_recent_meetings.assert_awaited_once_with(
+        [startup.id], 90, date(2024, 2, 29)
+    )
