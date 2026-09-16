@@ -70,15 +70,15 @@ describe('CurrencyInput', () => {
   // is moved to the end after every keystroke, so a "-" typed after the number
   // landed at the end and was silently dropped — the burn was saved positive.
   it('should make a typed number negative when "-" is typed after it', () => {
-    digitar('1234');
-    digitar('12,34-');
+    typeText('1234');
+    typeText('12,34-');
     expect(input.value).toBe('-12,34');
     expect(host.control.value).toBe(-12.34);
   });
 
   it('should toggle back to positive when "-" is typed again', () => {
-    digitar('-1234');
-    digitar('-12,34-');
+    typeText('-1234');
+    typeText('-12,34-');
     expect(input.value).toBe('12,34');
     expect(host.control.value).toBe(12.34);
   });
