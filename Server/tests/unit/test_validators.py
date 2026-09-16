@@ -4,6 +4,7 @@ from unittest.mock import patch
 import pytest
 
 from app.domain.validators import (
+    validate_password_max_bytes,
     validate_period_not_future,
     validate_username_no_spaces,
 )
@@ -41,3 +42,18 @@ def test_username_without_space_is_valid():
 def test_username_with_space_raises():
     with pytest.raises(ValueError, match="Username"):
         validate_username_no_spaces("invalid user")
+
+
+def test_password_up_to_72_bytes_is_valid():
+    validate_password_max_bytes("a" * 72)
+
+
+def test_password_over_72_bytes_raises():
+    with pytest.raises(ValueError, match="72"):
+        validate_password_max_bytes("a" * 73)
+
+
+def test_password_limit_counts_utf8_bytes_not_characters():
+    # 37 characters, 74 bytes: bcrypt reads bytes, so this must be rejected.
+    with pytest.raises(ValueError, match="72"):
+        validate_password_max_bytes("é" * 37)
