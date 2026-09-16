@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, ParamMap, Router, convertToParamMap } from '@angular/router';
-import { BehaviorSubject, NEVER, of } from 'rxjs';
+import { BehaviorSubject, NEVER, Observable, of, throwError } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
@@ -377,5 +377,75 @@ describe('Portfolio (estado do reporte na coluna de status)', () => {
     const component = await montar();
     const branco = { ...item('a', 2026, 7), total_revenue: null, headcount: null };
     expect(component.reportLabel(branco as never)).toBeNull();
+  });
+});
+
+describe('Portfolio (refresh when the period changes)', () => {
+  const summary = (): PortfolioSummary =>
+    ({
+      total_startups: 0,
+      revenue: 0,
+      revenue_variation_pct: null,
+      revenue_variation_direction: 'neutral',
+      health: { healthy: 0, warning: 0, critical: 0 },
+      monthly_report_pct: 0,
+      routines_up_to_date_pct: 0,
+      startups: [],
+    }) as PortfolioSummary;
+
+  let getSummary: () => Observable<PortfolioSummary>;
+
+  const mount = async () => {
+    getSummary = () => of(summary());
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [Portfolio],
+      providers: [
+        provideNoopAnimations(),
+        {
+          provide: ActivatedRoute,
+          useValue: { queryParamMap: of(convertToParamMap({ month: '7', year: '2026' })) },
+        },
+        { provide: Router, useValue: { navigate: vi.fn().mockResolvedValue(true) } },
+        { provide: MatDialog, useValue: { open: vi.fn() } },
+        { provide: MatSnackBar, useValue: { open: vi.fn() } },
+        { provide: PortfolioService, useValue: { getSummary: () => getSummary() } },
+        { provide: StartupService, useValue: { create: vi.fn() } },
+      ],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(Portfolio);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    return fixture;
+  };
+
+  // Regression: changing the month swapped the content for a spinner, which
+  // reset the table's sort header while the rows stayed sorted.
+  it('should keep the content mounted and busy while the next period loads', async () => {
+    const fixture = await mount();
+    const el = fixture.nativeElement as HTMLElement;
+
+    getSummary = () => NEVER;
+    fixture.componentInstance.loadSummary();
+    fixture.detectChanges();
+
+    expect(el.textContent).toContain('Nenhuma startup cadastrada');
+    expect(el.querySelector('[aria-busy="true"]')).toBeTruthy();
+  });
+
+  // Keeping the previous content must not turn a failed load into the previous
+  // period's numbers shown under the new period's label.
+  it('should not keep the previous period on screen when the refresh fails', async () => {
+    const fixture = await mount();
+    const el = fixture.nativeElement as HTMLElement;
+
+    getSummary = () => throwError(() => ({ error: { detail: 'falhou' } }));
+    fixture.componentInstance.loadSummary();
+    fixture.detectChanges();
+
+    expect(el.textContent).not.toContain('Nenhuma startup cadastrada');
+    expect(el.querySelector('[role="status"]')?.textContent).toContain('Não foi possível');
   });
 });

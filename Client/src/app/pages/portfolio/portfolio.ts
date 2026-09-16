@@ -59,6 +59,7 @@ export class Portfolio implements OnInit {
 
   readonly summaryByPeriod = signal<PortfolioSummary | null>(null);
   readonly loading = signal(false);
+  readonly trackById = (_: number, row: StartupSummary) => row.startup.id;
   readonly selectedMonth = signal(this.defaultPeriod.month);
   readonly selectedYear = signal(this.defaultPeriod.year);
 
@@ -109,6 +110,9 @@ export class Portfolio implements OnInit {
       },
       error: (err) => {
         this.snackBar.open(err.error?.detail || 'Erro ao carregar monitoramento', 'Fechar', { duration: 3000 });
+        // The previous period stays mounted while loading; on failure it must go,
+        // or its numbers would show under the new period's label.
+        this.summaryByPeriod.set(null);
         this.loading.set(false);
       },
     });

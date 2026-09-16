@@ -87,6 +87,9 @@ export class StartupDetail implements OnInit {
   readonly executives = signal<Executive[]>([]);
   readonly tokens = signal<MonthlyIndicatorToken[]>([]);
   readonly loading = signal(false);
+  /** Reloads return new objects; tracking by id keeps rows (and the menu button
+   *  a dialog returns focus to) in the DOM. */
+  readonly trackById = (_: number, row: { id: string }) => row.id;
   readonly formatPeriod = formatPeriod;
 
   private startupId = '';
