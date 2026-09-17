@@ -1,104 +1,72 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
-import { formatIsoDate } from '../../models/formatters';
-import { Skill } from '../../models/skill.model';
-import { SkillService } from '../../services/skill.service';
+interface PackagedSkill {
+  name: string;
+  title: string;
+  description: string;
+  writes: boolean;
+}
 
-const SKILL_TITLES: Record<string, string> = {
-  'operar-portfolioos': 'Operar toda a plataforma',
-  'preparar-agenda': 'Preparar agenda de uma startup',
-  'granola-reuniao': 'Registrar reunião de conselho',
-  'cobrar-indicadores': 'Cobrar indicadores em falta',
-  'auditoria-qualitativa': 'Auditar o portfólio',
-};
+interface BlockedSkill {
+  name: string;
+  title: string;
+  description: string;
+  reason: string;
+}
 
-// Display order follows SKILL_TITLES; unknown skills sort last.
-const SKILL_ORDER = Object.keys(SKILL_TITLES);
-const skillRank = (name: string) => {
-  const rank = SKILL_ORDER.indexOf(name);
-  return rank === -1 ? SKILL_ORDER.length : rank;
-};
+// Mirrors `Server/skills/`: the published guides inside the pack, in the order of
+// its index, and the workflows still kept out of it.
+const PACKAGED_SKILLS: PackagedSkill[] = [
+  {
+    name: 'operar-portfolioos',
+    title: 'Operar toda a plataforma',
+    description:
+      'Consulta e administra o portfolioOS pelo navegador, incluindo startups, indicadores, reuniões, executivos, dealflow, usuários, convites e links.',
+    writes: true,
+  },
+  {
+    name: 'preparar-agenda',
+    title: 'Preparar agenda de uma startup',
+    description:
+      'Prepara conversas com uma startup usando reuniões e indicadores do portfolioOS.',
+    writes: false,
+  },
+  {
+    name: 'granola-reuniao',
+    title: 'Registrar reunião de conselho',
+    description:
+      'Obtém uma conversa do Granola pelo MCP conectado ou por um link compartilhado e a transforma em um registro de reunião no portfolioOS, com prévia.',
+    writes: true,
+  },
+  {
+    name: 'cobrar-indicadores',
+    title: 'Cobrar indicadores em falta',
+    description:
+      'Encontra as startups sem indicador no período, gera os links de reporte após confirmação e monta a fila de cobrança por WhatsApp.',
+    writes: true,
+  },
+];
+
+const BLOCKED_SKILLS: BlockedSkill[] = [
+  {
+    name: 'auditoria-qualitativa',
+    title: 'Auditar o portfólio',
+    description:
+      'Analisa textos qualitativos do portfólio para encontrar riscos, contradições com indicadores e compromissos sem avanço.',
+    reason:
+      'Aguardando aprovação da política de trânsito de dados. Até lá, use apenas com dados de demonstração.',
+  },
+];
 
 @Component({
   selector: 'app-ai',
-  imports: [MatButtonModule, MatIconModule, MatProgressSpinnerModule],
+  imports: [MatButtonModule, MatIconModule],
   templateUrl: './ai.html',
   styleUrl: './ai.scss',
 })
-export class Ai implements OnInit {
-  private readonly skillService = inject(SkillService);
-
-  readonly loading = signal(true);
-  readonly skills = signal<Skill[] | null>(null);
-  readonly downloading = signal(false);
-  readonly downloadFailed = signal(false);
-  readonly publishedSkills = computed(() =>
-    (this.skills() ?? [])
-      .filter((skill) => skill.published)
-      .sort((left, right) => skillRank(left.name) - skillRank(right.name)),
-  );
-  readonly blockedSkills = computed(() =>
-    (this.skills() ?? []).filter((skill) => !skill.published),
-  );
-
-  ngOnInit(): void {
-    this.skillService.list().subscribe({
-      next: (response) => {
-        this.skills.set(response.items);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.skills.set(null);
-        this.loading.set(false);
-      },
-    });
-  }
-
-  downloadPack(): void {
-    if (this.downloading()) return;
-
-    this.downloading.set(true);
-    this.downloadFailed.set(false);
-    this.skillService.downloadPack().subscribe({
-      next: (packageBlob) => {
-        const objectUrl = URL.createObjectURL(packageBlob);
-        const downloadLink = document.createElement('a');
-        downloadLink.href = objectUrl;
-        downloadLink.download = 'portfolioos.zip';
-        downloadLink.hidden = true;
-        document.body.append(downloadLink);
-        try {
-          downloadLink.click();
-        } finally {
-          downloadLink.remove();
-          URL.revokeObjectURL(objectUrl);
-          this.downloading.set(false);
-        }
-      },
-      error: () => {
-        this.downloadFailed.set(true);
-        this.downloading.set(false);
-      },
-    });
-  }
-
-  skillTitle(skill: Skill): string {
-    return SKILL_TITLES[skill.name] ?? this.titleFromName(skill.name);
-  }
-
-  skillStatus(skill: Skill): string {
-    return skill.writes ? 'Escrita com confirmação' : 'Somente leitura';
-  }
-
-  formatVersion(version: string): string {
-    return formatIsoDate(version) ?? version;
-  }
-
-  private titleFromName(name: string): string {
-    const words = name.replaceAll('-', ' ');
-    return `${words.charAt(0).toUpperCase()}${words.slice(1)}`;
-  }
+export class Ai {
+  readonly packagedSkills = PACKAGED_SKILLS;
+  readonly blockedSkills = BLOCKED_SKILLS;
 }

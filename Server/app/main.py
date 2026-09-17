@@ -1,5 +1,4 @@
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,6 +17,7 @@ from app.controllers.monthly_indicator_controller import (
     router as monthly_indicator_router,
 )
 from app.controllers.portfolio_controller import router as portfolio_router
+from app.controllers.skill_controller import PACK_PATH
 from app.controllers.skill_controller import public_router as skill_public_router
 from app.controllers.startup_controller import router as startup_router
 from app.controllers.user_controller import router as user_router
@@ -30,9 +30,8 @@ from app.database import engine
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    skills_dir = Path(settings.skills_dir)
-    if not skills_dir.is_dir():
-        raise RuntimeError(f"Skills directory does not exist: {skills_dir}")
+    if not PACK_PATH.is_file():
+        raise RuntimeError(f"Skill pack is missing: {PACK_PATH}")
     yield
     await engine.dispose()
 

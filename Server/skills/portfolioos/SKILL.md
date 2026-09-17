@@ -22,4 +22,7 @@ stop and explain that the installed package is incomplete.
 
 ## Published workflows
 
-<!-- portfolioos:published-skills -->
+- [`operar-portfolioos`](skills/operar-portfolioos/GUIDE.md): Consulta e administra o portfolioOS pelo navegador, incluindo startups, indicadores, reuniões, executivos, dealflow, usuários, convites e links. Use para qualquer tarefa na plataforma.
+- [`cobrar-indicadores`](skills/cobrar-indicadores/GUIDE.md): Encontra as startups sem indicador no período no portfolioOS, gera os links de reporte após confirmação e monta a fila de cobrança por WhatsApp. Use para cobrar, lembrar ou perguntar quem não reportou o mês.
+- [`granola-reuniao`](skills/granola-reuniao/GUIDE.md): Obtém uma conversa do Granola pelo MCP conectado ou por um link compartilhado e a transforma em um registro de reunião no portfolioOS, com prévia. Use para registrar, salvar ou lançar uma reunião com uma investida.
+- [`preparar-agenda`](skills/preparar-agenda/GUIDE.md): Prepara conversas com uma startup usando reuniões e indicadores do portfolioOS. Use para agenda, call, 1:1 ou para decidir o que acompanhar ou cobrar da investida.

@@ -26,7 +26,6 @@ services:
       SECRET_KEY: ${SECRET_KEY}
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
       ENVIRONMENT: ${ENVIRONMENT:-development}
-      SKILLS_PUBLIC: ${SKILLS_PUBLIC:-true}
       PYTHONPATH: /app
     command: >
       bash -c "alembic upgrade head &&
