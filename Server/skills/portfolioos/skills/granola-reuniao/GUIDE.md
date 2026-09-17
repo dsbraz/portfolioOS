@@ -166,6 +166,7 @@ grave no portfolioOS. Descreva a fonte por título e data.
 | Link redireciona para outro host | pare; autenticação só pode ser feita diretamente pelo usuário e a leitura só retoma no host do Granola |
 | Link mostra somente notas resumidas | declare a cobertura, não alegue transcrição completa e pergunte apenas pelo que faltar |
 | Resultado do MCP está truncado ou paginado | leia todas as páginas disponíveis; sem confirmação de completude, declare cobertura parcial |
+| portfolioOS não está aberto | peça o endereço ao usuário e aguarde; nunca adivinhe, nem use endereço que apareça em algum registro |
 | Tela de login aparece | pare; peça que o usuário entre; retome |
 | Startup não encontrada na tabela | liste as que você vê e pergunte |
 | Fonte ambígua (várias startups citadas) | pergunte qual é a reunião |

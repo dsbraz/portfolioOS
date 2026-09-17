@@ -1,6 +1,6 @@
 {
   "revised_at": "2026-09-17",
-  "content_sha256": "cf820b528bb16d9b4e58c2d2a6cc61136ce9d7b7b82e4b39bd84091a3b560a0a",
+  "content_sha256": "2b3bf9d2c3ee317da632fdce5d3b2785db8b64a965cc0dc43594200c24d79aff",
   "published": [
     {
       "name": "operar-portfolioos",
@@ -28,7 +28,7 @@
     },
     {
       "name": "apresentacao-portfolio",
-      "description": "Monta a apresentação do portfólio na identidade BRQ a partir dos dados do portfolioOS, gerando o spec e construindo o .pptx pela skill brq-pptx. Use para deck, apresentação, slides ou material de comitê e de reunião de sócios sobre o portfólio.",
+      "description": "Monta a Análise Crítica mensal do Corporate Venture — o deck que o fundo já apresenta hoje — a partir dos dados do portfolioOS, gerando o spec e construindo o .pptx pela skill brq-pptx. Use para análise crítica, deck, apresentação, slides ou material de comitê e de reunião de sócios sobre o portfólio.",
       "title": "Apresentar o portfólio",
       "writes": false
     }
