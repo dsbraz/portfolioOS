@@ -10,7 +10,8 @@ import uuid
 from datetime import date
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import select, text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.exceptions import ConflictError
@@ -55,3 +56,19 @@ async def test_duplicate_insert_raises_conflict_and_keeps_earlier_writes(
     await session.commit()
     stored = await session.scalars(select(model).where(model.startup_id == startup_id))
     assert len(stored.all()) == 2
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("model", "create"),
+    [(MonthlyIndicator, "create"), (MonthlyIndicatorToken, "create_token")],
+)
+async def test_other_integrity_errors_are_not_reported_as_a_taken_period(
+    session: AsyncSession, model: type, create: str
+):
+    # SQLite only enforces foreign keys when asked, before the transaction starts.
+    await session.execute(text("PRAGMA foreign_keys = ON"))
+    insert = getattr(MonthlyIndicatorRepository(session), create)
+
+    with pytest.raises(IntegrityError):
+        await insert(model(startup_id=uuid.uuid4(), **PERIOD))

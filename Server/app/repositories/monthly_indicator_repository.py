@@ -11,6 +11,17 @@ from app.domain.models.monthly_indicator_token import MonthlyIndicatorToken
 from app.domain.models.period import Period
 
 
+def _is_unique_violation(error: IntegrityError) -> bool:
+    """Only a duplicate is a conflict; a broken foreign key or NOT NULL is not.
+
+    PostgreSQL reports SQLSTATE 23505; SQLite says so only in the message.
+    """
+    return (
+        getattr(error.orig, "sqlstate", None) == "23505"
+        or "UNIQUE constraint failed" in str(error.orig)
+    )
+
+
 def year_month_key_expression() -> ColumnElement[int]:
     """`year * 100 + month` as a comparable, sortable integer (202607).
 
@@ -82,6 +93,8 @@ class MonthlyIndicatorRepository:
         except IntegrityError as error:
             # The use case checks the period first; this catches the request that
             # took it in between. Startup plus period is the only unique key.
+            if not _is_unique_violation(error):
+                raise
             raise ConflictError(f"Ja existe indicador para o periodo {period}") from error
         await self._session.refresh(indicator)
         return indicator
@@ -212,5 +225,7 @@ class MonthlyIndicatorRepository:
                 self._session.add(record)
                 await self._session.flush()
         except IntegrityError as error:
+            if not _is_unique_violation(error):
+                raise
             raise ConflictError(conflict_message) from error
         await self._session.refresh(record)
