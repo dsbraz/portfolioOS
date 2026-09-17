@@ -1,5 +1,5 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -41,6 +41,7 @@ import {
     MatSnackBarModule,
     MatProgressSpinnerModule,
     MatSortModule,
+    RouterLink,
     StatusBadge,
     KpiCard,
     HealthBar,

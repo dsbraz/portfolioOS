@@ -1,16 +1,17 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
-from app.database import engine
 from app.controllers.auth_controller import router as auth_router
 from app.controllers.auth_dependency import get_current_user
+from app.controllers.board_meeting_controller import router as board_meeting_router
 from app.controllers.deal_controller import router as deal_router
 from app.controllers.executive_controller import router as executive_router
 from app.controllers.health_controller import router as health_router
-from app.controllers.board_meeting_controller import router as board_meeting_router
 from app.controllers.monthly_indicator_controller import (
     public_router as monthly_indicator_public_router,
 )
@@ -24,6 +25,7 @@ from app.controllers.user_invite_controller import (
     public_router as user_invite_public_router,
 )
 from app.controllers.user_invite_controller import router as user_invite_router
+from app.database import engine
 
 
 @asynccontextmanager
@@ -46,6 +48,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Committed build artifacts (the AI skill pack), served as plain public files.
+STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
+app.mount("/api/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 # Public routes (no auth required)
 app.include_router(health_router, prefix="/api")

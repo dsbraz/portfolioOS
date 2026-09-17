@@ -23,4 +23,7 @@ import { MatIconModule } from '@angular/material/icon';
 export class DialogHeader {
   readonly title = input.required<string>();
   readonly description = input<string>('');
+  /** What the close button hands back to `afterClosed()`, for dialogs whose
+   *  result depends on what happened while they were open. */
+  readonly closeResult = input<unknown>(undefined);
 }

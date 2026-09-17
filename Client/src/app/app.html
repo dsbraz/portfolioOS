@@ -10,72 +10,90 @@
       [opened]="sidenavOpened()"
       (openedChange)="sidenavOpened.set($event)"
       class="app-sidenav"
-      aria-label="Navegação principal">
+      aria-label="Navegação principal"
+    >
       <div class="sidenav-inner">
-      <div class="sidenav-header">
-        <span class="app-logo">
-          <img class="app-logo-on-light" src="logo-light.svg" alt="BRQ Portfolio" />
-          <img class="app-logo-on-dark" src="logo-dark.svg" alt="" aria-hidden="true" />
-        </span>
-        <button
-          mat-icon-button
-          class="sidenav-toggle"
-          (click)="toggleSidenav()"
-          aria-label="Fechar menu lateral">
-          <mat-icon>menu_open</mat-icon>
-        </button>
-      </div>
-      <nav class="side-nav" aria-label="Seções">
-        <ul class="side-nav-list" role="list">
-          <li>
-            <a
-              class="side-nav-link"
-              routerLink="/portfolio"
-              routerLinkActive
-              ariaCurrentWhenActive="page"
-              (click)="closeOnCompact()">
-              <mat-icon class="side-nav-icon">dashboard</mat-icon>
-              <span>Monitoramento</span>
-            </a>
-          </li>
-          <li>
-            <a
-              class="side-nav-link"
-              routerLink="/dealflow"
-              routerLinkActive
-              ariaCurrentWhenActive="page"
-              (click)="closeOnCompact()">
-              <mat-icon class="side-nav-icon">view_kanban</mat-icon>
-              <span>Dealflow</span>
-            </a>
-          </li>
-          <li>
-            <a
-              class="side-nav-link"
-              routerLink="/users"
-              routerLinkActive
-              ariaCurrentWhenActive="page"
-              (click)="closeOnCompact()">
-              <mat-icon class="side-nav-icon">people</mat-icon>
-              <span>Usuários</span>
-            </a>
-          </li>
-        </ul>
-      </nav>
-      <div class="sidenav-footer">
-        <button
-          type="button"
-          class="side-nav-link side-foot-btn"
-          [attr.aria-label]="'Tema: ' + themeLabel() + '. Alternar.'"
-          (click)="theme.cycle()">
-          <mat-icon class="side-nav-icon">{{ themeIcon() }}</mat-icon>
-          <span>{{ themeLabel() }}</span>
-        </button>
-        <button type="button" class="side-nav-link side-foot-btn" (click)="logout()">
-          <mat-icon class="side-nav-icon">logout</mat-icon>
-          <span>Sair</span>
-        </button>
-      </div>
+        <div class="sidenav-header">
+          <span class="app-logo">
+            <img class="app-logo-on-light" src="logo-light.svg" alt="BRQ Portfolio" />
+            <img class="app-logo-on-dark" src="logo-dark.svg" alt="" aria-hidden="true" />
+          </span>
+          <button
+            mat-icon-button
+            class="sidenav-toggle"
+            (click)="toggleSidenav()"
+            aria-label="Fechar menu lateral"
+          >
+            <mat-icon>menu_open</mat-icon>
+          </button>
+        </div>
+        <nav class="side-nav" aria-label="Seções">
+          <ul class="side-nav-list" role="list">
+            <li>
+              <a
+                class="side-nav-link"
+                routerLink="/portfolio"
+                routerLinkActive
+                ariaCurrentWhenActive="page"
+                (click)="closeOnCompact()"
+              >
+                <mat-icon class="side-nav-icon">dashboard</mat-icon>
+                <span>Monitoramento</span>
+              </a>
+            </li>
+            <li>
+              <a
+                class="side-nav-link"
+                routerLink="/dealflow"
+                routerLinkActive
+                ariaCurrentWhenActive="page"
+                (click)="closeOnCompact()"
+              >
+                <mat-icon class="side-nav-icon">view_kanban</mat-icon>
+                <span>Dealflow</span>
+              </a>
+            </li>
+            <li>
+              <a
+                class="side-nav-link"
+                routerLink="/users"
+                routerLinkActive
+                ariaCurrentWhenActive="page"
+                (click)="closeOnCompact()"
+              >
+                <mat-icon class="side-nav-icon">people</mat-icon>
+                <span>Usuários</span>
+              </a>
+            </li>
+            <li>
+              <a
+                class="side-nav-link"
+                routerLink="/ia"
+                routerLinkActive
+                ariaCurrentWhenActive="page"
+                (click)="closeOnCompact()"
+              >
+                <mat-icon class="side-nav-icon">auto_awesome</mat-icon>
+                <span>IA na plataforma</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+        <div class="sidenav-footer">
+          <button
+            type="button"
+            class="side-nav-link side-foot-btn"
+            [attr.aria-label]="'Tema: ' + themeLabel() + '. Alternar.'"
+            (click)="theme.cycle()"
+          >
+            <mat-icon class="side-nav-icon">{{ themeIcon() }}</mat-icon>
+            <span>{{ themeLabel() }}</span>
+          </button>
+          <button type="button" class="side-nav-link side-foot-btn" (click)="logout()">
+            <mat-icon class="side-nav-icon">logout</mat-icon>
+            <span>Sair</span>
+          </button>
+        </div>
       </div>
     </mat-sidenav>
     <mat-sidenav-content class="app-content">
@@ -85,7 +103,8 @@
             mat-icon-button
             class="sidenav-open-btn"
             (click)="toggleSidenav()"
-            aria-label="Abrir menu lateral">
+            aria-label="Abrir menu lateral"
+          >
             <mat-icon>menu</mat-icon>
           </button>
           <span class="app-logo">

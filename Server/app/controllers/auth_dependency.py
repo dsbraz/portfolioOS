@@ -27,7 +27,7 @@ async def get_current_user(
                 detail="Token invalido",
             )
         user_id = uuid.UUID(user_id_str)
-    except JWTError:
+    except (JWTError, ValueError):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token invalido ou expirado",

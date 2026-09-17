@@ -1,5 +1,8 @@
 import pytest
 from httpx import AsyncClient
+from jose import jwt
+
+from app.config import settings
 
 
 @pytest.mark.asyncio
@@ -145,6 +148,21 @@ async def test_protected_route_with_invalid_token(anon_client: AsyncClient):
         "/api/startups",
         headers={"Authorization": "Bearer invalid.token.here"},
     )
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_protected_route_rejects_token_with_non_uuid_subject(
+    anon_client: AsyncClient,
+):
+    # A validly signed token whose `sub` is not a UUID used to escape as a 500.
+    token = jwt.encode({"sub": "not-a-uuid"}, settings.secret_key, algorithm="HS256")
+
+    response = await anon_client.get(
+        "/api/startups",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
     assert response.status_code == 401
 
 

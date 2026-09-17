@@ -53,14 +53,15 @@ describe('IndicatorFormDialog in read mode', () => {
   // Reading and editing must present the record with the same groups: the
   // sections the edit mode already has.
   it('should keep the quantitative and qualitative sections apart', () => {
-    const titles = [...el.querySelectorAll('h3')].map(h => h.textContent?.trim());
-    expect(titles).toEqual(['Quantitativos', 'Qualitativos']);
+    const titles = [...el.querySelectorAll('h3')].map((h) => h.textContent?.trim());
+    // The fund note is its own section, separate from the reportable zone.
+    expect(titles).toEqual(['Quantitativos', 'Qualitativos', 'Anotações do fundo']);
 
     const lists = el.querySelectorAll('dl');
-    // Standalone period at the top, then the two groups.
-    expect(lists.length).toBe(3);
+    // Standalone period at the top, then the three groups.
+    expect(lists.length).toBe(4);
     expect(lists[1].textContent).toContain('Receita do mês');
-    expect(lists[2].textContent).toContain('Conquistas do mês');
+    expect(lists[2].textContent).toContain('Destaques do mês');
   });
 
   it('should show the formatted values', () => {
@@ -76,7 +77,11 @@ describe('IndicatorFormDialog in read mode', () => {
   it('should mark absent values as such, including blank text', () => {
     const empties = [...el.querySelectorAll('.read-value--empty')];
     expect(empties.length).toBe(3); // gross margin, challenges, comments
-    expect(empties.every(v => v.querySelector('.visually-hidden')?.textContent?.trim() === 'Não informado')).toBe(true);
+    expect(
+      empties.every(
+        (v) => v.querySelector('.visually-hidden')?.textContent?.trim() === 'Não informado',
+      ),
+    ).toBe(true);
   });
 
   // Zero is data. A `||` instead of `== null` in the formatters would make the
@@ -99,6 +104,17 @@ describe('IndicatorFormDialog in read mode', () => {
     zeroed.detectChanges();
     await zeroed.whenStable();
     expect((zeroed.nativeElement as HTMLElement).textContent).toContain('0,00');
+  });
+
+  it('should preserve the qualitative labels used by read-only skills', () => {
+    const labels = [...el.querySelectorAll('dt')].map((label) => label.textContent?.trim());
+
+    expect(labels.slice(-3)).toEqual([
+      'Destaques do mês',
+      'Próximos passos e necessidades',
+      'Comentários do fundo',
+    ]);
+    expect(el.querySelector('mat-dialog-actions button')?.textContent?.trim()).toBe('Fechar');
   });
 });
 
@@ -156,5 +172,18 @@ describe('IndicatorFormDialog', () => {
     dialogRefSpy.close.mockClear();
     component.onCancel();
     expect(dialogRefSpy.close).toHaveBeenCalledWith();
+  });
+
+  // The edit path now catches an out-of-range value on the client, not only via
+  // the server's 422 — the same shared limits the report form uses.
+  it('does not submit a value beyond the limits; it flags the field instead', () => {
+    dialogRefSpy.close.mockClear();
+    component.form.patchValue({ month: 2, year: 2026, total_revenue: -10_000_000_000_000 });
+
+    component.onSubmit();
+
+    expect(component.form.get('total_revenue')!.hasError('max')).toBe(false);
+    expect(component.form.get('total_revenue')!.hasError('min')).toBe(true);
+    expect(dialogRefSpy.close).not.toHaveBeenCalled();
   });
 });

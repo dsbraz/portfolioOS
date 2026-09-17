@@ -33,6 +33,12 @@ Backend flow (required): `controllers -> application -> domain -> repos`.
 - `guards` (Auth layer): route protection (e.g. `auth.guard.ts`).
 - `interceptors` (HTTP layer): cross-cutting HTTP concerns (e.g. `auth.interceptor.ts` for JWT injection).
 
+### Dialog ↔ Page Data Flow
+Two shapes exist; pick by what the dialog must do after submitting.
+- **Form dialog** (default): collects input and closes with the form value; the page calls the service and shows the result. Use it when the dialog has nothing to show once the data is valid (e.g. `startup-form-dialog`, `meeting-form-dialog`).
+- **Transactional dialog**: calls the service itself and closes with `true` when something changed, so the page only reloads. Use it when a server error must keep the typed form open, or when the server's answer is shown inside the dialog (e.g. `user-form-dialog`, `add-indicator-dialog`, which displays the generated link).
+- Once a transactional dialog has changed server state, **every** way out must report it — the close button, `Escape` and the backdrop, not only the primary action. Route them through one result (`disableClose` plus `keydownEvents()`/`backdropClick()`, and `app-dialog-header`'s `closeResult`).
+
 ### Layering Rules
 - In backend, follow the chain strictly: `controllers -> application -> domain -> repos`.
 - Route handlers call use cases for business behavior; dependency wiring in controller modules composes repositories and use cases.
@@ -193,6 +199,15 @@ The app is read by assistive tech and by agents. Both use the same contract.
 - **Every row action needs a name that identifies its row**:
   `[attr.aria-label]="'Ações de ' + deal.company"`. Three identical unnamed
   `more_vert` buttons are indistinguishable.
+- **A row that navigates carries a real named link** (the `row-opener` pattern),
+  never a bare click handler on the `<tr>`. A clickable row is not a control: it
+  has no role, no name and no keyboard path, so an agent has to guess from the
+  row's text. Put the link on the identifying cell — the entity's own name is
+  the accessible name.
+- **A panel that hands over a value shows it as selectable text.** No step of a
+  flow may depend on the clipboard: `navigator.clipboard` is invisible to an
+  agent and can reject at runtime, so Copy is a convenience that must tolerate
+  failure, never the only way out.
 - A tab's `aria-controls` must reference an element that EXISTS. Keep all tabpanels
   mounted and toggle `[hidden]`; rendering only the active one leaves dangling
   references. `[hidden]` is a user-agent rule of minimal specificity, so any `display`

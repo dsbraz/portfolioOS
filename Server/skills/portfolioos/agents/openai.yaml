@@ -1,0 +1,6 @@
+interface:
+  display_name: "portfolioOS"
+  short_description: "Consultar e administrar o portfolioOS"
+  default_prompt: "Prepare a agenda para minha próxima conversa com uma startup."
+policy:
+  allow_implicit_invocation: true

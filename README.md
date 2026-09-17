@@ -63,6 +63,7 @@ portfolio/
 │       │   ├── startups/              # Detalhe + formularios (indicadores, reunioes, executivos, tokens)
 │       │   ├── dealflow/              # Board kanban de deals
 │       │   ├── users/                 # Gestao de usuarios
+│       │   ├── ai/                    # Install-once AI package and capability catalog (/ia)
 │       │   └── report/                # Formulario publico de indicadores mensais
 │       ├── services/       # Comunicacao HTTP com a API
 │       └── models/         # Interfaces TypeScript
@@ -79,6 +80,9 @@ portfolio/
 │   │   ├── infrastructure/ # Adaptadores (bcrypt, JWT)
 │   │   └── repositories/   # Acesso a dados
 │   ├── alembic/            # Migrations do banco
+│   ├── scripts/            # Ferramentas locais, incluindo o seed de demonstracao
+│   ├── skills/             # AI skill pack source (built into static/portfolioos.zip)
+│   ├── static/             # Committed build artifacts served as files
 │   └── tests/              # Testes automatizados (pytest)
 │       ├── integration/    # Testes de API (rotas end-to-end)
 │       ├── unit/           # Testes unitarios (use cases, validators)
@@ -158,14 +162,16 @@ Usuario do sistema com autenticacao via JWT. Campos: username, email, senha (has
 
 Base: `http://localhost:8000/api`
 
-Rotas publicas: `/health`, `/health/ready`, `/auth/login`, `/monthly-indicator/{token}` (GET e POST).
-Demais rotas exigem JWT bearer token.
+Public routes are `/health`, `/health/ready`, `/auth/login`,
+`/monthly-indicator/{token}` (GET and POST), and the files under `/static`.
+All other routes require a JWT bearer token.
 
 | Metodo | Rota | Descricao |
 |--------|------|-----------|
 | GET | `/health` | Health check |
 | GET | `/health/ready` | Readiness check |
 | POST | `/auth/login` | Autenticacao (retorna JWT) |
+| GET | `/static/portfolioos.zip` | Committed AI skill pack, served from `Server/static/` |
 | GET | `/portfolio` | Resumo do portfolio (KPIs) |
 | GET/POST | `/startups` | Listar / criar startups |
 | GET/PATCH/DELETE | `/startups/{id}` | Detalhe / atualizar / remover startup |
@@ -187,6 +193,12 @@ Demais rotas exigem JWT bearer token.
 
 Respostas de listagem retornam `{ items: T[], total: number }`.
 
+### AI skill pack
+
+The `/ia` page links to `/api/static/portfolioos.zip`: the committed
+`Server/static/portfolioos.zip`, served by FastAPI's `StaticFiles` mount. The same archive installs in
+Claude and ChatGPT. See `Server/skills/README.md` to change a skill.
+
 ## Comandos do dia a dia
 
 Todos os comandos assumem que os containers estao rodando (`docker compose up`).
@@ -207,6 +219,12 @@ docker compose exec client npx ng test
 # Testes backend
 docker compose exec server pytest
 
+# Restaurar o cenario deterministico para validar as skills de IA
+docker compose exec server python -m scripts.seed_demo
+
+# Regerar o pacote de skills apos alterar Server/skills/portfolioos
+docker compose exec server python -m scripts.build_skill_pack
+
 # Logs de um servico especifico
 docker compose logs -f server
 ```
@@ -223,6 +241,7 @@ Definidas no `.env` (gitignored). Copie de `.env.example`:
 | `POSTGRES_HOST` | Host do banco | `db` |
 | `POSTGRES_PORT` | Porta do banco | `5432` |
 | `DATABASE_URL` | Connection string completa (asyncpg) | montada a partir das variaveis acima |
+| `ENVIRONMENT` | Ambiente de execucao; o seed de IA exige `development` | `development` |
 
 ## Convencoes
 

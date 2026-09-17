@@ -46,9 +46,9 @@ import {
   TokenListDialogData,
 } from '../token-list-dialog/token-list-dialog';
 import {
-  TokenGenerateDialog,
-  TokenGenerateDialogData,
-} from '../token-generate-dialog/token-generate-dialog';
+  AddIndicatorDialog,
+  AddIndicatorDialogData,
+} from '../add-indicator-dialog/add-indicator-dialog';
 
 import { KpiCard } from '../../../components/kpi-card/kpi-card';
 
@@ -136,7 +136,7 @@ export class StartupDetail implements OnInit {
 
   readonly indicatorColumns = ['period', 'total_revenue', 'cash_balance', 'ebitda_burn', 'headcount', 'actions'];
   readonly meetingColumns = ['meeting_date', 'summary', 'actions'];
-  readonly executiveColumns = ['name', 'role', 'email', 'actions'];
+  readonly executiveColumns = ['name', 'role', 'email', 'phone', 'actions'];
 
   readonly indicatorSort = signal<SortState>({ active: '', direction: '' });
   readonly meetingSort = signal<SortState>({ active: '', direction: '' });
@@ -169,6 +169,7 @@ export class StartupDetail implements OnInit {
       name: (e) => e.name,
       role: (e) => e.role,
       email: (e) => e.email,
+      phone: (e) => e.phone,
     }),
   );
 
@@ -274,20 +275,20 @@ export class StartupDetail implements OnInit {
   }
 
   openCreateIndicator(): void {
-    const dialogRef = this.dialog.open(IndicatorFormDialog, {
-      width: '560px',
-      data: {} as IndicatorFormDialogData,
+    // The single entry point: pick the period, then fill now or generate a link.
+    // The dialog does the create/generate itself and closes truthy on a change,
+    // so there is no false "Indicador criado" over an upsert here.
+    const dialogRef = this.dialog.open(AddIndicatorDialog, {
+      width: '640px',
+      data: {
+        startupId: this.startupId,
+        indicators: this.indicators(),
+        tokens: this.tokens(),
+        executives: this.executives(),
+      } as AddIndicatorDialogData,
     });
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) {
-        this.indicatorService.create(this.startupId, result).subscribe({
-          next: () => {
-            this.snackBar.open('Indicador criado', 'Fechar', { duration: 3000 });
-            this.loadAll();
-          },
-          error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao criar indicador', 'Fechar', { duration: 3000 }),
-        });
-      }
+    dialogRef.afterClosed().subscribe((changed) => {
+      if (changed) this.loadAll();
     });
   }
 
@@ -430,42 +431,10 @@ export class StartupDetail implements OnInit {
     });
   }
 
-  // Tokens
-  generateToken(): void {
-    const defaultPeriod = this.getPreviousMonthPeriod();
-    const dialogRef = this.dialog.open(TokenGenerateDialog, {
-      width: '420px',
-      data: defaultPeriod as TokenGenerateDialogData,
-    });
-
-    dialogRef.afterClosed().subscribe((period) => {
-      if (!period) return;
-
-      this.tokenService.create(this.startupId, period).subscribe({
-        next: (token) => {
-          const url = `${window.location.origin}/monthly-indicator/${token.token}`;
-          navigator.clipboard.writeText(url).then(() => {
-            this.snackBar.open('Link gerado e copiado!', 'Fechar', { duration: 3000 });
-          });
-          this.loadAll();
-        },
-        error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao gerar link', 'Fechar', { duration: 3000 }),
-      });
-    });
-  }
-
-  private getPreviousMonthPeriod(): { month: number; year: number } {
-    const today = new Date();
-    if (today.getMonth() === 0) {
-      return { month: 12, year: today.getFullYear() - 1 };
-    }
-    return { month: today.getMonth(), year: today.getFullYear() };
-  }
-
   openTokenListDialog(): void {
     this.dialog.open(TokenListDialog, {
       width: '400px',
-      data: { tokens: this.tokens() } as TokenListDialogData,
+      data: { tokens: this.tokens(), executives: this.executives() } as TokenListDialogData,
     });
   }
 }

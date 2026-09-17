@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { of } from 'rxjs';
@@ -47,11 +47,13 @@ describe('Portfolio (sort header wiring)', () => {
       imports: [Portfolio],
       providers: [
         provideNoopAnimations(),
+        // A real router: the startup name is a `routerLink`, which a bare stub
+        // cannot build. It comes first so the ActivatedRoute below overrides its own.
+        provideRouter([]),
         {
           provide: ActivatedRoute,
           useValue: { queryParamMap: of(convertToParamMap({ month: '7', year: '2026' })) },
         },
-        { provide: Router, useValue: { navigate: vi.fn().mockResolvedValue(true) } },
         { provide: MatDialog, useValue: { open: vi.fn() } },
         { provide: MatSnackBar, useValue: { open: vi.fn() } },
         {

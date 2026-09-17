@@ -9,6 +9,7 @@ import { StartupDetail } from './startup-detail';
 import { StartupService } from '../../../services/startup.service';
 import { MonthlyIndicatorService } from '../../../services/monthly-indicator.service';
 import { BoardMeetingService } from '../../../services/board-meeting.service';
+import { Executive } from '../../../models/executive.model';
 import { ExecutiveService } from '../../../services/executive.service';
 import { MonthlyIndicatorTokenService } from '../../../services/monthly-indicator-token.service';
 import { MonthlyIndicator } from '../../../models/monthly-indicator.model';
@@ -34,24 +35,23 @@ describe('StartupDetail (totalParticipation)', () => {
     updated_at: '2025-01-01T00:00:00Z',
   });
 
-  const indicator = (m: number, y: number, revenue: number | null): MonthlyIndicator =>
-    ({
-      id: `${y}-${m}`,
-      startup_id: 's1',
-      month: m,
-      year: y,
-      total_revenue: revenue,
-      recurring_revenue_pct: null,
-      gross_margin_pct: null,
-      cash_balance: null,
-      headcount: null,
-      ebitda_burn: null,
-      achievements: null,
-      challenges: null,
-      comments: null,
-      created_at: '',
-      updated_at: '',
-    });
+  const indicator = (m: number, y: number, revenue: number | null): MonthlyIndicator => ({
+    id: `${y}-${m}`,
+    startup_id: 's1',
+    month: m,
+    year: y,
+    total_revenue: revenue,
+    recurring_revenue_pct: null,
+    gross_margin_pct: null,
+    cash_balance: null,
+    headcount: null,
+    ebitda_burn: null,
+    achievements: null,
+    challenges: null,
+    comments: null,
+    created_at: '',
+    updated_at: '',
+  });
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -145,7 +145,7 @@ describe('StartupDetail (loading and ARIA)', () => {
 
   /** `pending` keeps the calls from emitting, which is the loading state. */
   const mount = async (pending = false) => {
-    const respond = <T,>(value: T) => (pending ? NEVER : of(value));
+    const respond = <T>(value: T) => (pending ? NEVER : of(value));
 
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
@@ -162,7 +162,7 @@ describe('StartupDetail (loading and ARIA)', () => {
           useValue: { list: () => respond(page([indicatorFixture])) },
         },
         { provide: BoardMeetingService, useValue: { list: () => respond(page([])) } },
-        { provide: ExecutiveService, useValue: { list: () => respond(page([])) } },
+        { provide: ExecutiveService, useValue: { list: () => respond(page([executiveFixture])) } },
         { provide: MonthlyIndicatorTokenService, useValue: { list: () => respond(page([])) } },
       ],
     }).compileComponents();
@@ -172,6 +172,18 @@ describe('StartupDetail (loading and ARIA)', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     return fixture.nativeElement as HTMLElement;
+  };
+
+  const executiveFixture: Executive = {
+    id: 'e1',
+    startup_id: 's1',
+    name: 'Ana Costa',
+    role: 'CEO',
+    email: 'ana@lumina.example',
+    phone: '(11) 91234-5678',
+    linkedin: null,
+    created_at: '',
+    updated_at: '',
   };
 
   const indicatorFixture: MonthlyIndicator = {
@@ -230,7 +242,64 @@ describe('StartupDetail (loading and ARIA)', () => {
 
     const panels = [...el.querySelectorAll('[role="tabpanel"]')];
     expect(panels.length).toBe(3);
-    expect(panels.filter(p => !p.hasAttribute('hidden')).length).toBe(1);
+    expect(panels.filter((p) => !p.hasAttribute('hidden')).length).toBe(1);
+  });
+
+  it('should preserve the names browser-operated skills use to navigate', async () => {
+    const el = await mount();
+
+    const tabElements = [...el.querySelectorAll('[role="tab"]')];
+    expect(tabElements.map((tab) => tab.getAttribute('aria-label'))).toEqual([
+      'Indicadores Mensais',
+      'Reuniões de Conselho',
+      'Executivos',
+    ]);
+    for (const tab of tabElements) {
+      const descriptionId = tab.getAttribute('aria-describedby');
+      expect(descriptionId).toBeTruthy();
+      expect(el.querySelector(`#${descriptionId}`)?.textContent?.trim()).toMatch(/^\d+$/);
+    }
+
+    const indicatorHeaders = [...el.querySelectorAll('#panel-indicadores th[scope="col"]')]
+      .map((header) => header.textContent?.trim())
+      .filter(Boolean);
+    expect(indicatorHeaders).toEqual(['Período', 'Receita', 'Caixa', 'EBITDA/Burn', 'Headcount']);
+
+    // The chase workflow resolves the recipient from this table. Reading the
+    // phone must not require opening a row whose only keyboard path is `Editar`.
+    const executiveHeaders = [...el.querySelectorAll('#panel-executivos th[scope="col"]')]
+      .map((header) => header.textContent?.trim())
+      .filter(Boolean);
+    expect(executiveHeaders).toEqual(['Nome', 'Cargo', 'Email', 'Telefone']);
+
+    // The row click is mouse-only. Each row must also expose a focusable control
+    // whose name identifies the row it opens (WCAG 2.1.1, and the row-action
+    // naming rule in CLAUDE.md).
+    for (const name of ['Ver indicador de Jul/2026', 'Ver executivo Ana Costa']) {
+      const opener = el.querySelector<HTMLButtonElement>(`[aria-label="${name}"]`);
+      expect(opener, name).toBeTruthy();
+      expect(opener?.tagName).toBe('BUTTON');
+      expect(opener?.hasAttribute('disabled')).toBe(false);
+    }
+
+    const kpiLabels = [...el.querySelectorAll('.kpi-label')].map((label) =>
+      label.textContent?.trim(),
+    );
+    expect(kpiLabels).toEqual([
+      'Receita Total',
+      'Total da Participação',
+      'Saldo em Caixa',
+      'EBITDA/Burn',
+      'Headcount',
+    ]);
+    expect(el.querySelector('.section-action')?.textContent).toContain('Adicionar indicador');
+
+    const meetingsTab = tabElements.find(
+      (tab) => tab.getAttribute('aria-label') === 'Reuniões de Conselho',
+    ) as HTMLButtonElement;
+    meetingsTab.click();
+    await new Promise((resolve) => setTimeout(resolve));
+    expect(el.querySelector('.section-action')?.textContent).toContain('Adicionar reunião');
   });
 
   // Three identical `more_vert` buttons per table showed up as unlabeled
@@ -238,14 +307,16 @@ describe('StartupDetail (loading and ARIA)', () => {
   it('should name every row action button with its row', async () => {
     const el = await mount();
 
-    const actions = [...el.querySelectorAll('button[mat-icon-button][aria-haspopup], button[mat-icon-button]')]
-      .filter(b => b.closest('td'));
+    const actions = [
+      ...el.querySelectorAll('button[mat-icon-button][aria-haspopup], button[mat-icon-button]'),
+    ].filter((b) => b.closest('td'));
     expect(actions.length).toBeGreaterThan(0);
     for (const button of actions) {
       expect(button.getAttribute('aria-label')).toBeTruthy();
     }
-    expect(el.querySelector('td button[mat-icon-button]')?.getAttribute('aria-label'))
-      .toBe('Ações do indicador de Jul/2026');
+    expect(el.querySelector('td button[mat-icon-button]')?.getAttribute('aria-label')).toBe(
+      'Ações do indicador de Jul/2026',
+    );
   });
 });
 
@@ -268,14 +339,23 @@ describe('StartupDetail (sorting)', () => {
     return TestBed.createComponent(StartupDetail).componentInstance;
   };
 
-  const ind = (m: number, y: number, revenue: number | null = null): MonthlyIndicator =>
-    ({
-      id: `${y}-${m}`, startup_id: 's1', month: m, year: y,
-      total_revenue: revenue, recurring_revenue_pct: null, gross_margin_pct: null,
-      cash_balance: null, headcount: null, ebitda_burn: null,
-      achievements: null, challenges: null, comments: null,
-      created_at: '', updated_at: '',
-    });
+  const ind = (m: number, y: number, revenue: number | null = null): MonthlyIndicator => ({
+    id: `${y}-${m}`,
+    startup_id: 's1',
+    month: m,
+    year: y,
+    total_revenue: revenue,
+    recurring_revenue_pct: null,
+    gross_margin_pct: null,
+    cash_balance: null,
+    headcount: null,
+    ebitda_burn: null,
+    achievements: null,
+    challenges: null,
+    comments: null,
+    created_at: '',
+    updated_at: '',
+  });
 
   // "Período" shows `Jul/2026`. Sorted as text, Ago would come before Jul and
   // Dez before Fev — the column must sort by what it IS.
@@ -284,8 +364,12 @@ describe('StartupDetail (sorting)', () => {
     component.indicators.set([ind(7, 2026), ind(8, 2026), ind(12, 2025), ind(2, 2026)]);
     component.indicatorSort.set({ active: 'period', direction: 'asc' });
 
-    expect(component.sortedIndicators().map(i => `${i.month}/${i.year}`))
-      .toEqual(['12/2025', '2/2026', '7/2026', '8/2026']);
+    expect(component.sortedIndicators().map((i) => `${i.month}/${i.year}`)).toEqual([
+      '12/2025',
+      '2/2026',
+      '7/2026',
+      '8/2026',
+    ]);
   });
 
   it('should keep indicators without revenue last when sorting by revenue', () => {
@@ -293,7 +377,7 @@ describe('StartupDetail (sorting)', () => {
     component.indicators.set([ind(1, 2026, null), ind(2, 2026, 500), ind(3, 2026, 100)]);
     component.indicatorSort.set({ active: 'total_revenue', direction: 'desc' });
 
-    expect(component.sortedIndicators().map(i => i.total_revenue)).toEqual([500, 100, null]);
+    expect(component.sortedIndicators().map((i) => i.total_revenue)).toEqual([500, 100, null]);
   });
 
   it('should leave the rows untouched while no column is active', () => {
@@ -301,7 +385,7 @@ describe('StartupDetail (sorting)', () => {
     const rows = [ind(2, 2026), ind(1, 2026)];
     component.indicators.set(rows);
 
-    expect(component.sortedIndicators().map(i => i.month)).toEqual([2, 1]);
+    expect(component.sortedIndicators().map((i) => i.month)).toEqual([2, 1]);
   });
 });
 

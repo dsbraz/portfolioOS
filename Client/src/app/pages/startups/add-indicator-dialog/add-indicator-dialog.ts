@@ -1,0 +1,219 @@
+import { Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatButtonModule } from '@angular/material/button';
+import { MatRadioModule } from '@angular/material/radio';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { filter, merge } from 'rxjs';
+
+import { DialogHeader } from '../../../components/dialog-header/dialog-header';
+import { CurrencyInput } from '../../../directives/currency-input';
+import { Executive } from '../../../models/executive.model';
+import { formatPeriod } from '../../../models/formatters';
+import { buildReportedIndicatorForm, futurePeriodValidator } from '../../../models/indicator-form';
+import {
+  MONTH_LABELS,
+  MonthlyIndicator,
+  MonthlyIndicatorCreate,
+} from '../../../models/monthly-indicator.model';
+import { MonthlyIndicatorToken } from '../../../models/monthly-indicator-token.model';
+import { MonthlyIndicatorService } from '../../../services/monthly-indicator.service';
+import { MonthlyIndicatorTokenService } from '../../../services/monthly-indicator-token.service';
+import { TokenPanel } from '../token-panel/token-panel';
+
+export interface AddIndicatorDialogData {
+  startupId: string;
+  indicators: MonthlyIndicator[];
+  tokens: MonthlyIndicatorToken[];
+  executives: Executive[];
+}
+
+type Mode = 'fill' | 'link';
+
+/**
+ * The single entry point for a period's indicator (PRD-001 item 2): pick the
+ * period, then choose whether to fill it now or generate a link for the
+ * investee. It replaces the two separate entry points ("Adicionar indicador"
+ * and "Gerar link") the header carried before. Context comes from the records
+ * the page already loaded — no network call on open.
+ */
+@Component({
+  selector: 'app-add-indicator-dialog',
+  imports: [
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatButtonModule,
+    MatRadioModule,
+    MatSnackBarModule,
+    DialogHeader,
+    CurrencyInput,
+    TokenPanel,
+  ],
+  templateUrl: './add-indicator-dialog.html',
+  styleUrl: './add-indicator-dialog.scss',
+})
+export class AddIndicatorDialog {
+  private readonly fb = inject(FormBuilder);
+  private readonly dialogRef = inject(MatDialogRef<AddIndicatorDialog>);
+  private readonly indicatorService = inject(MonthlyIndicatorService);
+  private readonly tokenService = inject(MonthlyIndicatorTokenService);
+  private readonly snackBar = inject(MatSnackBar);
+  readonly data: AddIndicatorDialogData = inject(MAT_DIALOG_DATA);
+
+  readonly monthOptions = Array.from({ length: 12 }, (_, i) => i + 1);
+  readonly monthLabels = MONTH_LABELS;
+
+  readonly mode = signal<Mode>('fill');
+  readonly submitting = signal(false);
+  /** The link once generated; while set, link mode shows the panel instead. */
+  readonly generatedToken = signal<MonthlyIndicatorToken | null>(null);
+  /** Whether the page must reload on close: set as soon as a create request is
+   *  sent, because closing before the response must not drop what it creates. */
+  readonly changed = signal(false);
+
+  private readonly previousPeriod = AddIndicatorDialog.previousMonthPeriod();
+
+  // month/year live on the parent group so futurePeriodValidator can read them;
+  // the reportable zone comes from the shared factory (nested), so its limits
+  // never drift from the public form; comments is the admin-only fund note.
+  readonly form = this.fb.group(
+    {
+      month: [this.previousPeriod.month, [Validators.required]],
+      year: [
+        this.previousPeriod.year,
+        [Validators.required, Validators.min(2000), Validators.max(2100)],
+      ],
+      reported: buildReportedIndicatorForm(this.fb),
+      comments: [''],
+    },
+    { validators: [futurePeriodValidator] },
+  );
+
+  /** The selected period, read from the form as signals so context updates live.
+   *  Only valid values pass, so retyping the year never shows "null" or "26". */
+  private readonly month = AddIndicatorDialog.validValues(this.form.controls.month);
+  private readonly year = AddIndicatorDialog.validValues(this.form.controls.year);
+
+  readonly periodLabel = computed(() => formatPeriod(this.month()!, this.year()!));
+
+  readonly hasIndicator = computed(() => this.anyInPeriod(this.data.indicators));
+
+  readonly hasLink = computed(() => this.anyInPeriod(this.data.tokens));
+
+  private anyInPeriod(records: { month: number; year: number }[]): boolean {
+    const month = this.month();
+    const year = this.year();
+    return records.some((r) => r.month === month && r.year === year);
+  }
+
+  constructor() {
+    // Escape and the backdrop would close with `undefined`, losing the change
+    // signal once a link was generated. Route them through the same result.
+    this.dialogRef.disableClose = true;
+    merge(
+      this.dialogRef.keydownEvents().pipe(filter((event) => event.key === 'Escape')),
+      this.dialogRef.backdropClick(),
+    )
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.dialogRef.close(this.changed()));
+  }
+
+  setMode(mode: Mode): void {
+    // Switching hides the other mode's controls; the form persists, so what was
+    // typed survives the switch (PRD-001 criterion 6.1.6).
+    this.mode.set(mode);
+  }
+
+  submit(): void {
+    if (this.submitting()) return;
+    if (this.mode() === 'fill') {
+      this.saveIndicator();
+    } else {
+      this.generateLink();
+    }
+  }
+
+  private saveIndicator(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this.submitting.set(true);
+    this.changed.set(true);
+    this.indicatorService.create(this.data.startupId, this.buildPayload()).subscribe({
+      next: () => this.dialogRef.close(true),
+      error: (err) => {
+        this.submitting.set(false);
+        this.snackBar.open(err.error?.detail || 'Erro ao salvar indicador', 'Fechar', {
+          duration: 3000,
+        });
+      },
+    });
+  }
+
+  private generateLink(): void {
+    const { month, year } = this.form.controls;
+    if (this.form.hasError('futurePeriod') || month.invalid || year.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this.submitting.set(true);
+    this.changed.set(true);
+    this.tokenService
+      .create(this.data.startupId, { month: month.value!, year: year.value! })
+      .subscribe({
+        next: (token) => {
+          this.submitting.set(false);
+          this.generatedToken.set(token);
+        },
+        error: (err) => {
+          this.submitting.set(false);
+          this.snackBar.open(err.error?.detail || 'Erro ao gerar link', 'Fechar', {
+            duration: 3000,
+          });
+        },
+      });
+  }
+
+  /** Absence is not erasure: a blank string is normalised to null so an empty
+   * field does not wipe stored text on the upsert (PRD-001 §6.1/§8). */
+  private buildPayload(): MonthlyIndicatorCreate {
+    const raw = this.form.getRawValue();
+    const blankToNull = (v: string | null | undefined) => (v?.trim() ? v : null);
+    return {
+      month: raw.month!,
+      year: raw.year!,
+      total_revenue: raw.reported.total_revenue,
+      recurring_revenue_pct: raw.reported.recurring_revenue_pct,
+      gross_margin_pct: raw.reported.gross_margin_pct,
+      cash_balance: raw.reported.cash_balance,
+      headcount: raw.reported.headcount,
+      ebitda_burn: raw.reported.ebitda_burn,
+      achievements: blankToNull(raw.reported.achievements),
+      challenges: blankToNull(raw.reported.challenges),
+      comments: blankToNull(raw.comments),
+    };
+  }
+
+  private static validValues(control: FormControl<number | null>) {
+    return toSignal(control.valueChanges.pipe(filter(() => control.valid)), {
+      initialValue: control.value,
+    });
+  }
+
+  private static previousMonthPeriod(): { month: number; year: number } {
+    const today = new Date();
+    // getMonth() is 0-indexed, so its 1-based value already names last month.
+    if (today.getMonth() === 0) {
+      return { month: 12, year: today.getFullYear() - 1 };
+    }
+    return { month: today.getMonth(), year: today.getFullYear() };
+  }
+}
