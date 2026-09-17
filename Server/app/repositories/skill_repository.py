@@ -29,11 +29,12 @@ _LINKED_FILENAMES = "|".join(
 )
 PACK_SKILL_REFERENCE_PATTERN = re.compile(rf"skills/([^/\s]+)/({_LINKED_FILENAMES})")
 PACKAGE_ARTIFACTS = (
-    (Path("README.md"), Path("README.md")),
+    Path("README.md"),
     # OpenAI reads skill UI metadata from `agents/openai.yaml` beside SKILL.md.
-    (Path("agents/openai.yaml"), Path("agents/openai.yaml")),
-    (Path("PACK_SKILL.md"), Path(SKILL_FILENAME)),
+    Path("agents/openai.yaml"),
 )
+# Rendered with the published-skill index and shipped as the package's SKILL.md.
+PACK_SKILL_TEMPLATE = Path("PACK_SKILL.md")
 # `writestr` stamps 0o600; `write` copies the source mode. Pin both to 0644 so a
 # rendered entry extracts like every copied one.
 ARCHIVE_FILE_MODE = 0o100644
@@ -61,7 +62,7 @@ class SkillRepository:
 
         output = BytesIO()
         with ZipFile(output, "w", compression=ZIP_DEFLATED) as archive:
-            self._write_skill_files(archive, skill_dir, Path(name))
+            self._write_skill_files(archive, skill, skill_dir, Path(name))
         return output.getvalue()
 
     def get_pack(self) -> bytes:
@@ -74,19 +75,15 @@ class SkillRepository:
         if not base_skill.published:
             raise ValueError(f"Required base skill is unpublished: {BASE_SKILL_NAME}")
 
-        skills_with_directories = [
-            (base_skill, base_skill_dir),
-            *(
-                (self._load_skill(skill_dir), skill_dir)
-                for name, skill_dir in skill_directories.items()
-                if name != BASE_SKILL_NAME
-            ),
-        ]
-        published_skills = [
-            (skill, skill_dir)
-            for skill, skill_dir in skills_with_directories
-            if skill.published
-        ]
+        # Base skill first, then the rest by name (directories come sorted): the
+        # index and the archive both follow this order.
+        published_skills = [(base_skill, base_skill_dir)]
+        for name, skill_dir in skill_directories.items():
+            if name == BASE_SKILL_NAME:
+                continue
+            skill = self._load_skill(skill_dir)
+            if skill.published:
+                published_skills.append((skill, skill_dir))
         output = BytesIO()
         with ZipFile(output, "w", compression=ZIP_DEFLATED) as archive:
             self._write_package_artifacts(
@@ -97,6 +94,7 @@ class SkillRepository:
                 archive_root = Path(PACKAGE_NAME) / "skills" / skill.name
                 self._write_skill_files(
                     archive,
+                    skill,
                     skill_dir,
                     archive_root,
                     skill_filename=INTERNAL_SKILL_FILENAME,
@@ -128,25 +126,29 @@ class SkillRepository:
         if package_dir.is_symlink():
             raise ValueError("Package directory must not be a symlink")
 
-        for source_relative_path, archive_relative_path in PACKAGE_ARTIFACTS:
-            source_path = package_dir / source_relative_path
-            if not source_path.is_file() or self._path_contains_symlink(
-                source_path,
-                package_dir,
-            ):
-                raise ValueError(
-                    f"Package artifact is missing: {source_relative_path.as_posix()}"
-                )
-            archive_path = str(Path(PACKAGE_NAME) / archive_relative_path)
-            if source_relative_path.name == "PACK_SKILL.md":
-                self._write_rendered_file(
-                    archive,
-                    archive_path,
-                    source_path,
-                    self._render_pack_skill(source_path, published_skills),
-                )
-            else:
-                archive.write(source_path, arcname=archive_path)
+        for relative_path in PACKAGE_ARTIFACTS:
+            archive.write(
+                self._package_source(package_dir, relative_path),
+                arcname=str(Path(PACKAGE_NAME) / relative_path),
+            )
+        template_path = self._package_source(package_dir, PACK_SKILL_TEMPLATE)
+        self._write_rendered_file(
+            archive,
+            str(Path(PACKAGE_NAME) / SKILL_FILENAME),
+            template_path,
+            self._render_pack_skill(template_path, published_skills),
+        )
+
+    @staticmethod
+    def _package_source(package_dir: Path, relative_path: Path) -> Path:
+        source_path = package_dir / relative_path
+        if not source_path.is_file() or SkillRepository._path_contains_symlink(
+            source_path, package_dir
+        ):
+            raise ValueError(
+                f"Package artifact is missing: {relative_path.as_posix()}"
+            )
+        return source_path
 
     @staticmethod
     def _write_rendered_file(
@@ -175,14 +177,10 @@ class SkillRepository:
         if marker_count > 1:
             raise ValueError("Package skill index marker must appear exactly once")
 
-        ordered_skills = sorted(
-            published_skills,
-            key=lambda skill: (skill.name != BASE_SKILL_NAME, skill.name),
-        )
         skill_index = "\n".join(
             f"- [`{skill.name}`](skills/{skill.name}/{INTERNAL_SKILL_FILENAME}): "
             f"{skill.description}"
-            for skill in ordered_skills
+            for skill in published_skills
         )
         rendered_skill = template.replace(PACK_SKILL_INDEX_MARKER, skill_index)
         references = PACK_SKILL_REFERENCE_PATTERN.findall(rendered_skill)
@@ -375,12 +373,14 @@ class SkillRepository:
     @staticmethod
     def _write_skill_files(
         archive: ZipFile,
+        skill: Skill,
         skill_dir: Path,
         archive_root: Path,
         skill_filename: str = SKILL_FILENAME,
     ) -> None:
-        for path in SkillRepository._visible_files(skill_dir):
-            relative_path = path.relative_to(skill_dir)
+        # `skill.files` is the visible-file walk `_load_skill` already did.
+        for file in skill.files or []:
+            relative_path = Path(file)
             if relative_path == Path(SKILL_FILENAME):
                 relative_path = Path(skill_filename)
-            archive.write(path, arcname=str(archive_root / relative_path))
+            archive.write(skill_dir / file, arcname=str(archive_root / relative_path))

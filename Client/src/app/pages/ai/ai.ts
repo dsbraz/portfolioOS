@@ -15,11 +15,11 @@ const SKILL_TITLES: Record<string, string> = {
   'auditoria-qualitativa': 'Auditar o portfólio',
 };
 
-const SKILL_ORDER: Record<string, number> = {
-  'operar-portfolioos': 0,
-  'preparar-agenda': 1,
-  'granola-reuniao': 2,
-  'cobrar-indicadores': 3,
+// Display order follows SKILL_TITLES; unknown skills sort last.
+const SKILL_ORDER = Object.keys(SKILL_TITLES);
+const skillRank = (name: string) => {
+  const rank = SKILL_ORDER.indexOf(name);
+  return rank === -1 ? SKILL_ORDER.length : rank;
 };
 
 @Component({
@@ -38,7 +38,7 @@ export class Ai implements OnInit {
   readonly publishedSkills = computed(() =>
     (this.skills() ?? [])
       .filter((skill) => skill.published)
-      .sort((left, right) => (SKILL_ORDER[left.name] ?? 99) - (SKILL_ORDER[right.name] ?? 99)),
+      .sort((left, right) => skillRank(left.name) - skillRank(right.name)),
   );
   readonly blockedSkills = computed(() =>
     (this.skills() ?? []).filter((skill) => !skill.published),

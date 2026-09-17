@@ -4,10 +4,10 @@ import { AbstractControl, FormBuilder, ValidationErrors, Validators } from '@ang
  * Single client-side source of the reportable-indicator contract.
  *
  * The backend is the authority on the limits; these mirror it and must stay in
- * step with `Server/app/domain/schemas/monthly_indicator.py:11-16`
- * (`_MIN_MONEY` / `_MAX_MONEY` / `_MAX_PCT` / `_MAX_HEADCOUNT`). The admin dialog
- * and the public report form both build their reportable zone through
- * `buildReportedIndicatorForm`, so a limit cannot drift between the two — that
+ * step with `_MIN_MONEY` / `_MAX_MONEY` / `_MAX_PCT` / `_MAX_HEADCOUNT` in
+ * `Server/app/domain/schemas/monthly_indicator.py`. The admin dialogs and the
+ * public report form all build their reportable zone through
+ * `buildReportedIndicatorForm`, so a limit cannot drift between them — that
  * divergence is what let a -999-billion value reach the database before.
  */
 export const INDICATOR_LIMITS = {

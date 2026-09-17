@@ -141,51 +141,29 @@ async def _remove_scenario_drift(session: AsyncSession) -> None:
     )
 
 
-async def _upsert_indicators(session: AsyncSession) -> None:
-    for seed in _INDICATOR_SEEDS:
+async def _upsert_owned(
+    session: AsyncSession, model: type, seeds: list[dict], label: str
+) -> None:
+    for seed in seeds:
         values = {key: value for key, value in seed.items() if key != "id"}
-        indicator = await session.get(MonthlyIndicator, seed["id"])
+        record = await session.get(model, seed["id"])
 
-        if indicator is None:
-            indicator = MonthlyIndicator(
-                id=seed["id"],
-                startup_id=DEMO_STARTUP_ID,
-                **values,
-            )
-            session.add(indicator)
+        if record is None:
+            session.add(model(id=seed["id"], startup_id=DEMO_STARTUP_ID, **values))
         else:
-            if indicator.startup_id != DEMO_STARTUP_ID:
+            if record.startup_id != DEMO_STARTUP_ID:
                 raise RuntimeError(
-                    f"Demo indicator ID {indicator.id} belongs to another startup"
+                    f"Demo {label} ID {record.id} belongs to another startup"
                 )
-            _apply_values(indicator, values)
-
-
-async def _upsert_meetings(session: AsyncSession) -> None:
-    for seed in _MEETING_SEEDS:
-        values = {key: value for key, value in seed.items() if key != "id"}
-        meeting = await session.get(BoardMeeting, seed["id"])
-        if meeting is None:
-            meeting = BoardMeeting(
-                id=seed["id"],
-                startup_id=DEMO_STARTUP_ID,
-                **values,
-            )
-            session.add(meeting)
-        else:
-            if meeting.startup_id != DEMO_STARTUP_ID:
-                raise RuntimeError(
-                    f"Demo meeting ID {meeting.id} belongs to another startup"
-                )
-            _apply_values(meeting, values)
+            _apply_values(record, values)
 
 
 async def seed_demo(session: AsyncSession) -> Startup:
     """Create or restore the records owned by the local demo scenario."""
     startup = await _upsert_startup(session)
     await _remove_scenario_drift(session)
-    await _upsert_indicators(session)
-    await _upsert_meetings(session)
+    await _upsert_owned(session, MonthlyIndicator, _INDICATOR_SEEDS, "indicator")
+    await _upsert_owned(session, BoardMeeting, _MEETING_SEEDS, "meeting")
     await session.flush()
     return startup
 

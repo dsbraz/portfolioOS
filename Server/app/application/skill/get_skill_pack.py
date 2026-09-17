@@ -1,3 +1,5 @@
+import asyncio
+
 from app.repositories.skill_repository import SkillRepository
 
 
@@ -6,4 +8,4 @@ class GetSkillPack:
         self._repository = repository
 
     async def execute(self) -> bytes:
-        return self._repository.get_pack()
+        return await asyncio.to_thread(self._repository.get_pack)

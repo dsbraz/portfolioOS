@@ -6,11 +6,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 
-import {
-  INDICATOR_LIMITS,
-  futurePeriodValidator,
-  integerValidator,
-} from '../../../models/indicator-form';
+import { buildReportedIndicatorForm, futurePeriodValidator } from '../../../models/indicator-form';
 import { MonthlyIndicator, MONTH_LABELS } from '../../../models/monthly-indicator.model';
 import {
   formatCurrencyBRL,
@@ -54,38 +50,13 @@ export class IndicatorFormDialog implements OnInit {
   readonly monthLabels = MONTH_LABELS;
   readonly currentYear = new Date().getFullYear();
 
-  // The reportable fields carry the same limits as the shared factory, so an
-  // out-of-range value is caught here on edit and not only by the server's 422.
+  // The reportable fields come from the shared factory, so an out-of-range
+  // value is caught here on edit and not only by the server's 422.
   readonly form = this.fb.group(
     {
       month: [new Date().getMonth() + 1, [Validators.required, Validators.min(1), Validators.max(12)]],
       year: [this.currentYear, [Validators.required, Validators.min(2000), Validators.max(2100)]],
-      total_revenue: [
-        null as number | null,
-        [Validators.min(INDICATOR_LIMITS.MIN_MONEY), Validators.max(INDICATOR_LIMITS.MAX_MONEY)],
-      ],
-      recurring_revenue_pct: [
-        null as number | null,
-        [Validators.min(0), Validators.max(INDICATOR_LIMITS.MAX_PCT)],
-      ],
-      gross_margin_pct: [
-        null as number | null,
-        [Validators.min(0), Validators.max(INDICATOR_LIMITS.MAX_PCT)],
-      ],
-      cash_balance: [
-        null as number | null,
-        [Validators.min(INDICATOR_LIMITS.MIN_MONEY), Validators.max(INDICATOR_LIMITS.MAX_MONEY)],
-      ],
-      headcount: [
-        null as number | null,
-        [Validators.min(0), Validators.max(INDICATOR_LIMITS.MAX_HEADCOUNT), integerValidator],
-      ],
-      ebitda_burn: [
-        null as number | null,
-        [Validators.min(INDICATOR_LIMITS.MIN_MONEY), Validators.max(INDICATOR_LIMITS.MAX_MONEY)],
-      ],
-      achievements: [''],
-      challenges: [''],
+      ...buildReportedIndicatorForm(this.fb).controls,
       comments: [''],
     },
     { validators: [futurePeriodValidator] },

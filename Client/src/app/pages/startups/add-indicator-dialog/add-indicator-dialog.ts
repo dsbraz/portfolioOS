@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -87,32 +88,25 @@ export class AddIndicatorDialog {
     { validators: [futurePeriodValidator] },
   );
 
-  /** The selected period, tracked as a signal so context updates live. */
-  private readonly period = signal({ month: this.previousPeriod.month, year: this.previousPeriod.year });
+  /** The selected period, read from the form as signals so context updates live. */
+  private readonly month = toSignal(this.form.controls.month.valueChanges, {
+    initialValue: this.form.controls.month.value,
+  });
+  private readonly year = toSignal(this.form.controls.year.valueChanges, {
+    initialValue: this.form.controls.year.value,
+  });
 
-  constructor() {
-    this.form.controls.month.valueChanges.subscribe((month) =>
-      this.period.set({ ...this.period(), month: month ?? this.period().month }),
-    );
-    this.form.controls.year.valueChanges.subscribe((year) =>
-      this.period.set({ ...this.period(), year: year ?? this.period().year }),
-    );
+  readonly periodLabel = computed(() => `${MONTH_LABELS[this.month()!]}/${this.year()}`);
+
+  readonly hasIndicator = computed(() => this.anyInPeriod(this.data.indicators));
+
+  readonly hasLink = computed(() => this.anyInPeriod(this.data.tokens));
+
+  private anyInPeriod(records: { month: number; year: number }[]): boolean {
+    const month = this.month();
+    const year = this.year();
+    return records.some((r) => r.month === month && r.year === year);
   }
-
-  readonly periodLabel = computed(() => {
-    const { month, year } = this.period();
-    return `${MONTH_LABELS[month]}/${year}`;
-  });
-
-  readonly hasIndicator = computed(() => {
-    const { month, year } = this.period();
-    return this.data.indicators.some((i) => i.month === month && i.year === year);
-  });
-
-  readonly hasLink = computed(() => {
-    const { month, year } = this.period();
-    return this.data.tokens.some((t) => t.month === month && t.year === year);
-  });
 
   setMode(mode: Mode): void {
     // Switching hides the other mode's controls; the form persists, so what was

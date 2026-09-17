@@ -623,6 +623,27 @@ h5 {
   outline-offset: -2px;
 }
 
+// A table row that navigates stays clickable for the mouse, but the operable
+// element is this one: a real link/button that carries the row's name. It has to
+// read as the plain text it replaced, so only focus makes it look interactive —
+// the ring comes from the rules above (inset inside `.table-shell`).
+.row-opener {
+  display: inline-block;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
 :focus:not(:focus-visible) {
   outline: none;
 }
