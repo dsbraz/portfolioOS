@@ -220,7 +220,7 @@ async def test_seed_demo_does_not_change_records_owned_by_another_startup(sessio
     assert other_meeting.summary == "Unrelated meeting"
 
 
-# --- The scenarios the manual acceptance script (RFC-002 §10) needs ---
+# --- The contact and chase scenarios the send panel needs ---
 
 
 @pytest.mark.asyncio

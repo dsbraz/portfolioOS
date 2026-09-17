@@ -7,27 +7,6 @@
   padding: var(--content-padding);
 }
 
-.page-head {
-  display: grid;
-  gap: var(--space-2xs);
-  margin-bottom: var(--space-xl);
-
-  h1 {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: var(--fs-heading-xl);
-    font-weight: var(--fw-medium);
-    letter-spacing: var(--ls-tight);
-    line-height: var(--lh-tight);
-  }
-
-  > p:last-child {
-    margin: 0;
-    color: var(--color-text-muted);
-    font-size: var(--fs-body-md);
-  }
-}
-
 .package-card {
   display: grid;
   gap: var(--space-xl);
@@ -70,22 +49,6 @@
 
 .package-download {
   justify-self: start;
-}
-
-.download-error {
-  margin: calc(var(--space-lg) * -1) 0 0;
-  color: var(--color-danger);
-  font-size: var(--fs-body-xs);
-}
-
-.package-empty,
-.inline-empty {
-  margin: 0;
-  padding: var(--space-md);
-  border-radius: var(--radius-md);
-  background-color: var(--color-surface);
-  color: var(--color-text-muted);
-  font-size: var(--fs-body-sm);
 }
 
 .install-heading,
@@ -309,12 +272,6 @@
   flex-direction: column;
   align-items: flex-end;
   gap: var(--space-sm);
-
-  small {
-    color: var(--color-text-muted);
-    font-size: var(--fs-body-xs);
-    font-variant-numeric: tabular-nums;
-  }
 }
 
 .blocked-list {

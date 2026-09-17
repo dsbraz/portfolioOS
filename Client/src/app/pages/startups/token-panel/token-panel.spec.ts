@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 
 import { Executive } from '../../../models/executive.model';
@@ -49,7 +50,7 @@ describe('TokenPanel', () => {
     vi.restoreAllMocks();
   });
 
-  it('splits recipients into reachable and blocked by contact validity', async () => {
+  it('splits recipients into reachable and blocked by contact', async () => {
     const element = await render([
       executive({ name: 'Ana Costa' }),
       executive({ id: 'e2', name: 'Bruno Lima', phone: 'ramal 22' }),
@@ -60,9 +61,30 @@ describe('TokenPanel', () => {
     expect(element.textContent).toContain('Sem canal de envio');
   });
 
-  // E-mail is the fallback channel: an executive with no usable phone is still
-  // reachable when a registered address exists.
-  it('offers e-mail when the phone cannot be used', async () => {
+  it('builds the WhatsApp link with the fund message encoded', async () => {
+    const element = await render([executive({ name: 'Ana Costa Ribeiro' })]);
+
+    const href = element
+      .querySelector('[aria-label="Enviar por WhatsApp para Ana Costa Ribeiro"]')
+      ?.getAttribute('href');
+    const message =
+      'Olá Ana. Tudo bem?\n' +
+      `Segue o link para atualizações dos dados referentes a julho/2026: ${window.location.origin}/monthly-indicator/abc123\n` +
+      'Obrigado';
+    expect(href).toBe(`https://wa.me/5511912345678?text=${encodeURIComponent(message)}`);
+  });
+
+  // One channel per executive: WhatsApp when it resolves, e-mail only otherwise.
+  it('offers only WhatsApp when both channels resolve', async () => {
+    const element = await render([executive({ name: 'Ana Costa', email: 'ana@vertah.com.br' })]);
+
+    const actions = [...element.querySelectorAll('a[aria-label^="Enviar por"]')].map((a) =>
+      a.getAttribute('aria-label'),
+    );
+    expect(actions).toEqual(['Enviar por WhatsApp para Ana Costa']);
+  });
+
+  it('falls back to e-mail when there is no phone, and says why', async () => {
     const element = await render([
       executive({ name: 'Marina Alencar', phone: null, email: 'marina@vertah.com.br' }),
     ]);
@@ -70,39 +92,42 @@ describe('TokenPanel', () => {
     const mail = element.querySelector<HTMLAnchorElement>(
       '[aria-label="Enviar por e-mail para Marina Alencar"]',
     );
-    expect(mail?.tagName).toBe('A');
-    expect(mail?.getAttribute('href')).toContain('mailto:marina@vertah.com.br?subject=');
-    // Reachable by some channel, so it is not an impediment.
+    expect(mail?.getAttribute('href')).toContain(
+      `mailto:marina@vertah.com.br?subject=${encodeURIComponent('Vertah — indicadores de julho/2026')}`,
+    );
+    expect(element.textContent).toContain('Sem telefone cadastrado');
     expect(element.textContent).not.toContain('Sem canal de envio');
   });
 
-  it('blocks only when neither channel resolves', async () => {
+  // Records saved before the country code became mandatory must not vanish.
+  it('names a legacy phone without country code as the reason for e-mail', async () => {
     const element = await render([
-      executive({ name: 'Bruno Lima', phone: 'ramal 22', email: null }),
+      executive({ name: 'Marina Alencar', phone: '11912345678', email: 'marina@vertah.com.br' }),
     ]);
 
     expect(element.querySelector('[aria-label^="Enviar por WhatsApp"]')).toBeNull();
-    expect(element.querySelector('[aria-label^="Enviar por e-mail"]')).toBeNull();
-    expect(element.textContent).toContain('Sem canal de envio');
+    expect(element.querySelector('[aria-label="Enviar por e-mail para Marina Alencar"]')).toBeTruthy();
+    expect(element.textContent).toContain('Telefone sem código do país');
   });
 
-  it('offers both channels when both resolve, with WhatsApp first', async () => {
+  it('encodes the address so it cannot add recipients to the mail', async () => {
     const element = await render([
-      executive({ name: 'Ana Costa', email: 'ana@vertah.com.br' }),
+      executive({ name: 'Marina Alencar', phone: null, email: 'x?bcc=eu@fora.com' }),
     ]);
 
-    const actions = [...element.querySelectorAll('a[aria-label^="Enviar por"]')].map((a) =>
-      a.getAttribute('aria-label'),
-    );
-    expect(actions).toEqual([
-      'Enviar por WhatsApp para Ana Costa',
-      'Enviar por e-mail para Ana Costa',
-    ]);
+    const href = element.querySelector('[aria-label^="Enviar por e-mail"]')?.getAttribute('href');
+    expect(href).toMatch(/^mailto:x%3Fbcc%3Deu@fora\.com\?subject=/);
   });
 
-  // The fund's executives are not all in Brazil: a foreign number carrying its
-  // country prefix is a normal recipient, not an impediment.
-  it('reaches a foreign executive whose number carries its country prefix', async () => {
+  it('blocks only when neither channel resolves', async () => {
+    const element = await render([executive({ name: 'Bruno Lima', phone: '11912345678' })]);
+
+    expect(element.querySelector('[aria-label^="Enviar por"]')).toBeNull();
+    expect(element.textContent).toContain('Sem canal de envio');
+    expect(element.textContent).toContain('Telefone sem código do país');
+  });
+
+  it('reaches a foreign executive whose number carries its country code', async () => {
     const element = await render([
       executive({ id: 'e3', name: 'John Miller', phone: '+14155551234' }),
     ]);
@@ -111,32 +136,22 @@ describe('TokenPanel', () => {
       '[aria-label="Enviar por WhatsApp para John Miller"]',
     );
     expect(send?.getAttribute('href')).toContain('https://wa.me/14155551234?text=');
-    // Shown as stored — no invented grouping for a country whose rules we do
-    // not encode.
     expect(element.textContent).toContain('+14155551234');
-    expect(element.textContent).not.toContain('Sem canal de envio');
   });
 
-  // Clipboard failure is common outside a secure context; the panel promises a
-  // soft landing because the link is always visible as text (RFC-001 §6).
+  // Outside a secure context the clipboard rejects; the link stays visible as text.
   it('reports a clipboard failure and points at the visible link', async () => {
     Object.defineProperty(navigator, 'clipboard', {
-      value: { writeText: () => Promise.reject(new Error('sem permissão')) },
+      value: { writeText: () => Promise.reject(new Error('denied')) },
       configurable: true,
     });
-    const snackSpy = vi.fn();
-    await render([executive({})]);
-    // Reach into the injected snackbar of this fixture.
-    const component = fixture.componentInstance as unknown as {
-      snackBar: { open: typeof snackSpy };
-      copyLink(): void;
-    };
-    component.snackBar.open = snackSpy;
+    const element = await render([executive({})]);
+    const open = vi.spyOn(fixture.debugElement.injector.get(MatSnackBar), 'open');
 
-    component.copyLink();
-    await new Promise((resolve) => setTimeout(resolve));
+    element.querySelector<HTMLButtonElement>('[aria-label^="Copiar link de"]')?.click();
+    await fixture.whenStable();
 
-    expect(snackSpy).toHaveBeenCalledWith(
+    expect(open).toHaveBeenCalledWith(
       'Não foi possível copiar. O link está visível acima para copiar manualmente.',
       'Fechar',
       expect.anything(),

@@ -7,7 +7,7 @@ import { MatTableModule } from '@angular/material/table';
 import { DialogHeader } from '../../../components/dialog-header/dialog-header';
 import { Executive } from '../../../models/executive.model';
 import { MonthlyIndicatorToken } from '../../../models/monthly-indicator-token.model';
-import { MONTH_LABELS } from '../../../models/monthly-indicator.model';
+import { formatPeriod } from '../../../models/formatters';
 import { TokenPanelDialog, TokenPanelDialogData } from '../token-panel-dialog/token-panel-dialog';
 
 export interface TokenListDialogData {
@@ -31,7 +31,7 @@ export interface TokenListDialogData {
           </caption>
           <ng-container matColumnDef="period">
             <th mat-header-cell *matHeaderCellDef scope="col">Período</th>
-            <td mat-cell *matCellDef="let t">{{ periodOf(t) }}</td>
+            <td mat-cell *matCellDef="let t">{{ formatPeriod(t.month, t.year) }}</td>
           </ng-container>
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef scope="col">
@@ -41,7 +41,7 @@ export interface TokenListDialogData {
               <button
                 mat-stroked-button
                 type="button"
-                [attr.aria-label]="'Abrir link de ' + periodOf(t)"
+                [attr.aria-label]="'Abrir link de ' + formatPeriod(t.month, t.year)"
                 (click)="openPanel(t)"
               >
                 <mat-icon aria-hidden="true">link</mat-icon>
@@ -72,11 +72,8 @@ export interface TokenListDialogData {
 export class TokenListDialog {
   readonly data = inject<TokenListDialogData>(MAT_DIALOG_DATA);
   private readonly dialog = inject(MatDialog);
+  readonly formatPeriod = formatPeriod;
   readonly columns = ['period', 'actions'];
-
-  periodOf(token: MonthlyIndicatorToken): string {
-    return `${MONTH_LABELS[token.month]}/${token.year}`;
-  }
 
   /**
    * The link itself lives in the panel, not here: one row action per period with

@@ -5,9 +5,9 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Executive } from '../../../models/executive.model';
 import { ExecutiveFormDialog } from './executive-form-dialog';
 
-describe('ExecutiveFormDialog em modo leitura', () => {
+describe('ExecutiveFormDialog in read mode', () => {
   it('should render the record as text instead of disabled form controls', async () => {
-    const executivo = {
+    const executive = {
       name: 'Ana Ribeiro',
       role: 'CEO',
       email: 'ana@cardume.com.br',
@@ -20,7 +20,7 @@ describe('ExecutiveFormDialog em modo leitura', () => {
       providers: [
         provideNoopAnimations(),
         { provide: MatDialogRef, useValue: { close: vi.fn() } },
-        { provide: MAT_DIALOG_DATA, useValue: { executive: executivo, readonly: true } },
+        { provide: MAT_DIALOG_DATA, useValue: { executive, readonly: true } },
       ],
     }).compileComponents();
 
@@ -72,26 +72,24 @@ describe('ExecutiveFormDialog', () => {
     );
   });
 
-  // The country prefix is mandatory (product decision, 2026-08-19): the fund's
-  // executives are not all in Brazil, so the country cannot be guessed.
-  it('should refuse a phone without the country prefix', () => {
+  it.each(['(415) 555-1234', '+12'])('should refuse the phone %s', (phone) => {
     dialogRefSpy.close.mockClear();
-    component.form.patchValue({ name: 'John Miller', phone: '(415) 555-1234' });
+    component.form.patchValue({ name: 'John Miller', phone });
 
     component.onSubmit();
 
-    expect(component.form.controls.phone.hasError('phoneCountryPrefix')).toBe(true);
+    expect(component.form.controls.phone.hasError('pattern')).toBe(true);
     expect(dialogRefSpy.close).not.toHaveBeenCalled();
   });
 
-  it('should accept a foreign number that carries its prefix, stored in E.164', () => {
+  it('should accept a foreign number that carries its prefix', () => {
     dialogRefSpy.close.mockClear();
     component.form.patchValue({ name: 'John Miller', phone: '+1 415 555 1234' });
 
     component.onSubmit();
 
     expect(dialogRefSpy.close).toHaveBeenCalledWith(
-      expect.objectContaining({ phone: '+14155551234' }),
+      expect.objectContaining({ phone: '+1 415 555 1234' }),
     );
   });
 
@@ -102,7 +100,7 @@ describe('ExecutiveFormDialog', () => {
     component.onSubmit();
 
     expect(dialogRefSpy.close).toHaveBeenCalledWith(
-      expect.objectContaining({ phone: null }),
+      expect.objectContaining({ phone: '' }),
     );
   });
 });

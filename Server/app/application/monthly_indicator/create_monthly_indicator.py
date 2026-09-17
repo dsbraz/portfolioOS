@@ -5,7 +5,9 @@ from app.repositories.monthly_indicator_repository import (
     MonthlyIndicatorRepository,
 )
 
-_REPORTED_FIELDS = (
+# Fields an upsert overwrites when the incoming value is present; absence never
+# erases what is stored.
+_MERGED_FIELDS = (
     "total_revenue",
     "recurring_revenue_pct",
     "gross_margin_pct",
@@ -25,32 +27,28 @@ class CreateMonthlyIndicator:
     async def execute(self, indicator: MonthlyIndicator) -> MonthlyIndicator:
         validate_period_not_future(indicator.month, indicator.year)
 
-        existing = await self._repository.get_by_startup_and_period(
+        existing = await self._find_existing(indicator)
+        if existing is None:
+            try:
+                return await self._repository.create(indicator)
+            except ConflictError:
+                # Another request created the period after the lookup. Creating
+                # is an upsert, so merge into the record that won.
+                existing = await self._find_existing(indicator)
+                if existing is None:
+                    raise
+        return await self._merge(existing, indicator)
+
+    async def _find_existing(self, indicator: MonthlyIndicator) -> MonthlyIndicator | None:
+        return await self._repository.get_by_startup_and_period(
             indicator.startup_id, indicator.month, indicator.year
         )
-        if existing:
-            return await self._merge(indicator, existing)
-
-        try:
-            return await self._repository.create(indicator)
-        except ConflictError:
-            # Lost the insert race: another writer created this period between
-            # the check above and the insert. The intent is "this period should
-            # carry these values", so merge onto the row that landed instead of
-            # failing a write the caller reasonably expects to succeed.
-            winner = await self._repository.get_by_startup_and_period(
-                indicator.startup_id, indicator.month, indicator.year
-            )
-            if winner is None:
-                raise
-            return await self._merge(indicator, winner)
 
     async def _merge(
-        self, incoming: MonthlyIndicator, target: MonthlyIndicator
+        self, existing: MonthlyIndicator, incoming: MonthlyIndicator
     ) -> MonthlyIndicator:
-        """Field by field, absence never erases (PRD-001 §6.1/§8)."""
-        for field in _REPORTED_FIELDS:
+        for field in _MERGED_FIELDS:
             value = getattr(incoming, field)
             if value is not None:
-                setattr(target, field, value)
-        return await self._repository.update(target)
+                setattr(existing, field, value)
+        return await self._repository.update(existing)

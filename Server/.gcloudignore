@@ -7,6 +7,6 @@ venv/
 .git
 .gitignore
 tests/
-!skills/**/tests/
-!skills/**/tests/**
+# Only the built archive in static/ ships; the pack source is for tests.
+skills/
 Dockerfile

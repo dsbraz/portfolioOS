@@ -6,12 +6,12 @@ import { MAT_DIALOG_DEFAULT_OPTIONS, MatDialog, MatDialogModule } from '@angular
 import { dialogDefaults } from './app.config';
 
 @Component({ template: '<p>conteúdo</p>' })
-class DialogoDeTeste {}
+class TestDialog {}
 
 describe('dialogDefaults', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [MatDialogModule, DialogoDeTeste],
+      imports: [MatDialogModule, TestDialog],
       providers: [
         provideNoopAnimations(),
         { provide: MAT_DIALOG_DEFAULT_OPTIONS, useValue: dialogDefaults },
@@ -19,14 +19,14 @@ describe('dialogDefaults', () => {
     }).compileComponents();
   });
 
-  // Regressão: `MAT_DIALOG_DEFAULT_OPTIONS` SUBSTITUI a configuração padrão do
-  // Material. Sem declarar `role` aqui, o container saía com `aria-modal="true"`
-  // e nenhum role — e `aria-modal` só tem significado sobre um `role="dialog"`.
-  // Assistive tech deixava de anunciar o diálogo como diálogo.
+  // Regression: `MAT_DIALOG_DEFAULT_OPTIONS` REPLACES Material's default
+  // config. Without declaring `role` here, the container came out with
+  // `aria-modal="true"` and no role — and `aria-modal` only has meaning on a
+  // `role="dialog"`. Assistive tech stopped announcing the dialog as a dialog.
   it('should open dialogs with both role and aria-modal', () => {
     const dialog = TestBed.inject(MatDialog);
-    dialog.open(DialogoDeTeste);
-    // Os atributos do container só chegam ao DOM depois da detecção de mudanças.
+    dialog.open(TestDialog);
+    // The container attributes only reach the DOM after change detection.
     TestBed.inject(ApplicationRef).tick();
     const container = document.querySelector('.mat-mdc-dialog-container');
     expect(container?.getAttribute('role')).toBe('dialog');

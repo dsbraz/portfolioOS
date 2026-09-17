@@ -18,8 +18,8 @@ describe('CurrencyInput', () => {
   let host: TestHost;
   let input: HTMLInputElement;
 
-  const digitar = (texto: string) => {
-    input.value = texto;
+  const typeText = (text: string) => {
+    input.value = text;
     input.dispatchEvent(new Event('input'));
     fixture.detectChanges();
   };
@@ -33,42 +33,59 @@ describe('CurrencyInput', () => {
   });
 
   it('should format what the user types as pt-BR currency', () => {
-    digitar('125000000');
+    typeText('125000000');
     expect(input.value).toBe('1.250.000,00');
   });
 
-  // O ponto do componente: a máscara é de APRESENTAÇÃO. Se o controle guardasse
-  // a string formatada, o formulário enviaria "1.250.000,00" para a API.
+  // The point of the component: the mask is for PRESENTATION only. If the control
+  // held the formatted string, the form would send "1.250.000,00" to the API.
   it('should keep the control value numeric', () => {
-    digitar('125000000');
+    typeText('125000000');
     expect(host.control.value).toBe(1250000);
   });
 
   it('should treat the last two digits as cents', () => {
-    digitar('1234');
+    typeText('1234');
     expect(input.value).toBe('12,34');
     expect(host.control.value).toBe(12.34);
   });
 
   it('should support negative values for burn', () => {
-    digitar('-13820000');
+    typeText('-13820000');
     expect(host.control.value).toBe(-138200);
   });
 
-  // Regressão: o "-" chega sozinho, antes de qualquer dígito. Limpar o campo
-  // nesse instante descartava o sinal, e o burn nunca ficava negativo.
+  // Regression: the "-" arrives on its own, before any digit. Clearing the field
+  // at that moment dropped the sign, and burn never became negative.
   it('should keep the minus sign typed before any digit', () => {
-    digitar('-');
+    typeText('-');
     expect(input.value).toBe('-');
 
-    digitar('-13820000');
+    typeText('-13820000');
     expect(input.value).toBe('-138.200,00');
     expect(host.control.value).toBe(-138200);
   });
 
+  // Regression: the sign only counted when the text STARTED with "-". The cursor
+  // is moved to the end after every keystroke, so a "-" typed after the number
+  // landed at the end and was silently dropped — the burn was saved positive.
+  it('should make a typed number negative when "-" is typed after it', () => {
+    typeText('1234');
+    typeText('12,34-');
+    expect(input.value).toBe('-12,34');
+    expect(host.control.value).toBe(-12.34);
+  });
+
+  it('should toggle back to positive when "-" is typed again', () => {
+    typeText('-1234');
+    typeText('-12,34-');
+    expect(input.value).toBe('12,34');
+    expect(host.control.value).toBe(12.34);
+  });
+
   it('should clear to null when emptied', () => {
-    digitar('1234');
-    digitar('');
+    typeText('1234');
+    typeText('');
     expect(input.value).toBe('');
     expect(host.control.value).toBeNull();
   });

@@ -2,8 +2,11 @@ import uuid
 
 from app.domain.exceptions import ConflictError
 from app.domain.models.user import User
-from app.domain.validators import validate_username_no_spaces
-from app.infrastructure.bcrypt_password_hasher import BcryptPasswordHasher
+from app.domain.password_hasher import PasswordHasher
+from app.domain.validators import (
+    validate_password_max_bytes,
+    validate_username_no_spaces,
+)
 from app.repositories.user_repository import UserRepository
 
 
@@ -11,7 +14,7 @@ class UpdateUser:
     def __init__(
         self,
         repository: UserRepository,
-        password_hasher: BcryptPasswordHasher,
+        password_hasher: PasswordHasher,
     ) -> None:
         self._repository = repository
         self._hasher = password_hasher
@@ -32,6 +35,7 @@ class UpdateUser:
 
         password = updates.pop("password", None)
         if password:
+            validate_password_max_bytes(password)
             user.hashed_password = self._hasher.hash(password)
 
         username = updates.get("username")

@@ -18,78 +18,67 @@
 <section class="panel-section" aria-labelledby="token-send-title">
   <p class="section-title" id="token-send-title">Enviar para a investida</p>
 
-  @if (reachable().length === 0 && blocked().length === 0) {
+  @if (recipients().length === 0) {
     <p class="panel-empty">
       Nenhum executivo cadastrado nesta startup. Cadastre o responsável na aba
       <strong>Executivos</strong>, com telefone ou e-mail, para poder enviar.
     </p>
-  } @else {
-    @if (reachable().length > 0) {
-      <ul class="recipient-list" role="list">
-        @for (recipient of reachable(); track recipient.name) {
-          <li>
-            <div class="recipient-copy">
-              <h3>{{ recipient.name }}</h3>
-              <p>
-                {{ recipient.role ?? 'Sem cargo informado' }}
-                @if (recipient.formattedPhone) {
-                  · {{ recipient.formattedPhone }}
-                }
-                @if (recipient.email) {
-                  · {{ recipient.email }}
-                }
-              </p>
-            </div>
-            <!-- WhatsApp first: it is the fund's habit. E-mail is the fallback
-                 that keeps the person reachable when the phone is not usable. -->
-            <div class="recipient-actions">
-              @if (recipient.whatsappUrl) {
-                <a
-                  mat-flat-button
-                  [href]="recipient.whatsappUrl"
-                  target="_blank"
-                  rel="noopener"
-                  [attr.aria-label]="'Enviar por WhatsApp para ' + recipient.name"
-                >
-                  <mat-icon aria-hidden="true">send</mat-icon>
-                  WhatsApp
-                </a>
-              }
-              @if (recipient.mailtoUrl) {
-                <a
-                  mat-stroked-button
-                  [href]="recipient.mailtoUrl"
-                  [attr.aria-label]="'Enviar por e-mail para ' + recipient.name"
-                >
-                  <mat-icon aria-hidden="true">mail</mat-icon>
-                  E-mail
-                </a>
-              }
-            </div>
-          </li>
-        }
-      </ul>
-    }
+  }
 
-    @if (blocked().length > 0) {
-      <ul class="recipient-list recipient-list--blocked" role="list">
-        @for (recipient of blocked(); track recipient.name) {
-          <li>
-            <div class="recipient-copy">
-              <h3>{{ recipient.name }}</h3>
-              <p>{{ recipient.role ?? 'Sem cargo informado' }}</p>
-            </div>
-            <span class="pill pill--warn">Sem canal de envio</span>
-          </li>
-        }
-      </ul>
-      <p class="panel-hint">
-        Para enviar, cadastre um e-mail válido ou um telefone com o código do país — por
-        exemplo <span class="phone-example">+55 11 91234-5678</span> ou
-        <span class="phone-example">+1 415 555 1234</span>. Corrija o cadastro na aba
-        <strong>Executivos</strong>.
-      </p>
-    }
+  @if (reachable().length > 0) {
+    <ul class="recipient-list" role="list">
+      @for (recipient of reachable(); track recipient.name) {
+        <li>
+          <div class="recipient-copy">
+            <h3>{{ recipient.name }}</h3>
+            <p>{{ recipient.role ?? 'Sem cargo informado' }} · {{ recipient.contact }}</p>
+            @if (recipient.channel === 'email') {
+              <p>{{ recipient.notice }} — enviando por e-mail.</p>
+            }
+          </div>
+          @if (recipient.channel === 'whatsapp') {
+            <a
+              mat-flat-button
+              [href]="recipient.url"
+              target="_blank"
+              rel="noopener"
+              [attr.aria-label]="'Enviar por WhatsApp para ' + recipient.name"
+            >
+              <mat-icon aria-hidden="true">send</mat-icon>
+              WhatsApp
+            </a>
+          } @else {
+            <a
+              mat-flat-button
+              [href]="recipient.url"
+              [attr.aria-label]="'Enviar por e-mail para ' + recipient.name"
+            >
+              <mat-icon aria-hidden="true">mail</mat-icon>
+              E-mail
+            </a>
+          }
+        </li>
+      }
+    </ul>
+  }
+
+  @if (blocked().length > 0) {
+    <ul class="recipient-list recipient-list--blocked" role="list">
+      @for (recipient of blocked(); track recipient.name) {
+        <li>
+          <div class="recipient-copy">
+            <h3>{{ recipient.name }}</h3>
+            <p>{{ recipient.role ?? 'Sem cargo informado' }} · {{ recipient.notice }}</p>
+          </div>
+          <span class="pill pill--warn">Sem canal de envio</span>
+        </li>
+      }
+    </ul>
+    <p class="panel-hint">
+      Para enviar, cadastre um telefone com o código do país (por exemplo
+      <span class="phone-example">+55 11 91234-5678</span>) ou um e-mail. Corrija o cadastro
+      na aba <strong>Executivos</strong>.
+    </p>
   }
 </section>
 

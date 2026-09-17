@@ -120,3 +120,11 @@ async def test_allows_case_only_update_for_same_user(use_case, repo):
 
     assert result is user
     repo.update.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_rejects_password_over_72_bytes(use_case, hasher):
+    user = _make_user()
+    with pytest.raises(ValueError, match="72"):
+        await use_case.execute(user, {"password": "a" * 73})
+    hasher.hash.assert_not_called()

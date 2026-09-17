@@ -1,17 +1,5 @@
 .add-indicator-form {
-  display: flex;
-  flex-direction: column;
   min-width: min(34rem, 100%);
-}
-
-.form-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-md);
-
-  .field {
-    flex: 1 1 12rem;
-  }
 }
 
 .mode-selector {

@@ -24,7 +24,7 @@ class UpdateMonthlyIndicator:
             occupant = await self._repository.get_by_startup_and_period(
                 indicator.startup_id, month, year
             )
-            if occupant is not None and occupant.id != indicator.id:
+            if occupant is not None:
                 raise ConflictError(
                     f"Ja existe indicador para o periodo {month}/{year}"
                 )

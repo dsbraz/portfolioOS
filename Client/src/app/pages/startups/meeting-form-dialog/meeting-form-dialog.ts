@@ -32,7 +32,6 @@ import { formatIsoDate } from '../../../models/formatters';
   ],
   providers: [provideNativeDateAdapter()],
   templateUrl: './meeting-form-dialog.html',
-  styleUrl: './meeting-form-dialog.scss',
 })
 export class MeetingFormDialog implements OnInit {
   private readonly fb = inject(FormBuilder);
@@ -50,10 +49,10 @@ export class MeetingFormDialog implements OnInit {
     next_steps: [''],
   });
 
-  /** Ver [[ReadView]]: o modo leitura deixou de ser um formulário desabilitado. */
+  /** See [[ReadView]]: read mode is no longer a disabled form. */
   readonly readSections: ReadSection[] = this.buildReadSections();
 
-  /** A reunião não tem grupos no modo de edição, então também não tem aqui. */
+  /** The meeting has no groups in edit mode, so it has none here either. */
   private buildReadSections(): ReadSection[] {
     const m = this.data?.meeting;
     if (!m) return [];
@@ -62,7 +61,7 @@ export class MeetingFormDialog implements OnInit {
       {
         items: [
           { label: 'Data', value: formatIsoDate(m.meeting_date) },
-          // Texto em branco é ausência: um textarea nunca preenchido chega vazio.
+          // Blank text means absence: a never-filled textarea arrives empty.
           { label: 'Participantes', value: m.participants || null, kind: 'long' },
           { label: 'Resumo', value: m.summary || null, kind: 'long' },
           { label: 'Pontos de atenção', value: m.attention_points || null, kind: 'long' },

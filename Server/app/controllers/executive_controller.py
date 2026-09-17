@@ -38,13 +38,7 @@ async def create_executive(
     use_case: CreateExecutive = Depends(executive_builder(CreateExecutive)),
 ):
     executive = Executive(startup_id=startup_id, **data.model_dump())
-    try:
-        created = await use_case.execute(executive)
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
-        )
+    created = await use_case.execute(executive)
     return ExecutiveResponse.model_validate(created)
 
 
@@ -77,15 +71,7 @@ async def update_executive(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Executivo com id {executive_id} não encontrado",
         )
-    try:
-        updated = await update_uc.execute(
-            executive, data.model_dump(exclude_unset=True)
-        )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
-        )
+    updated = await update_uc.execute(executive, data.model_dump(exclude_unset=True))
     return ExecutiveResponse.model_validate(updated)
 
 

@@ -5,9 +5,9 @@ export enum StartupStatus {
 }
 
 /**
- * Gravidade do status, para ordenação. O status é ORDINAL, não alfabético:
- * ordenar por rótulo daria "Atenção, Crítico, Saudável", que não é ordem
- * nenhuma. Crescente traz o mais saudável primeiro.
+ * Status severity, for sorting. Status is ORDINAL, not alphabetical:
+ * sorting by label would yield "Atenção, Crítico, Saudável", which is no
+ * order at all. Ascending puts the healthiest first.
  */
 export const STARTUP_STATUS_SEVERITY: Record<StartupStatus, number> = {
   [StartupStatus.HEALTHY]: 0,

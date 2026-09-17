@@ -6,6 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import {
   Deal,
@@ -27,6 +28,7 @@ import {
     MatMenuModule,
     MatDialogModule,
     MatSnackBarModule,
+    MatProgressSpinnerModule,
     CdkDropList,
     CdkDrag,
   ],
@@ -40,13 +42,9 @@ export class Dealflow implements OnInit {
 
   readonly deals = signal<Deal[]>([]);
   readonly loading = signal(false);
-  // Born with every column present: the template reads
-  // `dealsByStage()[stage].length` unconditionally, so a bare `{}` crashed any
-  // render that happened before the load resolved — including every load
-  // failure, which turned an error toast into a broken page.
-  readonly dealsByStage = signal<Record<string, Deal[]>>(
-    Object.fromEntries(Object.values(DealStage).map((stage) => [stage, []])),
-  );
+  /** Distinguishes "not loaded yet / failed" from "loaded, no deals". */
+  readonly hasLoaded = signal(false);
+  readonly dealsByStage = signal<Record<string, Deal[]>>({});
 
   readonly stages = Object.values(DealStage);
   readonly stageConfig = DEAL_STAGE_CONFIG;
@@ -64,6 +62,7 @@ export class Dealflow implements OnInit {
       next: (response) => {
         this.deals.set(response.items);
         this.groupDealsByStage(response.items);
+        this.hasLoaded.set(true);
         this.loading.set(false);
       },
       error: (err) => {

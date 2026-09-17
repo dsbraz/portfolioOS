@@ -105,9 +105,8 @@ _MEETING_SEEDS: tuple[dict[str, Any], ...] = (
     },
 )
 
-# The three contact states the send panel branches on. Without all three, two
-# items of the manual acceptance script (RFC-002 §10) have no scenario to run
-# against: the e-mail fallback and the blocked recipient.
+# The three contact states the send panel branches on: WhatsApp, the e-mail
+# fallback and the blocked recipient.
 _EXECUTIVE_SEEDS: tuple[dict[str, Any], ...] = (
     {
         "id": uuid.UUID("2f1d6a4e-0b8c-4a1d-9f3e-6c2a7b5d4e10"),
@@ -215,13 +214,15 @@ def _apply_values(record: object, values: Mapping[str, Any]) -> None:
         setattr(record, field, value)
 
 
-async def _upsert_startup(session: AsyncSession) -> Startup:
-    startup = await session.get(Startup, DEMO_STARTUP_ID)
+async def _upsert_startup(
+    session: AsyncSession, startup_id: uuid.UUID, values: Mapping[str, Any]
+) -> Startup:
+    startup = await session.get(Startup, startup_id)
     if startup is None:
-        startup = Startup(id=DEMO_STARTUP_ID, **_STARTUP_VALUES)
+        startup = Startup(id=startup_id, **values)
         session.add(startup)
     else:
-        _apply_values(startup, _STARTUP_VALUES)
+        _apply_values(startup, values)
 
     await session.flush()
     return startup
@@ -257,90 +258,38 @@ async def _remove_scenario_drift(session: AsyncSession) -> None:
     )
 
 
-async def _upsert_indicators(session: AsyncSession) -> None:
-    for seed in _INDICATOR_SEEDS:
-        values = {key: value for key, value in seed.items() if key != "id"}
-        indicator = await session.get(MonthlyIndicator, seed["id"])
-
-        if indicator is None:
-            indicator = MonthlyIndicator(
-                id=seed["id"],
-                startup_id=DEMO_STARTUP_ID,
-                **values,
-            )
-            session.add(indicator)
-        else:
-            if indicator.startup_id != DEMO_STARTUP_ID:
-                raise RuntimeError(
-                    f"Demo indicator ID {indicator.id} belongs to another startup"
-                )
-            _apply_values(indicator, values)
-
-
-async def _upsert_meetings(session: AsyncSession) -> None:
-    for seed in _MEETING_SEEDS:
-        values = {key: value for key, value in seed.items() if key != "id"}
-        meeting = await session.get(BoardMeeting, seed["id"])
-        if meeting is None:
-            meeting = BoardMeeting(
-                id=seed["id"],
-                startup_id=DEMO_STARTUP_ID,
-                **values,
-            )
-            session.add(meeting)
-        else:
-            if meeting.startup_id != DEMO_STARTUP_ID:
-                raise RuntimeError(
-                    f"Demo meeting ID {meeting.id} belongs to another startup"
-                )
-            _apply_values(meeting, values)
-
-
-async def _upsert_record(
+async def _upsert_owned(
     session: AsyncSession,
     model: type,
-    seed: Mapping[str, Any],
+    seeds: tuple[dict[str, Any], ...],
     startup_id: uuid.UUID,
 ) -> None:
-    values = {key: value for key, value in seed.items() if key != "id"}
-    record = await session.get(model, seed["id"])
-    if record is None:
-        session.add(model(id=seed["id"], startup_id=startup_id, **values))
-        return
-    if record.startup_id != startup_id:
-        raise RuntimeError(
-            f"Demo {model.__name__} ID {record.id} belongs to another startup"
-        )
-    _apply_values(record, values)
+    for seed in seeds:
+        values = {key: value for key, value in seed.items() if key != "id"}
+        record = await session.get(model, seed["id"])
 
-
-async def _upsert_chase_startup(session: AsyncSession) -> Startup:
-    startup = await session.get(Startup, CHASE_STARTUP_ID)
-    if startup is None:
-        startup = Startup(id=CHASE_STARTUP_ID, **_CHASE_STARTUP_VALUES)
-        session.add(startup)
-    else:
-        _apply_values(startup, _CHASE_STARTUP_VALUES)
-
-    await session.flush()
-    return startup
+        if record is None:
+            session.add(model(id=seed["id"], startup_id=startup_id, **values))
+        else:
+            if record.startup_id != startup_id:
+                raise RuntimeError(
+                    f"Demo {model.__name__} ID {record.id} belongs to another startup"
+                )
+            _apply_values(record, values)
 
 
 async def seed_demo(session: AsyncSession) -> Startup:
     """Create or restore the records owned by the local demo scenario."""
-    startup = await _upsert_startup(session)
-    await _upsert_chase_startup(session)
+    startup = await _upsert_startup(session, DEMO_STARTUP_ID, _STARTUP_VALUES)
+    await _upsert_startup(session, CHASE_STARTUP_ID, _CHASE_STARTUP_VALUES)
     await _remove_scenario_drift(session)
-    await _upsert_indicators(session)
-    await _upsert_meetings(session)
-
-    for seed in _EXECUTIVE_SEEDS:
-        await _upsert_record(session, Executive, seed, DEMO_STARTUP_ID)
-    for seed in _CHASE_EXECUTIVE_SEEDS:
-        await _upsert_record(session, Executive, seed, CHASE_STARTUP_ID)
-    for seed in _CHASE_INDICATOR_SEEDS:
-        await _upsert_record(session, MonthlyIndicator, seed, CHASE_STARTUP_ID)
-
+    await _upsert_owned(session, MonthlyIndicator, _INDICATOR_SEEDS, DEMO_STARTUP_ID)
+    await _upsert_owned(session, BoardMeeting, _MEETING_SEEDS, DEMO_STARTUP_ID)
+    await _upsert_owned(session, Executive, _EXECUTIVE_SEEDS, DEMO_STARTUP_ID)
+    await _upsert_owned(
+        session, MonthlyIndicator, _CHASE_INDICATOR_SEEDS, CHASE_STARTUP_ID
+    )
+    await _upsert_owned(session, Executive, _CHASE_EXECUTIVE_SEEDS, CHASE_STARTUP_ID)
     await session.flush()
     return startup
 

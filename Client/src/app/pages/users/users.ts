@@ -4,10 +4,12 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSortModule } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 
 import { UserResponse } from '../../models/auth.model';
+import { formatDateTime } from '../../models/formatters';
 import { SortState, applySort } from '../../models/sorting';
 import { AuthService } from '../../services/auth.service';
 import { UserInviteService } from '../../services/user-invite.service';
@@ -26,6 +28,7 @@ import { UserFormDialog, UserFormDialogData } from './user-form-dialog/user-form
     MatDialogModule,
     MatIconModule,
     MatSnackBarModule,
+    MatProgressSpinnerModule,
     MatSortModule,
     MatTableModule,
   ],
@@ -40,7 +43,12 @@ export class Users implements OnInit {
 
   readonly users = signal<UserResponse[]>([]);
   readonly loading = signal(false);
+  /** Distinguishes "not loaded yet / failed" from "loaded, no users". */
+  readonly hasLoaded = signal(false);
+  readonly trackById = (_: number, user: UserResponse) => user.id;
   readonly displayedColumns = ['username', 'email', 'is_active', 'created_at', 'actions'];
+
+  readonly formatDateTime = formatDateTime;
 
   readonly sort = signal<SortState>({ active: '', direction: '' });
 
@@ -48,9 +56,9 @@ export class Users implements OnInit {
     applySort(this.users(), this.sort(), {
       username: (user) => user.username,
       email: (user) => user.email,
-      // Booleano vira número para ter ordem: ascendente traz Inativo primeiro.
+      // Boolean becomes a number to get an order: ascending puts Inativo first.
       is_active: (user) => (user.is_active ? 1 : 0),
-      // Timestamp ISO ordena corretamente como texto.
+      // An ISO timestamp sorts correctly as text.
       created_at: (user) => user.created_at,
     }),
   );
@@ -64,6 +72,7 @@ export class Users implements OnInit {
     this.authService.listUsers().subscribe({
       next: (data) => {
         this.users.set(data.items);
+        this.hasLoaded.set(true);
         this.loading.set(false);
       },
       error: (err) => {
@@ -119,12 +128,5 @@ export class Users implements OnInit {
         });
       },
     });
-  }
-
-  formatDate(dateStr: string): string {
-    return new Intl.DateTimeFormat('pt-BR', {
-      dateStyle: 'short',
-      timeStyle: 'short',
-    }).format(new Date(dateStr));
   }
 }

@@ -1,28 +1,19 @@
-import { Component, ElementRef, computed, inject, OnInit, signal, viewChild, viewChildren } from '@angular/core';
+import { Component, ElementRef, computed, inject, OnInit, signal, viewChildren } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatCardModule } from '@angular/material/card';
-import { MatDatepicker, MatDatepickerModule } from '@angular/material/datepicker';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSortModule } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
-import { MatExpansionModule } from '@angular/material/expansion';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { forkJoin } from 'rxjs';
 
-import { Startup, StartupStatus, STARTUP_STATUS_CONFIG } from '../../../models/startup.model';
-import { MonthlyIndicator, MONTH_LABELS } from '../../../models/monthly-indicator.model';
-import { formatCurrencyBRL } from '../../../models/formatters';
-import { formatPhone as toDisplayPhone } from '../../../models/whatsapp';
+import { Startup } from '../../../models/startup.model';
+import { MonthlyIndicator } from '../../../models/monthly-indicator.model';
+import { formatCurrencyBRL, formatPeriod } from '../../../models/formatters';
 import { SortState, applySort } from '../../../models/sorting';
 import { participationValue } from '../../../models/participation';
 import { BoardMeeting } from '../../../models/board-meeting.model';
@@ -66,22 +57,14 @@ import { KpiCard } from '../../../components/kpi-card/kpi-card';
   imports: [
     KpiCard,
     DatePipe,
-    FormsModule,
     MatButtonModule,
     MatIconModule,
-    MatCardModule,
-    MatDatepickerModule,
     MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatNativeDateModule,
     MatSnackBarModule,
     MatProgressSpinnerModule,
     MatSortModule,
     MatTableModule,
-    MatExpansionModule,
     MatMenuModule,
-    MatTooltipModule,
     StatusBadge,
   ],
   templateUrl: './startup-detail.html',
@@ -104,14 +87,16 @@ export class StartupDetail implements OnInit {
   readonly executives = signal<Executive[]>([]);
   readonly tokens = signal<MonthlyIndicatorToken[]>([]);
   readonly loading = signal(false);
-  readonly monthLabels = MONTH_LABELS;
-  readonly statusConfig = STARTUP_STATUS_CONFIG;
+  /** Reloads return new objects; tracking by id keeps rows (and the menu button
+   *  a dialog returns focus to) in the DOM. */
+  readonly trackById = (_: number, row: { id: string }) => row.id;
+  readonly formatPeriod = formatPeriod;
 
   private startupId = '';
 
   readonly tabButtons = viewChildren<ElementRef<HTMLButtonElement>>('tabBtn');
 
-  /** Seções da página. A ordem define a navegação por setas do tablist. */
+  /** Page sections. The order defines the tablist's arrow-key navigation. */
   readonly sections = [
     { id: 'indicadores' as const, label: 'Indicadores Mensais' },
     { id: 'reunioes' as const, label: 'Reuniões de Conselho' },
@@ -158,8 +143,8 @@ export class StartupDetail implements OnInit {
   readonly executiveSort = signal<SortState>({ active: '', direction: '' });
 
   /**
-   * "Período" mostra `Jul/2026`, mas ordena por ano e mês. Comparar o texto
-   * poria Ago antes de Jul, e 2025 no meio de 2026.
+   * "Período" shows `Jul/2026`, but sorts by year and month. Comparing the text
+   * would put Ago before Jul, and 2025 in the middle of 2026.
    */
   readonly sortedIndicators = computed(() =>
     applySort(this.indicators(), this.indicatorSort(), {
@@ -173,7 +158,7 @@ export class StartupDetail implements OnInit {
 
   readonly sortedMeetings = computed(() =>
     applySort(this.meetings(), this.meetingSort(), {
-      // Data ISO (`YYYY-MM-DD`) já ordena corretamente como texto.
+      // An ISO date (`YYYY-MM-DD`) already sorts correctly as text.
       meeting_date: (m) => m.meeting_date,
       summary: (m) => m.summary,
     }),
@@ -237,12 +222,6 @@ export class StartupDetail implements OnInit {
 
   formatCurrency(value: number | null): string {
     return formatCurrencyBRL(value) ?? '-';
-  }
-
-  /** Falls back to the stored value so a legacy record without the country
-   *  prefix stays visible — and visibly in need of a fix. */
-  formatPhone(value: string | null): string {
-    return toDisplayPhone(value) ?? value ?? '-';
   }
 
   extractDomain(url: string): string {

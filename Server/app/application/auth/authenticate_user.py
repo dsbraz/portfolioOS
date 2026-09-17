@@ -1,5 +1,5 @@
 from app.domain.models.user import User
-from app.infrastructure.bcrypt_password_hasher import BcryptPasswordHasher
+from app.domain.password_hasher import PasswordHasher
 from app.repositories.user_repository import UserRepository
 
 
@@ -7,7 +7,7 @@ class AuthenticateUser:
     def __init__(
         self,
         repository: UserRepository,
-        password_hasher: BcryptPasswordHasher,
+        password_hasher: PasswordHasher,
     ) -> None:
         self._repository = repository
         self._hasher = password_hasher

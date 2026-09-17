@@ -1,4 +1,4 @@
-<div class="dealflow-page">
+<div class="dealflow-page" [attr.aria-busy]="loading() ? 'true' : null">
   <div class="dealflow-content">
     <header class="page-head">
       <div class="page-head-text">
@@ -13,6 +13,16 @@
       </div>
     </header>
 
+    @if (!hasLoaded()) {
+      <div class="page-status" role="status">
+        @if (loading()) {
+          <mat-spinner diameter="24" aria-hidden="true" />
+          <span>Carregando deals…</span>
+        } @else {
+          <span>Não foi possível carregar os deals.</span>
+        }
+      </div>
+    } @else {
     <div class="kanban-board">
     @for (stage of stages; track stage) {
       <div class="kanban-column">
@@ -39,8 +49,7 @@
             <mat-card class="deal-card" cdkDrag [cdkDragData]="deal" (click)="openEditDialog(deal)">
               <mat-card-content>
                 <div class="deal-head">
-                  <!-- Um botão, não um link: o card ABRE UM DIÁLOGO, não navega.
-                       É o que dá nome, papel e caminho por teclado ao card. -->
+                  <!-- A button, not a link: the card opens a dialog instead of navigating. -->
                   <button
                     type="button"
                     class="deal-empresa row-opener"
@@ -98,5 +107,6 @@
       </div>
     }
     </div>
+    }
   </div>
 </div>

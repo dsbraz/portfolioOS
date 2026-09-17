@@ -63,9 +63,8 @@ describe('Dealflow', () => {
     vi.restoreAllMocks();
   });
 
-  // Regressão: o card era pointer-only. Um card que só responde a clique não é
-  // um controle — sem papel, sem nome e sem caminho por teclado —, então nem
-  // leitor de tela nem agente conseguiam abrir um negócio.
+  // Regression: the card was pointer-only, with no role, name or keyboard path,
+  // so neither a screen reader nor an agent could open a deal.
   it('opens a deal from a named, keyboard-reachable control', async () => {
     const element = await render();
 

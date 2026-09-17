@@ -8,12 +8,10 @@
 }
 
 // ---------- Page head ----------
+// Base rules come from the global `.page-head`; only the deltas live here.
 .page-head {
-  display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-sm);
-  margin-bottom: var(--panel-gap);
 }
 
 .header-logo,
@@ -40,13 +38,6 @@
   color: var(--color-text-muted);
 }
 
-.page-head-text {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2xs);
-  min-width: 0;
-}
-
 .header-name-row {
   display: flex;
   align-items: baseline;
@@ -62,23 +53,11 @@ app-status-badge {
   align-self: center;
 }
 
-.page-head-title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--fs-heading-md);
-  font-weight: var(--fw-medium);
-  letter-spacing: var(--ls-tight);
-  line-height: var(--lh-tight);
-}
-
 .page-head-sub {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: var(--space-2xs);
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--fs-body-sm);
 }
 
 // Links carry the FUNCTIONAL accent (purple), not the primary ink (black).
@@ -103,31 +82,18 @@ app-status-badge {
   font-size: 0.875rem;
 }
 
-.page-head-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-xs);
-  margin-inline-start: auto;
-}
-
-.danger-btn {
-  --mdc-outlined-button-label-text-color: var(--color-danger);
-  color: var(--color-danger);
-}
-
 // ---------- KPIs ----------
 .kpi-grid {
   display: grid;
-  // Intrínseca, não por breakpoint: `repeat(N, minmax(0, 1fr))` obrigava N
-  // colunas e deixava cada uma encolher ABAIXO do conteúdo — daí o número
-  // cortado pela borda do card. Aqui o piso de 13.5rem é medido, não estimado:
-  // é a largura em que o valor mais largo cabe no menor tamanho de fonte. Quando
-  // não couberem N lado a lado, a grade quebra a linha em vez de espremer.
+  // Intrinsic, not by breakpoint: `repeat(N, minmax(0, 1fr))` forced N columns
+  // and let each shrink BELOW its content — hence the number clipped by the
+  // card border. Here the 13.5rem floor is measured, not estimated: it is the
+  // width at which the widest value fits at the smallest font size. When N do
+  // not fit side by side, the grid wraps instead of squeezing.
   grid-template-columns: repeat(auto-fit, minmax(13.5rem, 1fr));
   gap: var(--tile-gap);
-  // A margem segue em --panel-gap de propósito: é ela que separa a faixa da
-  // região seguinte, e o contraste com o gap interno é o que agrupa os tiles.
+  // The margin stays at --panel-gap on purpose: it separates the strip from the
+  // next region, and the contrast with the inner gap is what groups the tiles.
   margin-bottom: var(--panel-gap);
 }
 
@@ -136,16 +102,16 @@ app-status-badge {
 // content surface. Wrapping it in the same bordered box as the table made the
 // whole thing read as one grid — tabs looking like a header row of the
 // spreadsheet below. What switches is the PANEL; the tabs are chrome above it.
-// A barra alterna entre EMPILHADA e EM LINHA conforme o espaço disponível, não
-// conforme a viewport. Aqui as duas coisas não são a mesma: com a sidebar
-// acoplada, uma viewport de 1470px deixa 1158px de largura útil. Uma media
-// query precisaria embutir esse desconto de 312px — e erraria sempre que o
-// estado da sidebar mudasse. A container query mede o que de fato existe.
+// The bar switches between STACKED and INLINE based on the available space, not
+// the viewport. Here the two are not the same: with the sidebar docked, a
+// 1470px viewport leaves 1158px of usable width. A media query would have to
+// bake in that 312px offset — and would be wrong whenever the sidebar state
+// changed. The container query measures what actually exists.
 //
-// O rail acompanha o modo. Uma tentativa anterior de quebrar a linha foi
-// revertida porque o rail morava fixo na barra: ao quebrar, a borda descia para
-// baixo do botão e riscava uma linha solta sob ele. Empilhado, o rail é a régua
-// das ABAS; em linha, é a borda da BARRA, e aí atravessa até a largura do painel.
+// The rail follows the mode. An earlier attempt to wrap the row was reverted
+// because the rail was fixed on the bar: when wrapping, the border dropped below
+// the button and drew a stray line under it. Stacked, the rail is the TABS'
+// ruler; inline, it is the BAR's border, spanning the full panel width.
 .detail-page {
   container: detail / inline-size;
 }
@@ -160,13 +126,13 @@ app-status-badge {
 
 .section-action {
   flex: none;
-  // Largura natural: esticar a ação na largura toda daria a ela um peso de
-  // submit de formulário, que não é o que ela é.
+  // Natural width: stretching the action to full width would give it the weight
+  // of a form submit, which is not what it is.
   align-self: flex-start;
 }
 
-// As abas rolam em vez de encolher até cortar o rótulo no meio da palavra —
-// que era exatamente o sintoma no mobile.
+// Tabs scroll instead of shrinking until the label is cut mid-word — which was
+// exactly the symptom on mobile.
 .section-tabs {
   display: flex;
   align-items: stretch;
@@ -181,8 +147,8 @@ app-status-badge {
   }
 }
 
-// 47rem = os 734px que abas e ação ocupam lado a lado, com folga para o
-// contador crescer. Medido, não estimado.
+// 47rem = the 734px that tabs and action take side by side, with room for the
+// counter to grow. Measured, not estimated.
 @container detail (min-width: 47rem) {
   .sections-bar {
     flex-direction: row;
@@ -234,12 +200,12 @@ app-status-badge {
     border-bottom-color: var(--color-accent);
   }
 
-  // Anel PARA DENTRO. O strip rola na horizontal, e `overflow-x: auto` faz o
-  // `overflow-y` virar `auto` junto — o container passa a recortar nos quatro
-  // lados. Como as abas usam `align-items: stretch` e encostam nas bordas, um
-  // anel para fora era cortado em cima e embaixo em TODAS elas, e nas laterais
-  // da primeira e da última. Chegar na aba pelo teclado não mostrava onde
-  // estava, que é o mesmo que não ter foco visível.
+  // INWARD ring. The strip scrolls horizontally, and `overflow-x: auto` also
+  // turns `overflow-y` into `auto` — the container then clips on all four sides.
+  // Since the tabs use `align-items: stretch` and touch the edges, an outward
+  // ring was clipped top and bottom on ALL of them, and on the sides of the
+  // first and last. Reaching a tab by keyboard did not show where you were,
+  // which is the same as having no visible focus.
   &:focus-visible {
     outline: 2px solid var(--color-focus);
     outline-offset: -2px;
@@ -275,9 +241,9 @@ app-status-badge {
   border-radius: var(--radius-md);
   overflow: hidden;
 
-  // `[hidden]` é regra do user-agent, de especificidade mínima: qualquer
-  // `display` declarado aqui a venceria e os três painéis apareceriam
-  // empilhados. Explicitar mantém o atributo com poder de decisão.
+  // `[hidden]` is a user-agent rule with minimal specificity: any `display`
+  // declared here would beat it and all three panels would show stacked.
+  // Making it explicit keeps the attribute in charge.
   &[hidden] {
     display: none;
   }
@@ -291,79 +257,6 @@ app-status-badge {
     outline-offset: -2px;
   }
 }
-
-.table-shell {
-  width: 100%;
-  overflow-x: auto;
-
-  &:focus-visible {
-    outline: 2px solid var(--color-focus);
-    outline-offset: -2px;
-  }
-}
-
-.section-table {
-  width: 100%;
-  background: transparent;
-
-  th,
-  td {
-    padding: var(--space-sm) var(--space-md);
-    border-bottom: 1px solid var(--color-border);
-    text-align: start;
-    white-space: nowrap;
-  }
-
-  // Header is Inter, small and semibold -- NOT mono, NOT uppercase. A table
-  // header is information, so it belongs to the body face.
-  th.mat-mdc-header-cell {
-    background-color: var(--color-surface);
-    color: var(--color-text-muted);
-    font-family: var(--font-body);
-    font-size: var(--fs-body-xs);
-    font-weight: var(--fw-semibold);
-    text-transform: none;
-  }
-
-  td.mat-mdc-cell {
-    color: var(--color-text);
-    font-family: var(--font-body);
-    font-size: var(--fs-body-sm);
-  }
-
-  // Numeric columns: right-aligned, tabular figures, mono -- fixed-width digits
-  // are what make amounts of different lengths line up as a column.
-  .is-num {
-    text-align: end;
-    font-variant-numeric: tabular-nums;
-  }
-
-  td.is-num {
-    font-family: var(--font-mono);
-    font-size: var(--fs-body-xs);
-  }
-
-  tr.mat-mdc-row {
-    height: var(--table-row-h);
-    transition: background-color var(--transition-fast);
-
-    &:nth-child(even) {
-      background-color: var(--color-surface);
-    }
-  }
-
-  .clickable-row {
-    cursor: pointer;
-
-    &:hover {
-      background-color: var(--color-hover) !important;
-    }
-  }
-}
-
-// The row stays clickable for the mouse, but the operable element is this one:
-// a real link/button that carries the row's name. It has to read as the plain
-// text it replaced, so only focus makes it look interactive.
 
 .truncate-cell {
   max-width: 18rem;
@@ -387,30 +280,6 @@ app-status-badge {
   color: var(--color-text-muted);
   text-align: center;
   margin: 0;
-}
-
-@media (max-width: 768px) {
-  .page-head-actions {
-    margin-inline-start: 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .editable,
-  .status-trigger,
-  .section-table tr.mat-mdc-row {
-    transition: none;
-  }
-}
-
-// Destructive item in the overflow menu — the only place the danger tone shows
-// up in the header, so it never competes with the routine actions.
-.menu-item-danger {
-  color: var(--color-danger);
-
-  .mat-icon {
-    color: var(--color-danger);
-  }
 }
 
 // Identity is one group: avatar + name + state. Separating it from the back

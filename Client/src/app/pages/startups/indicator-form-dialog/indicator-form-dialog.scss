@@ -1,17 +1,9 @@
 .indicator-form {
-  display: flex;
-  flex-direction: column;
   min-width: min(31.25rem, 100%);
-  padding-top: var(--space-xs);
 }
 
-// A tipografia vem do `.section-title` global; aqui só o ritmo, que é do
-// contexto: um respiro maior acima para descolar do grupo anterior.
+// Typography comes from the global `.section-title`; only rhythm here, which
+// belongs to the context: more space above to detach from the previous group.
 .section-title {
   margin-block: var(--space-xs) var(--space-2xs);
 }
-
-.field {
-  width: 100%;
-}
-

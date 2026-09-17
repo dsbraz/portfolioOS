@@ -5,6 +5,7 @@ import pytest
 from app.application.monthly_indicator.create_monthly_indicator import (
     CreateMonthlyIndicator,
 )
+from app.domain.exceptions import ConflictError
 
 
 @pytest.fixture
@@ -74,17 +75,8 @@ async def test_validates_period_not_future(use_case):
         await use_case.execute(indicator)
 
 
-# --- Losing the insert race (the branch the integration test cannot reach) ---
-#
-# The integration test pre-inserts the winner, so the guard finds it and the
-# `except ConflictError` branch never runs. Only a repo that returns "nothing
-# there" and THEN raises on create reproduces the true interleaving.
-
-
 @pytest.mark.asyncio
 async def test_lost_race_merges_onto_the_row_that_won(repo):
-    from app.domain.exceptions import ConflictError
-
     winner = MagicMock(total_revenue=None, headcount=10)
     # First check sees nothing; after the failed insert, the winner is there.
     repo.get_by_startup_and_period.side_effect = [None, winner]
@@ -113,11 +105,8 @@ async def test_lost_race_merges_onto_the_row_that_won(repo):
 
 @pytest.mark.asyncio
 async def test_lost_race_with_no_winner_visible_reraises(repo):
-    from app.domain.exceptions import ConflictError
-
-    # Pathological: insert conflicts but the row is not visible either (e.g. the
-    # winner's transaction has not committed). Swallowing this would return
-    # nothing; re-raising lets the controller answer 409 honestly.
+    # The winner is not visible yet (e.g. its transaction has not committed):
+    # re-raise so the controller answers 409.
     repo.get_by_startup_and_period.side_effect = [None, None]
     repo.create.side_effect = ConflictError("periodo ja existe")
 

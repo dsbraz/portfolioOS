@@ -6,12 +6,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 
 import { Executive } from '../../../models/executive.model';
-import { emailValidator, normalizeContactEmail } from '../../../models/email';
-import {
-  formatPhone,
-  normalizeInternationalPhone,
-  phoneCountryPrefixValidator,
-} from '../../../models/whatsapp';
 
 export interface ExecutiveFormDialogData {
   executive?: Executive;
@@ -33,7 +27,6 @@ import { ReadSection, ReadView } from '../../../components/read-view/read-view';
     MatButtonModule,
   ],
   templateUrl: './executive-form-dialog.html',
-  styleUrl: './executive-form-dialog.scss',
 })
 export class ExecutiveFormDialog implements OnInit {
   private readonly fb = inject(FormBuilder);
@@ -46,19 +39,16 @@ export class ExecutiveFormDialog implements OnInit {
   readonly form = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(255)]],
     role: [''],
-    // The e-mail is a send channel, so an address we cannot compose to is
-    // refused here rather than discovered at send time.
-    email: ['', [emailValidator]],
-    // The country prefix is mandatory: the fund's executives are not all in
-    // Brazil, so a local-format number cannot be told apart from a foreign one.
-    phone: ['', [phoneCountryPrefixValidator]],
+    email: ['', [Validators.email]],
+    // Mirrors `InternationalPhone` in the server schema: "+" and 8 to 15 digits.
+    phone: ['', [Validators.pattern(/^\s*\+[\s().\-/]*(\d[\s().\-/]*){8,15}$/)]],
     linkedin: [''],
   });
 
-  /** Ver [[ReadView]]: o modo leitura deixou de ser um formulário desabilitado. */
+  /** See [[ReadView]]: read mode is no longer a disabled form. */
   readonly readSections: ReadSection[] = this.buildReadSections();
 
-  /** O executivo não tem grupos no modo de edição, então também não tem aqui. */
+  /** The executive has no groups in edit mode, so it has none here either. */
   private buildReadSections(): ReadSection[] {
     const e = this.data?.executive;
     if (!e) return [];
@@ -69,9 +59,7 @@ export class ExecutiveFormDialog implements OnInit {
           { label: 'Nome', value: e.name || null },
           { label: 'Cargo', value: e.role || null },
           { label: 'Email', value: e.email || null },
-          // Falls back to the raw value so a legacy record without the prefix
-          // is shown as it is, rather than disappearing behind a "—".
-          { label: 'Telefone', value: formatPhone(e.phone) ?? e.phone ?? null },
+          { label: 'Telefone', value: e.phone || null },
           { label: 'LinkedIn', value: e.linkedin || null, kind: 'long' },
         ],
       },
@@ -90,14 +78,7 @@ export class ExecutiveFormDialog implements OnInit {
       this.form.markAllAsTouched();
       return;
     }
-    const raw = this.form.getRawValue();
-    // Stored in the same shapes the server persists: E.164 and a lowercased
-    // address.
-    this.dialogRef.close({
-      ...raw,
-      phone: normalizeInternationalPhone(raw.phone),
-      email: normalizeContactEmail(raw.email),
-    });
+    this.dialogRef.close(this.form.getRawValue());
   }
 
   onCancel(): void {

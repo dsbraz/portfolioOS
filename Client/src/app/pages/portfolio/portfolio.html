@@ -29,7 +29,9 @@
     </div>
   </header>
 
-  @if (loading()) {
+  <!-- Only the first load shows the spinner; changing the period keeps the
+       content (and the table's sort header) mounted while it refreshes. -->
+  @if (loading() && !summaryByPeriod()) {
     <div class="page-status" role="status">
       <mat-spinner diameter="24" aria-hidden="true" />
       <span>Carregando monitoramento…</span>
@@ -75,11 +77,11 @@
       </mat-card>
     } @else {
       <div
-        class="table-shell"
+        class="table-shell table-shell--card"
         tabindex="0"
         role="region"
         aria-label="Tabela de startups monitoradas (rolável)">
-        <table mat-table [dataSource]="sortedStartups()" class="monitoring-table"
+        <table mat-table [dataSource]="sortedStartups()" [trackBy]="trackById" class="data-table monitoring-table"
                matSort (matSortChange)="sort.set($event)">
           <caption class="visually-hidden">
             Startups monitoradas no período, com status, receita, caixa, EBITDA/burn e headcount.
@@ -111,10 +113,10 @@
 
           <ng-container matColumnDef="status">
             <th mat-header-cell *matHeaderCellDef mat-sort-header="status" scope="col">Status</th>
-            <!-- Duas dimensões, e a ausência NÃO substitui a avaliação: uma
-                 startup crítica que não reportou é mais preocupante, não menos.
-                 O pill segue sendo o julgamento do fundo; a linha de baixo é o
-                 fato operacional do período, e só aparece quando há o que dizer. -->
+            <!-- Two dimensions, and a missing report does NOT replace the assessment: a
+                 critical startup that did not report is more worrying, not less.
+                 The pill remains the fund's judgment; the line below is the
+                 period's operational fact, and only appears when there is something to say. -->
             <td mat-cell *matCellDef="let item">
               <div class="status-cell">
                 <app-status-badge [status]="item.startup.status" />
