@@ -11,8 +11,8 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { MonthlyIndicatorTokenService } from '../../services/monthly-indicator-token.service';
 import { PublicIndicatorForm } from '../../models/monthly-indicator-token.model';
-import { MONTH_LABELS } from '../../models/monthly-indicator.model';
 import { buildReportedIndicatorForm } from '../../models/indicator-form';
+import { formatPeriod } from '../../models/formatters';
 
 import { CurrencyInput } from '../../directives/currency-input';
 
@@ -44,7 +44,7 @@ export default class ReportForm implements OnInit {
   readonly submitting = signal(false);
   readonly submitted = signal(false);
   readonly error = signal<string | null>(null);
-  readonly monthLabels = MONTH_LABELS;
+  readonly formatPeriod = formatPeriod;
 
   private token = '';
 

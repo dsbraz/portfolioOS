@@ -12,6 +12,7 @@ import {
   formatCurrencyBRL,
   formatInteger,
   formatPercent,
+  formatPeriod,
 } from '../../../models/formatters';
 import { ReadSection, ReadView } from '../../../components/read-view/read-view';
 import { CurrencyInput } from '../../../directives/currency-input';
@@ -79,7 +80,7 @@ export class IndicatorFormDialog implements OnInit {
 
     return [
       {
-        items: [{ label: 'Período', value: `${MONTH_LABELS[ind.month]}/${ind.year}` }],
+        items: [{ label: 'Período', value: formatPeriod(ind.month, ind.year) }],
       },
       {
         title: 'Quantitativos',

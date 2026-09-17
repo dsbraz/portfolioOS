@@ -12,6 +12,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { DialogHeader } from '../../../components/dialog-header/dialog-header';
 import { CurrencyInput } from '../../../directives/currency-input';
 import { Executive } from '../../../models/executive.model';
+import { formatPeriod } from '../../../models/formatters';
 import { buildReportedIndicatorForm, futurePeriodValidator } from '../../../models/indicator-form';
 import {
   MONTH_LABELS,
@@ -96,7 +97,7 @@ export class AddIndicatorDialog {
     initialValue: this.form.controls.year.value,
   });
 
-  readonly periodLabel = computed(() => `${MONTH_LABELS[this.month()!]}/${this.year()}`);
+  readonly periodLabel = computed(() => formatPeriod(this.month()!, this.year()!));
 
   readonly hasIndicator = computed(() => this.anyInPeriod(this.data.indicators));
 

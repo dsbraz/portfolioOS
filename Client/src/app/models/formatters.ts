@@ -7,6 +7,8 @@
  * escolha de quem tem o contexto.
  */
 
+import { MONTH_LABELS } from './monthly-indicator.model';
+
 const MOEDA = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
 const DECIMAL = new Intl.NumberFormat('pt-BR', {
@@ -27,6 +29,11 @@ export function formatPercent(value: number | null | undefined): string | null {
 export function formatInteger(value: number | null | undefined): string | null {
   if (value == null) return null;
   return DECIMAL.format(value);
+}
+
+/** Período de referência como `Mmm/AAAA` (ex.: `Jan/2026`). */
+export function formatPeriod(month: number, year: number): string {
+  return `${MONTH_LABELS[month]}/${year}`;
 }
 
 /** Data ISO (`YYYY-MM-DD`) para `dd/MM/yyyy`. */

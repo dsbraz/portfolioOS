@@ -32,7 +32,6 @@ import { formatIsoDate } from '../../../models/formatters';
   ],
   providers: [provideNativeDateAdapter()],
   templateUrl: './meeting-form-dialog.html',
-  styleUrl: './meeting-form-dialog.scss',
 })
 export class MeetingFormDialog implements OnInit {
   private readonly fb = inject(FormBuilder);

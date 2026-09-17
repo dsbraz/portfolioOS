@@ -25,42 +25,9 @@
 }
 
 // ---------- Page head ----------
+// Base rules come from the global `.page-head`.
 .page-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--space-md);
-  margin-bottom: var(--panel-gap);
   flex-shrink: 0;
-}
-
-.page-head-text {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2xs);
-  min-width: 0;
-}
-
-.page-head-title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--fs-heading-md);
-  font-weight: var(--fw-medium);
-  letter-spacing: var(--ls-tight);
-  line-height: var(--lh-tight);
-}
-
-.page-head-sub {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--fs-body-sm);
-}
-
-.page-head-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  margin-inline-start: auto;
 }
 
 // ---------- Quadro ----------
@@ -123,7 +90,7 @@
 }
 
 .column-add {
-  --mdc-icon-button-state-layer-size: 1.75rem;
+  --mat-icon-button-state-layer-size: 1.75rem;
   width: 1.75rem;
   height: 1.75rem;
   padding: 0;
@@ -242,7 +209,7 @@
 .deal-menu-btn {
   // Pelo token, não por width/height: sem isso o state layer (o círculo de
   // hover) continua nos 40px padrão e transborda a caixa do botão.
-  --mdc-icon-button-state-layer-size: var(--_btn-size);
+  --mat-icon-button-state-layer-size: var(--_btn-size);
 
   // Centralização explícita: ao redimensionar o botão, o Material deixa de
   // centrar o glifo sozinho e ele fica ~2px acima do centro da caixa.

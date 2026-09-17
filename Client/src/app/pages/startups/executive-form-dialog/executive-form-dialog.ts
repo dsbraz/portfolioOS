@@ -27,7 +27,6 @@ import { ReadSection, ReadView } from '../../../components/read-view/read-view';
     MatButtonModule,
   ],
   templateUrl: './executive-form-dialog.html',
-  styleUrl: './executive-form-dialog.scss',
 })
 export class ExecutiveFormDialog implements OnInit {
   private readonly fb = inject(FormBuilder);

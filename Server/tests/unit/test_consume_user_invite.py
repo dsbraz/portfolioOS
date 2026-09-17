@@ -102,3 +102,12 @@ async def test_raises_value_error_when_username_has_spaces(use_case, invite_repo
         await use_case.execute(
             uuid.uuid4(), "invitee@example.com", "new user", "password123"
         )
+
+
+@pytest.mark.asyncio
+async def test_rejects_password_over_72_bytes(use_case, invite_repo, hasher):
+    invite_repo.get_by_token.return_value = _active_invite()
+
+    with pytest.raises(ValueError, match="72"):
+        await use_case.execute(uuid.uuid4(), "invitee@example.com", "newuser", "a" * 73)
+    hasher.hash.assert_not_called()

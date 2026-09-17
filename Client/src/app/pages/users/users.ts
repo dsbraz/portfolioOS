@@ -4,6 +4,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSortModule } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 
@@ -26,6 +27,7 @@ import { UserFormDialog, UserFormDialogData } from './user-form-dialog/user-form
     MatDialogModule,
     MatIconModule,
     MatSnackBarModule,
+    MatProgressSpinnerModule,
     MatSortModule,
     MatTableModule,
   ],
@@ -40,6 +42,9 @@ export class Users implements OnInit {
 
   readonly users = signal<UserResponse[]>([]);
   readonly loading = signal(false);
+  /** Distinguishes "not loaded yet / failed" from "loaded, no users". */
+  readonly hasLoaded = signal(false);
+  readonly trackById = (_: number, user: UserResponse) => user.id;
   readonly displayedColumns = ['username', 'email', 'is_active', 'created_at', 'actions'];
 
   readonly sort = signal<SortState>({ active: '', direction: '' });
@@ -64,6 +69,7 @@ export class Users implements OnInit {
     this.authService.listUsers().subscribe({
       next: (data) => {
         this.users.set(data.items);
+        this.hasLoaded.set(true);
         this.loading.set(false);
       },
       error: (err) => {

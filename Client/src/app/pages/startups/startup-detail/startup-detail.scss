@@ -8,12 +8,10 @@
 }
 
 // ---------- Page head ----------
+// Base rules come from the global `.page-head`; only the deltas live here.
 .page-head {
-  display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-sm);
-  margin-bottom: var(--panel-gap);
 }
 
 .header-logo,
@@ -40,13 +38,6 @@
   color: var(--color-text-muted);
 }
 
-.page-head-text {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2xs);
-  min-width: 0;
-}
-
 .header-name-row {
   display: flex;
   align-items: baseline;
@@ -62,23 +53,11 @@ app-status-badge {
   align-self: center;
 }
 
-.page-head-title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--fs-heading-md);
-  font-weight: var(--fw-medium);
-  letter-spacing: var(--ls-tight);
-  line-height: var(--lh-tight);
-}
-
 .page-head-sub {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: var(--space-2xs);
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--fs-body-sm);
 }
 
 // Links carry the FUNCTIONAL accent (purple), not the primary ink (black).
@@ -101,19 +80,6 @@ app-status-badge {
   width: 0.875rem;
   height: 0.875rem;
   font-size: 0.875rem;
-}
-
-.page-head-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-xs);
-  margin-inline-start: auto;
-}
-
-.danger-btn {
-  --mdc-outlined-button-label-text-color: var(--color-danger);
-  color: var(--color-danger);
 }
 
 // ---------- KPIs ----------
@@ -292,75 +258,6 @@ app-status-badge {
   }
 }
 
-.table-shell {
-  width: 100%;
-  overflow-x: auto;
-
-  &:focus-visible {
-    outline: 2px solid var(--color-focus);
-    outline-offset: -2px;
-  }
-}
-
-.section-table {
-  width: 100%;
-  background: transparent;
-
-  th,
-  td {
-    padding: var(--space-sm) var(--space-md);
-    border-bottom: 1px solid var(--color-border);
-    text-align: start;
-    white-space: nowrap;
-  }
-
-  // Header is Inter, small and semibold -- NOT mono, NOT uppercase. A table
-  // header is information, so it belongs to the body face.
-  th.mat-mdc-header-cell {
-    background-color: var(--color-surface);
-    color: var(--color-text-muted);
-    font-family: var(--font-body);
-    font-size: var(--fs-body-xs);
-    font-weight: var(--fw-semibold);
-    text-transform: none;
-  }
-
-  td.mat-mdc-cell {
-    color: var(--color-text);
-    font-family: var(--font-body);
-    font-size: var(--fs-body-sm);
-  }
-
-  // Numeric columns: right-aligned, tabular figures, mono -- fixed-width digits
-  // are what make amounts of different lengths line up as a column.
-  .is-num {
-    text-align: end;
-    font-variant-numeric: tabular-nums;
-  }
-
-  td.is-num {
-    font-family: var(--font-mono);
-    font-size: var(--fs-body-xs);
-  }
-
-  tr.mat-mdc-row {
-    height: var(--table-row-h);
-    transition: background-color var(--transition-fast);
-
-    &:nth-child(even) {
-      background-color: var(--color-surface);
-    }
-  }
-
-  .clickable-row {
-    cursor: pointer;
-
-    &:hover {
-      background-color: var(--color-hover) !important;
-    }
-  }
-}
-
 .truncate-cell {
   max-width: 18rem;
   white-space: nowrap;
@@ -383,30 +280,6 @@ app-status-badge {
   color: var(--color-text-muted);
   text-align: center;
   margin: 0;
-}
-
-@media (max-width: 768px) {
-  .page-head-actions {
-    margin-inline-start: 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .editable,
-  .status-trigger,
-  .section-table tr.mat-mdc-row {
-    transition: none;
-  }
-}
-
-// Destructive item in the overflow menu — the only place the danger tone shows
-// up in the header, so it never competes with the routine actions.
-.menu-item-danger {
-  color: var(--color-danger);
-
-  .mat-icon {
-    color: var(--color-danger);
-  }
 }
 
 // Identity is one group: avatar + name + state. Separating it from the back

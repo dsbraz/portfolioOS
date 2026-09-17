@@ -1,8 +1,10 @@
 <div class="ai-page" [attr.aria-busy]="loading() ? 'true' : null">
   <header class="page-head">
-    <p class="section-title">IA na plataforma</p>
-    <h1>IA no portfolioOS</h1>
-    <p>Ensine seu agente a trabalhar com o portfólio usando um único pacote.</p>
+    <div class="page-head-text">
+      <p class="section-title">IA na plataforma</p>
+      <h1 class="page-head-title">IA no portfolioOS</h1>
+      <p class="page-head-sub">Ensine seu agente a trabalhar com o portfólio usando um único pacote.</p>
+    </div>
   </header>
 
   @if (loading()) {

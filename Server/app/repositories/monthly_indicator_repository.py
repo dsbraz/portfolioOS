@@ -120,11 +120,7 @@ class MonthlyIndicatorRepository:
             .group_by(MonthlyIndicator.startup_id)
         )
 
-        return {
-            row[0]: (row[1] // 100, row[1] % 100)
-            for row in result.all()
-            if row[1] is not None
-        }
+        return {row[0]: (row[1] // 100, row[1] % 100) for row in result.all()}
 
     async def get_accumulated_revenue_by_startups(
         self, startup_ids: list[uuid.UUID], month: int, year: int

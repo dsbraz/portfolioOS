@@ -29,7 +29,7 @@
         <h1 class="status-panel-title">Relatório enviado</h1>
         <p class="status-panel-text">
           Obrigado por preencher o relatório de
-          {{ monthLabels[context()!.month] }}/{{ context()!.year }}. Pode fechar esta página.
+          {{ formatPeriod(context()!.month, context()!.year) }}. Pode fechar esta página.
         </p>
       </div>
     </div>
@@ -45,7 +45,7 @@
           <h1 class="form-intro-title">Relatório mensal</h1>
           <p class="form-intro-meta">
             {{ ctx.startup_name }} &middot;
-            {{ monthLabels[ctx.month] }}/{{ ctx.year }}
+            {{ formatPeriod(ctx.month, ctx.year) }}
           </p>
         </div>
       </div>

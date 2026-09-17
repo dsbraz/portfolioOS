@@ -29,7 +29,9 @@
     </div>
   </header>
 
-  @if (loading()) {
+  <!-- Only the first load shows the spinner; changing the period keeps the
+       content (and the table's sort header) mounted while it refreshes. -->
+  @if (loading() && !summaryByPeriod()) {
     <div class="page-status" role="status">
       <mat-spinner diameter="24" aria-hidden="true" />
       <span>Carregando monitoramento…</span>
@@ -75,11 +77,11 @@
       </mat-card>
     } @else {
       <div
-        class="table-shell"
+        class="table-shell table-shell--card"
         tabindex="0"
         role="region"
         aria-label="Tabela de startups monitoradas (rolável)">
-        <table mat-table [dataSource]="sortedStartups()" class="monitoring-table"
+        <table mat-table [dataSource]="sortedStartups()" [trackBy]="trackById" class="data-table monitoring-table"
                matSort (matSortChange)="sort.set($event)">
           <caption class="visually-hidden">
             Startups monitoradas no período, com status, receita, caixa, EBITDA/burn e headcount.

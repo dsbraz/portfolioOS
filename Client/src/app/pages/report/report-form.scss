@@ -12,46 +12,12 @@
   padding-bottom: var(--space-3xl);
 }
 
-.report-center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-md);
-  min-height: 200px;
-}
-
-.error-icon {
-  font-size: var(--fs-decoration-xl);
-  width: var(--fs-decoration-xl);
-  height: var(--fs-decoration-xl);
-  color: var(--color-danger);
-}
-
-.error-text {
-  color: var(--color-text-muted);
-  font-size: var(--fs-body-md);
-}
-
-.success-icon {
-  font-size: var(--fs-decoration-3xl);
-  width: var(--fs-decoration-3xl);
-  height: var(--fs-decoration-3xl);
-  color: var(--color-good);
-}
-
-.success-text {
-  color: var(--color-text-muted);
-}
-
 .report-form {
   display: flex;
   flex-direction: column;
 }
 
 .field {
-  width: 100%;
-
   --mat-form-field-subscript-text-size: 11px;
 }
 

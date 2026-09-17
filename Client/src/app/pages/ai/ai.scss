@@ -7,27 +7,6 @@
   padding: var(--content-padding);
 }
 
-.page-head {
-  display: grid;
-  gap: var(--space-2xs);
-  margin-bottom: var(--space-xl);
-
-  h1 {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: var(--fs-heading-xl);
-    font-weight: var(--fw-medium);
-    letter-spacing: var(--ls-tight);
-    line-height: var(--lh-tight);
-  }
-
-  > p:last-child {
-    margin: 0;
-    color: var(--color-text-muted);
-    font-size: var(--fs-body-md);
-  }
-}
-
 .package-card {
   display: grid;
   gap: var(--space-xl);
