@@ -1,4 +1,5 @@
 import uuid
+from collections.abc import Awaitable, Callable
 from decimal import Decimal
 
 from sqlalchemy import ColumnElement, Integer, cast, func, select
@@ -79,10 +80,17 @@ class MonthlyIndicatorRepository:
         )
         return result.scalar_one_or_none()
 
-    async def create(self, indicator: MonthlyIndicator) -> MonthlyIndicator:
-        period = f"{indicator.month}/{indicator.year}"
-        await self._insert(indicator, f"Ja existe indicador para o periodo {period}")
-        return indicator
+    async def get_or_create(
+        self, indicator: MonthlyIndicator
+    ) -> tuple[MonthlyIndicator, bool]:
+        """The stored indicator for the period, or `indicator` inserted; and whether it was."""
+        return await self._get_or_insert(
+            indicator,
+            lambda: self.get_by_startup_and_period(
+                indicator.startup_id, indicator.month, indicator.year
+            ),
+            f"Ja existe indicador para o periodo {indicator.month}/{indicator.year}",
+        )
 
     async def update(self, indicator: MonthlyIndicator) -> MonthlyIndicator:
         # Read before flushing: a failed flush invalidates the session and the
@@ -210,10 +218,34 @@ class MonthlyIndicatorRepository:
         )
         return list(result.scalars().all()), total
 
-    async def create_token(self, token: MonthlyIndicatorToken) -> MonthlyIndicatorToken:
-        period = f"{token.month}/{token.year}"
-        await self._insert(token, f"Ja existe link para o periodo {period}")
-        return token
+    async def get_or_create_token(
+        self, token: MonthlyIndicatorToken
+    ) -> tuple[MonthlyIndicatorToken, bool]:
+        """The stored link for the period, or `token` inserted; and whether it was."""
+        return await self._get_or_insert(
+            token,
+            lambda: self.get_token_by_startup_and_period(
+                token.startup_id, token.month, token.year
+            ),
+            f"Ja existe link para o periodo {token.month}/{token.year}",
+        )
+
+    async def _get_or_insert[T: (MonthlyIndicator, MonthlyIndicatorToken)](
+        self, record: T, find: Callable[[], Awaitable[T | None]], conflict_message: str
+    ) -> tuple[T, bool]:
+        existing = await find()
+        if existing is not None:
+            return existing, False
+        try:
+            await self._insert(record, conflict_message)
+        except ConflictError:
+            # Another request took the period after the lookup; the savepoint kept
+            # the session usable, so read the row that won.
+            winner = await find()
+            if winner is None:
+                raise
+            return winner, False
+        return record, True
 
     async def _insert(
         self, record: MonthlyIndicator | MonthlyIndicatorToken, conflict_message: str
