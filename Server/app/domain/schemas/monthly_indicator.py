@@ -47,8 +47,9 @@ class MonthlyIndicatorCreate(MonthlyIndicatorBase):
 
 
 class MonthlyIndicatorUpdate(BaseModel):
-    month: Month | None = None
-    year: Year | None = None
+    # Optional to send, but never null: the period cannot be erased.
+    month: Month = None
+    year: Year = None
     total_revenue: Money | None = None
     recurring_revenue_pct: Pct | None = None
     gross_margin_pct: Pct | None = None

@@ -69,8 +69,15 @@ class MonthlyIndicatorRepository:
         return result.scalar_one_or_none()
 
     async def create(self, indicator: MonthlyIndicator) -> MonthlyIndicator:
-        self._session.add(indicator)
-        await self._session.flush()
+        period = f"{indicator.month}/{indicator.year}"
+        try:
+            # A savepoint keeps the session usable when another request took the
+            # period first, so the caller can still read and merge into it.
+            async with self._session.begin_nested():
+                self._session.add(indicator)
+                await self._session.flush()
+        except IntegrityError as error:
+            raise ConflictError(f"Ja existe indicador para o periodo {period}") from error
         await self._session.refresh(indicator)
         return indicator
 

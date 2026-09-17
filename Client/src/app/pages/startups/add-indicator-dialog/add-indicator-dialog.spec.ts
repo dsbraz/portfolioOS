@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Subject, of, throwError } from 'rxjs';
+import { NEVER, Subject, of, throwError } from 'rxjs';
 
 import { MonthlyIndicator } from '../../../models/monthly-indicator.model';
 import { MonthlyIndicatorToken } from '../../../models/monthly-indicator-token.model';
@@ -204,6 +204,35 @@ describe('AddIndicatorDialog', () => {
       dialogRef.backdropClick$.next(new MouseEvent('click'));
       expect(dialogRef.close).toHaveBeenCalledWith(true);
     });
+  });
+
+  // Regression: Escape during an in-flight save closed with `false`; the server
+  // still created the record and the page never reloaded to show it.
+  it.each([['fill'], ['link']] as const)(
+    'reports a change when closed while the %s request is in flight',
+    async (mode) => {
+      indicatorService.create.mockReturnValue(NEVER);
+      tokenService.create.mockReturnValue(NEVER);
+      await render();
+      component.setMode(mode);
+      component.submit();
+
+      dialogRef.keydownEvents$.next(new KeyboardEvent('keydown', { key: 'Escape' }));
+
+      expect(dialogRef.close).toHaveBeenCalledWith(true);
+    },
+  );
+
+  // Regression: clearing the year to retype it put "null" in the title.
+  it('keeps the last valid period in the title while the year is being retyped', async () => {
+    await render();
+    const label = component.periodLabel();
+
+    component.form.controls.year.setValue(null);
+    expect(component.periodLabel()).toBe(label);
+
+    component.form.controls.year.setValue(26);
+    expect(component.periodLabel()).toBe(label);
   });
 
   it('closes without a change signal on Escape before anything was created', async () => {

@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -74,8 +74,9 @@ export class AddIndicatorDialog {
   readonly submitting = signal(false);
   /** The link once generated; while set, link mode shows the panel instead. */
   readonly generatedToken = signal<MonthlyIndicatorToken | null>(null);
-  /** Whether the page must reload on close: a link already exists server-side. */
-  readonly changed = computed(() => this.generatedToken() !== null);
+  /** Whether the page must reload on close: set as soon as a create request is
+   *  sent, because closing before the response must not drop what it creates. */
+  readonly changed = signal(false);
 
   private readonly previousPeriod = AddIndicatorDialog.previousMonthPeriod();
 
@@ -95,13 +96,10 @@ export class AddIndicatorDialog {
     { validators: [futurePeriodValidator] },
   );
 
-  /** The selected period, read from the form as signals so context updates live. */
-  private readonly month = toSignal(this.form.controls.month.valueChanges, {
-    initialValue: this.form.controls.month.value,
-  });
-  private readonly year = toSignal(this.form.controls.year.valueChanges, {
-    initialValue: this.form.controls.year.value,
-  });
+  /** The selected period, read from the form as signals so context updates live.
+   *  Only valid values pass, so retyping the year never shows "null" or "26". */
+  private readonly month = AddIndicatorDialog.validValues(this.form.controls.month);
+  private readonly year = AddIndicatorDialog.validValues(this.form.controls.year);
 
   readonly periodLabel = computed(() => formatPeriod(this.month()!, this.year()!));
 
@@ -148,6 +146,7 @@ export class AddIndicatorDialog {
       return;
     }
     this.submitting.set(true);
+    this.changed.set(true);
     this.indicatorService.create(this.data.startupId, this.buildPayload()).subscribe({
       next: () => this.dialogRef.close(true),
       error: (err) => {
@@ -166,6 +165,7 @@ export class AddIndicatorDialog {
       return;
     }
     this.submitting.set(true);
+    this.changed.set(true);
     this.tokenService
       .create(this.data.startupId, { month: month.value!, year: year.value! })
       .subscribe({
@@ -200,6 +200,12 @@ export class AddIndicatorDialog {
       challenges: blankToNull(raw.reported.challenges),
       comments: blankToNull(raw.comments),
     };
+  }
+
+  private static validValues(control: FormControl<number | null>) {
+    return toSignal(control.valueChanges.pipe(filter(() => control.valid)), {
+      initialValue: control.value,
+    });
   }
 
   private static previousMonthPeriod(): { month: number; year: number } {
