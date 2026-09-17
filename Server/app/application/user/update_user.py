@@ -1,6 +1,6 @@
 import uuid
 
-from app.domain.exceptions import ConflictError
+from app.domain.exceptions import ConflictError, InvalidInputError
 from app.domain.models.user import User
 from app.domain.password_hasher import PasswordHasher
 from app.domain.validators import (
@@ -31,7 +31,7 @@ class UpdateUser:
             and current_user_id
             and user.id == current_user_id
         ):
-            raise ValueError("Voce nao pode desativar seu proprio usuario")
+            raise InvalidInputError("Voce nao pode desativar seu proprio usuario")
 
         password = updates.pop("password", None)
         if password:

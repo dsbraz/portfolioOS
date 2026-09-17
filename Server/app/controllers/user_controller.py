@@ -10,7 +10,6 @@ from app.application.user.update_user import UpdateUser
 from app.controllers.auth_dependency import get_current_user
 from app.controllers.dependencies import user_builder
 from app.database import get_session
-from app.domain.exceptions import ConflictError
 from app.domain.models.user import User
 from app.domain.schemas.user import (
     UserCreate,
@@ -60,18 +59,7 @@ async def create_user(
     data: UserCreate,
     register: RegisterUser = Depends(_get_register),
 ):
-    try:
-        user = await register.execute(data.username, data.email, data.password)
-    except ConflictError as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(e),
-        )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
-        )
+    user = await register.execute(data.username, data.email, data.password)
     return UserResponse.model_validate(user)
 
 
@@ -99,18 +87,7 @@ async def update_user(
     current_user: User = Depends(get_current_user),
     update_use_case: UpdateUser = Depends(_get_update_user),
 ):
-    try:
-        updated = await update_use_case.execute(
-            user, data.model_dump(exclude_unset=True), current_user.id
-        )
-    except ConflictError as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(e),
-        )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
-        )
+    updated = await update_use_case.execute(
+        user, data.model_dump(exclude_unset=True), current_user.id
+    )
     return UserResponse.model_validate(updated)

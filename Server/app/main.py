@@ -10,6 +10,7 @@ from app.controllers.auth_controller import router as auth_router
 from app.controllers.auth_dependency import get_current_user
 from app.controllers.board_meeting_controller import router as board_meeting_router
 from app.controllers.deal_controller import router as deal_router
+from app.controllers.exception_handlers import register_exception_handlers
 from app.controllers.executive_controller import router as executive_router
 from app.controllers.health_controller import router as health_router
 from app.controllers.monthly_indicator_controller import (
@@ -40,6 +41,7 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+register_exception_handlers(app)
 
 app.add_middleware(
     CORSMiddleware,

@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from app.application.user_invite.consume_user_invite import ConsumeUserInvite
-from app.domain.exceptions import ConflictError
+from app.domain.exceptions import ConflictError, InvalidInputError
 
 
 @pytest.fixture
@@ -88,7 +88,7 @@ async def test_raises_conflict_when_username_exists(use_case, invite_repo, user_
 async def test_raises_value_error_when_email_mismatch(use_case, invite_repo):
     invite_repo.get_by_token.return_value = _active_invite(email="expected@example.com")
 
-    with pytest.raises(ValueError, match="Email"):
+    with pytest.raises(InvalidInputError, match="Email"):
         await use_case.execute(
             uuid.uuid4(), "other@example.com", "newuser", "password123"
         )

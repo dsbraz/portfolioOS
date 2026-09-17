@@ -51,10 +51,11 @@ Two shapes exist; pick by what the dialog must do after submitting.
 - **Domain models and exceptions** (`app.domain.models.*`, `app.domain.exceptions`) are the shared language between layers.
 
 ### Error Handling Convention
-- **Use cases** raise domain exceptions for business-rule violations: `ValueError` for invalid input, `ConflictError` (`app.domain.exceptions`) for state conflicts (e.g. duplicates).
+- **Use cases** raise domain exceptions for business-rule violations: `InvalidInputError` for invalid input, `ConflictError` for state conflicts (e.g. duplicates), both in `app.domain.exceptions`. A plain `ValueError` is reserved for invariants (e.g. `Period`): reaching one is a bug and answers 500.
 - **Use cases** return `None` for not-found scenarios (e.g. `get_by_id` returns `Model | None`).
-- **Controllers** catch domain exceptions and map them to HTTP status codes (`ValueError` → 400, `ConflictError` → 409, `None` → 404).
-- **Controllers** own all existence checks: use FastAPI dependencies like `_verify_startup_exists` for parent-resource validation, or inline checks for entity lookups.
+- **Controllers do not catch domain exceptions.** `app/controllers/exception_handlers.py`, registered in `main.py`, maps `InvalidInputError` → 400 and `ConflictError` → 409 with `{"detail": str(exc)}`. There is deliberately no handler for `ValueError`: Pydantic's `ValidationError` subclasses it. An architecture test forbids catching the domain exceptions in controllers.
+- **Controllers** map `None` → 404 and own all existence checks: use FastAPI dependencies like `verify_startup_exists` for parent-resource validation, or inline checks for entity lookups.
+- **Repositories** absorb insert races on unique keys (`get_or_create*` with a savepoint), so use cases keep only the business rule applied to the stored record.
 
 ### Controller ↔ Use Case Data Flow
 - **Input**: controllers convert schemas to domain models or `dict`s before calling use cases (e.g. `Startup(**data.model_dump())`, `data.model_dump(exclude_unset=True)`).

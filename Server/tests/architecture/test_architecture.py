@@ -23,6 +23,39 @@ def _collect_imports(directory: Path) -> list[tuple[str, str]]:
     return results
 
 
+# -- Controllers ---------------------------------------------------------------
+
+
+DOMAIN_EXCEPTIONS = {"ConflictError", "InvalidInputError"}
+
+
+def _caught_names(handler: ast.ExceptHandler) -> list[str]:
+    if handler.type is None:
+        return []
+    nodes = handler.type.elts if isinstance(handler.type, ast.Tuple) else [handler.type]
+    return [
+        node.id if isinstance(node, ast.Name) else node.attr
+        for node in nodes
+        if isinstance(node, (ast.Name, ast.Attribute))
+    ]
+
+
+def test_controllers_must_not_catch_domain_exceptions():
+    # The app-level handlers map them; a local catch would drift from that mapping.
+    violations = []
+    for py in sorted((APP_ROOT / "controllers").rglob("*.py")):
+        for node in ast.walk(ast.parse(py.read_text(), filename=str(py))):
+            if isinstance(node, ast.ExceptHandler):
+                violations += [
+                    f"  {py.relative_to(APP_ROOT.parent)}:{node.lineno}: {name}"
+                    for name in _caught_names(node)
+                    if name in DOMAIN_EXCEPTIONS
+                ]
+    assert violations == [], (
+        "Controllers must not catch domain exceptions:\n" + "\n".join(violations)
+    )
+
+
 # -- Application layer --------------------------------------------------------
 
 

@@ -267,6 +267,11 @@ async def test_patch_that_loses_a_race_for_the_period_still_conflicts(
     )
 
     assert resp.status_code == 409
+    # The handler answers after the session rolled back: the move did not stick.
+    stored = await client.get(
+        f"/api/startups/{startup_id}/monthly-indicators/{second.json()['id']}"
+    )
+    assert stored.json()["month"] == 9
 
 
 @pytest.mark.asyncio

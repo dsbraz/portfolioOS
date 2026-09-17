@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from app.application.portfolio.get_portfolio_summary import GetPortfolioSummary
+from app.domain.exceptions import InvalidInputError
 from app.domain.models.period import Period
 from app.domain.models.startup import StartupStatus
 
@@ -209,7 +210,7 @@ async def test_revenue_variation_should_be_negative(
 
 @pytest.mark.asyncio
 async def test_should_raise_when_only_month_is_provided(use_case):
-    with pytest.raises(ValueError, match="Mes e ano devem ser informados juntos"):
+    with pytest.raises(InvalidInputError, match="Mes e ano devem ser informados juntos"):
         await use_case.execute(month=1)
 
 
@@ -219,7 +220,7 @@ async def test_should_raise_when_period_is_in_the_future(use_case):
     month = 1 if future.month == 12 else future.month + 1
     year = future.year + 1 if future.month == 12 else future.year
 
-    with pytest.raises(ValueError, match="nao pode ser no futuro"):
+    with pytest.raises(InvalidInputError, match="nao pode ser no futuro"):
         await use_case.execute(month=month, year=year)
 
 

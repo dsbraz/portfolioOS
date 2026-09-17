@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from app.application.user.update_user import UpdateUser
-from app.domain.exceptions import ConflictError
+from app.domain.exceptions import ConflictError, InvalidInputError
 
 
 @pytest.fixture
@@ -49,7 +49,7 @@ async def test_raises_error_on_self_deactivation(use_case):
     user_id = uuid.uuid4()
     user = _make_user(id=user_id)
 
-    with pytest.raises(ValueError, match="proprio"):
+    with pytest.raises(InvalidInputError, match="proprio"):
         await use_case.execute(user, {"is_active": False}, current_user_id=user_id)
 
 
