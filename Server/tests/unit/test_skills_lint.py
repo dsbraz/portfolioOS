@@ -299,10 +299,18 @@ def test_chase_guide_orients_the_whatsapp_connection_before_the_queue():
     chase = _read("cobrar-indicadores")
     normalized = _normalized(chase)
 
-    # The interstitial's controls, verbatim: the agent finds them by visible
-    # text, so a paraphrase would leave it clicking blind.
+    # The interstitial belongs to WhatsApp, not to us, and it follows the
+    # BROWSER's language: on the fund's pt-BR browsers the English labels are
+    # not there at all. So the guide names the two exits by what they DO, and
+    # carries the English wording only as a reference — an instruction to click
+    # a literal string would stall the queue at the first item.
     for label in ("Open app", "Continue to WhatsApp Web"):
         assert label in chase, label
+    assert "segue o idioma do navegador" in normalized
+    assert "saída do aplicativo" in normalized
+    assert "saída do navegador" in normalized
+    # The rule that makes the labels reference material instead of a target.
+    assert "nunca pelo texto exato" in normalized
 
     # The trap the guidance exists for: one connection does not imply the other.
     assert "conexões independentes" in normalized

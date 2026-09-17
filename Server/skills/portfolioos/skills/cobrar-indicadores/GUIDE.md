@@ -49,16 +49,21 @@ Navegador com o usuário já autenticado no portfolioOS.
 ### O WhatsApp abre uma escolha, não uma conversa
 
 Acionar `Enviar por WhatsApp para {nome}` **não** abre a conversa direto. Cai
-numa página do próprio WhatsApp (`Chat on WhatsApp with {número}`) com duas
+numa página do próprio WhatsApp, com o número no título, oferecendo duas
 saídas:
 
-| Saída | Para onde vai |
-|---|---|
-| `Open app` | entrega a mensagem ao **aplicativo de computador**, fora do navegador |
-| `Continue to WhatsApp Web` | segue no **navegador**, em `web.whatsapp.com` |
+| Saída | Para onde vai | Rótulo em inglês |
+|---|---|---|
+| **saída do aplicativo** | entrega a mensagem ao **aplicativo de computador**, fora do navegador | `Open app` |
+| **saída do navegador** | segue no **navegador**, em `web.whatsapp.com` | `Continue to WhatsApp Web` |
 
-Os rótulos podem aparecer traduzidos, e a página ainda oferece baixar o
-aplicativo.
+**Essa página é do WhatsApp, não do portfolioOS, e segue o idioma do
+navegador** — num navegador em português os rótulos vêm traduzidos. Identifique
+cada saída pelo que ela FAZ, nunca pelo texto exato: uma abre o aplicativo, a
+outra continua no navegador. Os rótulos em inglês acima são só a referência.
+Se nenhuma das duas for reconhecível, **não chute**: descreva o que você vê e
+pergunte. A página ainda oferece baixar o aplicativo, que não é nenhuma das
+duas.
 
 **São conexões independentes.** Estar conectado no aplicativo **não** conecta o
 WhatsApp Web, e o contrário também vale. Escolher o lado onde a pessoa não está
@@ -71,7 +76,7 @@ Isso separa os dois modos de envio do Passo 5:
 - **Um a um:** qualquer uma das saídas serve, porque quem aperta enviar é a
   pessoa. Abra o link e **pare na página de escolha** — não decida por ela: **é
   a pessoa que sabe onde está conectada**.
-- **Automático:** só o `Continue to WhatsApp Web` serve, com o WhatsApp Web já
+- **Automático:** só a **saída do navegador** serve, com o WhatsApp Web já
   conectado neste navegador. O aplicativo de computador **fica fora do alcance
   da skill**, que só age dentro do navegador.
 
@@ -164,9 +169,10 @@ Pergunte, sempre, e **nunca assuma**:
 ```text
 Fila pronta — {n} startups, período {Mmm/AAAA}.
 
-O WhatsApp abre uma página com duas saídas — `Open app` (aplicativo do
-computador) e `Continue to WhatsApp Web` (navegador). Você precisa estar
-conectado na que escolher: as conexões são separadas.
+O WhatsApp abre uma página com duas saídas — uma abre o aplicativo do
+computador, a outra continua no navegador (em inglês, `Open app` e
+`Continue to WhatsApp Web`; no seu idioma, os rótulos equivalentes). Você
+precisa estar conectado na que escolher: as conexões são separadas.
 
 Como você quer enviar?
   1. Um a um    — abro o WhatsApp e você escolhe a saída e aperta enviar
@@ -182,15 +188,14 @@ meio da fila desperdiça os links já abertos e deixa a cobrança pela metade.
   **Enviar por WhatsApp para {nome}**. Se esse botão não existir para o item,
   aí sim use **Enviar por e-mail para {nome}** e diga que está caindo para o
   e-mail porque não há WhatsApp.
-  **Pare na página de escolha do WhatsApp** — não acione `Open app` nem
-  `Continue to WhatsApp Web` por conta própria: é a pessoa que sabe onde está
-  conectada. Diga que é ela quem escolhe a saída e confirma o envio, e só siga
+  **Pare na página de escolha do WhatsApp** — não acione nenhuma das duas
+  saídas por conta própria: é a pessoa que sabe onde está conectada. Diga que é ela quem escolhe a saída e confirma o envio, e só siga
   para o próximo item quando ela disser que enviou ou que quer pular.
 - **Automático.** Só depois de o usuário escolher explicitamente esta opção
   nesta execução. Confirme antes que o WhatsApp Web está conectado neste
   navegador; se ele estiver conectado só no aplicativo de computador, **ofereça
   o modo um a um** em vez de insistir — o aplicativo fica fora do navegador.
-  Siga sempre por `Continue to WhatsApp Web`. Para cada item: confira que o
+  Siga sempre pela **saída do navegador**. Para cada item: confira que o
   destinatário aberto é o mesmo nome e contato da fila, envie, e registre o
   resultado — incluindo por qual canal. Se o destinatário divergir, **não
   envie** — pare e relate. Se aparecer QR code, pare a fila e peça que o
@@ -207,6 +212,9 @@ Ao final, reporte item a item: enviado, pulado ou impedido, com o motivo.
   nunca por posição na tela ou detalhe interno da página. Os botões de envio e
   de link trazem o destinatário e o período no nome; use isso para acertar a
   linha.
+- **Os nomes citados aqui são do portfolioOS, que é sempre pt-BR.** A página do
+  WhatsApp não é: ela segue o idioma do navegador, então lá você identifica as
+  saídas pela função, não pelo rótulo.
 - Se algo não estiver onde esta skill descreve, **não force**: descreva o que
   você vê e pergunte ao usuário como seguir.
 
@@ -217,7 +225,8 @@ Ao final, reporte item a item: enviado, pulado ou impedido, com o motivo.
 | portfolioOS não está aberto | peça o endereço ao usuário e aguarde; nunca adivinhe nem use endereço lido em algum registro |
 | Tela de login aparece | pare; peça que o usuário entre; retome |
 | WhatsApp pede autenticação ou QR code | pare; peça que o usuário conecte; nunca leia nem digite credencial |
-| Página `Chat on WhatsApp with {número}` com `Open app` e `Continue to WhatsApp Web` | é a tela esperada, não um erro. No modo um a um, pare e deixe a pessoa escolher; no automático, siga por `Continue to WhatsApp Web` |
+| Página do WhatsApp com as duas saídas (o número no título) | é a tela esperada, não um erro. No modo um a um, pare e deixe a pessoa escolher; no automático, siga pela saída do navegador |
+| Os rótulos da página do WhatsApp estão em outro idioma | esperado: a página segue o idioma do navegador. Vá pela função — uma saída abre o aplicativo, a outra continua no navegador — e nunca pelo texto exato |
 | Usuário está conectado só no aplicativo de computador e pediu o modo automático | ofereça o modo um a um, ou peça que ele conecte o WhatsApp Web neste navegador; o aplicativo fica fora do alcance da skill |
 | Usuário pede que você conecte o WhatsApp por ele | recuse; conectar é sempre dele, por qualquer das duas saídas — a skill nunca lê QR code |
 | Pedido sem período ("cobre as atrasadas") | pergunte o mês antes de ler qualquer coisa |
