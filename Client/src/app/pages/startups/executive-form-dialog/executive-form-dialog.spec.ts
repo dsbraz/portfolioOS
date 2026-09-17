@@ -72,11 +72,9 @@ describe('ExecutiveFormDialog', () => {
     );
   });
 
-  // The country prefix is mandatory (product decision, 2026-08-19): the fund's
-  // executives are not all in Brazil, so the country cannot be guessed.
-  it('should refuse a phone without the country prefix', () => {
+  it.each(['(415) 555-1234', '+12'])('should refuse the phone %s', (phone) => {
     dialogRefSpy.close.mockClear();
-    component.form.patchValue({ name: 'John Miller', phone: '(415) 555-1234' });
+    component.form.patchValue({ name: 'John Miller', phone });
 
     component.onSubmit();
 

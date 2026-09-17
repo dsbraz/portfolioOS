@@ -8,20 +8,24 @@ import { MonthlyIndicatorToken } from '../../../models/monthly-indicator-token.m
 import { formatPeriod } from '../../../models/formatters';
 import { MONTH_LABELS_FULL } from '../../../models/monthly-indicator.model';
 
+interface RecipientBase {
+  name: string;
+  role: string | null;
+  message: string;
+}
+
 /**
  * One executive and the single channel the link goes out by: WhatsApp when the
  * phone carries its country code, otherwise e-mail. `notice` says why WhatsApp
  * was not used, so the record can be fixed instead of the detour becoming habit.
  */
-interface Recipient {
-  name: string;
-  role: string | null;
-  channel: 'whatsapp' | 'email' | null;
-  contact: string | null;
-  url: string | null;
-  notice: string | null;
-  message: string;
-}
+type ReachableRecipient = RecipientBase &
+  (
+    | { channel: 'whatsapp'; contact: string; url: string }
+    | { channel: 'email'; contact: string; url: string; notice: string }
+  );
+type BlockedRecipient = RecipientBase & { channel: null; notice: string };
+type Recipient = ReachableRecipient | BlockedRecipient;
 
 /**
  * Presentational panel for a generated reporting link: the URL as text, a copy
@@ -41,7 +45,7 @@ export class TokenPanel {
   readonly token = input.required<MonthlyIndicatorToken>();
   readonly executives = input.required<Executive[]>();
   /** Names the startup in the e-mail subject. */
-  readonly startupName = input<string>('');
+  readonly startupName = input.required<string>();
 
   private readonly snackBar = inject(MatSnackBar);
 
@@ -64,8 +68,12 @@ export class TokenPanel {
     this.executives().map((executive) => this.toRecipient(executive)),
   );
 
-  readonly reachable = computed(() => this.recipients().filter((r) => r.channel !== null));
-  readonly blocked = computed(() => this.recipients().filter((r) => r.channel === null));
+  readonly reachable = computed(() =>
+    this.recipients().filter((r): r is ReachableRecipient => r.channel !== null),
+  );
+  readonly blocked = computed(() =>
+    this.recipients().filter((r): r is BlockedRecipient => r.channel === null),
+  );
 
   copyLink(): void {
     // The link is always visible as text above, so a clipboard failure — common
@@ -81,34 +89,34 @@ export class TokenPanel {
     );
   }
 
-  private toRecipient({ name, role, phone, email }: Executive): Recipient {
-    const firstName = name.trim().split(/\s+/)[0];
+  private toRecipient(executive: Executive): Recipient {
+    const phone = executive.phone?.trim();
+    const email = executive.email?.trim();
+    const firstName = executive.name.trim().split(/\s+/)[0];
     // The fund's standard message, already in use before the platform existed.
     const message = [
       `Olá ${firstName}. Tudo bem?`,
       `Segue o link para atualizações dos dados referentes a ${this.messagePeriod()}: ${this.formUrl()}`,
       'Obrigado',
     ].join('\n');
-    const base = { name, role, message };
+    const base = { name: executive.name, role: executive.role, message };
 
-    // The country code is never guessed: the fund's executives are not all in
-    // Brazil. Records saved before the rule may still lack it.
-    if (phone?.trim().startsWith('+')) {
-      const digits = phone.replace(/\D/g, '');
-      const url = `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
-      return { ...base, channel: 'whatsapp', contact: phone, url, notice: null };
+    // Records saved before the country code became mandatory may lack it.
+    if (phone?.startsWith('+')) {
+      const url = `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+      return { ...base, channel: 'whatsapp', contact: phone, url };
     }
 
-    const notice = phone?.trim() ? 'Telefone sem código do país' : 'Sem telefone cadastrado';
-    if (!email?.trim()) {
-      return { ...base, channel: null, contact: null, url: null, notice };
+    const notice = phone ? 'Telefone sem código do país' : 'Sem telefone cadastrado';
+    if (!email) {
+      return { ...base, channel: null, notice };
     }
 
     const subject = `${this.startupName()} — indicadores de ${this.messagePeriod()}`;
     // The address is encoded too: a "?" or "," in it would otherwise add
     // recipients to the mail. "@" stays literal for mail clients that do not
     // decode it.
-    const address = encodeURIComponent(email.trim()).replace('%40', '@');
+    const address = encodeURIComponent(email).replace('%40', '@');
     const url =
       `mailto:${address}?subject=${encodeURIComponent(subject)}` +
       `&body=${encodeURIComponent(message)}`;

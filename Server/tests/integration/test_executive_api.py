@@ -106,23 +106,22 @@ async def test_executive_startup_not_found(client):
 
 
 @pytest.mark.asyncio
-async def test_create_executive_stores_the_phone_in_e164(client, startup_id):
+@pytest.mark.parametrize(
+    "phone,stored",
+    [
+        ("+55 (11) 91234-5678", "+5511912345678"),
+        ("+1 415 555 1234", "+14155551234"),
+    ],
+)
+async def test_create_executive_stores_the_phone_in_e164(
+    client, startup_id, phone, stored
+):
     resp = await client.post(
         f"/api/startups/{startup_id}/executives",
-        json={"name": "Ana Costa", "phone": "+55 (11) 91234-5678"},
+        json={"name": "Ana Costa", "phone": phone},
     )
     assert resp.status_code == 201
-    assert resp.json()["phone"] == "+5511912345678"
-
-
-@pytest.mark.asyncio
-async def test_create_executive_accepts_a_foreign_number(client, startup_id):
-    resp = await client.post(
-        f"/api/startups/{startup_id}/executives",
-        json={"name": "John Miller", "phone": "+1 415 555 1234"},
-    )
-    assert resp.status_code == 201
-    assert resp.json()["phone"] == "+14155551234"
+    assert resp.json()["phone"] == stored
 
 
 @pytest.mark.asyncio

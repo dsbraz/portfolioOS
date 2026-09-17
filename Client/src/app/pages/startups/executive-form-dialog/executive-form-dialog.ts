@@ -40,10 +40,8 @@ export class ExecutiveFormDialog implements OnInit {
     name: ['', [Validators.required, Validators.maxLength(255)]],
     role: [''],
     email: ['', [Validators.email]],
-    // The country code is mandatory: the fund's executives are not all in
-    // Brazil, so a local-format number cannot be told apart from a foreign one.
-    // The server validates the full format and stores it normalized.
-    phone: ['', [Validators.pattern(/^\s*\+/)]],
+    // Mirrors `InternationalPhone` in the server schema: "+" and 8 to 15 digits.
+    phone: ['', [Validators.pattern(/^\s*\+[\s().\-/]*(\d[\s().\-/]*){8,15}$/)]],
     linkedin: [''],
   });
 

@@ -39,13 +39,9 @@ ContactEmail = Annotated[EmailStr | None, BeforeValidator(_normalize_email)]
 class ExecutiveBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     role: str | None = Field(None, max_length=255)
-    email: str | None = Field(None, max_length=255)
-    phone: str | None = Field(None, max_length=50)
     linkedin: str | None = Field(None, max_length=512)
 
 
-# Input schemas validate the contact fields; the response keeps plain strings so
-# records saved before the rule still load.
 class ExecutiveCreate(ExecutiveBase):
     email: ContactEmail = None
     phone: InternationalPhone = None
@@ -62,6 +58,9 @@ class ExecutiveUpdate(BaseModel):
 class ExecutiveResponse(ExecutiveBase):
     model_config = ConfigDict(from_attributes=True)
 
+    # Plain strings: records saved before the contact rules must still load.
+    email: str | None = None
+    phone: str | None = None
     id: uuid.UUID
     startup_id: uuid.UUID
     created_at: datetime
