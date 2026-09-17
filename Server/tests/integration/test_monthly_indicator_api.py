@@ -1,5 +1,7 @@
 import pytest
 
+from app.repositories.monthly_indicator_repository import MonthlyIndicatorRepository
+
 
 @pytest.mark.asyncio
 async def test_list_indicators_empty(client, startup_id):
@@ -234,6 +236,37 @@ async def test_patch_onto_an_occupied_period_conflicts_instead_of_crashing(
 
     assert resp.status_code == 409
     assert "6/2026" in resp.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_patch_that_loses_a_race_for_the_period_still_conflicts(
+    client, startup_id, monkeypatch
+):
+    first = await client.post(
+        f"/api/startups/{startup_id}/monthly-indicators",
+        json={"month": 8, "year": 2026},
+    )
+    second = await client.post(
+        f"/api/startups/{startup_id}/monthly-indicators",
+        json={"month": 9, "year": 2026},
+    )
+    assert first.status_code == 201 and second.status_code == 201
+
+    # Another request takes the period between the check and the write: the
+    # check sees it free, so only the unique constraint can catch it.
+    async def period_looks_free(*_args, **_kwargs):
+        return None
+
+    monkeypatch.setattr(
+        MonthlyIndicatorRepository, "get_by_startup_and_period", period_looks_free
+    )
+
+    resp = await client.patch(
+        f"/api/startups/{startup_id}/monthly-indicators/{second.json()['id']}",
+        json={"month": 8, "year": 2026},
+    )
+
+    assert resp.status_code == 409
 
 
 @pytest.mark.asyncio

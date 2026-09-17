@@ -2,8 +2,10 @@ import uuid
 from decimal import Decimal
 
 from sqlalchemy import ColumnElement, Integer, cast, func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domain.exceptions import ConflictError
 from app.domain.models.monthly_indicator import MonthlyIndicator
 from app.domain.models.monthly_indicator_token import MonthlyIndicatorToken
 from app.domain.models.period import Period
@@ -73,7 +75,15 @@ class MonthlyIndicatorRepository:
         return indicator
 
     async def update(self, indicator: MonthlyIndicator) -> MonthlyIndicator:
-        await self._session.flush()
+        # Read before flushing: a failed flush invalidates the session and the
+        # instance can no longer load its attributes.
+        period = f"{indicator.month}/{indicator.year}"
+        try:
+            await self._session.flush()
+        except IntegrityError as error:
+            # The use case checks the period first; this catches the request that
+            # took it in between. Startup plus period is the only unique key.
+            raise ConflictError(f"Ja existe indicador para o periodo {period}") from error
         await self._session.refresh(indicator)
         return indicator
 
