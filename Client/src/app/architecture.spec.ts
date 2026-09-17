@@ -4,6 +4,11 @@
  *
  * Uses Vite's import.meta.glob to read source files at build time
  * and asserts that no layer imports from a forbidden layer.
+ *
+ * Glob patterns MUST be root-relative (`/src/app/...`). The Angular unit-test
+ * builder bundles specs before Vitest sees them, so a `./` pattern resolves
+ * against the bundle's location, matches nothing, and every rule passes
+ * vacuously.
  */
 
 const importRegex = /from\s+['"]([^'"]+)['"]/g;
@@ -43,27 +48,32 @@ function formatViolations(violations: Violation[]): string {
 // Load source files at build time via Vite glob imports
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const serviceFiles = import.meta.glob(
-  ['./services/*.ts', '!./services/*.spec.ts'],
+  ['/src/app/services/*.ts', '!/src/app/services/*.spec.ts'],
   { query: '?raw', eager: true },
 ) as Record<string, any>;
 
 const componentFiles = import.meta.glob(
-  ['./components/**/*.ts', '!./components/**/*.spec.ts'],
+  ['/src/app/components/**/*.ts', '!/src/app/components/**/*.spec.ts'],
   { query: '?raw', eager: true },
 ) as Record<string, any>;
 
-const modelFiles = import.meta.glob('./models/*.ts', {
+const modelFiles = import.meta.glob('/src/app/models/*.ts', {
   query: '?raw',
   eager: true,
 }) as Record<string, any>;
 
+const directiveFiles = import.meta.glob(
+  ['/src/app/directives/*.ts', '!/src/app/directives/*.spec.ts'],
+  { query: '?raw', eager: true },
+) as Record<string, any>;
+
 const guardFiles = import.meta.glob(
-  ['./guards/*.ts', '!./guards/*.spec.ts'],
+  ['/src/app/guards/*.ts', '!/src/app/guards/*.spec.ts'],
   { query: '?raw', eager: true },
 ) as Record<string, any>;
 
 const interceptorFiles = import.meta.glob(
-  ['./interceptors/*.ts', '!./interceptors/*.spec.ts'],
+  ['/src/app/interceptors/*.ts', '!/src/app/interceptors/*.spec.ts'],
   { query: '?raw', eager: true },
 ) as Record<string, any>;
 /* eslint-enable @typescript-eslint/no-explicit-any */
@@ -77,6 +87,22 @@ function toRawMap(globResult: Record<string, unknown>): Record<string, string> {
 }
 
 describe('Architecture boundaries', () => {
+  // Regression: with `./` globs every map was empty and all rules passed
+  // without reading a single file.
+  it('should load source files for every checked layer', () => {
+    const layers = {
+      services: serviceFiles,
+      components: componentFiles,
+      models: modelFiles,
+      directives: directiveFiles,
+      guards: guardFiles,
+      interceptors: interceptorFiles,
+    };
+    for (const [layer, files] of Object.entries(layers)) {
+      expect(Object.keys(files).length, `no files loaded for ${layer}`).toBeGreaterThan(0);
+    }
+  });
+
   it('services must not import from pages or components', () => {
     const violations = findViolations(toRawMap(serviceFiles), ['/pages/', '/components/']);
     expect(violations, formatViolations(violations)).toEqual([]);
@@ -91,6 +117,15 @@ describe('Architecture boundaries', () => {
     const violations = findViolations(toRawMap(modelFiles), [
       '/services/',
       '/pages/',
+      '/components/',
+    ]);
+    expect(violations, formatViolations(violations)).toEqual([]);
+  });
+
+  it('directives must not import from pages, services, or components', () => {
+    const violations = findViolations(toRawMap(directiveFiles), [
+      '/pages/',
+      '/services/',
       '/components/',
     ]);
     expect(violations, formatViolations(violations)).toEqual([]);
