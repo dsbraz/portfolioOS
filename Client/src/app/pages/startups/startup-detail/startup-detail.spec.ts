@@ -126,7 +126,7 @@ describe('StartupDetail (totalParticipation)', () => {
   });
 });
 
-describe('StartupDetail (carregamento e ARIA)', () => {
+describe('StartupDetail (loading and ARIA)', () => {
   const startup: Startup = {
     id: 's1',
     name: 'Acme',
@@ -141,11 +141,11 @@ describe('StartupDetail (carregamento e ARIA)', () => {
     updated_at: '2025-01-01T00:00:00Z',
   };
 
-  const lista = (items: unknown[]) => ({ items, total: items.length });
+  const page = (items: unknown[]) => ({ items, total: items.length });
 
-  /** `pendente` deixa as chamadas sem emitir, que é o estado de carregando. */
-  const montar = async (pendente = false) => {
-    const resposta = <T>(valor: T) => (pendente ? NEVER : of(valor));
+  /** `pending` keeps the calls from emitting, which is the loading state. */
+  const mount = async (pending = false) => {
+    const respond = <T>(value: T) => (pending ? NEVER : of(value));
 
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
@@ -156,14 +156,14 @@ describe('StartupDetail (carregamento e ARIA)', () => {
         { provide: Router, useValue: {} },
         { provide: MatDialog, useValue: {} },
         { provide: MatSnackBar, useValue: { open: vi.fn() } },
-        { provide: StartupService, useValue: { getById: () => resposta(startup) } },
+        { provide: StartupService, useValue: { getById: () => respond(startup) } },
         {
           provide: MonthlyIndicatorService,
-          useValue: { list: () => resposta(lista([indicatorFixture])) },
+          useValue: { list: () => respond(page([indicatorFixture])) },
         },
-        { provide: BoardMeetingService, useValue: { list: () => resposta(lista([])) } },
-        { provide: ExecutiveService, useValue: { list: () => resposta(lista([executiveFixture])) } },
-        { provide: MonthlyIndicatorTokenService, useValue: { list: () => resposta(lista([])) } },
+        { provide: BoardMeetingService, useValue: { list: () => respond(page([])) } },
+        { provide: ExecutiveService, useValue: { list: () => respond(page([executiveFixture])) } },
+        { provide: MonthlyIndicatorTokenService, useValue: { list: () => respond(page([])) } },
       ],
     }).compileComponents();
 
@@ -204,11 +204,11 @@ describe('StartupDetail (carregamento e ARIA)', () => {
     updated_at: '',
   };
 
-  // Antes a página não renderizava NADA enquanto carregava, e um container
-  // vazio é indistinguível de "não há dados" — para quem lê a tela e para
-  // qualquer agente que raspe o DOM cedo demais.
+  // The page used to render NOTHING while loading, and an empty container is
+  // indistinguishable from "no data" — for anyone reading the screen and for
+  // any agent that scrapes the DOM too early.
   it('should announce that it is loading instead of rendering an empty page', async () => {
-    const el = await montar(true);
+    const el = await mount(true);
 
     expect(el.querySelector('[aria-busy="true"]')).toBeTruthy();
     expect(el.querySelector('[role="status"]')?.textContent).toContain('Carregando');
@@ -216,37 +216,37 @@ describe('StartupDetail (carregamento e ARIA)', () => {
   });
 
   it('should drop the busy state once the data arrives', async () => {
-    const el = await montar();
+    const el = await mount();
 
     expect(el.querySelector('[aria-busy="true"]')).toBeNull();
     expect(el.querySelector('h1')?.textContent).toContain('Acme');
   });
 
-  // Regressão: as abas declaram `aria-controls`, mas só o painel ativo era
-  // renderizado — duas das três referências apontavam para ids inexistentes.
+  // Regression: the tabs declare `aria-controls`, but only the active panel was
+  // rendered — two of the three references pointed to non-existent ids.
   it('should point every tab at a panel that exists', async () => {
-    const el = await montar();
+    const el = await mount();
 
-    const abas = [...el.querySelectorAll('[role="tab"]')];
-    expect(abas.length).toBe(3);
+    const tabs = [...el.querySelectorAll('[role="tab"]')];
+    expect(tabs.length).toBe(3);
 
-    for (const aba of abas) {
-      const id = aba.getAttribute('aria-controls');
+    for (const tab of tabs) {
+      const id = tab.getAttribute('aria-controls');
       expect(id).toBeTruthy();
       expect(el.querySelector(`#${id}`)).toBeTruthy();
     }
   });
 
   it('should keep only the selected panel visible', async () => {
-    const el = await montar();
+    const el = await mount();
 
-    const paineis = [...el.querySelectorAll('[role="tabpanel"]')];
-    expect(paineis.length).toBe(3);
-    expect(paineis.filter((p) => !p.hasAttribute('hidden')).length).toBe(1);
+    const panels = [...el.querySelectorAll('[role="tabpanel"]')];
+    expect(panels.length).toBe(3);
+    expect(panels.filter((p) => !p.hasAttribute('hidden')).length).toBe(1);
   });
 
   it('should preserve the names browser-operated skills use to navigate', async () => {
-    const el = await montar();
+    const el = await mount();
 
     const tabElements = [...el.querySelectorAll('[role="tab"]')];
     expect(tabElements.map((tab) => tab.getAttribute('aria-label'))).toEqual([
@@ -302,17 +302,17 @@ describe('StartupDetail (carregamento e ARIA)', () => {
     expect(el.querySelector('.section-action')?.textContent).toContain('Adicionar reunião');
   });
 
-  // Três botões `more_vert` iguais por tabela apareciam como "button" sem
-  // rótulo: nada distinguia a linha a que cada um pertence.
+  // Three identical `more_vert` buttons per table showed up as unlabeled
+  // "button": nothing told apart the row each one belongs to.
   it('should name every row action button with its row', async () => {
-    const el = await montar();
+    const el = await mount();
 
-    const acoes = [
+    const actions = [
       ...el.querySelectorAll('button[mat-icon-button][aria-haspopup], button[mat-icon-button]'),
     ].filter((b) => b.closest('td'));
-    expect(acoes.length).toBeGreaterThan(0);
-    for (const botao of acoes) {
-      expect(botao.getAttribute('aria-label')).toBeTruthy();
+    expect(actions.length).toBeGreaterThan(0);
+    for (const button of actions) {
+      expect(button.getAttribute('aria-label')).toBeTruthy();
     }
     expect(el.querySelector('td button[mat-icon-button]')?.getAttribute('aria-label')).toBe(
       'Ações do indicador de Jul/2026',
@@ -320,8 +320,8 @@ describe('StartupDetail (carregamento e ARIA)', () => {
   });
 });
 
-describe('StartupDetail (ordenação)', () => {
-  const criar = () => {
+describe('StartupDetail (sorting)', () => {
+  const create = () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [
@@ -357,10 +357,10 @@ describe('StartupDetail (ordenação)', () => {
     updated_at: '',
   });
 
-  // "Período" mostra `Jul/2026`. Ordenado como texto, Ago viria antes de Jul e
-  // Dez antes de Fev — a coluna precisa ordenar pelo que ela É.
+  // "Período" shows `Jul/2026`. Sorted as text, Ago would come before Jul and
+  // Dez before Fev — the column must sort by what it IS.
   it('should sort the period column chronologically, not alphabetically', () => {
-    const component = criar();
+    const component = create();
     component.indicators.set([ind(7, 2026), ind(8, 2026), ind(12, 2025), ind(2, 2026)]);
     component.indicatorSort.set({ active: 'period', direction: 'asc' });
 
@@ -373,7 +373,7 @@ describe('StartupDetail (ordenação)', () => {
   });
 
   it('should keep indicators without revenue last when sorting by revenue', () => {
-    const component = criar();
+    const component = create();
     component.indicators.set([ind(1, 2026, null), ind(2, 2026, 500), ind(3, 2026, 100)]);
     component.indicatorSort.set({ active: 'total_revenue', direction: 'desc' });
 
@@ -381,7 +381,7 @@ describe('StartupDetail (ordenação)', () => {
   });
 
   it('should leave the rows untouched while no column is active', () => {
-    const component = criar();
+    const component = create();
     const rows = [ind(2, 2026), ind(1, 2026)];
     component.indicators.set(rows);
 

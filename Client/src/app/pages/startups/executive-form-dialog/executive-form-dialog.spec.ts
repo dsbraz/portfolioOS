@@ -5,9 +5,9 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Executive } from '../../../models/executive.model';
 import { ExecutiveFormDialog } from './executive-form-dialog';
 
-describe('ExecutiveFormDialog em modo leitura', () => {
+describe('ExecutiveFormDialog in read mode', () => {
   it('should render the record as text instead of disabled form controls', async () => {
-    const executivo = {
+    const executive = {
       name: 'Ana Ribeiro',
       role: 'CEO',
       email: 'ana@cardume.com.br',
@@ -20,7 +20,7 @@ describe('ExecutiveFormDialog em modo leitura', () => {
       providers: [
         provideNoopAnimations(),
         { provide: MatDialogRef, useValue: { close: vi.fn() } },
-        { provide: MAT_DIALOG_DATA, useValue: { executive: executivo, readonly: true } },
+        { provide: MAT_DIALOG_DATA, useValue: { executive, readonly: true } },
       ],
     }).compileComponents();
 

@@ -10,8 +10,8 @@
        focus, scroll and the sort headers. Only the first load shows the spinner. -->
   <div class="detail-page" [attr.aria-busy]="loading() ? 'true' : null">
     <header class="page-head">
-      <!-- Identidade: logo, nome, site e ESTADO. O status descreve a startup,
-           então mora aqui e não junto das ações. -->
+      <!-- Identity: logo, name, website and STATE. The status describes the startup,
+           so it lives here and not next to the actions. -->
       <div class="page-head-identity">
         @if (s.logo_url) {
           <img [src]="s.logo_url" [alt]="s.name + ' logo'" class="header-logo" />
@@ -39,8 +39,8 @@
         </div>
       </div>
 
-      <!-- Ações: duas explícitas e o resto no overflow. Ação destrutiva não
-           divide peso visual com uma ação corriqueira. -->
+      <!-- Actions: two explicit ones and the rest in the overflow. A destructive
+           action does not share visual weight with a routine one. -->
       <div class="page-head-actions">
         <button mat-stroked-button (click)="openEditStartup()">
           <mat-icon>edit</mat-icon>
@@ -113,7 +113,7 @@
         }
       </div>
 
-      <!-- Fora do tablist: um role="tablist" só admite tabs como filhos. -->
+      <!-- Outside the tablist: a role="tablist" only allows tabs as children. -->
       @if (activeSection() === 'indicadores') {
         <button mat-flat-button class="section-action" (click)="openCreateIndicator()">
           <mat-icon>add</mat-icon>
@@ -132,10 +132,10 @@
       }
     </div>
 
-    <!-- Os três painéis ficam no DOM, escondidos com `hidden` em vez de
-           removidos: as abas declaram `aria-controls`, e renderizar só o ativo
-           deixava duas dessas referências apontando para ids inexistentes. É
-           também o padrão da WAI-ARIA APG para tablist. -->
+    <!-- All three panels stay in the DOM, hidden with `hidden` instead of
+         removed: the tabs declare `aria-controls`, and rendering only the active
+         one left two of those references pointing at nonexistent ids. It is
+         also the WAI-ARIA APG pattern for tablists. -->
     <section
       class="section-panel"
       role="tabpanel"

@@ -10,7 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { AuthService } from './services/auth.service';
 import { ThemeService } from './services/theme.service';
 
-/** Abaixo disto a sidebar cobre o conteúdo em vez de dividir a largura. */
+/** Below this, the sidebar covers the content instead of sharing the width. */
 const COMPACT = '(max-width: 64em)';
 
 @Component({
@@ -34,9 +34,9 @@ export class App implements OnInit {
   private readonly breakpoints = inject(BreakpointObserver);
 
   /**
-   * Abaixo de 64em a sidebar deixa de dividir a largura e passa a cobrir o
-   * conteúdo. Fixa em `mode="side"` ela consumia 248px de uma tela de 390px,
-   * sobrando ~140px para tudo. Mesmo comportamento do shell de referência.
+   * Below 64em the sidebar stops sharing the width and covers the content
+   * instead. Pinned in `mode="side"` it took 248px of a 390px screen, leaving
+   * ~140px for everything else. Same behavior as the reference shell.
    */
   readonly isCompact = toSignal(
     this.breakpoints.observe(COMPACT).pipe(map((state) => state.matches)),
@@ -46,16 +46,16 @@ export class App implements OnInit {
   readonly sidenavMode = computed<'over' | 'side'>(() => (this.isCompact() ? 'over' : 'side'));
 
   /**
-   * A barra é o TOPO DO APP sempre que a gaveta for um overlay: no compacto ela
-   * fica atrás do backdrop, então removê-la ao abrir não esconde nada — só
-   * reflui o conteúdo a cada abre/fecha, porque a barra ocupa espaço no fluxo.
-   * Ela só sai de cena quando a sidebar está ACOPLADA e dividindo a largura,
-   * onde seria repetição do que já está à vista.
+   * The bar is the APP TOP whenever the drawer is an overlay: in compact mode it
+   * sits behind the backdrop, so removing it on open hides nothing — it only
+   * reflows the content on every open/close, because the bar takes space in the flow.
+   * It only goes away when the sidebar is DOCKED and sharing the width,
+   * where it would repeat what is already in view.
    */
   readonly showOpenBar = computed(() => this.isCompact() || !this.sidenavOpened());
 
-  // Estado inicial pelo breakpoint atual: no compacto a sidebar nasce fechada,
-  // senão cobre a tela inteira ao carregar.
+  // Initial state follows the current breakpoint: in compact mode the sidebar
+  // starts closed, otherwise it covers the whole screen on load.
   readonly sidenavOpened = signal(!this.breakpoints.isMatched(COMPACT));
 
   private wasCompact: boolean | null = null;
@@ -63,9 +63,9 @@ export class App implements OnInit {
   constructor() {
     effect(() => {
       const compact = this.isCompact();
-      // Só age na TRANSIÇÃO de breakpoint. Reagir a toda execução faria o effect
-      // sobrescrever o toggle manual — a intenção do usuário venceria só até o
-      // próximo flush.
+      // Only acts on a breakpoint TRANSITION. Reacting to every run would make the
+      // effect overwrite the manual toggle — the user's intent would only win until
+      // the next flush.
       if (this.wasCompact !== null && this.wasCompact !== compact) {
         this.sidenavOpened.set(!compact);
       }
@@ -74,8 +74,8 @@ export class App implements OnInit {
   }
 
 
-  /** Rótulo do estado ATUAL, não da próxima ação: com três estados, "Modo
-   *  escuro" seria ambíguo (é o atual ou o que vem a seguir?). */
+  /** Label for the CURRENT state, not the next action: with three states, "Modo
+   *  escuro" would be ambiguous (is it the current one or the next?). */
   readonly themeLabel = computed(() => {
     const t = this.theme.theme();
     if (t === 'light') return 'Tema claro';
@@ -103,7 +103,7 @@ export class App implements OnInit {
       });
   }
 
-  /** No modo gaveta, navegar deve fechar — senão o conteúdo fica coberto. */
+  /** In drawer mode, navigating must close it — otherwise the content stays covered. */
   closeOnCompact(): void {
     if (this.isCompact()) this.sidenavOpened.set(false);
   }

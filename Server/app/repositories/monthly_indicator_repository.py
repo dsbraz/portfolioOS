@@ -1,23 +1,26 @@
 import uuid
 from decimal import Decimal
 
-from sqlalchemy import Integer, cast, func, select
+from sqlalchemy import ColumnElement, Integer, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.models.monthly_indicator import MonthlyIndicator
 from app.domain.models.monthly_indicator_token import MonthlyIndicatorToken
+from app.domain.models.period import Period
 
 
-def period_expression():
-    """`ano * 100 + mes` como inteiro comparavel e ordenavel (202607).
+def year_month_key_expression() -> ColumnElement[int]:
+    """`year * 100 + month` as a comparable, sortable integer (202607).
 
-    Dispensa comparar dois campos e evita o classico de Dez/2025 vencer
-    Jan/2026 por ter mes maior.
+    SQL counterpart of `Period.key`; results are decoded with `Period.from_key`.
 
-    Os DOIS casts sao necessarios, nao decorativos: `year` e `month` sao
-    SMALLINT, e o tipo da soma segue o ultimo operando. Convertendo so o `year`,
-    o literal da comparacao ainda saia como int16 -- 202607 estoura o limite de
-    32767 e o asyncpg recusa o parametro em runtime.
+    Avoids comparing two fields and the classic bug of Dec/2025 beating
+    Jan/2026 for having a larger month.
+
+    BOTH casts are required, not decorative: `year` and `month` are
+    SMALLINT, and the sum's type follows the last operand. Casting only `year`,
+    the comparison literal still went out as int16 -- 202607 overflows the 32767
+    limit and asyncpg rejects the parameter at runtime.
     """
     return cast(MonthlyIndicator.year, Integer) * 100 + cast(
         MonthlyIndicator.month, Integer
@@ -97,30 +100,30 @@ class MonthlyIndicatorRepository:
 
     async def get_last_reported_period_by_startups(
         self, startup_ids: list[uuid.UUID], month: int, year: int
-    ) -> dict[uuid.UUID, tuple[int, int]]:
-        """Ultimo periodo reportado por startup, ATE o periodo consultado.
+    ) -> dict[uuid.UUID, Period]:
+        """Latest period reported per startup, UP TO the queried period.
 
-        O limite superior importa: olhando Fev/2026, um reporte de Jul/2026 e
-        futuro em relacao ao recorte da tela, e exibi-lo diria que a startup
-        reportou algo que, naquele contexto, ainda nao aconteceu.
+        The upper bound matters: looking at Feb/2026, a Jul/2026 report is in
+        the future relative to the screen's window, and showing it would say the
+        startup reported something that, in that context, has not happened yet.
 
-        Retorna `(ano, mes)`; startups sem nenhum reporte ficam fora do dict.
+        Startups without any report are left out of the dict.
         """
         if not startup_ids:
             return {}
 
-        period = period_expression()
+        period = year_month_key_expression()
 
         result = await self._session.execute(
             select(MonthlyIndicator.startup_id, func.max(period))
             .where(
                 MonthlyIndicator.startup_id.in_(startup_ids),
-                period <= year * 100 + month,
+                period <= Period(year=year, month=month).key,
             )
             .group_by(MonthlyIndicator.startup_id)
         )
 
-        return {row[0]: (row[1] // 100, row[1] % 100) for row in result.all()}
+        return {row[0]: Period.from_key(row[1]) for row in result.all()}
 
     async def get_accumulated_revenue_by_startups(
         self, startup_ids: list[uuid.UUID], month: int, year: int

@@ -7,8 +7,8 @@ export interface StartupSummary {
   ebitda_burn: number | null;
   headcount: number | null;
   accumulated_revenue_ytd: number | null;
-  /** Último período reportado ATÉ o período consultado (não o mais recente
-   *  em absoluto: olhando Fev, um reporte de Jul ainda não aconteceu). */
+  /** Latest period reported UP TO the queried period (not the most recent
+   *  overall: looking at Feb, a Jul report has not happened yet). */
   last_reported_month: number | null;
   last_reported_year: number | null;
 }

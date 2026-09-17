@@ -78,8 +78,8 @@ export class Portfolio implements OnInit {
 
   readonly sort = signal<SortState>({ active: '', direction: '' });
 
-  /** Cada coluna ordena pelo que ela É, não pelo texto que mostra: status pela
-   *  gravidade, dinheiro pelo número. Ver `models/sorting.ts`. */
+  /** Each column sorts by what it IS, not by the text it shows: status by
+   *  severity, money by the number. See `models/sorting.ts`. */
   readonly sortedStartups = computed(() =>
     applySort(this.summaryByPeriod()?.startups ?? [], this.sort(), {
       name: (item) => item.startup.name,
@@ -136,18 +136,18 @@ export class Portfolio implements OnInit {
   }
 
   /**
-   * Estado do reporte NO PERÍODO da tela. Retorna `null` quando a startup
-   * reportou — aí a linha inteira já é o relatório dela, e repetir a data seria
-   * ruído numa tabela onde só o que destoa merece tinta.
+   * Report state IN THE PERIOD shown on screen. Returns `null` when the startup
+   * reported — then the whole row already is its report, and repeating the date
+   * would be noise in a table where only what stands out deserves ink.
    */
   reportLabel(item: StartupSummary): string | null {
-    // Como `last_reported` é limitado ao período da tela, bater com ele é a
-    // prova exata de que reportou. Deduzir por campos nulos seria heurística —
-    // um relatório enviado em branco cairia nela e apareceria como ausente.
-    const reportou =
+    // Since `last_reported` is capped at the screen's period, matching it is exact
+    // proof that the startup reported. Inferring from null fields would be a
+    // heuristic — a blank report would fall into it and show up as missing.
+    const hasReported =
       item.last_reported_year === this.selectedYear() &&
       item.last_reported_month === this.selectedMonth();
-    if (reportou) return null;
+    if (hasReported) return null;
 
     if (item.last_reported_year === null || item.last_reported_month === null) {
       return 'Nunca reportou';

@@ -1,10 +1,10 @@
-// Dealflow — mesmo registro das outras telas: `page-head` pequeno, painéis com
-// filete de 1px e canto de 8px, sem sombra.
+// Dealflow — same register as the other screens: small `page-head`, panels with
+// a 1px hairline and 8px corner, no shadow.
 //
-// As colunas NÃO são coloridas. Cada uma com sua cor é o "arco-íris de cores por
-// seção" que a marca proíbe: cor deve carregar significado, e aqui a ordem das
-// colunas já é o significado. O kanban de referência do px-operations também
-// não colore coluna.
+// Columns are NOT colored. Each with its own color is the "rainbow of colors by
+// section" the brand forbids: color must carry meaning, and here the column
+// order already is the meaning. The px-operations reference kanban does not
+// color columns either.
 
 .dealflow-page {
   display: flex;
@@ -30,7 +30,7 @@
   flex-shrink: 0;
 }
 
-// ---------- Quadro ----------
+// ---------- Board ----------
 .kanban-board {
   display: grid;
   grid-auto-flow: column;
@@ -53,9 +53,9 @@
   overflow: hidden;
 }
 
-// A altura vem do botão, não do texto: o alvo padrão de 40px do Material ao
-// lado de um rótulo de 18px empurrava o cabeçalho para 65px. Com 28px (ainda
-// acima dos 24px da WCAG 2.5.8) e padding menor, fica nos ~44px da referência.
+// Height comes from the button, not the text: Material's default 40px target
+// next to an 18px label pushed the header to 65px. With 28px (still above the
+// 24px of WCAG 2.5.8) and less padding, it lands at the reference's ~44px.
 .column-header {
   display: flex;
   align-items: center;
@@ -65,8 +65,8 @@
   border-bottom: 1px solid var(--color-border);
 }
 
-// Inter, pequeno e semibold — NÃO caixa alta. O rótulo de coluna é informação,
-// não eyebrow decorativo.
+// Inter, small and semibold — NOT uppercase. The column label is information,
+// not a decorative eyebrow.
 .column-title {
   margin: 0;
   color: var(--color-text);
@@ -77,8 +77,8 @@
   text-transform: none;
 }
 
-// Contagem em mono: é número, e a largura fixa dos dígitos mantém o cabeçalho
-// estável quando o valor muda.
+// Count in mono: it is a number, and fixed-width digits keep the header stable
+// when the value changes.
 .column-count {
   padding: 1px var(--space-xs);
   border-radius: var(--radius-full);
@@ -128,8 +128,8 @@
   cursor: pointer;
   transition: border-color var(--transition-fast);
 
-  // Sem elevação e sem deslocar no hover: o card é um painel, não um objeto
-  // flutuante. A borda escurecendo já é a afordância.
+  // No elevation and no shift on hover: the card is a panel, not a floating
+  // object. The darkening border is already the affordance.
   &:hover {
     border-color: var(--color-gray-500);
   }
@@ -151,14 +151,14 @@
   overflow-wrap: anywhere;
 }
 
-// Block para a tag abaixo começar a própria linha.
+// Block so the tag below starts its own line.
 .deal-setor {
   display: block;
   font-size: var(--fs-body-xs);
   color: var(--color-text-muted);
 }
 
-// A rodada é um descritor, não uma ação — por isso tag, não chip.
+// The round is a descriptor, not an action — hence a tag, not a chip.
 .deal-round {
   margin-top: var(--space-2xs);
 }
@@ -171,11 +171,11 @@
   font-size: var(--fs-body-xs);
   color: var(--color-text-muted);
 
-  // Herda a tinta do texto ao lado, sem cor própria. O laranja da marca media
-  // 2,77:1 aqui: um ícone de 14px é texto pequeno para todos os efeitos, e o
-  // contrato de acentos reserva o laranja para preenchimento, nunca para traço
-  // fino em fundo claro. A seta é decorativa (`aria-hidden`) e o texto ao lado
-  // carrega o significado — ela não precisa de destaque, precisa de legibilidade.
+  // Inherits the ink of the adjacent text, with no color of its own. The brand
+  // orange measured 2.77:1 here: a 14px icon is small text for all purposes, and
+  // the accent contract reserves orange for fills, never for thin strokes on a
+  // light background. The arrow is decorative (`aria-hidden`) and the adjacent
+  // text carries the meaning — it needs legibility, not emphasis.
   mat-icon {
     flex: none;
     width: 0.875rem;
@@ -184,10 +184,10 @@
   }
 }
 
-// Nome e ações na MESMA linha flex. Posicionar o botão em absolute exigia
-// calibrar offsets contra o padding e a altura de linha do título — número
-// mágico que quebra assim que a tipografia muda. No flex o alinhamento é
-// consequência, não ajuste.
+// Name and actions on the SAME flex row. Positioning the button absolutely
+// required calibrating offsets against the padding and the title line height —
+// a magic number that breaks as soon as typography changes. With flex,
+// alignment is a consequence, not a tweak.
 .deal-head {
   display: flex;
   align-items: center;
@@ -195,9 +195,9 @@
   gap: var(--space-xs);
 }
 
-// Só o GLIFO precisa cair na linha do padding; a caixa do botão pode passar
-// dela. A margem negativa é exatamente o recuo do ícone dentro do botão, então
-// o alvo de toque continua inteiro.
+// Only the GLYPH needs to land on the padding line; the button box may extend
+// past it. The negative margin is exactly the icon's inset inside the button,
+// so the touch target stays whole.
 .deal-actions {
   --_btn-size: 2rem;
   --_icon-size: var(--icon-md);
@@ -207,12 +207,12 @@
 }
 
 .deal-menu-btn {
-  // Pelo token, não por width/height: sem isso o state layer (o círculo de
-  // hover) continua nos 40px padrão e transborda a caixa do botão.
+  // Via the token, not width/height: otherwise the state layer (the hover
+  // circle) stays at the default 40px and overflows the button box.
   --mat-icon-button-state-layer-size: var(--_btn-size);
 
-  // Centralização explícita: ao redimensionar o botão, o Material deixa de
-  // centrar o glifo sozinho e ele fica ~2px acima do centro da caixa.
+  // Explicit centering: once the button is resized, Material stops centering
+  // the glyph on its own and it sits ~2px above the box center.
   display: inline-flex;
   align-items: center;
   justify-content: center;

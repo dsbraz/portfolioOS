@@ -201,14 +201,14 @@ main {
   outline: none;
 }
 
-// Com a gaveta fechada, esta barra é o ÚNICO caminho de volta para a navegação.
-// Em fluxo normal ela rolava para fora da tela junto com o conteúdo: bastava
-// descer um pouco para o app ficar sem nenhuma forma de navegar. No mobile, onde
-// a gaveta nasce fechada, isso valia para todas as páginas. Sticky não é enfeite
-// aqui, é o que mantém a navegação alcançável.
+// With the drawer closed, this bar is the ONLY way back to the navigation.
+// In normal flow it scrolled off screen along with the content: scrolling down
+// a little left the app with no way to navigate. On mobile, where the drawer
+// starts closed, that applied to every page. Sticky is not decoration here, it
+// is what keeps navigation reachable.
 //
-// Também ganhou a identidade: um ícone solto num vão vazio não se lê como barra,
-// e com a gaveta fechada o logo não aparece em nenhum outro lugar.
+// It also gained the brand identity: a lone icon in an empty gap does not read
+// as a bar, and with the drawer closed the logo appears nowhere else.
 .sidenav-open-bar {
   position: sticky;
   top: 0;
