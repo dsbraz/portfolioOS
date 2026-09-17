@@ -44,10 +44,10 @@ export class ExecutiveFormDialog implements OnInit {
     linkedin: [''],
   });
 
-  /** Ver [[ReadView]]: o modo leitura deixou de ser um formulário desabilitado. */
+  /** See [[ReadView]]: read mode is no longer a disabled form. */
   readonly readSections: ReadSection[] = this.buildReadSections();
 
-  /** O executivo não tem grupos no modo de edição, então também não tem aqui. */
+  /** The executive has no groups in edit mode, so it has none here either. */
   private buildReadSections(): ReadSection[] {
     const e = this.data?.executive;
     if (!e) return [];

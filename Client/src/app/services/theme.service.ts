@@ -1,27 +1,27 @@
 import { DOCUMENT, Injectable, computed, inject, signal } from '@angular/core';
 
-/** O que o usuário escolheu. `system` delega ao sistema operacional. */
+/** What the user chose. `system` defers to the operating system. */
 export type ThemePreference = 'system' | 'light' | 'dark';
-/** O tema que de fato está pintado. */
+/** The theme actually painted. */
 export type ResolvedTheme = 'light' | 'dark';
 
-/** Compartilhado com o script de bootstrap do `index.html`, que aplica o tema
- *  antes do primeiro paint. Mude os dois juntos. */
+/** Shared with the bootstrap script in `index.html`, which applies the theme
+ *  before first paint. Change both together. */
 export const THEME_STORAGE_KEY = 'portfolio-theme';
 
 const SYSTEM_DARK_QUERY = '(prefers-color-scheme: dark)';
 
 /**
- * Preferência de tema.
+ * Theme preference.
  *
- * Escreve `[data-theme]` e `color-scheme` no elemento raiz: o primeiro dirige a
- * camada de tokens BRQ, o segundo faz os controles nativos (scrollbar, pickers)
- * acompanharem.
+ * Writes `[data-theme]` and `color-scheme` on the root element: the former drives
+ * the BRQ token layer, the latter makes native controls (scrollbar, pickers)
+ * follow along.
  *
- * O padrão é `system` e ele é REATIVO: um listener de `matchMedia` repinta
- * quando o sistema operacional troca de tema com a página aberta. Sem esse
- * listener, o `data-theme` carimbado no bootstrap desliga o ramo
- * `@media (prefers-color-scheme: dark)` do CSS e a troca ao vivo não acontece.
+ * The default is `system` and it is REACTIVE: a `matchMedia` listener repaints
+ * when the operating system switches theme while the page is open. Without that
+ * listener, the `data-theme` stamped at bootstrap disables the CSS
+ * `@media (prefers-color-scheme: dark)` branch and the live switch never happens.
  */
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
@@ -43,11 +43,11 @@ export class ThemeService {
     this.apply(this.resolved());
   }
 
-  /** Percorre sistema -> claro -> escuro -> sistema. */
+  /** Cycles system -> light -> dark -> system. */
   cycle(): void {
-    const ordem: ThemePreference[] = ['system', 'light', 'dark'];
-    const proximo = ordem[(ordem.indexOf(this.preference()) + 1) % ordem.length];
-    this.set(proximo);
+    const order: ThemePreference[] = ['system', 'light', 'dark'];
+    const next = order[(order.indexOf(this.preference()) + 1) % order.length];
+    this.set(next);
   }
 
   set(preference: ThemePreference): void {
@@ -60,8 +60,8 @@ export class ThemeService {
     const mq = this.document.defaultView?.matchMedia?.(SYSTEM_DARK_QUERY);
     mq?.addEventListener?.('change', (event) => {
       this.systemDark.set(event.matches);
-      // Só repinta quando a escolha é delegar ao sistema; uma escolha explícita
-      // não deve ser sobrescrita porque o SO mudou.
+      // Only repaint when the choice is to defer to the system; an explicit choice
+      // must not be overridden because the OS changed.
       if (this.preference() === 'system') this.apply(this.resolved());
     });
   }
@@ -71,7 +71,7 @@ export class ThemeService {
       const stored = this.document.defaultView?.localStorage.getItem(THEME_STORAGE_KEY);
       return stored === 'light' || stored === 'dark' || stored === 'system' ? stored : null;
     } catch {
-      // Storage pode estar indisponível (modo privado, cookies bloqueados).
+      // Storage may be unavailable (private mode, blocked cookies).
       return null;
     }
   }
@@ -80,7 +80,7 @@ export class ThemeService {
     try {
       this.document.defaultView?.localStorage.setItem(THEME_STORAGE_KEY, preference);
     } catch {
-      // A preferência simplesmente não sobrevive à sessão.
+      // The preference simply does not survive the session.
     }
   }
 
