@@ -1,0 +1,44 @@
+{
+  "revised_at": "2026-09-17",
+  "content_sha256": "cf820b528bb16d9b4e58c2d2a6cc61136ce9d7b7b82e4b39bd84091a3b560a0a",
+  "published": [
+    {
+      "name": "operar-portfolioos",
+      "description": "Consulta e administra o portfolioOS pelo navegador, incluindo startups, indicadores, reuniões, executivos, dealflow, usuários, convites e links. Use para qualquer tarefa na plataforma.",
+      "title": "Operar toda a plataforma",
+      "writes": true
+    },
+    {
+      "name": "preparar-agenda",
+      "description": "Prepara conversas com uma startup usando reuniões e indicadores do portfolioOS. Use para agenda, call, 1:1 ou para decidir o que acompanhar ou cobrar da investida.",
+      "title": "Preparar agenda de uma startup",
+      "writes": false
+    },
+    {
+      "name": "granola-reuniao",
+      "description": "Obtém uma conversa do Granola pelo MCP conectado ou por um link compartilhado e a transforma em um registro de reunião no portfolioOS, com prévia. Use para registrar, salvar ou lançar uma reunião com uma investida.",
+      "title": "Registrar reunião de conselho",
+      "writes": true
+    },
+    {
+      "name": "cobrar-indicadores",
+      "description": "Encontra as startups sem indicador no período no portfolioOS, gera os links de reporte após confirmação e monta a fila de cobrança por WhatsApp, com e-mail como alternativa. Use para cobrar, lembrar ou perguntar quem não reportou o mês.",
+      "title": "Cobrar indicadores em falta",
+      "writes": true
+    },
+    {
+      "name": "apresentacao-portfolio",
+      "description": "Monta a apresentação do portfólio na identidade BRQ a partir dos dados do portfolioOS, gerando o spec e construindo o .pptx pela skill brq-pptx. Use para deck, apresentação, slides ou material de comitê e de reunião de sócios sobre o portfólio.",
+      "title": "Apresentar o portfólio",
+      "writes": false
+    }
+  ],
+  "unpublished": [
+    {
+      "name": "auditoria-qualitativa",
+      "description": "Analisa textos qualitativos do portfólio para encontrar riscos, contradições com indicadores e compromissos sem avanço.",
+      "title": "Auditar o portfólio",
+      "reason": "Aguardando aprovação da política de trânsito de dados. Até lá, use apenas com dados de demonstração."
+    }
+  ]
+}

@@ -11,6 +11,17 @@ from app.domain.models.monthly_indicator_token import MonthlyIndicatorToken
 from app.domain.models.period import Period
 
 
+def _is_unique_violation(error: IntegrityError) -> bool:
+    """Only a duplicate is a conflict; a broken foreign key or NOT NULL is not.
+
+    PostgreSQL reports SQLSTATE 23505; SQLite says so only in the message.
+    """
+    return (
+        getattr(error.orig, "sqlstate", None) == "23505"
+        or "UNIQUE constraint failed" in str(error.orig)
+    )
+
+
 def year_month_key_expression() -> ColumnElement[int]:
     """`year * 100 + month` as a comparable, sortable integer (202607).
 
@@ -70,15 +81,7 @@ class MonthlyIndicatorRepository:
 
     async def create(self, indicator: MonthlyIndicator) -> MonthlyIndicator:
         period = f"{indicator.month}/{indicator.year}"
-        try:
-            # A savepoint keeps the session usable when another request took the
-            # period first, so the caller can still read and merge into it.
-            async with self._session.begin_nested():
-                self._session.add(indicator)
-                await self._session.flush()
-        except IntegrityError as error:
-            raise ConflictError(f"Ja existe indicador para o periodo {period}") from error
-        await self._session.refresh(indicator)
+        await self._insert(indicator, f"Ja existe indicador para o periodo {period}")
         return indicator
 
     async def update(self, indicator: MonthlyIndicator) -> MonthlyIndicator:
@@ -90,6 +93,8 @@ class MonthlyIndicatorRepository:
         except IntegrityError as error:
             # The use case checks the period first; this catches the request that
             # took it in between. Startup plus period is the only unique key.
+            if not _is_unique_violation(error):
+                raise
             raise ConflictError(f"Ja existe indicador para o periodo {period}") from error
         await self._session.refresh(indicator)
         return indicator
@@ -206,7 +211,21 @@ class MonthlyIndicatorRepository:
         return list(result.scalars().all()), total
 
     async def create_token(self, token: MonthlyIndicatorToken) -> MonthlyIndicatorToken:
-        self._session.add(token)
-        await self._session.flush()
-        await self._session.refresh(token)
+        period = f"{token.month}/{token.year}"
+        await self._insert(token, f"Ja existe link para o periodo {period}")
         return token
+
+    async def _insert(
+        self, record: MonthlyIndicator | MonthlyIndicatorToken, conflict_message: str
+    ) -> None:
+        try:
+            # A savepoint keeps the session usable when another request took the
+            # period first, so the caller can still read the record that won.
+            async with self._session.begin_nested():
+                self._session.add(record)
+                await self._session.flush()
+        except IntegrityError as error:
+            if not _is_unique_violation(error):
+                raise
+            raise ConflictError(conflict_message) from error
+        await self._session.refresh(record)

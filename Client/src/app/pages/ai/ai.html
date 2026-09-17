@@ -1,4 +1,4 @@
-<div class="ai-page">
+<div class="ai-page" [attr.aria-busy]="loading() ? 'true' : null">
   <header class="page-head">
     <div class="page-head-text">
       <p class="section-title">IA na plataforma</p>
@@ -75,7 +75,12 @@
     </aside>
 
     <div class="package-support">
-      <p>Instruções revisadas em <time datetime="2026-08-13">13/08/2026</time>.</p>
+      @if (manifest(); as pack) {
+        <p>
+          Instruções revisadas em
+          <time [attr.datetime]="pack.revised_at">{{ revisedAtLabel() }}</time>.
+        </p>
+      }
       <details class="support-details">
         <summary>Ajuda para equipes e atualizações</summary>
         <div>
@@ -109,53 +114,59 @@
     </ul>
   </section>
 
-  <section class="contents-section" id="package-contents" aria-labelledby="contents-title">
-    <div class="section-heading">
-      <div>
-        <p class="section-title">Conteúdo atual</p>
-        <h2 id="contents-title">O que vem no pacote</h2>
+  @if (loading() && !manifest()) {
+    <div class="page-status" role="status">Carregando o conteúdo do pacote…</div>
+  } @else if (manifest(); as pack) {
+    <section class="contents-section" id="package-contents" aria-labelledby="contents-title">
+      <div class="section-heading">
+        <div>
+          <p class="section-title">Conteúdo atual</p>
+          <h2 id="contents-title">O que vem no pacote</h2>
+        </div>
+        <p>{{ pack.published.length }} capacidades disponíveis</p>
       </div>
-      <p>{{ packagedSkills.length }} capacidades disponíveis</p>
-    </div>
 
-    <ul class="capability-list" role="list">
-      @for (skill of packagedSkills; track skill.name) {
-        <li [attr.data-included-skill]="skill.name">
-          <div class="capability-copy">
-            <h3>{{ skill.title }}</h3>
-            <p>{{ skill.description }}</p>
-          </div>
-          <div class="capability-meta">
-            <span class="pill" [class.pill--info]="skill.writes" [class.pill--neutral]="!skill.writes">
-              {{ skill.writes ? 'Escrita com confirmação' : 'Somente leitura' }}
-            </span>
-          </div>
-        </li>
-      }
-    </ul>
-  </section>
+      <ul class="capability-list" role="list">
+        @for (skill of pack.published; track skill.name) {
+          <li [attr.data-included-skill]="skill.name">
+            <div class="capability-copy">
+              <h3>{{ skill.title }}</h3>
+              <p>{{ skill.description }}</p>
+            </div>
+            <div class="capability-meta">
+              <span class="pill" [class.pill--info]="skill.writes" [class.pill--neutral]="!skill.writes">
+                {{ skill.writes ? 'Escrita com confirmação' : 'Somente leitura' }}
+              </span>
+            </div>
+          </li>
+        }
+      </ul>
+    </section>
 
-  <section class="blocked-section" aria-labelledby="blocked-title">
-    <div class="section-heading">
-      <div>
-        <p class="section-title">Em avaliação</p>
-        <h2 id="blocked-title">Ainda não disponíveis</h2>
+    <section class="blocked-section" aria-labelledby="blocked-title">
+      <div class="section-heading">
+        <div>
+          <p class="section-title">Em avaliação</p>
+          <h2 id="blocked-title">Ainda não disponíveis</h2>
+        </div>
+        <p>Estas capacidades não fazem parte do pacote atual.</p>
       </div>
-      <p>Estas capacidades não fazem parte do pacote atual.</p>
-    </div>
-    <ul class="blocked-list" role="list">
-      @for (skill of blockedSkills; track skill.name) {
-        <li [attr.data-blocked-skill]="skill.name">
-          <div>
-            <h3>{{ skill.title }}</h3>
-            <p>{{ skill.description }}</p>
-          </div>
-          <div class="blocked-status">
-            <span class="pill pill--warn">Não incluída</span>
-            <p><strong>Motivo:</strong> {{ skill.reason }}</p>
-          </div>
-        </li>
-      }
-    </ul>
-  </section>
+      <ul class="blocked-list" role="list">
+        @for (skill of pack.unpublished; track skill.name) {
+          <li [attr.data-blocked-skill]="skill.name">
+            <div>
+              <h3>{{ skill.title }}</h3>
+              <p>{{ skill.description }}</p>
+            </div>
+            <div class="blocked-status">
+              <span class="pill pill--warn">Não incluída</span>
+              <p><strong>Motivo:</strong> {{ skill.reason }}</p>
+            </div>
+          </li>
+        }
+      </ul>
+    </section>
+  } @else {
+    <div class="page-status">Não foi possível carregar o conteúdo do pacote.</div>
+  }
 </div>

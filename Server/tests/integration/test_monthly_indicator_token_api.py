@@ -7,6 +7,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.models.monthly_indicator_token import MonthlyIndicatorToken
+from app.repositories.monthly_indicator_repository import MonthlyIndicatorRepository
 
 
 def _current_period() -> tuple[int, int]:
@@ -66,6 +67,64 @@ async def test_create_token_is_idempotent(client, startup_id):
         json={"month": month, "year": year},
     )
     assert resp1.json()["token"] == resp2.json()["token"]
+
+
+@pytest.mark.asyncio
+async def test_create_token_that_loses_the_race_returns_the_winning_link(
+    client, startup_id, monkeypatch
+):
+    month, year = _current_period()
+    winner = await client.post(
+        f"/api/startups/{startup_id}/monthly-indicator-tokens",
+        json={"month": month, "year": year},
+    )
+
+    real_lookup = MonthlyIndicatorRepository.get_token_by_startup_and_period
+    calls = 0
+
+    async def free_on_first_look(self, *args, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return None
+        return await real_lookup(self, *args, **kwargs)
+
+    monkeypatch.setattr(
+        MonthlyIndicatorRepository, "get_token_by_startup_and_period", free_on_first_look
+    )
+
+    loser = await client.post(
+        f"/api/startups/{startup_id}/monthly-indicator-tokens",
+        json={"month": month, "year": year},
+    )
+
+    assert loser.status_code == 200
+    assert loser.json()["token"] == winner.json()["token"]
+
+
+@pytest.mark.asyncio
+async def test_create_token_that_conflicts_with_no_visible_winner_answers_409(
+    client, startup_id, monkeypatch
+):
+    month, year = _current_period()
+    await client.post(
+        f"/api/startups/{startup_id}/monthly-indicator-tokens",
+        json={"month": month, "year": year},
+    )
+
+    async def period_looks_free(*_args, **_kwargs):
+        return None
+
+    monkeypatch.setattr(
+        MonthlyIndicatorRepository, "get_token_by_startup_and_period", period_looks_free
+    )
+
+    resp = await client.post(
+        f"/api/startups/{startup_id}/monthly-indicator-tokens",
+        json={"month": month, "year": year},
+    )
+
+    assert resp.status_code == 409
 
 
 @pytest.mark.asyncio

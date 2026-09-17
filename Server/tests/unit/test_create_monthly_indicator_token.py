@@ -1,4 +1,5 @@
 import uuid
+from datetime import date
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -6,6 +7,7 @@ import pytest
 from app.application.monthly_indicator.create_monthly_indicator_token import (
     CreateMonthlyIndicatorToken,
 )
+from app.domain.exceptions import ConflictError
 
 
 @pytest.fixture
@@ -54,3 +56,26 @@ async def test_raises_error_when_period_is_in_future(use_case, repo):
 
     repo.get_token_by_startup_and_period.assert_not_awaited()
     repo.create_token.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_lost_race_returns_the_link_that_won(use_case, repo):
+    winner = MagicMock()
+    repo.get_token_by_startup_and_period.side_effect = [None, winner]
+    repo.create_token.side_effect = ConflictError("link ja existe")
+
+    today = date.today()
+    result = await use_case.execute(uuid.uuid4(), today.month, today.year)
+
+    # A batch run gets the existing link, not an error.
+    assert result is winner
+
+
+@pytest.mark.asyncio
+async def test_lost_race_with_no_winner_visible_reraises(use_case, repo):
+    repo.get_token_by_startup_and_period.side_effect = [None, None]
+    repo.create_token.side_effect = ConflictError("link ja existe")
+
+    today = date.today()
+    with pytest.raises(ConflictError):
+        await use_case.execute(uuid.uuid4(), today.month, today.year)

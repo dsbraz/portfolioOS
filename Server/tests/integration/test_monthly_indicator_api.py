@@ -307,6 +307,32 @@ async def test_create_that_loses_a_race_for_the_period_merges_into_the_winner(
 
 
 @pytest.mark.asyncio
+async def test_create_that_conflicts_with_no_visible_winner_answers_409(
+    client, startup_id, monkeypatch
+):
+    first = await client.post(
+        f"/api/startups/{startup_id}/monthly-indicators",
+        json={"month": 11, "year": 2025},
+    )
+    assert first.status_code == 201
+
+    # The insert conflicts but the winner is not visible yet: no merge target.
+    async def period_looks_free(*_args, **_kwargs):
+        return None
+
+    monkeypatch.setattr(
+        MonthlyIndicatorRepository, "get_by_startup_and_period", period_looks_free
+    )
+
+    resp = await client.post(
+        f"/api/startups/{startup_id}/monthly-indicators",
+        json={"month": 11, "year": 2025, "headcount": 7},
+    )
+
+    assert resp.status_code == 409
+
+
+@pytest.mark.asyncio
 async def test_patch_rejects_a_null_period(client, startup_id):
     created = await client.post(
         f"/api/startups/{startup_id}/monthly-indicators",

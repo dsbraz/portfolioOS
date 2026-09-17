@@ -1,7 +1,15 @@
 import os
+import tempfile
 from collections.abc import AsyncGenerator
+from pathlib import Path
 
-os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///./test.db")
+# One database file per run, outside the mounted tree: a shared `./test.db` let
+# two concurrent or interrupted runs poison each other's fixtures. A file, not
+# `:memory:`, because the app engine may fall back to this URL and its pool
+# sizing arguments are rejected by the in-memory pool. Removed at exit.
+_TEST_DATABASE_DIR = tempfile.TemporaryDirectory(prefix="portfolioos-tests-")
+TEST_DATABASE_URL = f"sqlite+aiosqlite:///{Path(_TEST_DATABASE_DIR.name) / 'test.db'}"
+os.environ.setdefault("DATABASE_URL", TEST_DATABASE_URL)
 os.environ.setdefault("SECRET_KEY", "test-secret-key-for-testing-only")
 
 import pytest_asyncio
@@ -19,8 +27,6 @@ from app.domain.models.user import User
 from app.infrastructure.bcrypt_password_hasher import BcryptPasswordHasher
 from app.infrastructure.jwt_token_generator import JwtTokenGenerator
 from app.main import app
-
-TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 
 engine = create_async_engine(TEST_DATABASE_URL, echo=False)
 TestSessionLocal = async_sessionmaker(engine, expire_on_commit=False)

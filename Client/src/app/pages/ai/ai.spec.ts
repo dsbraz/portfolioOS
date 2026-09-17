@@ -1,16 +1,91 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { routes } from '../../app.routes';
 import { authGuard } from '../../guards/auth.guard';
+import { SkillPackManifest } from '../../models/skill-pack.model';
 import { Ai } from './ai';
 
+const MANIFEST_URL = '/api/static/portfolioos-manifest.json';
+
+const skill = (name: string, writes: boolean) => ({
+  name,
+  title: `Título de ${name}`,
+  description: `Descrição de ${name}`,
+  writes,
+});
+
+const manifest: SkillPackManifest = {
+  revised_at: '2026-09-17',
+  content_sha256: 'abc',
+  published: [
+    skill('operar-portfolioos', true),
+    skill('preparar-agenda', false),
+    skill('granola-reuniao', true),
+    skill('cobrar-indicadores', true),
+    skill('apresentacao-portfolio', false),
+  ],
+  unpublished: [
+    {
+      name: 'auditoria-qualitativa',
+      title: 'Auditar o portfólio',
+      description: 'Analisa textos qualitativos.',
+      reason: 'Aguardando aprovação.',
+    },
+  ],
+};
+
 describe('Ai', () => {
-  async function render(): Promise<HTMLElement> {
-    await TestBed.configureTestingModule({ imports: [Ai] }).compileComponents();
+  let httpMock: HttpTestingController;
+
+  async function mount(): Promise<{ element: HTMLElement; detect: () => void }> {
+    await TestBed.configureTestingModule({
+      imports: [Ai],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    }).compileComponents();
+    httpMock = TestBed.inject(HttpTestingController);
     const fixture = TestBed.createComponent(Ai);
     fixture.detectChanges();
-    return fixture.nativeElement as HTMLElement;
+    return { element: fixture.nativeElement as HTMLElement, detect: () => fixture.detectChanges() };
   }
+
+  async function render(): Promise<HTMLElement> {
+    const { element, detect } = await mount();
+    httpMock.expectOne(MANIFEST_URL).flush(manifest);
+    detect();
+    return element;
+  }
+
+  afterEach(() => {
+    try {
+      httpMock.verify();
+    } finally {
+      TestBed.resetTestingModule();
+    }
+  });
+
+  it('should announce loading while the package manifest is on its way', async () => {
+    const { element } = await mount();
+
+    expect(element.querySelector('.ai-page')?.getAttribute('aria-busy')).toBe('true');
+    expect(element.querySelector('[role="status"]')?.textContent).toContain('Carregando');
+    expect(element.querySelector('[data-included-skill]')).toBeNull();
+
+    httpMock.expectOne(MANIFEST_URL).flush(manifest);
+  });
+
+  it('should say the contents failed to load instead of showing an empty package', async () => {
+    const { element, detect } = await mount();
+    httpMock.expectOne(MANIFEST_URL).flush(null, { status: 404, statusText: 'Not Found' });
+    detect();
+
+    expect(element.textContent).toContain('Não foi possível carregar o conteúdo do pacote');
+    expect(element.querySelector('.ai-page')?.hasAttribute('aria-busy')).toBe(false);
+    // Downloading does not depend on the manifest.
+    expect(element.querySelector('.package-download')).toBeTruthy();
+    expect(element.querySelector('time')).toBeNull();
+  });
 
   it('should present one portfolioOS package and one download link to the static zip', async () => {
     const element = await render();
@@ -60,14 +135,14 @@ describe('Ai', () => {
       '[data-blocked-skill="auditoria-qualitativa"]',
     );
 
-    expect(included.map((item) => item.dataset['includedSkill'])).toEqual([
-      'operar-portfolioos',
-      'preparar-agenda',
-      'granola-reuniao',
-      'cobrar-indicadores',
-    ]);
+    expect(included.map((item) => item.dataset['includedSkill'])).toEqual(
+      manifest.published.map((item) => item.name),
+    );
     expect(agenda?.textContent).toContain('Somente leitura');
     expect(meeting?.textContent).toContain('Escrita com confirmação');
+    expect(
+      element.querySelector('[data-included-skill="apresentacao-portfolio"]')?.textContent,
+    ).toContain('Somente leitura');
     expect(element.querySelector('[data-included-skill="auditoria-qualitativa"]')).toBeNull();
     expect(blocked?.textContent).toContain('Auditar o portfólio');
     expect(blocked?.textContent).toContain('Motivo:');
@@ -92,7 +167,7 @@ describe('Ai', () => {
     expect(packageCard?.textContent).toContain('Nunca digite sua senha no chat');
     expect(packageCard?.textContent).toContain('link de indicador permite escrever no período');
     expect(packageCard?.textContent).toContain('Revise a prévia antes de permitir uma gravação');
-    expect(element.querySelector('time[datetime="2026-08-13"]')).toBeTruthy();
+    expect(element.querySelector('time[datetime="2026-09-17"]')?.textContent).toBe('17/09/2026');
     expect(help?.textContent).toContain('instalação para toda a organização');
     expect(help?.textContent).toContain('Cowork');
   });

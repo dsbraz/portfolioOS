@@ -12,7 +12,9 @@ from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.models.board_meeting import BoardMeeting
+from app.domain.models.executive import Executive
 from app.domain.models.monthly_indicator import MonthlyIndicator
+from app.domain.models.monthly_indicator_token import MonthlyIndicatorToken
 from app.domain.models.startup import Startup, StartupStatus
 
 DEMO_STARTUP_ID = uuid.UUID("7a70e9fd-b17b-4ad2-9234-7cb0eb2b5da1")
@@ -103,8 +105,113 @@ _MEETING_SEEDS: tuple[dict[str, Any], ...] = (
     },
 )
 
-_INDICATOR_IDS = tuple(seed["id"] for seed in _INDICATOR_SEEDS)
-_MEETING_IDS = tuple(seed["id"] for seed in _MEETING_SEEDS)
+# The three contact states the send panel branches on: WhatsApp, the e-mail
+# fallback and the blocked recipient.
+_EXECUTIVE_SEEDS: tuple[dict[str, Any], ...] = (
+    {
+        "id": uuid.UUID("2f1d6a4e-0b8c-4a1d-9f3e-6c2a7b5d4e10"),
+        "name": "Ana Costa",
+        "role": "CEO",
+        "email": "ana@lumina-demo.example.invalid",
+        # With the country prefix, like the product now requires everywhere.
+        "phone": "+5511987650001",
+        "linkedin": None,
+    },
+    {
+        "id": uuid.UUID("3a2e7b5f-1c9d-4b2e-8a4f-7d3b8c6e5f21"),
+        "name": "Bruno Lima",
+        "role": "COO",
+        # No phone: exercises the e-mail fallback.
+        "email": "bruno@lumina-demo.example.invalid",
+        "phone": None,
+        "linkedin": None,
+    },
+    {
+        "id": uuid.UUID("4b3f8c6a-2d0e-4c3f-9b5a-8e4c9d7f6a32"),
+        "name": "Carla Reis",
+        "role": "CFO",
+        # Neither channel: exercises the blocked recipient.
+        "email": None,
+        "phone": None,
+        "linkedin": None,
+    },
+)
+
+# A second startup that is deliberately BEHIND on the last seeded period. The
+# chase queue is built from who did not report, so with every startup up to
+# date the queue is always empty and the flow cannot be exercised.
+CHASE_STARTUP_ID = uuid.UUID("5c4a9d7b-3e1f-4d40-a6b7-9f5d0e8a7b43")
+CHASE_STARTUP_NAME = "Aurora Demo IA"
+CHASE_MISSING_MONTH = 7
+CHASE_MISSING_YEAR = 2026
+
+_CHASE_STARTUP_VALUES: dict[str, Any] = {
+    "name": CHASE_STARTUP_NAME,
+    "site": "https://aurora-demo.example.invalid",
+    "logo_url": None,
+    "status": StartupStatus.HEALTHY,
+    "sector": "Fintech",
+    "investment_date": date(2024, 9, 2),
+    "equity_stake": Decimal("8.00"),
+    "notes": "Cenário fictício: investida em dia até junho, faltando julho.",
+}
+
+_CHASE_INDICATOR_SEEDS: tuple[dict[str, Any], ...] = (
+    {
+        "id": uuid.UUID("6d5b0e8c-4f20-4e51-b7c8-0a6e1f9b8c54"),
+        "month": 5,
+        "year": 2026,
+        "total_revenue": Decimal("220000.00"),
+        "recurring_revenue_pct": Decimal("91.00"),
+        "gross_margin_pct": Decimal("72.00"),
+        "cash_balance": Decimal("1450000.00"),
+        "headcount": 31,
+        "ebitda_burn": Decimal("-40000.00"),
+        "achievements": None,
+        "challenges": None,
+        "comments": None,
+    },
+    {
+        "id": uuid.UUID("7e6c1f9d-5031-4f62-c8d9-1b7f2a0c9d65"),
+        "month": 6,
+        "year": 2026,
+        "total_revenue": Decimal("235000.00"),
+        "recurring_revenue_pct": Decimal("92.00"),
+        "gross_margin_pct": Decimal("73.00"),
+        "cash_balance": Decimal("1500000.00"),
+        "headcount": 32,
+        "ebitda_burn": Decimal("-25000.00"),
+        "achievements": None,
+        "challenges": None,
+        "comments": None,
+    },
+)
+
+_CHASE_EXECUTIVE_SEEDS: tuple[dict[str, Any], ...] = (
+    {
+        "id": uuid.UUID("8f7d2a0e-6142-4073-d9e0-2c8a3b1d0e76"),
+        "name": "Diego Moraes",
+        "role": "CEO",
+        "email": "diego@aurora-demo.example.invalid",
+        "phone": "+5511987650002",
+        "linkedin": None,
+    },
+)
+
+_DEMO_STARTUPS: tuple[tuple[uuid.UUID, dict[str, Any]], ...] = (
+    (DEMO_STARTUP_ID, _STARTUP_VALUES),
+    (CHASE_STARTUP_ID, _CHASE_STARTUP_VALUES),
+)
+# Every seeded record, with its model and owner. Drift removal derives the kept
+# IDs from here, so a seed group added below is never deleted as drift.
+_OWNED_SEEDS: tuple[tuple[type, tuple[dict[str, Any], ...], uuid.UUID], ...] = (
+    (MonthlyIndicator, _INDICATOR_SEEDS, DEMO_STARTUP_ID),
+    (BoardMeeting, _MEETING_SEEDS, DEMO_STARTUP_ID),
+    (Executive, _EXECUTIVE_SEEDS, DEMO_STARTUP_ID),
+    (MonthlyIndicator, _CHASE_INDICATOR_SEEDS, CHASE_STARTUP_ID),
+    (Executive, _CHASE_EXECUTIVE_SEEDS, CHASE_STARTUP_ID),
+)
+_DEMO_STARTUP_IDS = tuple(startup_id for startup_id, _ in _DEMO_STARTUPS)
 _ALLOWED_ENVIRONMENTS = frozenset({"development", "local"})
 
 
@@ -113,13 +220,15 @@ def _apply_values(record: object, values: Mapping[str, Any]) -> None:
         setattr(record, field, value)
 
 
-async def _upsert_startup(session: AsyncSession) -> Startup:
-    startup = await session.get(Startup, DEMO_STARTUP_ID)
+async def _upsert_startup(
+    session: AsyncSession, startup_id: uuid.UUID, values: Mapping[str, Any]
+) -> Startup:
+    startup = await session.get(Startup, startup_id)
     if startup is None:
-        startup = Startup(id=DEMO_STARTUP_ID, **_STARTUP_VALUES)
+        startup = Startup(id=startup_id, **values)
         session.add(startup)
     else:
-        _apply_values(startup, _STARTUP_VALUES)
+        _apply_values(startup, values)
 
     await session.flush()
     return startup
@@ -127,45 +236,58 @@ async def _upsert_startup(session: AsyncSession) -> Startup:
 
 async def _remove_scenario_drift(session: AsyncSession) -> None:
     """Remove records created while manually exercising the demo skills."""
-    await session.execute(
-        delete(MonthlyIndicator).where(
-            MonthlyIndicator.startup_id == DEMO_STARTUP_ID,
-            MonthlyIndicator.id.not_in(_INDICATOR_IDS),
+    for model in (MonthlyIndicator, BoardMeeting, Executive):
+        seeded_ids = [
+            seed["id"]
+            for owned_model, seeds, _ in _OWNED_SEEDS
+            if owned_model is model
+            for seed in seeds
+        ]
+        await session.execute(
+            delete(model).where(
+                model.startup_id.in_(_DEMO_STARTUP_IDS),
+                model.id.not_in(seeded_ids),
+            )
         )
-    )
+    # Links are minted by the chase flow itself. Left behind, the next run finds
+    # a link already there and silently takes the "reuse existing" branch — the
+    # scenario stops testing what it claims to test.
     await session.execute(
-        delete(BoardMeeting).where(
-            BoardMeeting.startup_id == DEMO_STARTUP_ID,
-            BoardMeeting.id.not_in(_MEETING_IDS),
+        delete(MonthlyIndicatorToken).where(
+            MonthlyIndicatorToken.startup_id.in_(_DEMO_STARTUP_IDS)
         )
     )
 
 
 async def _upsert_owned(
-    session: AsyncSession, model: type, seeds: list[dict], label: str
+    session: AsyncSession,
+    model: type,
+    seeds: tuple[dict[str, Any], ...],
+    startup_id: uuid.UUID,
 ) -> None:
     for seed in seeds:
         values = {key: value for key, value in seed.items() if key != "id"}
         record = await session.get(model, seed["id"])
 
         if record is None:
-            session.add(model(id=seed["id"], startup_id=DEMO_STARTUP_ID, **values))
+            session.add(model(id=seed["id"], startup_id=startup_id, **values))
         else:
-            if record.startup_id != DEMO_STARTUP_ID:
+            if record.startup_id != startup_id:
                 raise RuntimeError(
-                    f"Demo {label} ID {record.id} belongs to another startup"
+                    f"Demo {model.__name__} ID {record.id} belongs to another startup"
                 )
             _apply_values(record, values)
 
 
 async def seed_demo(session: AsyncSession) -> Startup:
     """Create or restore the records owned by the local demo scenario."""
-    startup = await _upsert_startup(session)
+    for startup_id, values in _DEMO_STARTUPS:
+        await _upsert_startup(session, startup_id, values)
     await _remove_scenario_drift(session)
-    await _upsert_owned(session, MonthlyIndicator, _INDICATOR_SEEDS, "indicator")
-    await _upsert_owned(session, BoardMeeting, _MEETING_SEEDS, "meeting")
+    for model, seeds, startup_id in _OWNED_SEEDS:
+        await _upsert_owned(session, model, seeds, startup_id)
     await session.flush()
-    return startup
+    return await session.get(Startup, DEMO_STARTUP_ID)
 
 
 def ensure_development_environment(environment: str) -> None:

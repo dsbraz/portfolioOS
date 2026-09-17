@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 
 import { Executive } from '../../../models/executive.model';
@@ -46,6 +47,7 @@ describe('TokenPanel', () => {
 
   afterEach(() => {
     TestBed.resetTestingModule();
+    Reflect.deleteProperty(navigator, 'clipboard');
     vi.restoreAllMocks();
   });
 
@@ -138,10 +140,22 @@ describe('TokenPanel', () => {
     expect(element.textContent).toContain('+14155551234');
   });
 
-  // NOTE: copyLink's clipboard-failure branch (RFC-001 §6) is implemented in the
-  // component but not unit-tested here — the Angular Vitest/jsdom builder does
-  // not expose a mockable navigator.clipboard to the component under test, so a
-  // rejection cannot be staged reliably. The link is always visible as text, so
-  // the copy path is a convenience, and its success path is exercised through
-  // the dialog spec.
+  // Outside a secure context the clipboard rejects; the link stays visible as text.
+  it('reports a clipboard failure and points at the visible link', async () => {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: () => Promise.reject(new Error('denied')) },
+      configurable: true,
+    });
+    const element = await render([executive({})]);
+    const open = vi.spyOn(fixture.debugElement.injector.get(MatSnackBar), 'open');
+
+    element.querySelector<HTMLButtonElement>('[aria-label^="Copiar link de"]')?.click();
+    await fixture.whenStable();
+
+    expect(open).toHaveBeenCalledWith(
+      'Não foi possível copiar. O link está visível acima para copiar manualmente.',
+      'Fechar',
+      expect.anything(),
+    );
+  });
 });

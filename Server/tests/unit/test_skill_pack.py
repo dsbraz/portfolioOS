@@ -1,8 +1,20 @@
+import json
 import re
+from datetime import date
 from pathlib import PurePosixPath
 from zipfile import ZipFile
 
-from scripts.build_skill_pack import PACK_PATH, PACK_SOURCE_DIR, pack_entries
+import scripts.build_skill_pack as build_skill_pack
+from scripts.build_skill_pack import (
+    MANIFEST_PATH,
+    PACK_PATH,
+    PACK_SOURCE_DIR,
+    PUBLISHED,
+    UNPUBLISHED,
+    UNPUBLISHED_DIR,
+    build_manifest,
+    pack_entries,
+)
 
 LINK_PATTERN = re.compile(r"\]\(([^)#\s]+)(?:#[^)]*)?\)")
 
@@ -77,3 +89,34 @@ def test_guides_keep_the_standard_frontmatter():
         assert fields == {"name", "description"}
         assert f"name: {guide.parent.name}" in frontmatter
 
+
+def test_committed_manifest_matches_the_source():
+    # The `/ia` page lists the package from this file, so it goes stale exactly
+    # like the zip does. Rebuilding also moves `revised_at` when content changed.
+    committed = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+
+    assert committed == build_manifest(committed["revised_at"])
+
+
+def test_manifest_catalog_covers_every_workflow_and_nothing_else():
+    guides = {path.parent.name for path in PACK_SOURCE_DIR.glob("skills/*/GUIDE.md")}
+    kept_out = {path.parent.name for path in UNPUBLISHED_DIR.glob("*/SKILL.md")}
+
+    assert set(PUBLISHED) == guides
+    assert set(UNPUBLISHED) == kept_out
+
+
+def test_rebuild_keeps_the_revision_date_until_the_content_changes(tmp_path, monkeypatch):
+    manifest = tmp_path / "manifest.json"
+    monkeypatch.setattr(build_skill_pack, "MANIFEST_PATH", manifest)
+
+    manifest.write_text(
+        json.dumps(build_manifest("2026-01-02")), encoding="utf-8"
+    )
+    assert build_skill_pack._revised_at() == "2026-01-02"
+
+    manifest.write_text(
+        json.dumps({**build_manifest("2026-01-02"), "content_sha256": "stale"}),
+        encoding="utf-8",
+    )
+    assert build_skill_pack._revised_at() == date.today().isoformat()

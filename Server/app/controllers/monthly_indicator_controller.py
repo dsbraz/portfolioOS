@@ -123,6 +123,11 @@ async def public_create_monthly_indicator(
     )
     try:
         await create.execute(indicator)
+    except ConflictError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(e),
+        )
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -165,6 +170,11 @@ async def create_indicator(
     indicator = MonthlyIndicator(startup_id=startup_id, **data.model_dump())
     try:
         created = await use_case.execute(indicator)
+    except ConflictError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(e),
+        )
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -271,6 +281,11 @@ async def create_monthly_indicator_token(
 ):
     try:
         token = await create.execute(startup_id, data.month, data.year)
+    except ConflictError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(e),
+        )
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

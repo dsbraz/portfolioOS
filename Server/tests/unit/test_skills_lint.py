@@ -2,9 +2,13 @@ from pathlib import Path
 
 import yaml
 
-SKILLS_DIR = Path(__file__).resolve().parent.parent.parent / "skills"
-PACKAGE_SOURCE_DIR = SKILLS_DIR / "portfolioos"
-UNPUBLISHED_DIR = SKILLS_DIR / "unpublished"
+from scripts.build_skill_pack import (
+    PACK_SOURCE_DIR as PACKAGE_SOURCE_DIR,
+    PUBLISHED,
+    UNPUBLISHED,
+    UNPUBLISHED_DIR,
+)
+
 RULES_HEADINGS = ("## Regras (inegociáveis)", "## Non-negotiable rules")
 
 
@@ -19,16 +23,10 @@ def _rules_section(content: str) -> str:
     return rules_and_after.split("\n## ", maxsplit=1)[0].casefold()
 
 
-# What each workflow may do, which decides the safety anchors its rules must carry.
-# Kept here, next to the check, instead of in a sidecar file shipped nowhere.
-WRITES = {"operar-portfolioos", "cobrar-indicadores", "granola-reuniao"}
-READS_EXTERNAL = {
-    "operar-portfolioos",
-    "cobrar-indicadores",
-    "granola-reuniao",
-    "preparar-agenda",
-    "auditoria-qualitativa",
-}
+# What each workflow may do decides the safety anchors its rules must carry.
+_CATALOG = {**PUBLISHED, **UNPUBLISHED}
+WRITES = {name for name, meta in _CATALOG.items() if meta["writes"]}
+READS_EXTERNAL = {name for name, meta in _CATALOG.items() if meta["reads_external"]}
 
 
 def _skill_files() -> dict[str, Path]:
@@ -45,7 +43,7 @@ def _read(name: str) -> str:
 
 def test_skill_frontmatter_and_safety_anchors_are_valid():
     skills = _skill_files()
-    assert set(skills) == READS_EXTERNAL | WRITES
+    assert set(skills) == set(_CATALOG)
 
     for name, path in skills.items():
         content = path.read_text(encoding="utf-8")
@@ -217,3 +215,50 @@ def test_package_source_artifacts_are_uploadable_without_duplicating_skills():
     }
     assert fields == {"name", "description"}
     assert "name: portfolioos" in frontmatter
+
+
+def test_presentation_skill_protects_the_numbers_it_puts_on_a_slide():
+    deck = _read("apresentacao-portfolio")
+    normalized = " ".join(deck.casefold().split())
+
+    # A deck outlives the conversation, so an invented number becomes a decision.
+    assert "somente leitura" in normalized
+    assert "verbatim" in normalized
+    # Absence is not zero: the top cards coerce it, the deck must not.
+    assert "sem dado" in normalized
+    assert "nunca como zero" in normalized
+    assert "estimativa" in normalized
+    # The brand skills are not shipped here; degrade instead of going off-brand.
+    assert "brq-pptx" in normalized
+    assert "não improvise" in normalized
+
+    # Every control the guide navigates by must exist verbatim in the UI.
+    for label in (
+        "Monitoramento",
+        "Mês anterior",
+        "Indicadores Mensais",
+        "Ver indicador de {Mmm/AAAA}",
+    ):
+        assert label in deck, label
+
+
+def test_every_published_guide_has_activation_vocabulary_in_the_entrypoint():
+    # The runtime loads the whole package from the entrypoint's description, so a
+    # guide without a trigger word there is shipped but unreachable.
+    wrapper = (PACKAGE_SOURCE_DIR / "SKILL.md").read_text(encoding="utf-8")
+    description = next(
+        line for line in wrapper.splitlines() if line.startswith("description:")
+    ).casefold()
+    triggers = {
+        "operar-portfolioos": ("portfolioos",),
+        "preparar-agenda": ("agenda",),
+        "granola-reuniao": ("granola", "reunião de conselho"),
+        "cobrar-indicadores": ("cobrança", "não reportou"),
+        "apresentacao-portfolio": ("apresentação", "deck", "slides"),
+    }
+    published = {path.parent.name for path in PACKAGE_SOURCE_DIR.glob("skills/*/GUIDE.md")}
+
+    # A guide added without extending the map fails here, on purpose.
+    assert published == set(triggers)
+    for name in published:
+        assert any(word in description for word in triggers[name]), name

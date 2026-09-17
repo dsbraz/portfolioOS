@@ -63,8 +63,9 @@ request, apply it together with these shared safety rules.
 For a preparation brief before a startup conversation, also apply
 `preparar-agenda`. For a conversation, link or notes from Granola, also apply
 `granola-reuniao`. To chase the startups missing an indicator for a period, also
-apply `cobrar-indicadores`. Do not make the user select one; discover it from
-the request.
+apply `cobrar-indicadores`. For a deck, slides or committee material about the
+portfolio, also apply `apresentacao-portfolio`. Do not make the user select
+one; discover it from the request.
 
 ## Resolve records before acting
 
