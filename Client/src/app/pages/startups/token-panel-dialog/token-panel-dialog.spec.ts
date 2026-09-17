@@ -24,7 +24,7 @@ describe('TokenPanelDialog', () => {
     name: 'Ana Costa',
     role: 'CEO',
     email: null,
-    phone: '(11) 91234-5678',
+    phone: '+5511912345678',
     linkedin: null,
     created_at: '',
     updated_at: '',
@@ -81,14 +81,14 @@ describe('TokenPanelDialog', () => {
   it('should show the resolved recipient number before the send', async () => {
     const element = await render([executive({})]);
 
-    expect(element.textContent).toContain('+55 (11) 91234-5678');
+    expect(element.textContent).toContain('+5511912345678');
   });
 
   it('should offer no send for an unresolvable phone and say why', async () => {
     const element = await render([executive({ name: 'Bruno Lima', phone: 'ramal 22' })]);
 
     expect(element.querySelector('[aria-label="Enviar por WhatsApp para Bruno Lima"]')).toBeNull();
-    expect(element.textContent).toContain('Sem telefone válido');
+    expect(element.textContent).toContain('Sem canal de envio');
     expect(element.textContent).toContain('Executivos');
   });
 

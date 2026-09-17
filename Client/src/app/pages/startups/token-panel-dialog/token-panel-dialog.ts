@@ -11,6 +11,7 @@ import { TokenPanel } from '../token-panel/token-panel';
 export interface TokenPanelDialogData {
   token: MonthlyIndicatorToken;
   executives: Executive[];
+  startupName: string;
 }
 
 /**
@@ -27,7 +28,11 @@ export interface TokenPanelDialogData {
       description="O link abre o formulário de reporte deste período. Quem o recebe consegue preencher os dados da startup."
     />
     <mat-dialog-content>
-      <app-token-panel [token]="data.token" [executives]="data.executives" />
+      <app-token-panel
+        [token]="data.token"
+        [executives]="data.executives"
+        [startupName]="data.startupName"
+      />
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-stroked-button mat-dialog-close>Fechar</button>

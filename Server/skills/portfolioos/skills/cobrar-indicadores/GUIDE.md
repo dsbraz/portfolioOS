@@ -108,14 +108,26 @@ Do painel de cada startup, registre para a fila:
 | Startup | cabeçalho da página |
 | Período | título do painel |
 | Link | o texto sob **Link do formulário** |
-| Destinatário | nome e número em **Enviar por WhatsApp** |
-| Impedimento | `Sem telefone válido`, ou o aviso de que não há executivo cadastrado |
+| Destinatário | nome e contato em **Enviar para a investida** |
+| Canal | o único controle de envio do executivo: `Enviar por WhatsApp para {nome}` ou `Enviar por e-mail para {nome}` |
+| Aviso | o motivo mostrado sob o nome quando o envio é por e-mail |
+| Impedimento | `Sem canal de envio`, ou o aviso de que não há executivo cadastrado |
+
+**O painel já escolhe o canal.** Cada executivo tem no máximo um controle de
+envio: WhatsApp quando o telefone tem código do país, e-mail quando não tem.
+Use o controle que aparece e leve o aviso do painel para a fila, para que quem
+opera possa corrigir o cadastro. Os dois abrem o programa da própria pessoa com
+a mensagem pronta — **a plataforma nunca envia nada sozinha**.
 
 Mostre a fila completa antes de qualquer envio. **Item impedido aparece na fila
-com o motivo e nunca entra no envio** — diga que o caminho é cadastrar ou
-corrigir o telefone na aba **Executivos** da startup.
+com o motivo e nunca entra no envio** — diga que o caminho é cadastrar, na aba
+**Executivos** da startup, um e-mail válido ou um telefone **sempre com o código
+do país** (`+55 11 91234-5678`, `+1 415 555 1234`). Nem todo executivo está no
+Brasil, e a plataforma não adivinha o país: número sem `+` é recusado. Se
+alguém ditar um número local, pergunte de que país ele é — nunca complete com
+`+55` por conta própria.
 
-Quando a startup tiver mais de um executivo com telefone, **pergunte para quem
+Quando a startup tiver mais de um executivo alcançável, **pergunte para quem
 enviar**. Nunca escolha sozinho.
 
 ## Passo 5 — escolher o modo de envio
@@ -125,19 +137,18 @@ Pergunte, sempre, e **nunca assuma**:
 ```text
 Fila pronta — {n} startups, período {Mmm/AAAA}.
 Como você quer enviar?
-  1. Um a um    — abro o WhatsApp com a mensagem pronta e você aperta enviar
+  1. Um a um    — abro o WhatsApp ou o e-mail com a mensagem pronta e você aperta enviar
   2. Automático — envio as {n} e reporto item a item
 ```
 
-- **Um a um (padrão).** Para cada item, acione o botão
-  **Enviar por WhatsApp para {nome}**.
-  O WhatsApp abre com a mensagem pronta. **Pare aí** e diga ao usuário que é ele
-  quem confirma o envio. Só siga para o próximo item quando ele disser que
+- **Um a um (padrão).** Para cada item, acione o controle de envio do
+  executivo. O programa abre com a mensagem pronta. **Pare aí** e diga ao
+  usuário que é ele quem confirma o envio. Só siga para o próximo item quando ele disser que
   enviou ou que quer pular.
 - **Automático.** Só depois de o usuário escolher explicitamente esta opção
-  nesta execução. Para cada item: confira que o destinatário aberto no WhatsApp
-  é o mesmo nome e número da fila, envie, e registre o resultado. Se o
-  destinatário divergir, **não envie** — pare e relate.
+  nesta execução. Para cada item: confira que o destinatário aberto é o mesmo
+  nome e contato da fila, envie, e registre o resultado — incluindo por qual
+  canal. Se o destinatário divergir, **não envie** — pare e relate.
 
 A escolha vale só para esta execução. Nunca a memorize, nunca a proponha como
 padrão na próxima, e nunca mude de modo no meio da fila sem perguntar.
@@ -162,8 +173,9 @@ Ao final, reporte item a item: enviado, pulado ou impedido, com o motivo.
 | Pedido sem período ("cobre as atrasadas") | pergunte o mês antes de ler qualquer coisa |
 | Sua lista não fecha com o cartão Report Mensal | pare e releia a tabela; não siga com número que não bate |
 | Startup sem executivo cadastrado | fila com impedimento; oriente a cadastrar na aba Executivos |
-| Executivo sem telefone, ou telefone recusado pelo painel | fila com impedimento; oriente a corrigir o cadastro |
-| Mais de um executivo com telefone | pergunte para quem enviar |
+| Envio por e-mail, com aviso do painel | envie pelo e-mail e relate o aviso, para o cadastro ser corrigido |
+| `Sem canal de envio` | fila com impedimento; oriente a cadastrar um contato na aba Executivos |
+| Mais de um executivo alcançável | pergunte para quem enviar |
 | Usuário oferece um número avulso | recuse; explique que o destinatário vem do cadastro |
 | Link já existe para o período | reaproveite por Links anteriores; não gere de novo nem trate como duplicidade |
 | Usuário pede para editar ou excluir algo durante a cobrança | conclua ou pause esta fila e retorne essa parte ao roteador interno do pacote, que segue com o fluxo aplicável e sua prévia |

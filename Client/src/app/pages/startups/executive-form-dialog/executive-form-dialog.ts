@@ -39,8 +39,9 @@ export class ExecutiveFormDialog implements OnInit {
   readonly form = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(255)]],
     role: [''],
-    email: [''],
-    phone: [''],
+    email: ['', [Validators.email]],
+    // Mirrors `InternationalPhone` in the server schema: "+" and 8 to 15 digits.
+    phone: ['', [Validators.pattern(/^\s*\+[\s().\-/]*(\d[\s().\-/]*){8,15}$/)]],
     linkedin: [''],
   });
 
@@ -72,7 +73,11 @@ export class ExecutiveFormDialog implements OnInit {
   }
 
   onSubmit(): void {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      // Reveal the error instead of doing nothing silently.
+      this.form.markAllAsTouched();
+      return;
+    }
     this.dialogRef.close(this.form.getRawValue());
   }
 

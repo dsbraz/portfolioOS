@@ -71,4 +71,36 @@ describe('ExecutiveFormDialog', () => {
       expect.objectContaining({ name: 'Joao Silva', role: 'CEO' }),
     );
   });
+
+  it.each(['(415) 555-1234', '+12'])('should refuse the phone %s', (phone) => {
+    dialogRefSpy.close.mockClear();
+    component.form.patchValue({ name: 'John Miller', phone });
+
+    component.onSubmit();
+
+    expect(component.form.controls.phone.hasError('pattern')).toBe(true);
+    expect(dialogRefSpy.close).not.toHaveBeenCalled();
+  });
+
+  it('should accept a foreign number that carries its prefix', () => {
+    dialogRefSpy.close.mockClear();
+    component.form.patchValue({ name: 'John Miller', phone: '+1 415 555 1234' });
+
+    component.onSubmit();
+
+    expect(dialogRefSpy.close).toHaveBeenCalledWith(
+      expect.objectContaining({ phone: '+1 415 555 1234' }),
+    );
+  });
+
+  it('should keep an empty phone valid — an executive may have none', () => {
+    dialogRefSpy.close.mockClear();
+    component.form.patchValue({ name: 'Joao Silva', phone: '' });
+
+    component.onSubmit();
+
+    expect(dialogRefSpy.close).toHaveBeenCalledWith(
+      expect.objectContaining({ phone: '' }),
+    );
+  });
 });

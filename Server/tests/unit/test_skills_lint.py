@@ -168,10 +168,15 @@ def test_chase_skill_never_assumes_the_send_mode_or_the_recipient():
         "Link do formulário",
         "Links anteriores",
         "Enviar por WhatsApp para {nome}",
-        "Sem telefone válido",
+        "Enviar por e-mail para {nome}",
+        "Sem canal de envio",
         "Executivos",
     ):
         assert label in chase, label
+
+    # The panel picks the channel; the skill only follows it and never sends.
+    assert "o painel já escolhe o canal" in normalized
+    assert "a plataforma nunca envia nada sozinha" in normalized
 
 
 def test_package_source_artifacts_are_uploadable_without_duplicating_skills():

@@ -7,24 +7,30 @@ import { Executive } from '../../../models/executive.model';
 import { MonthlyIndicatorToken } from '../../../models/monthly-indicator-token.model';
 import { formatPeriod } from '../../../models/formatters';
 import { MONTH_LABELS_FULL } from '../../../models/monthly-indicator.model';
-import {
-  buildIndicatorRequestMessage,
-  buildWhatsAppLink,
-  formatBrazilianPhone,
-} from '../../../models/whatsapp';
 
-/** One executive, resolved for sending — or blocked, with the reason visible. */
-interface Recipient {
+interface RecipientBase {
   name: string;
   role: string | null;
-  formattedPhone: string | null;
-  whatsappUrl: string | null;
   message: string;
 }
 
 /**
+ * One executive and the single channel the link goes out by: WhatsApp when the
+ * phone carries its country code, otherwise e-mail. `notice` says why WhatsApp
+ * was not used, so the record can be fixed instead of the detour becoming habit.
+ */
+type ReachableRecipient = RecipientBase &
+  (
+    | { channel: 'whatsapp'; contact: string; url: string }
+    | { channel: 'email'; contact: string; url: string; notice: string }
+  );
+type BlockedRecipient = RecipientBase & { channel: null; notice: string };
+type Recipient = ReachableRecipient | BlockedRecipient;
+
+/**
  * Presentational panel for a generated reporting link: the URL as text, a copy
- * control, and one WhatsApp send affordance per executive with a valid phone.
+ * control, and one send link per reachable executive. Both channels only open
+ * the operator's own app with the message ready — nothing is sent from here.
  * It renders inline inside the unified add-indicator dialog (link mode) and
  * inside the "Links anteriores" dialog, so it takes its data as inputs and owns
  * no navigation.
@@ -38,6 +44,8 @@ interface Recipient {
 export class TokenPanel {
   readonly token = input.required<MonthlyIndicatorToken>();
   readonly executives = input.required<Executive[]>();
+  /** Names the startup in the e-mail subject. */
+  readonly startupName = input.required<string>();
 
   private readonly snackBar = inject(MatSnackBar);
 
@@ -54,25 +62,18 @@ export class TokenPanel {
   /**
    * Every executive appears, including the ones that cannot be reached. Hiding
    * them would make "there is nobody to send to" indistinguishable from "the
-   * phone is missing from the record", which is the actionable case.
+   * contact is missing from the record", which is the actionable case.
    */
-  readonly recipients = computed<Recipient[]>(() => {
-    const messagePeriod = this.messagePeriod();
-    const url = this.formUrl();
-    return this.executives().map((executive) => {
-      const message = buildIndicatorRequestMessage(executive.name, messagePeriod, url);
-      return {
-        name: executive.name,
-        role: executive.role,
-        formattedPhone: formatBrazilianPhone(executive.phone),
-        whatsappUrl: buildWhatsAppLink(executive.phone, message),
-        message,
-      };
-    });
-  });
+  readonly recipients = computed<Recipient[]>(() =>
+    this.executives().map((executive) => this.toRecipient(executive)),
+  );
 
-  readonly reachable = computed(() => this.recipients().filter((r) => r.whatsappUrl !== null));
-  readonly blocked = computed(() => this.recipients().filter((r) => r.whatsappUrl === null));
+  readonly reachable = computed(() =>
+    this.recipients().filter((r): r is ReachableRecipient => r.channel !== null),
+  );
+  readonly blocked = computed(() =>
+    this.recipients().filter((r): r is BlockedRecipient => r.channel === null),
+  );
 
   copyLink(): void {
     // The link is always visible as text above, so a clipboard failure — common
@@ -86,5 +87,39 @@ export class TokenPanel {
           { duration: 4000 },
         ),
     );
+  }
+
+  private toRecipient(executive: Executive): Recipient {
+    const phone = executive.phone?.trim();
+    const email = executive.email?.trim();
+    const firstName = executive.name.trim().split(/\s+/)[0];
+    // The fund's standard message, already in use before the platform existed.
+    const message = [
+      `Olá ${firstName}. Tudo bem?`,
+      `Segue o link para atualizações dos dados referentes a ${this.messagePeriod()}: ${this.formUrl()}`,
+      'Obrigado',
+    ].join('\n');
+    const base = { name: executive.name, role: executive.role, message };
+
+    // Records saved before the country code became mandatory may lack it.
+    if (phone?.startsWith('+')) {
+      const url = `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+      return { ...base, channel: 'whatsapp', contact: phone, url };
+    }
+
+    const notice = phone ? 'Telefone sem código do país' : 'Sem telefone cadastrado';
+    if (!email) {
+      return { ...base, channel: null, notice };
+    }
+
+    const subject = `${this.startupName()} — indicadores de ${this.messagePeriod()}`;
+    // The address is encoded too: a "?" or "," in it would otherwise add
+    // recipients to the mail. "@" stays literal for mail clients that do not
+    // decode it.
+    const address = encodeURIComponent(email).replace('%40', '@');
+    const url =
+      `mailto:${address}?subject=${encodeURIComponent(subject)}` +
+      `&body=${encodeURIComponent(message)}`;
+    return { ...base, channel: 'email', contact: email, url, notice };
   }
 }
