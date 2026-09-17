@@ -212,10 +212,8 @@ def test_chase_skill_never_assumes_the_send_mode_or_the_recipient():
     ):
         assert label in chase, label
 
-    # Channel order is a product rule, not a preference: WhatsApp is tried
-    # first, and e-mail is the fallback only when WhatsApp is unavailable.
-    assert "tente sempre o whatsapp primeiro" in normalized
-    assert "só use o e-mail quando o whatsapp não estiver disponível" in normalized
+    # The panel picks the channel; the skill only follows it and never sends.
+    assert "o painel já escolhe o canal" in normalized
     assert "a plataforma nunca envia nada sozinha" in normalized
 
 

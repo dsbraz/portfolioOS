@@ -6,31 +6,26 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Executive } from '../../../models/executive.model';
 import { MonthlyIndicatorToken } from '../../../models/monthly-indicator-token.model';
 import { MONTH_LABELS, MONTH_LABELS_FULL } from '../../../models/monthly-indicator.model';
-import {
-  buildIndicatorRequestSubject,
-  buildMailtoLink,
-  normalizeContactEmail,
-} from '../../../models/email';
-import {
-  buildIndicatorRequestMessage,
-  buildWhatsAppLink,
-  formatPhone,
-} from '../../../models/whatsapp';
 
-/** One executive, resolved for sending — or blocked, with the reason visible. */
+/**
+ * One executive and the single channel the link goes out by: WhatsApp when the
+ * phone carries its country code, otherwise e-mail. `notice` says why WhatsApp
+ * was not used, so the record can be fixed instead of the detour becoming habit.
+ */
 interface Recipient {
   name: string;
   role: string | null;
-  formattedPhone: string | null;
-  email: string | null;
-  whatsappUrl: string | null;
-  mailtoUrl: string | null;
+  channel: 'whatsapp' | 'email' | null;
+  contact: string | null;
+  url: string | null;
+  notice: string | null;
   message: string;
 }
 
 /**
  * Presentational panel for a generated reporting link: the URL as text, a copy
- * control, and one WhatsApp send affordance per executive with a valid phone.
+ * control, and one send link per reachable executive. Both channels only open
+ * the operator's own app with the message ready — nothing is sent from here.
  * It renders inline inside the unified add-indicator dialog (link mode) and
  * inside the "Links anteriores" dialog, so it takes its data as inputs and owns
  * no navigation.
@@ -63,37 +58,13 @@ export class TokenPanel {
    * Every executive appears, including the ones that cannot be reached. Hiding
    * them would make "there is nobody to send to" indistinguishable from "the
    * contact is missing from the record", which is the actionable case.
-   *
-   * Two channels, same message: WhatsApp is the fund's habit and comes first;
-   * e-mail is the fallback that keeps an executive reachable when the phone is
-   * missing or unusable. Both hand the composed message to the operator's own
-   * client, which is where the send is confirmed.
    */
-  readonly recipients = computed<Recipient[]>(() => {
-    const messagePeriod = this.messagePeriod();
-    const url = this.formUrl();
-    const subject = buildIndicatorRequestSubject(this.startupName(), messagePeriod);
-    return this.executives().map((executive) => {
-      const message = buildIndicatorRequestMessage(executive.name, messagePeriod, url);
-      return {
-        name: executive.name,
-        role: executive.role,
-        formattedPhone: formatPhone(executive.phone),
-        email: normalizeContactEmail(executive.email),
-        whatsappUrl: buildWhatsAppLink(executive.phone, message),
-        mailtoUrl: buildMailtoLink(executive.email, subject, message),
-        message,
-      };
-    });
-  });
+  readonly recipients = computed<Recipient[]>(() =>
+    this.executives().map((executive) => this.toRecipient(executive)),
+  );
 
-  /** Reachable by at least one channel; blocked only when neither resolves. */
-  readonly reachable = computed(() =>
-    this.recipients().filter((r) => r.whatsappUrl !== null || r.mailtoUrl !== null),
-  );
-  readonly blocked = computed(() =>
-    this.recipients().filter((r) => r.whatsappUrl === null && r.mailtoUrl === null),
-  );
+  readonly reachable = computed(() => this.recipients().filter((r) => r.channel !== null));
+  readonly blocked = computed(() => this.recipients().filter((r) => r.channel === null));
 
   copyLink(): void {
     // The link is always visible as text above, so a clipboard failure — common
@@ -107,5 +78,39 @@ export class TokenPanel {
           { duration: 4000 },
         ),
     );
+  }
+
+  private toRecipient({ name, role, phone, email }: Executive): Recipient {
+    const firstName = name.trim().split(/\s+/)[0];
+    // The fund's standard message, already in use before the platform existed.
+    const message = [
+      `Olá ${firstName}. Tudo bem?`,
+      `Segue o link para atualizações dos dados referentes a ${this.messagePeriod()}: ${this.formUrl()}`,
+      'Obrigado',
+    ].join('\n');
+    const base = { name, role, message };
+
+    // The country code is never guessed: the fund's executives are not all in
+    // Brazil. Records saved before the rule may still lack it.
+    if (phone?.trim().startsWith('+')) {
+      const digits = phone.replace(/\D/g, '');
+      const url = `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
+      return { ...base, channel: 'whatsapp', contact: phone, url, notice: null };
+    }
+
+    const notice = phone?.trim() ? 'Telefone sem código do país' : 'Sem telefone cadastrado';
+    if (!email?.trim()) {
+      return { ...base, channel: null, contact: null, url: null, notice };
+    }
+
+    const subject = `${this.startupName()} — indicadores de ${this.messagePeriod()}`;
+    // The address is encoded too: a "?" or "," in it would otherwise add
+    // recipients to the mail. "@" stays literal for mail clients that do not
+    // decode it.
+    const address = encodeURIComponent(email.trim()).replace('%40', '@');
+    const url =
+      `mailto:${address}?subject=${encodeURIComponent(subject)}` +
+      `&body=${encodeURIComponent(message)}`;
+    return { ...base, channel: 'email', contact: email, url, notice };
   }
 }

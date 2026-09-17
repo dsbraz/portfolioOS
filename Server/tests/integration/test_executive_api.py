@@ -1,4 +1,8 @@
+import uuid
+
 import pytest
+
+from app.domain.models.executive import Executive
 
 
 @pytest.mark.asyncio
@@ -98,7 +102,7 @@ async def test_executive_startup_not_found(client):
     assert resp.status_code == 404
 
 
-# --- Country prefix is mandatory (product decision, 2026-08-19) ---
+# --- Contact fields: the country prefix is mandatory (product decision, 2026-08-19) ---
 
 
 @pytest.mark.asyncio
@@ -108,7 +112,6 @@ async def test_create_executive_stores_the_phone_in_e164(client, startup_id):
         json={"name": "Ana Costa", "phone": "+55 (11) 91234-5678"},
     )
     assert resp.status_code == 201
-    # Stored normalized, so every consumer reads one shape.
     assert resp.json()["phone"] == "+5511912345678"
 
 
@@ -123,15 +126,27 @@ async def test_create_executive_accepts_a_foreign_number(client, startup_id):
 
 
 @pytest.mark.asyncio
-async def test_create_executive_without_country_prefix_is_refused(client, startup_id):
-    # Regression: a foreign number in local format used to be prefixed with 55
-    # and became a plausible Brazilian line belonging to someone else.
+@pytest.mark.parametrize(
+    "phone",
+    [
+        # Regression: a foreign number in local format used to be prefixed with
+        # 55 and became a plausible Brazilian line belonging to someone else.
+        "(415) 555-1234",
+        "11 91234-5678",
+        "0055 11 91234-5678",
+        "+55",
+        "+55119123456789012",
+        "+５５１１９１２３４５６７８",
+    ],
+)
+async def test_create_executive_with_phone_outside_e164_is_refused(
+    client, startup_id, phone
+):
     resp = await client.post(
         f"/api/startups/{startup_id}/executives",
-        json={"name": "John Miller", "phone": "(415) 555-1234"},
+        json={"name": "John Miller", "phone": phone},
     )
-    assert resp.status_code == 400
-    assert "código do país" in resp.json()["detail"]
+    assert resp.status_code == 422
 
 
 @pytest.mark.asyncio
@@ -146,7 +161,18 @@ async def test_update_executive_phone_without_prefix_is_refused(client, startup_
         f"/api/startups/{startup_id}/executives/{executive_id}",
         json={"phone": "11 91234-5678"},
     )
-    assert resp.status_code == 400
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_blank_contact_fields_are_stored_as_absent(client, startup_id):
+    create_resp = await client.post(
+        f"/api/startups/{startup_id}/executives",
+        json={"name": "Ana Costa", "phone": "", "email": "  "},
+    )
+    assert create_resp.status_code == 201
+    assert create_resp.json()["phone"] is None
+    assert create_resp.json()["email"] is None
 
 
 @pytest.mark.asyncio
@@ -162,7 +188,6 @@ async def test_executive_phone_can_be_cleared(client, startup_id):
         json={"phone": ""},
     )
     assert resp.status_code == 200
-    # Absence is not a validation failure — an executive may have no phone.
     assert resp.json()["phone"] is None
 
 
@@ -178,10 +203,29 @@ async def test_create_executive_normalizes_the_email(client, startup_id):
 
 @pytest.mark.asyncio
 async def test_create_executive_with_invalid_email_is_refused(client, startup_id):
-    # The e-mail is the fallback send channel, so an address the product cannot
-    # compose to is refused at registration rather than at send time.
     resp = await client.post(
         f"/api/startups/{startup_id}/executives",
         json={"name": "Ana Costa", "email": "ana arroba startup"},
     )
-    assert resp.status_code == 400
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_executive_saved_before_the_contact_rules_still_loads(
+    client, session, startup_id
+):
+    # The rules apply to input only: a legacy record must keep loading, or the
+    # whole executives tab fails for that startup.
+    session.add(
+        Executive(
+            startup_id=uuid.UUID(startup_id),
+            name="Registro Antigo",
+            phone="11912345678",
+            email="",
+        )
+    )
+    await session.commit()
+
+    resp = await client.get(f"/api/startups/{startup_id}/executives")
+    assert resp.status_code == 200
+    assert resp.json()["items"][0]["phone"] == "11912345678"

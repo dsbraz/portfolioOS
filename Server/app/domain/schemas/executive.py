@@ -1,9 +1,39 @@
+import re
 import uuid
 from datetime import datetime
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    EmailStr,
+    Field,
+    StringConstraints,
+)
 
 from app.domain.schemas.common import PaginatedResponse
+
+_PHONE_SEPARATORS = re.compile(r"[\s().\-/]")
+
+
+def _normalize_phone(value: object) -> object:
+    if not isinstance(value, str):
+        return value
+    return _PHONE_SEPARATORS.sub("", value) or None
+
+
+def _normalize_email(value: object) -> object:
+    if not isinstance(value, str):
+        return value
+    return value.strip().lower() or None
+
+
+# E.164 with the country code required: the fund's executives are not all in
+# Brazil, and a local-format number cannot be told apart from a foreign one.
+_E164 = Annotated[str, StringConstraints(pattern=r"^\+[0-9]{8,15}$")]
+InternationalPhone = Annotated[_E164 | None, BeforeValidator(_normalize_phone)]
+ContactEmail = Annotated[EmailStr | None, BeforeValidator(_normalize_email)]
 
 
 class ExecutiveBase(BaseModel):
@@ -14,15 +44,18 @@ class ExecutiveBase(BaseModel):
     linkedin: str | None = Field(None, max_length=512)
 
 
+# Input schemas validate the contact fields; the response keeps plain strings so
+# records saved before the rule still load.
 class ExecutiveCreate(ExecutiveBase):
-    pass
+    email: ContactEmail = None
+    phone: InternationalPhone = None
 
 
 class ExecutiveUpdate(BaseModel):
     name: str | None = Field(None, min_length=1, max_length=255)
     role: str | None = Field(None, max_length=255)
-    email: str | None = Field(None, max_length=255)
-    phone: str | None = Field(None, max_length=50)
+    email: ContactEmail = None
+    phone: InternationalPhone = None
     linkedin: str | None = Field(None, max_length=512)
 
 

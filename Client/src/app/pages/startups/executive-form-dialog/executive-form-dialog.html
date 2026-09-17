@@ -49,7 +49,7 @@
           placeholder="+55 11 91234-5678"
         />
         <mat-hint>Comece pelo código do país (+55 no Brasil, +1 nos EUA…).</mat-hint>
-        @if (form.controls.phone.hasError('phoneCountryPrefix')) {
+        @if (form.controls.phone.hasError('pattern')) {
           <mat-error>
             Informe o telefone com o código do país, começando com +.
           </mat-error>

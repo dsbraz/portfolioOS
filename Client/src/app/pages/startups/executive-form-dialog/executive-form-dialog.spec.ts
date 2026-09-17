@@ -80,18 +80,18 @@ describe('ExecutiveFormDialog', () => {
 
     component.onSubmit();
 
-    expect(component.form.controls.phone.hasError('phoneCountryPrefix')).toBe(true);
+    expect(component.form.controls.phone.hasError('pattern')).toBe(true);
     expect(dialogRefSpy.close).not.toHaveBeenCalled();
   });
 
-  it('should accept a foreign number that carries its prefix, stored in E.164', () => {
+  it('should accept a foreign number that carries its prefix', () => {
     dialogRefSpy.close.mockClear();
     component.form.patchValue({ name: 'John Miller', phone: '+1 415 555 1234' });
 
     component.onSubmit();
 
     expect(dialogRefSpy.close).toHaveBeenCalledWith(
-      expect.objectContaining({ phone: '+14155551234' }),
+      expect.objectContaining({ phone: '+1 415 555 1234' }),
     );
   });
 
@@ -102,7 +102,7 @@ describe('ExecutiveFormDialog', () => {
     component.onSubmit();
 
     expect(dialogRefSpy.close).toHaveBeenCalledWith(
-      expect.objectContaining({ phone: null }),
+      expect.objectContaining({ phone: '' }),
     );
   });
 });

@@ -87,11 +87,10 @@ the mode: `Preencher agora` fills the reportable zone plus the fund note, and
 `Gerar link para a investida` creates the link. In link mode, `Gerar link` opens
 the panel inline: the link as text under `Link do formulário`, a `Copiar link de
 {Mmm/AAAA}` control, and one send control per reachable executive:
-`Enviar por WhatsApp para {name}` when the registered phone resolves, and
-`Enviar por e-mail para {name}` when a registered e-mail exists. WhatsApp is the
-fund's primary channel; e-mail is the alternative when the phone is missing or
-unusable. Both open the operator's own client with the message ready — the
-platform never sends anything. An executive with neither channel appears as
+`Enviar por WhatsApp para {name}` when the phone carries its country code,
+otherwise `Enviar por e-mail para {name}` with the reason shown under the name.
+Both open the operator's own client with the message ready — the platform never
+sends anything. An executive with neither channel appears as
 `Sem canal de envio` and gets no send control.
 
 `Mais ações` → `Links anteriores` lists existing periods; `Abrir link de

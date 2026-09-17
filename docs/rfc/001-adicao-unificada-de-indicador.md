@@ -111,23 +111,8 @@ models/indicator-form.ts        ← NOVO: única fonte do contrato no cliente
   buildReportedIndicatorForm()  (FormGroup da zona reportada, validadores idênticos)
   futurePeriodValidator         (movido do diálogo; passa a ser compartilhado)
 
-models/email.ts                 ← NOVO: canal alternativo, só `mailto:`
-  normalizeContactEmail()       (minúsculas e aparado; inválido → null)
-  buildIndicatorRequestSubject() ("{Startup} — indicadores de {mês}/{ano}")
-  buildMailtoLink()             (mailto:<endereço>?subject=…&body=…)
-  emailValidator                (validador do formulário de executivo)
-
-models/whatsapp.ts              ← NOVO: funções puras, testáveis sem Angular
-  normalizeInternationalPhone() (E.164; sem prefixo do país → null)
-  formatPhone()                 (exibição na prévia: máscara BR para +55,
-                                 E.164 como está para os demais países)
-  phoneCountryPrefixValidator   (validador do formulário de executivo)
-  firstName()                   (primeiro token do nome, para a saudação)
-  buildIndicatorRequestMessage() (modelo padrão do fundo: primeiro nome,
-                                 mês de referência, link — ver §3.3)
-  buildWhatsAppLink()           (wa.me/<dígitos>?text=<mensagem codificada>)
-
 pages/startups/add-indicator-dialog/   ← NOVO: a entrada única + painel do link
+pages/startups/token-panel/             ← NOVO: link, canal de envio e mensagem
 pages/startups/indicator-form-dialog/  ← passa a ser SÓ edição e leitura
 pages/startups/token-generate-dialog/  ← REMOVIDO
 pages/report/report-form.ts            ← consome a factory; perde constantes locais
@@ -201,20 +186,18 @@ executivo (aba Executivos), e o painel orienta esse caminho quando nenhum
 executivo tem telefone. Antes de abrir o WhatsApp, o painel exibe nome e número
 normalizado.
 
-**Normalização** (`normalizeInternationalPhone`, função pura): descarta apenas
-separadores de apresentação e exige E.164 — `+`, código do país e de 8 a 15
-dígitos. **O país nunca é inferido.** Os executivos do fundo não estão todos no
-Brasil, e um número local estrangeiro de 10 dígitos é indistinguível de um
-brasileiro: prefixar `55` por palpite transformava `(415) 555-1234` num celular
-plausível do Paraná, entregando a capacidade de escrita a um desconhecido. Por
-isso o prefixo é **obrigatório no cadastro do executivo**, imposto no domínio
-por `normalize_international_phone`
-(`Server/app/domain/validators.py`) e espelhado no cliente pelo
-`phoneCountryPrefixValidator`. Qualquer forma que não resolva é recusada com
-orientação — nunca se abre `wa.me` com número que não normalizou.
+**Telefone com código do país.** O país nunca é inferido. Os executivos do fundo
+não estão todos no Brasil, e um número local estrangeiro de 10 dígitos é
+indistinguível de um brasileiro: prefixar `55` por palpite transformava
+`(415) 555-1234` num celular plausível do Paraná, entregando a capacidade de
+escrita a um desconhecido. Por isso o cadastro do executivo exige E.164 — `+`,
+código do país e de 8 a 15 dígitos — no schema de entrada
+(`Server/app/domain/schemas/executive.py`), que também grava o número sem
+separadores. O painel usa o WhatsApp só quando o telefone começa com `+`; um
+registro antigo sem o código aparece com o aviso "Telefone sem código do país".
 
-**Canal alternativo — e-mail** (decisão de 19/08/2026): quando o telefone não
-resolve, o painel oferece `mailto:` para o e-mail cadastrado do executivo, com a
+**Canal alternativo — e-mail** (decisão de 19/08/2026): cada executivo tem um
+único canal de envio. Quando o telefone não serve, o painel oferece `mailto:` para o e-mail cadastrado do executivo, com a
 mesma mensagem no corpo e um assunto que nomeia startup e período. A escolha do
 `mailto:` é deliberada e **espelha o `wa.me`**: a plataforma compõe e entrega ao
 cliente de e-mail da própria pessoa, que confirma e envia. Não há SMTP, provedor
@@ -223,7 +206,7 @@ nada**, o que preserva a garantia de que toda comunicação passa por confirmaç
 humana. Envio autônomo pela plataforma continua fora de escopo aqui e pertence ao
 PRD-003, junto da decisão de canal.
 
-**Mensagem** (`buildIndicatorRequestMessage`, função pura): o modelo padrão que
+**Mensagem** (montada no `token-panel`): o modelo padrão que
 o fundo já usa hoje, parametrizado —
 
 ```
@@ -324,10 +307,11 @@ pela página — zero requisições adicionais.
   factory);
 - "Anotações do fundo" presente na edição e na leitura, ausente no público;
 - falha de clipboard informada;
-- **normalização de telefone** (E.164, prefixo do país obrigatório): tabela de
-  casos — `+55 11 99999-9999` → `+5511999999999`, `+1 415 555 1234` →
-  `+14155551234`, `(11) 99999-9999` → **recusado** (sem prefixo),
-  `(415) 555-1234` → **recusado**, `+55` → recusado;
+- **telefone no cadastro** (API, E.164 obrigatório): `+55 (11) 99999-9999` →
+  `+5511999999999`, `+1 415 555 1234` → `+14155551234`, `(11) 99999-9999`,
+  `(415) 555-1234` e `+55` → 422;
+- **canal único**: com telefone válido, só WhatsApp; sem telefone ou com
+  telefone sem código do país, e-mail com o motivo visível;
 - **URL do WhatsApp**: `href` contém o número normalizado e a mensagem
   codificada (`encodeURIComponent`) no modelo padrão — primeiro nome, mês de
   referência e link, com as quebras de linha preservadas (`%0A`);
@@ -377,7 +361,7 @@ encerrada em 18/08/2026); o status por incremento fica registrado abaixo.
    como texto + copiar), remoção do "Gerar link" do cabeçalho e do
    `TokenGenerateDialog`; `IndicatorFormDialog` reduzido a edição/leitura.
    O `token-generate-dialog` foi de fato removido da árvore.
-3. **Envio por WhatsApp** ✅ — `whatsapp.ts` (normalização, mensagem, URL),
+3. **Envio por WhatsApp** ✅ — mensagem e URL no `token-panel`,
    seletor de destinatário no painel (extraído como `token-panel`, reutilizado
    pelo diálogo e pela lista de links) e o spec do fluxo por papéis/nomes que
    sela a operabilidade por agente.

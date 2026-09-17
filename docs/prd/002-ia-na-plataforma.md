@@ -414,8 +414,8 @@ profundidade e explica claramente as diferenças de sessão e segurança.
         de cada disparo.
   - [ ] Startup sem executivo alcançável — sem telefone utilizável **e** sem
         e-mail — aparece na fila marcada como impedida, com o motivo, e nunca
-        entra no envio. Havendo só e-mail, a skill cai para esse canal e diz
-        por quê; o WhatsApp é sempre tentado primeiro.
+        entra no envio. O painel mostra um único canal por executivo, e a
+        skill usa esse canal e relata o aviso quando ele é o e-mail.
 
 
 ## 7. Regras transversais

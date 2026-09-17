@@ -6,12 +6,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 
 import { Executive } from '../../../models/executive.model';
-import { emailValidator, normalizeContactEmail } from '../../../models/email';
-import {
-  formatPhone,
-  normalizeInternationalPhone,
-  phoneCountryPrefixValidator,
-} from '../../../models/whatsapp';
 
 export interface ExecutiveFormDialogData {
   executive?: Executive;
@@ -46,12 +40,11 @@ export class ExecutiveFormDialog implements OnInit {
   readonly form = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(255)]],
     role: [''],
-    // The e-mail is a send channel, so an address we cannot compose to is
-    // refused here rather than discovered at send time.
-    email: ['', [emailValidator]],
-    // The country prefix is mandatory: the fund's executives are not all in
+    email: ['', [Validators.email]],
+    // The country code is mandatory: the fund's executives are not all in
     // Brazil, so a local-format number cannot be told apart from a foreign one.
-    phone: ['', [phoneCountryPrefixValidator]],
+    // The server validates the full format and stores it normalized.
+    phone: ['', [Validators.pattern(/^\s*\+/)]],
     linkedin: [''],
   });
 
@@ -69,9 +62,7 @@ export class ExecutiveFormDialog implements OnInit {
           { label: 'Nome', value: e.name || null },
           { label: 'Cargo', value: e.role || null },
           { label: 'Email', value: e.email || null },
-          // Falls back to the raw value so a legacy record without the prefix
-          // is shown as it is, rather than disappearing behind a "—".
-          { label: 'Telefone', value: formatPhone(e.phone) ?? e.phone ?? null },
+          { label: 'Telefone', value: e.phone || null },
           { label: 'LinkedIn', value: e.linkedin || null, kind: 'long' },
         ],
       },
@@ -90,14 +81,7 @@ export class ExecutiveFormDialog implements OnInit {
       this.form.markAllAsTouched();
       return;
     }
-    const raw = this.form.getRawValue();
-    // Stored in the same shapes the server persists: E.164 and a lowercased
-    // address.
-    this.dialogRef.close({
-      ...raw,
-      phone: normalizeInternationalPhone(raw.phone),
-      email: normalizeContactEmail(raw.email),
-    });
+    this.dialogRef.close(this.form.getRawValue());
   }
 
   onCancel(): void {

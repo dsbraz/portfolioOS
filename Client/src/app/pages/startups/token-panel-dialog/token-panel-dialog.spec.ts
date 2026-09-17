@@ -81,7 +81,7 @@ describe('TokenPanelDialog', () => {
   it('should show the resolved recipient number before the send', async () => {
     const element = await render([executive({})]);
 
-    expect(element.textContent).toContain('+55 (11) 91234-5678');
+    expect(element.textContent).toContain('+5511912345678');
   });
 
   it('should offer no send for an unresolvable phone and say why', async () => {
