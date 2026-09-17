@@ -22,7 +22,7 @@ describe('Ai', () => {
     expect(packageCard?.textContent).toContain('Instale uma vez');
     expect(packageCard?.textContent).toContain('descobre automaticamente');
     expect(downloads).toHaveLength(1);
-    expect(downloads[0].getAttribute('href')).toBe('/api/skills.zip');
+    expect(downloads[0].getAttribute('href')).toBe('/api/static/portfolioos.zip');
     expect(downloads[0].getAttribute('download')).toBe('portfolioos.zip');
     expect(downloads[0].getAttribute('aria-label')).toBe('Baixar pacote de skills portfolioOS');
   });

@@ -163,15 +163,15 @@ Usuario do sistema com autenticacao via JWT. Campos: username, email, senha (has
 Base: `http://localhost:8000/api`
 
 Public routes are `/health`, `/health/ready`, `/auth/login`,
-`/monthly-indicator/{token}` (GET and POST), and `/skills.zip`. All other
-routes require a JWT bearer token.
+`/monthly-indicator/{token}` (GET and POST), and the files under `/static`.
+All other routes require a JWT bearer token.
 
 | Metodo | Rota | Descricao |
 |--------|------|-----------|
 | GET | `/health` | Health check |
 | GET | `/health/ready` | Readiness check |
 | POST | `/auth/login` | Autenticacao (retorna JWT) |
-| GET | `/skills.zip` | Download the committed AI skill pack (`portfolioos.zip`) |
+| GET | `/static/portfolioos.zip` | Committed AI skill pack, served from `Server/static/` |
 | GET | `/portfolio` | Resumo do portfolio (KPIs) |
 | GET/POST | `/startups` | Listar / criar startups |
 | GET/PATCH/DELETE | `/startups/{id}` | Detalhe / atualizar / remover startup |
@@ -195,8 +195,8 @@ Respostas de listagem retornam `{ items: T[], total: number }`.
 
 ### AI skill pack
 
-The `/ia` page links to `/api/skills.zip`, which serves the committed
-`Server/static/portfolioos.zip` as a plain file. The same archive installs in
+The `/ia` page links to `/api/static/portfolioos.zip`: the committed
+`Server/static/portfolioos.zip`, served by FastAPI's `StaticFiles` mount. The same archive installs in
 Claude and ChatGPT. See `Server/skills/README.md` to change a skill.
 
 ## Comandos do dia a dia

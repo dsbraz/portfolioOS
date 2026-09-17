@@ -1,7 +1,9 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
 from app.controllers.auth_controller import router as auth_router
@@ -17,8 +19,6 @@ from app.controllers.monthly_indicator_controller import (
     router as monthly_indicator_router,
 )
 from app.controllers.portfolio_controller import router as portfolio_router
-from app.controllers.skill_controller import PACK_PATH
-from app.controllers.skill_controller import public_router as skill_public_router
 from app.controllers.startup_controller import router as startup_router
 from app.controllers.user_controller import router as user_router
 from app.controllers.user_invite_controller import (
@@ -30,8 +30,6 @@ from app.database import engine
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    if not PACK_PATH.is_file():
-        raise RuntimeError(f"Skill pack is missing: {PACK_PATH}")
     yield
     await engine.dispose()
 
@@ -51,12 +49,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Committed build artifacts (the AI skill pack), served as plain public files.
+STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
+app.mount("/api/static", StaticFiles(directory=STATIC_DIR), name="static")
+
 # Public routes (no auth required)
 app.include_router(health_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
 app.include_router(monthly_indicator_public_router, prefix="/api")
 app.include_router(user_invite_public_router, prefix="/api")
-app.include_router(skill_public_router, prefix="/api")
 
 # Protected routes (auth required)
 protected = [Depends(get_current_user)]
