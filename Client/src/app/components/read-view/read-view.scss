@@ -1,20 +1,20 @@
 :host {
   display: flex;
   flex-direction: column;
-  // Entre seções, mais respiro do que entre pares da mesma seção: é a diferença
-  // que faz o grupo ler como grupo.
+  // More breathing room between sections than between pairs of the same
+  // section: that difference is what makes a group read as a group.
   gap: var(--space-lg);
 }
 
-// Tipografia vem do `.section-title` global — a mesma do modo de edição, para
-// que ler e editar apresentem os grupos com a mesma aparência. Aqui só o ritmo:
-// o respiro acima já vem do `gap` do :host, então basta o de baixo.
+// Typography comes from the global `.section-title` — the same as edit mode, so
+// reading and editing present groups with the same look. Only rhythm here: the
+// space above already comes from the :host `gap`, so only the bottom is needed.
 .read-section-title {
   margin-block-end: var(--space-xs);
 }
 
-// Colunas intrínsecas: os pares se acomodam pela largura disponível, sem
-// breakpoint. Em diálogo estreito vira uma coluna só.
+// Intrinsic columns: pairs fit the available width, with no breakpoint. In a
+// narrow dialog it becomes a single column.
 .read-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
@@ -29,8 +29,8 @@
   min-width: 0;
 }
 
-// Texto corrido ocupa a linha inteira: numa coluna estreita ele vira uma fita
-// de duas palavras por linha.
+// Running text takes the full row: in a narrow column it turns into a ribbon of
+// two words per line.
 .read-item--long {
   grid-column: 1 / -1;
 }
@@ -42,22 +42,22 @@
   font-weight: var(--fw-medium);
 }
 
-// Tinta cheia: isto é o dado, não cromo. Era exatamente o que o campo
-// desabilitado tirava — o rótulo ficava legível e o valor não.
+// Full ink: this is the data, not chrome. That is exactly what the disabled
+// field took away — the label stayed legible and the value did not.
 .read-value {
   margin: 0;
   color: var(--color-text);
   font-family: var(--font-body);
   font-size: var(--fs-body-sm);
   line-height: var(--lh-base);
-  // Preserva as quebras que a pessoa digitou no textarea.
+  // Preserves the line breaks the person typed in the textarea.
   white-space: pre-wrap;
-  // URLs e e-mails longos não têm espaço onde quebrar e estouram a coluna.
+  // Long URLs and e-mails have no space to break at and overflow the column.
   overflow-wrap: anywhere;
 }
 
-// Mono tabular pelo mesmo motivo das colunas numéricas da tabela: dígitos de
-// largura fixa alinham valores de comprimentos diferentes.
+// Tabular mono for the same reason as the table's numeric columns: fixed-width
+// digits line up values of different lengths.
 .read-value--num {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;

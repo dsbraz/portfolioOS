@@ -191,7 +191,7 @@ async def test_monitoring_summary_should_return_400_with_future_period(client):
 
 @pytest.mark.asyncio
 async def test_last_reported_period_ignores_reports_after_the_selected_month(client):
-    """Olhando Mar, um reporte de Mai ainda nao aconteceu naquele recorte."""
+    """Viewed from Mar, a May report has not happened yet in that slice."""
     startup_resp = await client.post(
         "/api/startups",
         json={
@@ -202,7 +202,7 @@ async def test_last_reported_period_ignores_reports_after_the_selected_month(cli
     )
     startup_id = startup_resp.json()["id"]
 
-    # Dez/2025 vence Jan/2026 numa comparacao ingenua por mes.
+    # Dec/2025 beats Jan/2026 in a naive month-only comparison.
     await client.post(
         f"/api/startups/{startup_id}/monthly-indicators",
         json={"month": 12, "year": 2025, "total_revenue": 100},
@@ -220,7 +220,7 @@ async def test_last_reported_period_ignores_reports_after_the_selected_month(cli
     assert resp.status_code == 200
     item = resp.json()["startups"][0]
 
-    # Nao reportou em Mar; o ultimo ate ali foi Jan/2026, nao Mai nem Dez.
+    # Did not report in Mar; the last one up to then was Jan/2026, not May or Dec.
     assert item["total_revenue"] is None
     assert item["last_reported_year"] == 2026
     assert item["last_reported_month"] == 1

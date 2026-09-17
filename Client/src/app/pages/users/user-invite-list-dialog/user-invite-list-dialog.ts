@@ -5,6 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
+import { formatDateTime } from '../../../models/formatters';
 import { UserInviteResponse } from '../../../models/user-invite.model';
 
 export interface UserInviteListDialogData {
@@ -35,7 +36,7 @@ export interface UserInviteListDialogData {
           <ng-container matColumnDef="expires_at">
             <th mat-header-cell *matHeaderCellDef>Expira em</th>
             <td mat-cell *matCellDef="let invite">
-              {{ formatDate(invite.expires_at) }}
+              {{ formatDateTime(invite.expires_at) ?? '-' }}
             </td>
           </ng-container>
 
@@ -76,18 +77,12 @@ export class UserInviteListDialog {
   readonly data = inject<UserInviteListDialogData>(MAT_DIALOG_DATA);
   private readonly snackBar = inject(MatSnackBar);
   readonly columns = ['email', 'expires_at', 'actions'];
+  readonly formatDateTime = formatDateTime;
 
   copyLink(token: string): void {
     const url = `${window.location.origin}/user-invites/${token}`;
     navigator.clipboard.writeText(url).then(() => {
       this.snackBar.open('Link copiado!', 'Fechar', { duration: 2000 });
     });
-  }
-
-  formatDate(dateStr: string): string {
-    return new Intl.DateTimeFormat('pt-BR', {
-      dateStyle: 'short',
-      timeStyle: 'short',
-    }).format(new Date(dateStr));
   }
 }

@@ -1,5 +1,5 @@
-// A página pública é uma coluna: cabeçalho de marca no topo, formulário
-// centrado abaixo. Sem card em volta — as seções já se separam por filete.
+// The public page is a single column: brand header on top, centered form
+// below. No surrounding card — sections are already separated by hairlines.
 .report-page {
   min-height: 100vh;
   background-color: var(--color-bg);
@@ -33,9 +33,9 @@
   }
 
   .form-row {
-  // Intrinsecamente responsivo: as colunas colapsam quando não cabem, sem
-  // breakpoint. `auto-fit` + `minmax` deixa o container decidir — media query
-  // aqui só adivinharia a largura que o grid já sabe.
+  // Intrinsically responsive: columns collapse when they do not fit, with no
+  // breakpoint. `auto-fit` + `minmax` lets the container decide — a media query
+  // here would only guess the width the grid already knows.
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
 }
