@@ -36,49 +36,22 @@ async def _startup(session: AsyncSession) -> uuid.UUID:
 
 
 @pytest.mark.asyncio
-async def test_duplicate_indicator_raises_conflict_and_keeps_earlier_writes(
-    session: AsyncSession,
+@pytest.mark.parametrize(
+    ("model", "create"),
+    [(MonthlyIndicator, "create"), (MonthlyIndicatorToken, "create_token")],
+)
+async def test_duplicate_insert_raises_conflict_and_keeps_earlier_writes(
+    session: AsyncSession, model: type, create: str
 ):
     startup_id = await _startup(session)
-    repository = MonthlyIndicatorRepository(session)
-    earlier = await repository.create(
-        MonthlyIndicator(startup_id=startup_id, **OTHER_PERIOD, headcount=7)
-    )
-    await repository.create(MonthlyIndicator(startup_id=startup_id, **PERIOD))
+    insert = getattr(MonthlyIndicatorRepository(session), create)
+    await insert(model(startup_id=startup_id, **OTHER_PERIOD))
+    await insert(model(startup_id=startup_id, **PERIOD))
 
     with pytest.raises(ConflictError):
-        await repository.create(MonthlyIndicator(startup_id=startup_id, **PERIOD))
+        await insert(model(startup_id=startup_id, **PERIOD))
 
     # Only the failed insert is undone: the request's other writes still commit.
     await session.commit()
-    assert earlier.headcount == 7
-    stored = await session.scalars(
-        select(MonthlyIndicator).where(MonthlyIndicator.startup_id == startup_id)
-    )
-    assert len(stored.all()) == 2
-
-
-@pytest.mark.asyncio
-async def test_duplicate_token_raises_conflict_and_keeps_earlier_writes(
-    session: AsyncSession,
-):
-    startup_id = await _startup(session)
-    repository = MonthlyIndicatorRepository(session)
-    earlier = await repository.create_token(
-        MonthlyIndicatorToken(startup_id=startup_id, **OTHER_PERIOD)
-    )
-    await repository.create_token(MonthlyIndicatorToken(startup_id=startup_id, **PERIOD))
-
-    with pytest.raises(ConflictError):
-        await repository.create_token(
-            MonthlyIndicatorToken(startup_id=startup_id, **PERIOD)
-        )
-
-    await session.commit()
-    assert earlier.month == OTHER_PERIOD["month"]
-    stored = await session.scalars(
-        select(MonthlyIndicatorToken).where(
-            MonthlyIndicatorToken.startup_id == startup_id
-        )
-    )
+    stored = await session.scalars(select(model).where(model.startup_id == startup_id))
     assert len(stored.all()) == 2

@@ -146,6 +146,12 @@ describe('ReportForm page flow', () => {
     fixture.detectChanges();
   }
 
+  async function renderLoaded(): Promise<void> {
+    await render();
+    httpMock.expectOne('/api/monthly-indicator/tok-1').flush(contexto);
+    fixture.detectChanges();
+  }
+
   afterEach(() => {
     // Reset FIRST: a verify() that throws must not leave the TestBed
     // instantiated, or every later test dies on configureTestingModule.
@@ -211,9 +217,7 @@ describe('ReportForm page flow', () => {
   });
 
   it('submits and lands on the confirmation state', async () => {
-    await render();
-    httpMock.expectOne('/api/monthly-indicator/tok-1').flush(contexto);
-    fixture.detectChanges();
+    await renderLoaded();
     component.form.patchValue({ total_revenue: 1000 });
 
     component.onSubmit();
@@ -229,9 +233,7 @@ describe('ReportForm page flow', () => {
   });
 
   it('reveals the offending field instead of silently refusing an invalid submit', async () => {
-    await render();
-    httpMock.expectOne('/api/monthly-indicator/tok-1').flush(contexto);
-    fixture.detectChanges();
+    await renderLoaded();
     component.form.patchValue({ headcount: 2.5 });
 
     component.onSubmit();
@@ -248,15 +250,13 @@ describe('ReportForm page flow', () => {
   });
 
   it('recovers from a failed submit and keeps what was typed', async () => {
-    await render();
-    httpMock.expectOne('/api/monthly-indicator/tok-1').flush(contexto);
-    fixture.detectChanges();
+    await renderLoaded();
     component.form.patchValue({ total_revenue: 1000 });
 
     component.onSubmit();
     httpMock
       .expectOne((r) => r.method === 'POST')
-      .flush({ detail: 'Fora dos limites'.repeat(1) }, { status: 400, statusText: 'Bad' });
+      .flush({ detail: 'Fora dos limites' }, { status: 400, statusText: 'Bad' });
     fixture.detectChanges();
 
     // Not submitted, not stuck: the founder can fix and resend.
@@ -266,9 +266,7 @@ describe('ReportForm page flow', () => {
   });
 
   it('ignores a second click while a submit is in flight', async () => {
-    await render();
-    httpMock.expectOne('/api/monthly-indicator/tok-1').flush(contexto);
-    fixture.detectChanges();
+    await renderLoaded();
 
     component.onSubmit();
     component.onSubmit();

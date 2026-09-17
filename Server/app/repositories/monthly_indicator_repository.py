@@ -70,15 +70,7 @@ class MonthlyIndicatorRepository:
 
     async def create(self, indicator: MonthlyIndicator) -> MonthlyIndicator:
         period = f"{indicator.month}/{indicator.year}"
-        try:
-            # A savepoint keeps the session usable when another request took the
-            # period first, so the caller can still read and merge into it.
-            async with self._session.begin_nested():
-                self._session.add(indicator)
-                await self._session.flush()
-        except IntegrityError as error:
-            raise ConflictError(f"Ja existe indicador para o periodo {period}") from error
-        await self._session.refresh(indicator)
+        await self._insert(indicator, f"Ja existe indicador para o periodo {period}")
         return indicator
 
     async def update(self, indicator: MonthlyIndicator) -> MonthlyIndicator:
@@ -207,11 +199,18 @@ class MonthlyIndicatorRepository:
 
     async def create_token(self, token: MonthlyIndicatorToken) -> MonthlyIndicatorToken:
         period = f"{token.month}/{token.year}"
+        await self._insert(token, f"Ja existe link para o periodo {period}")
+        return token
+
+    async def _insert(
+        self, record: MonthlyIndicator | MonthlyIndicatorToken, conflict_message: str
+    ) -> None:
         try:
+            # A savepoint keeps the session usable when another request took the
+            # period first, so the caller can still read the record that won.
             async with self._session.begin_nested():
-                self._session.add(token)
+                self._session.add(record)
                 await self._session.flush()
         except IntegrityError as error:
-            raise ConflictError(f"Ja existe link para o periodo {period}") from error
-        await self._session.refresh(token)
-        return token
+            raise ConflictError(conflict_message) from error
+        await self._session.refresh(record)

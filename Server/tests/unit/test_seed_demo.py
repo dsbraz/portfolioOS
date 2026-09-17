@@ -226,18 +226,17 @@ async def test_seed_demo_does_not_change_records_owned_by_another_startup(sessio
 @pytest.mark.asyncio
 async def test_seed_creates_executives_covering_every_send_channel_state(session):
     """The chase flow branches on how a person can be reached, so the scenario
-    has to carry all three states — otherwise two items of the script cannot be
-    exercised at all."""
+    has to carry all three states."""
     await seed_demo(session)
 
     result = await session.execute(
         select(Executive).where(Executive.startup_id == DEMO_STARTUP_ID)
     )
-    executives = {e.name: e for e in result.scalars().all()}
+    executives = result.scalars().all()
 
-    reachable_by_phone = [e for e in executives.values() if e.phone]
-    email_only = [e for e in executives.values() if not e.phone and e.email]
-    unreachable = [e for e in executives.values() if not e.phone and not e.email]
+    reachable_by_phone = [e for e in executives if e.phone]
+    email_only = [e for e in executives if not e.phone and e.email]
+    unreachable = [e for e in executives if not e.phone and not e.email]
 
     assert reachable_by_phone, "no executive can be reached by WhatsApp"
     assert email_only, "no executive exercises the e-mail fallback"
@@ -254,14 +253,10 @@ async def test_seed_leaves_a_startup_missing_the_last_period(session):
     startup up to date, the queue is always empty and the flow is untestable."""
     await seed_demo(session)
 
-    result = await session.execute(
-        select(Startup).where(Startup.id == CHASE_STARTUP_ID)
-    )
-    startup = result.scalar_one()
-
+    assert await session.get(Startup, CHASE_STARTUP_ID) is not None
     periods = await session.execute(
         select(MonthlyIndicator.month, MonthlyIndicator.year).where(
-            MonthlyIndicator.startup_id == startup.id
+            MonthlyIndicator.startup_id == CHASE_STARTUP_ID
         )
     )
     reported = set(periods.all())

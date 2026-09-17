@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from app.application.monthly_indicator.create_monthly_indicator import (
+    _MERGED_FIELDS,
     CreateMonthlyIndicator,
 )
 from app.domain.exceptions import ConflictError
@@ -76,25 +77,23 @@ async def test_validates_period_not_future(use_case):
 
 
 @pytest.mark.asyncio
-async def test_lost_race_merges_onto_the_row_that_won(repo):
+async def test_lost_race_merges_onto_the_row_that_won(use_case, repo):
     winner = MagicMock(total_revenue=None, headcount=10)
     # First check sees nothing; after the failed insert, the winner is there.
     repo.get_by_startup_and_period.side_effect = [None, winner]
     repo.create.side_effect = ConflictError("periodo ja existe")
 
-    incoming = MagicMock(month=1, year=2025, startup_id="abc")
-    incoming.total_revenue = 1234
-    incoming.headcount = None
-    for field in (
-        "recurring_revenue_pct", "gross_margin_pct", "cash_balance",
-        "ebitda_burn", "achievements", "challenges", "comments",
-    ):
-        setattr(incoming, field, None)
+    incoming = MagicMock(
+        month=1,
+        year=2025,
+        startup_id="abc",
+        **{**dict.fromkeys(_MERGED_FIELDS), "total_revenue": 1234},
+    )
 
     with patch(
         "app.application.monthly_indicator.create_monthly_indicator.validate_period_not_future"
     ):
-        result = await CreateMonthlyIndicator(repo).execute(incoming)
+        result = await use_case.execute(incoming)
 
     # Merged onto the winner: our value lands, the winner's survives.
     assert result is winner
@@ -104,7 +103,7 @@ async def test_lost_race_merges_onto_the_row_that_won(repo):
 
 
 @pytest.mark.asyncio
-async def test_lost_race_with_no_winner_visible_reraises(repo):
+async def test_lost_race_with_no_winner_visible_reraises(use_case, repo):
     # The winner is not visible yet (e.g. its transaction has not committed):
     # re-raise so the controller answers 409.
     repo.get_by_startup_and_period.side_effect = [None, None]
@@ -116,4 +115,4 @@ async def test_lost_race_with_no_winner_visible_reraises(repo):
         "app.application.monthly_indicator.create_monthly_indicator.validate_period_not_future"
     ):
         with pytest.raises(ConflictError):
-            await CreateMonthlyIndicator(repo).execute(incoming)
+            await use_case.execute(incoming)

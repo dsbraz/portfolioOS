@@ -47,6 +47,7 @@ describe('TokenPanel', () => {
 
   afterEach(() => {
     TestBed.resetTestingModule();
+    Reflect.deleteProperty(navigator, 'clipboard');
     vi.restoreAllMocks();
   });
 

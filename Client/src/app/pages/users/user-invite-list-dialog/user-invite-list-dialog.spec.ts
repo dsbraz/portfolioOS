@@ -12,19 +12,12 @@ describe('UserInviteListDialog', () => {
   let fixture: ComponentFixture<UserInviteListDialog>;
 
   const snackBar = { open: vi.fn() };
-  let escritoNoClipboard: string | null;
+  const writeText = vi.fn();
 
   async function render(data: UserInviteListDialogData): Promise<HTMLElement> {
-    escritoNoClipboard = null;
-    Object.defineProperty(navigator, 'clipboard', {
-      value: {
-        writeText: (texto: string) => {
-          escritoNoClipboard = texto;
-          return Promise.resolve();
-        },
-      },
-      configurable: true,
-    });
+    // jsdom has no clipboard; the dialog copies the invite URL.
+    writeText.mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
 
     await TestBed.configureTestingModule({
       imports: [UserInviteListDialog],
@@ -40,6 +33,7 @@ describe('UserInviteListDialog', () => {
 
   afterEach(() => {
     TestBed.resetTestingModule();
+    Reflect.deleteProperty(navigator, 'clipboard');
     vi.clearAllMocks();
   });
 
@@ -67,6 +61,6 @@ describe('UserInviteListDialog', () => {
     await fixture.whenStable();
 
     // The copied URL is the row's own token — not the first row's.
-    expect(escritoNoClipboard).toContain('/user-invites/tok-2');
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining('/user-invites/tok-2'));
   });
 });

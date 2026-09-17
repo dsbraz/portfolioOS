@@ -14,21 +14,12 @@ describe('UserInviteDialog', () => {
   const inviteService = { createInvite: vi.fn() };
   const dialogRef = { close: vi.fn() };
   const snackBar = { open: vi.fn() };
-  let escritoNoClipboard: string | null;
+  const writeText = vi.fn();
 
   beforeEach(async () => {
-    escritoNoClipboard = null;
-    // jsdom has no clipboard; the dialog copies the invite URL on success, so
-    // the spec provides one that records what was written.
-    Object.defineProperty(navigator, 'clipboard', {
-      value: {
-        writeText: (texto: string) => {
-          escritoNoClipboard = texto;
-          return Promise.resolve();
-        },
-      },
-      configurable: true,
-    });
+    // jsdom has no clipboard; the dialog copies the invite URL.
+    writeText.mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
 
     await TestBed.configureTestingModule({
       imports: [UserInviteDialog],
@@ -48,6 +39,7 @@ describe('UserInviteDialog', () => {
 
   afterEach(() => {
     TestBed.resetTestingModule();
+    Reflect.deleteProperty(navigator, 'clipboard');
     vi.clearAllMocks();
   });
 
@@ -69,7 +61,7 @@ describe('UserInviteDialog', () => {
 
     expect(inviteService.createInvite).toHaveBeenCalledWith({ email: 'novo@fundo.com' });
     // The copied URL carries the token — it is the artifact the admin sends on.
-    expect(escritoNoClipboard).toContain('/user-invites/tok-abc');
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining('/user-invites/tok-abc'));
     expect(dialogRef.close).toHaveBeenCalledWith(true);
   });
 

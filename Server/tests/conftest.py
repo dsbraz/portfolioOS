@@ -6,10 +6,9 @@ from pathlib import Path
 # One database file per run, outside the mounted tree: a shared `./test.db` let
 # two concurrent or interrupted runs poison each other's fixtures. A file, not
 # `:memory:`, because the app engine may fall back to this URL and its pool
-# sizing arguments are rejected by the in-memory pool.
-TEST_DATABASE_URL = (
-    f"sqlite+aiosqlite:///{Path(tempfile.mkdtemp(prefix='portfolioos-tests-')) / 'test.db'}"
-)
+# sizing arguments are rejected by the in-memory pool. Removed at exit.
+_TEST_DATABASE_DIR = tempfile.TemporaryDirectory(prefix="portfolioos-tests-")
+TEST_DATABASE_URL = f"sqlite+aiosqlite:///{Path(_TEST_DATABASE_DIR.name) / 'test.db'}"
 os.environ.setdefault("DATABASE_URL", TEST_DATABASE_URL)
 os.environ.setdefault("SECRET_KEY", "test-secret-key-for-testing-only")
 

@@ -10,7 +10,7 @@ import { Dealflow } from './dealflow';
 
 describe('Dealflow', () => {
   let deal: Deal;
-  let lastFixture: ComponentFixture<Dealflow> | null = null;
+  let fixture: ComponentFixture<Dealflow>;
 
   const dealService = {
     list: vi.fn(),
@@ -50,11 +50,11 @@ describe('Dealflow', () => {
       .overrideProvider(MatSnackBar, { useValue: snackBar })
       .compileComponents();
 
-    lastFixture = TestBed.createComponent(Dealflow);
-    lastFixture.detectChanges();
-    await lastFixture.whenStable();
-    lastFixture.detectChanges();
-    return lastFixture.nativeElement as HTMLElement;
+    fixture = TestBed.createComponent(Dealflow);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
   }
 
   afterEach(() => {
@@ -82,7 +82,7 @@ describe('Dealflow', () => {
 
     expect(element.textContent).toContain('Cardume');
     // The grouped map places the deal under its own stage and nowhere else.
-    const grouped = fixtureComponentOf(element).dealsByStage();
+    const grouped = fixture.componentInstance.dealsByStage();
     expect(grouped['novo'].map((d) => d.company)).toEqual(['Cardume']);
     expect(grouped['investido']).toEqual([]);
   });
@@ -90,7 +90,7 @@ describe('Dealflow', () => {
   it('moves a deal via the menu and reports the target stage by name', async () => {
     dealService.move = vi.fn(() => of(deal));
     const element = await render();
-    const component = fixtureComponentOf(element);
+    const component = fixture.componentInstance;
 
     component.moveDeal(deal, 'comite' as never);
 
@@ -105,7 +105,7 @@ describe('Dealflow', () => {
   it('reloads after a failed board drop, so the screen never lies about the stage', async () => {
     dealService.move = vi.fn(() => throwError(() => ({ error: { detail: 'boom' } })));
     const element = await render();
-    const component = fixtureComponentOf(element);
+    const component = fixture.componentInstance;
     const origem = [deal];
     const destino: Deal[] = [];
     const drop = {
@@ -129,7 +129,7 @@ describe('Dealflow', () => {
   it('deletes only after the person confirms, and never on refusal', async () => {
     dealService.delete = vi.fn(() => of(void 0));
     const element = await render();
-    const component = fixtureComponentOf(element);
+    const component = fixture.componentInstance;
 
     vi.spyOn(window, 'confirm').mockReturnValueOnce(false);
     component.deleteDeal(deal);
@@ -146,7 +146,7 @@ describe('Dealflow', () => {
       afterClosed: () => of({ company: 'Nova Co', stage: 'novo' }),
     })) as never;
     const element = await render();
-    const component = fixtureComponentOf(element);
+    const component = fixture.componentInstance;
 
     component.openCreateDialog();
 
@@ -163,7 +163,4 @@ describe('Dealflow', () => {
     expect(snackBar.open).toHaveBeenCalledWith('sem acesso', 'Fechar', expect.anything());
   });
 
-  function fixtureComponentOf(_el: HTMLElement): Dealflow {
-    return lastFixture!.componentInstance;
-  }
 });

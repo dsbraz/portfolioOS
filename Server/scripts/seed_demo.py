@@ -198,14 +198,20 @@ _CHASE_EXECUTIVE_SEEDS: tuple[dict[str, Any], ...] = (
     },
 )
 
-_DEMO_STARTUP_IDS = (DEMO_STARTUP_ID, CHASE_STARTUP_ID)
-_INDICATOR_IDS = tuple(
-    seed["id"] for seed in _INDICATOR_SEEDS + _CHASE_INDICATOR_SEEDS
+_DEMO_STARTUPS: tuple[tuple[uuid.UUID, dict[str, Any]], ...] = (
+    (DEMO_STARTUP_ID, _STARTUP_VALUES),
+    (CHASE_STARTUP_ID, _CHASE_STARTUP_VALUES),
 )
-_MEETING_IDS = tuple(seed["id"] for seed in _MEETING_SEEDS)
-_EXECUTIVE_IDS = tuple(
-    seed["id"] for seed in _EXECUTIVE_SEEDS + _CHASE_EXECUTIVE_SEEDS
+# Every seeded record, with its model and owner. Drift removal derives the kept
+# IDs from here, so a seed group added below is never deleted as drift.
+_OWNED_SEEDS: tuple[tuple[type, tuple[dict[str, Any], ...], uuid.UUID], ...] = (
+    (MonthlyIndicator, _INDICATOR_SEEDS, DEMO_STARTUP_ID),
+    (BoardMeeting, _MEETING_SEEDS, DEMO_STARTUP_ID),
+    (Executive, _EXECUTIVE_SEEDS, DEMO_STARTUP_ID),
+    (MonthlyIndicator, _CHASE_INDICATOR_SEEDS, CHASE_STARTUP_ID),
+    (Executive, _CHASE_EXECUTIVE_SEEDS, CHASE_STARTUP_ID),
 )
+_DEMO_STARTUP_IDS = tuple(startup_id for startup_id, _ in _DEMO_STARTUPS)
 _ALLOWED_ENVIRONMENTS = frozenset({"development", "local"})
 
 
@@ -230,24 +236,19 @@ async def _upsert_startup(
 
 async def _remove_scenario_drift(session: AsyncSession) -> None:
     """Remove records created while manually exercising the demo skills."""
-    await session.execute(
-        delete(MonthlyIndicator).where(
-            MonthlyIndicator.startup_id.in_(_DEMO_STARTUP_IDS),
-            MonthlyIndicator.id.not_in(_INDICATOR_IDS),
+    for model in (MonthlyIndicator, BoardMeeting, Executive):
+        seeded_ids = [
+            seed["id"]
+            for owned_model, seeds, _ in _OWNED_SEEDS
+            if owned_model is model
+            for seed in seeds
+        ]
+        await session.execute(
+            delete(model).where(
+                model.startup_id.in_(_DEMO_STARTUP_IDS),
+                model.id.not_in(seeded_ids),
+            )
         )
-    )
-    await session.execute(
-        delete(BoardMeeting).where(
-            BoardMeeting.startup_id.in_(_DEMO_STARTUP_IDS),
-            BoardMeeting.id.not_in(_MEETING_IDS),
-        )
-    )
-    await session.execute(
-        delete(Executive).where(
-            Executive.startup_id.in_(_DEMO_STARTUP_IDS),
-            Executive.id.not_in(_EXECUTIVE_IDS),
-        )
-    )
     # Links are minted by the chase flow itself. Left behind, the next run finds
     # a link already there and silently takes the "reuse existing" branch — the
     # scenario stops testing what it claims to test.
@@ -280,18 +281,13 @@ async def _upsert_owned(
 
 async def seed_demo(session: AsyncSession) -> Startup:
     """Create or restore the records owned by the local demo scenario."""
-    startup = await _upsert_startup(session, DEMO_STARTUP_ID, _STARTUP_VALUES)
-    await _upsert_startup(session, CHASE_STARTUP_ID, _CHASE_STARTUP_VALUES)
+    for startup_id, values in _DEMO_STARTUPS:
+        await _upsert_startup(session, startup_id, values)
     await _remove_scenario_drift(session)
-    await _upsert_owned(session, MonthlyIndicator, _INDICATOR_SEEDS, DEMO_STARTUP_ID)
-    await _upsert_owned(session, BoardMeeting, _MEETING_SEEDS, DEMO_STARTUP_ID)
-    await _upsert_owned(session, Executive, _EXECUTIVE_SEEDS, DEMO_STARTUP_ID)
-    await _upsert_owned(
-        session, MonthlyIndicator, _CHASE_INDICATOR_SEEDS, CHASE_STARTUP_ID
-    )
-    await _upsert_owned(session, Executive, _CHASE_EXECUTIVE_SEEDS, CHASE_STARTUP_ID)
+    for model, seeds, startup_id in _OWNED_SEEDS:
+        await _upsert_owned(session, model, seeds, startup_id)
     await session.flush()
-    return startup
+    return await session.get(Startup, DEMO_STARTUP_ID)
 
 
 def ensure_development_environment(environment: str) -> None:

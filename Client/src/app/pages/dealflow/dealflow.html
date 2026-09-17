@@ -49,12 +49,12 @@
             <mat-card class="deal-card" cdkDrag [cdkDragData]="deal" (click)="openEditDialog(deal)">
               <mat-card-content>
                 <div class="deal-head">
-                  <!-- A button, not a link: the card opens a dialog instead of navigating. -->
+                  <!-- A button, not a link: the card opens a dialog instead of navigating.
+                       Its click bubbles to the card's handler. -->
                   <button
                     type="button"
                     class="deal-empresa row-opener"
                     [attr.aria-label]="'Abrir negócio ' + deal.company"
-                    (click)="$event.stopPropagation(); openEditDialog(deal)"
                   >
                     {{ deal.company }}
                   </button>
