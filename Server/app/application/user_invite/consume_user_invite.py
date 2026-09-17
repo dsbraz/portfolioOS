@@ -1,7 +1,7 @@
 import uuid
 from datetime import UTC, datetime
 
-from app.domain.exceptions import ConflictError
+from app.domain.exceptions import ConflictError, InvalidInputError
 from app.domain.models.user import User
 from app.domain.password_hasher import PasswordHasher
 from app.domain.validators import (
@@ -41,7 +41,7 @@ class ConsumeUserInvite:
             return None
 
         if invite.email.strip().lower() != email.strip().lower():
-            raise ValueError("Email do convite invalido")
+            raise InvalidInputError("Email do convite invalido")
 
         validate_username_no_spaces(username)
         validate_password_max_bytes(password)

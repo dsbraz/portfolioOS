@@ -10,6 +10,7 @@ from app.application.portfolio.readmodels import (
     PortfolioSummary,
     StartupSummary,
 )
+from app.domain.exceptions import InvalidInputError
 from app.domain.models.monthly_indicator import MonthlyIndicator
 from app.domain.models.period import Period
 from app.domain.models.startup import Startup, StartupStatus
@@ -94,10 +95,10 @@ class GetPortfolioSummary:
             return Period(year=today.year, month=today.month)
 
         if month is None or year is None:
-            raise ValueError("Mes e ano devem ser informados juntos")
+            raise InvalidInputError("Mes e ano devem ser informados juntos")
 
         if month < 1 or month > 12:
-            raise ValueError("Mes deve estar entre 1 e 12")
+            raise InvalidInputError("Mes deve estar entre 1 e 12")
 
         validate_period_not_future(month, year)
         return Period(year=year, month=month)

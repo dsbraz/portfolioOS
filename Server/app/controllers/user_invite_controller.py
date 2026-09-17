@@ -11,7 +11,6 @@ from app.controllers.dependencies import (
     user_invite_consume_builder,
     user_invite_create_builder,
 )
-from app.domain.exceptions import ConflictError
 from app.domain.schemas.user_invite import (
     PublicUserInviteConsume,
     PublicUserInviteResponse,
@@ -35,13 +34,7 @@ async def create_user_invite(
         user_invite_create_builder(CreateUserInvite)
     ),
 ):
-    try:
-        invite = await create_use_case.execute(data.email)
-    except ConflictError as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(e),
-        )
+    invite = await create_use_case.execute(data.email)
     return UserInviteResponse.model_validate(invite)
 
 
@@ -90,23 +83,12 @@ async def consume_user_invite(
         user_invite_consume_builder(ConsumeUserInvite)
     ),
 ):
-    try:
-        user = await consume_use_case.execute(
-            token,
-            data.email,
-            data.username,
-            data.password,
-        )
-    except ConflictError as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(e),
-        )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
-        )
+    user = await consume_use_case.execute(
+        token,
+        data.email,
+        data.username,
+        data.password,
+    )
 
     if not user:
         raise HTTPException(

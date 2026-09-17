@@ -1,4 +1,3 @@
-from app.domain.exceptions import ConflictError
 from app.domain.models.monthly_indicator import MonthlyIndicator
 from app.domain.validators import validate_period_not_future
 from app.repositories.monthly_indicator_repository import (
@@ -27,22 +26,10 @@ class CreateMonthlyIndicator:
     async def execute(self, indicator: MonthlyIndicator) -> MonthlyIndicator:
         validate_period_not_future(indicator.month, indicator.year)
 
-        existing = await self._find_existing(indicator)
-        if existing is None:
-            try:
-                return await self._repository.create(indicator)
-            except ConflictError:
-                # Another request created the period after the lookup. Creating
-                # is an upsert, so merge into the record that won.
-                existing = await self._find_existing(indicator)
-                if existing is None:
-                    raise
-        return await self._merge(existing, indicator)
-
-    async def _find_existing(self, indicator: MonthlyIndicator) -> MonthlyIndicator | None:
-        return await self._repository.get_by_startup_and_period(
-            indicator.startup_id, indicator.month, indicator.year
-        )
+        stored, created = await self._repository.get_or_create(indicator)
+        if created:
+            return stored
+        return await self._merge(stored, indicator)
 
     async def _merge(
         self, existing: MonthlyIndicator, incoming: MonthlyIndicator

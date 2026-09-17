@@ -32,7 +32,6 @@ from app.controllers.dependencies import (
     public_form_builder,
     verify_startup_exists,
 )
-from app.domain.exceptions import ConflictError
 from app.domain.models.monthly_indicator import MonthlyIndicator
 from app.domain.schemas.monthly_indicator import (
     MonthlyIndicatorCreate,
@@ -121,18 +120,7 @@ async def public_create_monthly_indicator(
         year=indicator_token.year,
         **data.model_dump(),
     )
-    try:
-        await create.execute(indicator)
-    except ConflictError as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(e),
-        )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
-        )
+    await create.execute(indicator)
 
 
 # --- Protected routes: indicators ---
@@ -168,18 +156,7 @@ async def create_indicator(
     ),
 ):
     indicator = MonthlyIndicator(startup_id=startup_id, **data.model_dump())
-    try:
-        created = await use_case.execute(indicator)
-    except ConflictError as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(e),
-        )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
-        )
+    created = await use_case.execute(indicator)
     return MonthlyIndicatorResponse.model_validate(created)
 
 
@@ -224,20 +201,9 @@ async def update_indicator(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Indicador com id {indicator_id} não encontrado",
         )
-    try:
-        updated = await update_uc.execute(
-            indicator, data.model_dump(exclude_unset=True)
-        )
-    except ConflictError as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(e),
-        )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
-        )
+    updated = await update_uc.execute(
+        indicator, data.model_dump(exclude_unset=True)
+    )
     return MonthlyIndicatorResponse.model_validate(updated)
 
 
@@ -279,18 +245,7 @@ async def create_monthly_indicator_token(
         monthly_indicator_builder(CreateMonthlyIndicatorToken)
     ),
 ):
-    try:
-        token = await create.execute(startup_id, data.month, data.year)
-    except ConflictError as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(e),
-        )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
-        )
+    token = await create.execute(startup_id, data.month, data.year)
     return MonthlyIndicatorTokenResponse.model_validate(token)
 
 
