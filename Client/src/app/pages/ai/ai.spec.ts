@@ -171,6 +171,20 @@ describe('Ai', () => {
     expect(help?.textContent).toContain('instalação para toda a organização');
     expect(help?.textContent).toContain('Cowork');
   });
+
+  // Chasing an indicator ends in a WhatsApp send, and that send lands on a
+  // choice between the desktop app and WhatsApp Web — two independent
+  // sessions. The setup page is where a person prepares the environment, so it
+  // is where the connection is worth naming, before a queue dead-ends on a QR
+  // code. The agent-driven mode is stricter: it cannot reach a native app.
+  it('should orient connecting WhatsApp before the agent sends anything', async () => {
+    const element = await render();
+    const packageCard = element.querySelector<HTMLElement>('.package-card');
+
+    expect(packageCard?.textContent).toContain('aplicativo do computador ou o WhatsApp Web');
+    expect(packageCard?.textContent).toContain('conexões separadas');
+    expect(packageCard?.textContent).toContain('no mesmo navegador');
+  });
 });
 
 describe('AI route', () => {
