@@ -2,9 +2,13 @@ from pathlib import Path
 
 import yaml
 
-SKILLS_DIR = Path(__file__).resolve().parent.parent.parent / "skills"
-PACKAGE_SOURCE_DIR = SKILLS_DIR / "portfolioos"
-UNPUBLISHED_DIR = SKILLS_DIR / "unpublished"
+from scripts.build_skill_pack import (
+    PACK_SOURCE_DIR as PACKAGE_SOURCE_DIR,
+    PUBLISHED,
+    UNPUBLISHED,
+    UNPUBLISHED_DIR,
+)
+
 RULES_HEADINGS = ("## Regras (inegociáveis)", "## Non-negotiable rules")
 
 
@@ -19,17 +23,10 @@ def _rules_section(content: str) -> str:
     return rules_and_after.split("\n## ", maxsplit=1)[0].casefold()
 
 
-# What each workflow may do, which decides the safety anchors its rules must carry.
-# Kept here, next to the check, instead of in a sidecar file shipped nowhere.
-WRITES = {"operar-portfolioos", "cobrar-indicadores", "granola-reuniao"}
-READS_EXTERNAL = {
-    "operar-portfolioos",
-    "cobrar-indicadores",
-    "granola-reuniao",
-    "preparar-agenda",
-    "apresentacao-portfolio",
-    "auditoria-qualitativa",
-}
+# What each workflow may do decides the safety anchors its rules must carry.
+_CATALOG = {**PUBLISHED, **UNPUBLISHED}
+WRITES = {name for name, meta in _CATALOG.items() if meta["writes"]}
+READS_EXTERNAL = {name for name, meta in _CATALOG.items() if meta["reads_external"]}
 
 
 def _skill_files() -> dict[str, Path]:
@@ -46,7 +43,7 @@ def _read(name: str) -> str:
 
 def test_skill_frontmatter_and_safety_anchors_are_valid():
     skills = _skill_files()
-    assert set(skills) == READS_EXTERNAL | WRITES
+    assert set(skills) == set(_CATALOG)
 
     for name, path in skills.items():
         content = path.read_text(encoding="utf-8")

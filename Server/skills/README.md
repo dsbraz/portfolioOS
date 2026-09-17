@@ -25,19 +25,24 @@ portfolioos/
 ## Changing a skill
 
 1. Edit the files under `portfolioos/`. When adding, publishing or removing a
-   guide, update the index in `portfolioos/SKILL.md` and the list on the `/ia`
-   page (`Client/src/app/pages/ai/ai.ts`).
-2. Rebuild the committed archive:
+   guide, update the index in `portfolioos/SKILL.md` and the catalog in
+   `scripts/build_skill_pack.py` (title, whether it writes, and the reason a
+   workflow stays unpublished). Descriptions come from each guide's frontmatter.
+2. Rebuild the committed archive and its manifest:
 
    ```bash
    docker compose exec server python -m scripts.build_skill_pack
    ```
 
-3. Commit the source and `Server/static/portfolioos.zip` together.
+   The `/ia` page lists the package from `static/portfolioos-manifest.json`. Its
+   `revised_at` moves to the build date only when the packaged content changed.
 
-`tests/unit/test_skill_pack.py` fails when the archive is stale, when the index
-misses a guide, when a relative link is broken, or when a second `SKILL.md`
-appears. `tests/unit/test_skills_lint.py` checks each workflow's safety rules.
+3. Commit the source, `Server/static/portfolioos.zip` and the manifest together.
+
+`tests/unit/test_skill_pack.py` fails when the archive or the manifest is stale,
+when the catalog and the folders disagree, when the index misses a guide, when a
+relative link is broken, or when a second `SKILL.md` appears.
+`tests/unit/test_skills_lint.py` checks each workflow's safety rules.
 
 ## Rules shared by every workflow
 
