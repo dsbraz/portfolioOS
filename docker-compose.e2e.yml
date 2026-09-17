@@ -1,0 +1,90 @@
+# Isolated stack for the end-to-end suite.
+#
+# Its own compose project, so the service names repeat the development ones on
+# a separate network: `proxy.conf.json` points at `http://server:8000` and keeps
+# working, unchanged, in both stacks.
+#
+# Nothing is published to the host. The runner lives inside the network and
+# reaches the app at `http://client:4200`, so an e2e run can never collide with
+# the development stack — or write to its database.
+name: portfolioos-e2e
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: e2e
+      POSTGRES_PASSWORD: e2e
+      POSTGRES_DB: portfolio_e2e
+    # In memory: the database dies with the run, which is the isolation we want,
+    # and the suite spends no time on disk I/O.
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U e2e -d portfolio_e2e"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  server:
+    build: ./Server
+    volumes:
+      - ./Server:/app
+    environment:
+      DATABASE_URL: postgresql+asyncpg://e2e:e2e@db:5432/portfolio_e2e
+      SECRET_KEY: e2e-secret-key-not-for-any-real-environment
+      ACCESS_TOKEN_EXPIRE_MINUTES: 60
+      ENVIRONMENT: development
+      SKILLS_PUBLIC: "true"
+      PYTHONPATH: /app
+    # Migrate, then plant the deterministic scenario the specs assert against.
+    command: >
+      bash -c "alembic upgrade head &&
+      python -m scripts.seed_e2e &&
+      uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')\""]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  client:
+    build: ./Client
+    volumes:
+      - ./Client:/app
+      - e2e_client_node_modules:/app/node_modules
+    depends_on:
+      server:
+        condition: service_healthy
+    healthcheck:
+      # 127.0.0.1, not localhost: inside the container `localhost` resolves to
+      # ::1 first and the dev server listens on IPv4 — the probe would report a
+      # healthy app as unreachable.
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:4200 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  e2e:
+    build:
+      context: ./Client
+      dockerfile: Dockerfile.e2e
+    volumes:
+      - ./Client/e2e:/app/e2e
+      - ./Client/playwright.config.ts:/app/playwright.config.ts
+      - ./Client/e2e-results:/app/e2e-results
+    environment:
+      E2E_BASE_URL: http://client:4200
+      E2E_API_URL: http://server:8000
+    depends_on:
+      client:
+        condition: service_healthy
+    # Overridden by the run command; kept so `up` does not start a test run by
+    # accident.
+    command: ["npx", "playwright", "--version"]
+
+volumes:
+  e2e_client_node_modules:
