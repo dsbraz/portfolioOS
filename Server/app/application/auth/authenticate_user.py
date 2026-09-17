@@ -1,6 +1,6 @@
 from app.domain.models.user import User
 from app.domain.password_hasher import PasswordHasher
-from app.repositories.user_repository import UserRepository
+from app.domain.repositories import UserRepository
 
 
 class AuthenticateUser:

@@ -11,7 +11,7 @@ from app.controllers.auth_dependency import get_current_user
 from app.controllers.dependencies import user_builder
 from app.database import get_session
 from app.domain.models.user import User
-from app.domain.schemas.user import (
+from app.controllers.schemas.user import (
     UserCreate,
     UserListResponse,
     UserResponse,

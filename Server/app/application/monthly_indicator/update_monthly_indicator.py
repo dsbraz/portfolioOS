@@ -1,9 +1,7 @@
 from app.domain.exceptions import ConflictError
 from app.domain.models.monthly_indicator import MonthlyIndicator
+from app.domain.repositories import MonthlyIndicatorRepository
 from app.domain.validators import validate_period_not_future
-from app.repositories.monthly_indicator_repository import (
-    MonthlyIndicatorRepository,
-)
 
 
 class UpdateMonthlyIndicator:

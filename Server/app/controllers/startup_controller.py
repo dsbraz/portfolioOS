@@ -9,7 +9,7 @@ from app.application.startup.list_startups import ListStartups
 from app.application.startup.update_startup import UpdateStartup
 from app.controllers.dependencies import startup_builder
 from app.domain.models.startup import Startup
-from app.domain.schemas.startup import (
+from app.controllers.schemas.startup import (
     StartupCreate,
     StartupListResponse,
     StartupResponse,

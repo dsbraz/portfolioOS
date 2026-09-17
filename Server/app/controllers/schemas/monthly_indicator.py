@@ -7,7 +7,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.domain.schemas.common import PaginatedResponse
+from app.controllers.schemas.common import PaginatedResponse
 
 _MAX_MONEY = Decimal("9999999999999.99")
 _MIN_MONEY = Decimal("-9999999999999.99")

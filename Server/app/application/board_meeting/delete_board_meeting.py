@@ -1,5 +1,5 @@
 from app.domain.models.board_meeting import BoardMeeting
-from app.repositories.board_meeting_repository import BoardMeetingRepository
+from app.domain.repositories import BoardMeetingRepository
 
 
 class DeleteBoardMeeting:

@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_session
-from app.domain.schemas.auth import LoginRequest, TokenResponse
+from app.controllers.schemas.auth import LoginRequest, TokenResponse
 from app.infrastructure.bcrypt_password_hasher import BcryptPasswordHasher
 from app.infrastructure.jwt_token_generator import JwtTokenGenerator
 from app.repositories.user_repository import UserRepository

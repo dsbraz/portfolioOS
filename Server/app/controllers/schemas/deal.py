@@ -4,7 +4,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.domain.models.deal import DealStage
-from app.domain.schemas.common import PaginatedResponse
+from app.controllers.schemas.common import PaginatedResponse
 
 
 class DealBase(BaseModel):

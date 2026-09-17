@@ -3,11 +3,11 @@ import uuid
 from app.domain.exceptions import ConflictError, InvalidInputError
 from app.domain.models.user import User
 from app.domain.password_hasher import PasswordHasher
+from app.domain.repositories import UserRepository
 from app.domain.validators import (
     validate_password_max_bytes,
     validate_username_no_spaces,
 )
-from app.repositories.user_repository import UserRepository
 
 
 class UpdateUser:

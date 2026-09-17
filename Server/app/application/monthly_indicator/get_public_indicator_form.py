@@ -1,8 +1,7 @@
 from app.domain.models.monthly_indicator import MonthlyIndicator
 from app.domain.models.monthly_indicator_token import MonthlyIndicatorToken
 from app.domain.models.startup import Startup
-from app.repositories.monthly_indicator_repository import MonthlyIndicatorRepository
-from app.repositories.startup_repository import StartupRepository
+from app.domain.repositories import MonthlyIndicatorRepository, StartupRepository
 
 
 class GetPublicIndicatorForm:

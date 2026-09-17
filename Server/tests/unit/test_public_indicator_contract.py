@@ -5,7 +5,7 @@ already holds and pins it here, so a field added to one side only breaks a test
 instead of quietly widening what an investee can write.
 """
 
-from app.domain.schemas.monthly_indicator import (
+from app.controllers.schemas.monthly_indicator import (
     MonthlyIndicatorBase,
     MonthlyIndicatorUpdate,
     PublicIndicatorData,

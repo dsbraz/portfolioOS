@@ -2,12 +2,12 @@ from fastapi import APIRouter, Depends, Query
 
 from app.application.portfolio.get_portfolio_summary import GetPortfolioSummary
 from app.controllers.dependencies import portfolio_builder
-from app.domain.schemas.portfolio import (
+from app.controllers.schemas.portfolio import (
     HealthDistribution,
     PortfolioSummary,
     StartupSummary,
 )
-from app.domain.schemas.startup import StartupResponse
+from app.controllers.schemas.startup import StartupResponse
 
 router = APIRouter(prefix="/portfolio", tags=["Portfolio"])
 
