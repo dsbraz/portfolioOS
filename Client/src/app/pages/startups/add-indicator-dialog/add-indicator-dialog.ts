@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -8,6 +8,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { filter, merge } from 'rxjs';
 
 import { DialogHeader } from '../../../components/dialog-header/dialog-header';
 import { CurrencyInput } from '../../../directives/currency-input';
@@ -73,6 +74,8 @@ export class AddIndicatorDialog {
   readonly submitting = signal(false);
   /** The link once generated; while set, link mode shows the panel instead. */
   readonly generatedToken = signal<MonthlyIndicatorToken | null>(null);
+  /** Whether the page must reload on close: a link already exists server-side. */
+  readonly changed = computed(() => this.generatedToken() !== null);
 
   private readonly previousPeriod = AddIndicatorDialog.previousMonthPeriod();
 
@@ -82,7 +85,10 @@ export class AddIndicatorDialog {
   readonly form = this.fb.group(
     {
       month: [this.previousPeriod.month, [Validators.required]],
-      year: [this.previousPeriod.year, [Validators.required]],
+      year: [
+        this.previousPeriod.year,
+        [Validators.required, Validators.min(2000), Validators.max(2100)],
+      ],
       reported: buildReportedIndicatorForm(this.fb),
       comments: [''],
     },
@@ -107,6 +113,18 @@ export class AddIndicatorDialog {
     const month = this.month();
     const year = this.year();
     return records.some((r) => r.month === month && r.year === year);
+  }
+
+  constructor() {
+    // Escape and the backdrop would close with `undefined`, losing the change
+    // signal once a link was generated. Route them through the same result.
+    this.dialogRef.disableClose = true;
+    merge(
+      this.dialogRef.keydownEvents().pipe(filter((event) => event.key === 'Escape')),
+      this.dialogRef.backdropClick(),
+    )
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.dialogRef.close(this.changed()));
   }
 
   setMode(mode: Mode): void {
@@ -143,13 +161,13 @@ export class AddIndicatorDialog {
 
   private generateLink(): void {
     const { month, year } = this.form.controls;
-    if (this.form.hasError('futurePeriod') || !month.value || !year.value) {
+    if (this.form.hasError('futurePeriod') || month.invalid || year.invalid) {
       this.form.markAllAsTouched();
       return;
     }
     this.submitting.set(true);
     this.tokenService
-      .create(this.data.startupId, { month: month.value, year: year.value })
+      .create(this.data.startupId, { month: month.value!, year: year.value! })
       .subscribe({
         next: (token) => {
           this.submitting.set(false);

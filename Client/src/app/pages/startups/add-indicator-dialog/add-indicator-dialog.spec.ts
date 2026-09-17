@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 
 import { MonthlyIndicator } from '../../../models/monthly-indicator.model';
 import { MonthlyIndicatorToken } from '../../../models/monthly-indicator-token.model';
@@ -14,7 +14,18 @@ describe('AddIndicatorDialog', () => {
   let fixture: ComponentFixture<AddIndicatorDialog>;
   let component: AddIndicatorDialog;
 
-  const dialogRef = { close: vi.fn() };
+  const dialogRef = {
+    close: vi.fn(),
+    disableClose: false,
+    keydownEvents$: new Subject<KeyboardEvent>(),
+    backdropClick$: new Subject<MouseEvent>(),
+    keydownEvents() {
+      return this.keydownEvents$.asObservable();
+    },
+    backdropClick() {
+      return this.backdropClick$.asObservable();
+    },
+  };
   const indicatorService = { create: vi.fn() };
   const tokenService = { create: vi.fn() };
   const snackBar = { open: vi.fn() };
@@ -162,6 +173,62 @@ describe('AddIndicatorDialog', () => {
     expect(el.querySelector('app-token-panel')).toBeTruthy();
     expect(el.querySelector('[aria-label="Enviar por WhatsApp para Ana Costa"]')).toBeTruthy();
   });
+
+  // Regression: only the "Fechar" button returned `true`. Closing by the header
+  // X, Escape or the backdrop returned `undefined`, so the page never reloaded
+  // and the link just created was missing from "Links anteriores".
+  describe('after a link is generated, every way out signals the change', () => {
+    async function renderGenerated(): Promise<HTMLElement> {
+      tokenService.create.mockReturnValue(of(token));
+      const el = await render();
+      component.setMode('link');
+      component.submit();
+      fixture.detectChanges();
+      return el;
+    }
+
+    it('closes with true from the header close button', async () => {
+      const el = await renderGenerated();
+      (el.querySelector('button[aria-label="Fechar diálogo"]') as HTMLButtonElement).click();
+      expect(dialogRef.close).toHaveBeenCalledWith(true);
+    });
+
+    it('closes with true on Escape', async () => {
+      await renderGenerated();
+      dialogRef.keydownEvents$.next(new KeyboardEvent('keydown', { key: 'Escape' }));
+      expect(dialogRef.close).toHaveBeenCalledWith(true);
+    });
+
+    it('closes with true on a backdrop click', async () => {
+      await renderGenerated();
+      dialogRef.backdropClick$.next(new MouseEvent('click'));
+      expect(dialogRef.close).toHaveBeenCalledWith(true);
+    });
+  });
+
+  it('closes without a change signal on Escape before anything was created', async () => {
+    await render();
+    dialogRef.keydownEvents$.next(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(dialogRef.close).toHaveBeenCalledWith(false);
+  });
+
+  // Regression: the year lost its 2000–2100 range, so `26` reached the API and
+  // came back as a 422 whose detail rendered as "[object Object]".
+  it.each([['fill'], ['link']] as const)(
+    'rejects a year outside 2000–2100 in %s mode without calling the API',
+    async (mode) => {
+      const el = await render();
+      component.setMode(mode);
+      component.form.controls.year.setValue(26);
+      component.submit();
+      fixture.detectChanges();
+
+      expect(component.form.controls.year.hasError('min')).toBe(true);
+      expect(indicatorService.create).not.toHaveBeenCalled();
+      expect(tokenService.create).not.toHaveBeenCalled();
+      expect(el.textContent).toContain('Informe um ano entre 2000 e 2100.');
+    },
+  );
 
   it('reports a save error and stays open', async () => {
     indicatorService.create.mockImplementation(() =>
