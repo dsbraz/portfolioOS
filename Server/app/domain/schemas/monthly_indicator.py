@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 from decimal import Decimal
+from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -15,19 +16,27 @@ _MAX_PCT = Decimal("99999.99")
 # stored, so the API refuses it (422) instead of failing in the driver (500).
 _MAX_HEADCOUNT = 2_147_483_647
 
+# Declared once and shared by every schema that accepts indicator values, so a
+# limit cannot drift between creating, editing and the investee's public form.
+Month = Annotated[int, Field(ge=1, le=12)]
+Year = Annotated[int, Field(ge=2000, le=2100)]
+Money = Annotated[Decimal, Field(ge=_MIN_MONEY, le=_MAX_MONEY)]
+Pct = Annotated[Decimal, Field(ge=0, le=_MAX_PCT)]
+Headcount = Annotated[int, Field(ge=0, le=_MAX_HEADCOUNT)]
+
 
 # --- Monthly Indicator schemas ---
 
 
 class MonthlyIndicatorBase(BaseModel):
-    month: int = Field(..., ge=1, le=12)
-    year: int = Field(..., ge=2000, le=2100)
-    total_revenue: Decimal | None = Field(None, ge=_MIN_MONEY, le=_MAX_MONEY)
-    recurring_revenue_pct: Decimal | None = Field(None, ge=0, le=_MAX_PCT)
-    gross_margin_pct: Decimal | None = Field(None, ge=0, le=_MAX_PCT)
-    cash_balance: Decimal | None = Field(None, ge=_MIN_MONEY, le=_MAX_MONEY)
-    headcount: int | None = Field(None, ge=0, le=_MAX_HEADCOUNT)
-    ebitda_burn: Decimal | None = Field(None, ge=_MIN_MONEY, le=_MAX_MONEY)
+    month: Month
+    year: Year
+    total_revenue: Money | None = None
+    recurring_revenue_pct: Pct | None = None
+    gross_margin_pct: Pct | None = None
+    cash_balance: Money | None = None
+    headcount: Headcount | None = None
+    ebitda_burn: Money | None = None
     achievements: str | None = None
     challenges: str | None = None
     comments: str | None = None
@@ -38,14 +47,15 @@ class MonthlyIndicatorCreate(MonthlyIndicatorBase):
 
 
 class MonthlyIndicatorUpdate(BaseModel):
-    month: int | None = Field(None, ge=1, le=12)
-    year: int | None = Field(None, ge=2000, le=2100)
-    total_revenue: Decimal | None = Field(None, ge=_MIN_MONEY, le=_MAX_MONEY)
-    recurring_revenue_pct: Decimal | None = Field(None, ge=0, le=_MAX_PCT)
-    gross_margin_pct: Decimal | None = Field(None, ge=0, le=_MAX_PCT)
-    cash_balance: Decimal | None = Field(None, ge=_MIN_MONEY, le=_MAX_MONEY)
-    headcount: int | None = Field(None, ge=0, le=_MAX_HEADCOUNT)
-    ebitda_burn: Decimal | None = Field(None, ge=_MIN_MONEY, le=_MAX_MONEY)
+    # Optional to send, but never null: the period cannot be erased.
+    month: Month = None
+    year: Year = None
+    total_revenue: Money | None = None
+    recurring_revenue_pct: Pct | None = None
+    gross_margin_pct: Pct | None = None
+    cash_balance: Money | None = None
+    headcount: Headcount | None = None
+    ebitda_burn: Money | None = None
     achievements: str | None = None
     challenges: str | None = None
     comments: str | None = None
@@ -79,8 +89,8 @@ class MonthlyIndicatorTokenResponse(BaseModel):
 
 
 class MonthlyIndicatorTokenCreate(BaseModel):
-    month: int = Field(..., ge=1, le=12)
-    year: int = Field(..., ge=2000, le=2100)
+    month: Month
+    year: Year
 
 
 class MonthlyIndicatorTokenListResponse(
@@ -114,11 +124,11 @@ class PublicIndicatorForm(BaseModel):
 
 
 class PublicIndicatorSubmit(BaseModel):
-    total_revenue: Decimal | None = Field(None, ge=_MIN_MONEY, le=_MAX_MONEY)
-    cash_balance: Decimal | None = Field(None, ge=_MIN_MONEY, le=_MAX_MONEY)
-    ebitda_burn: Decimal | None = Field(None, ge=_MIN_MONEY, le=_MAX_MONEY)
-    recurring_revenue_pct: Decimal | None = Field(None, ge=0, le=_MAX_PCT)
-    gross_margin_pct: Decimal | None = Field(None, ge=0, le=_MAX_PCT)
-    headcount: int | None = Field(None, ge=0, le=_MAX_HEADCOUNT)
+    total_revenue: Money | None = None
+    cash_balance: Money | None = None
+    ebitda_burn: Money | None = None
+    recurring_revenue_pct: Pct | None = None
+    gross_margin_pct: Pct | None = None
+    headcount: Headcount | None = None
     achievements: str | None = None
     challenges: str | None = None

@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { DialogHeader } from '../../../components/dialog-header/dialog-header';
 import { Executive } from '../../../models/executive.model';
 import { MonthlyIndicatorToken } from '../../../models/monthly-indicator-token.model';
-import { MONTH_LABELS } from '../../../models/monthly-indicator.model';
+import { formatPeriod } from '../../../models/formatters';
 import { TokenPanel } from '../token-panel/token-panel';
 
 export interface TokenPanelDialogData {
@@ -41,5 +41,5 @@ export interface TokenPanelDialogData {
 })
 export class TokenPanelDialog {
   readonly data = inject<TokenPanelDialogData>(MAT_DIALOG_DATA);
-  readonly period = `${MONTH_LABELS[this.data.token.month]}/${this.data.token.year}`;
+  readonly period = formatPeriod(this.data.token.month, this.data.token.year);
 }

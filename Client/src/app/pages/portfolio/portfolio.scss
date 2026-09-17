@@ -12,45 +12,6 @@
   padding: var(--content-padding);
 }
 
-// ---------- Page head ----------
-.page-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--space-md);
-  margin-bottom: var(--panel-gap);
-}
-
-.page-head-text {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2xs);
-  min-width: 0;
-}
-
-.page-head-title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--fs-heading-md);
-  font-weight: var(--fw-medium);
-  letter-spacing: var(--ls-tight);
-  line-height: var(--lh-tight);
-}
-
-.page-head-sub {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--fs-body-sm);
-}
-
-.page-head-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-xs);
-  margin-inline-start: auto;
-}
-
 .period-navigation {
   display: inline-flex;
   align-items: center;
@@ -68,15 +29,15 @@
 // ---------- KPIs ----------
 .kpi-grid {
   display: grid;
-  // Intrínseca, não por breakpoint: `repeat(N, minmax(0, 1fr))` obrigava N
-  // colunas e deixava cada uma encolher ABAIXO do conteúdo — daí o número
-  // cortado pela borda do card. Aqui o piso de 13.5rem é medido, não estimado:
-  // é a largura em que o valor mais largo cabe no menor tamanho de fonte. Quando
-  // não couberem N lado a lado, a grade quebra a linha em vez de espremer.
+  // Intrinsic, not by breakpoint: `repeat(N, minmax(0, 1fr))` forced N columns
+  // and let each shrink BELOW its content — hence the number clipped by the
+  // card border. Here the 13.5rem floor is measured, not estimated: it is the
+  // width at which the widest value fits at the smallest font size. When N do
+  // not fit side by side, the grid wraps instead of squeezing.
   grid-template-columns: repeat(auto-fit, minmax(13.5rem, 1fr));
   gap: var(--tile-gap);
-  // A margem segue em --panel-gap de propósito: é ela que separa a faixa da
-  // região seguinte, e o contraste com o gap interno é o que agrupa os tiles.
+  // The margin stays at --panel-gap on purpose: it separates the strip from the
+  // next region, and the contrast with the inner gap is what groups the tiles.
   margin-bottom: var(--panel-gap);
 }
 
@@ -99,77 +60,19 @@
 }
 
 // ---------- Table ----------
-.table-shell {
-  width: 100%;
-  overflow-x: auto;
-  background-color: var(--color-surface-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-
-  &:focus-visible {
-    outline: 2px solid var(--color-focus);
-    outline-offset: -2px;
-  }
-}
-
+// Base rules come from the global `.data-table`; only the deltas live here.
 .monitoring-table {
-  width: 100%;
   min-width: 58rem;
-  background: transparent;
 
-  th,
-  td {
-    padding: var(--space-sm) var(--space-md);
-    border-bottom: 1px solid var(--color-border);
-    text-align: start;
-    white-space: nowrap;
-  }
-
-  // Header is Inter, small and semibold -- NOT mono, NOT uppercase. A table
-  // header is information, so it belongs to the body face.
-  thead th,
   th.mat-mdc-header-cell {
     position: sticky;
     top: 0;
     z-index: 1;
-    background-color: var(--color-surface);
-    color: var(--color-text-muted);
-    font-family: var(--font-body);
-    font-size: var(--fs-body-xs);
-    font-weight: var(--fw-semibold);
     letter-spacing: var(--ls-normal);
-    text-transform: none;
-  }
-
-  td.mat-mdc-cell {
-    color: var(--color-text);
-    font-family: var(--font-body);
-    font-size: var(--fs-body-sm);
-  }
-
-  // Numeric columns: right-aligned, tabular figures, mono. This is the one
-  // place mono earns its way into a table -- fixed-width digits are what make
-  // amounts of different lengths line up as a column instead of ragged text.
-  // The HEADER stays Inter; mono on a table header is the classic error.
-  .is-num {
-    text-align: end;
-    font-variant-numeric: tabular-nums;
   }
 
   td.is-num {
-    font-family: var(--font-mono);
-    font-size: var(--fs-body-xs);
     letter-spacing: var(--ls-normal);
-  }
-
-  tr.mat-mdc-row {
-    height: var(--table-row-h);
-    background-color: transparent;
-    transition: background-color var(--transition-fast);
-
-    &:nth-child(even) {
-      background-color: var(--color-surface);
-    }
   }
 }
 
@@ -213,43 +116,6 @@
   color: var(--color-text-muted);
 }
 
-.clickable-row {
-  cursor: pointer;
-
-  &:hover {
-    background-color: var(--color-hover) !important;
-  }
-}
-
-// The row stays clickable for the mouse, but the operable element is this one:
-// a real link/button that carries the row's name. It has to read as the plain
-// text it replaced, so only focus makes it look interactive.
-.row-opener {
-  display: inline-block;
-  max-width: 100%;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  text-align: inherit;
-  text-decoration: none;
-  cursor: pointer;
-
-  &:hover {
-    text-decoration: underline;
-  }
-
-  // `.table-shell` scrolls, and `overflow-x: auto` clips on all four sides —
-  // an outward ring would be cut off, and a clipped focus ring is an invisible
-  // one (WCAG 2.4.7).
-  &:focus-visible {
-    outline: 2px solid var(--color-focus);
-    outline-offset: -2px;
-    border-radius: var(--radius-sm);
-  }
-}
-
 // ---------- Empty state ----------
 .empty-state {
   text-align: center;
@@ -280,20 +146,8 @@
   }
 }
 
-@media (max-width: 768px) {
-  .page-head-actions {
-    margin-inline-start: 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .monitoring-table tr.mat-mdc-row {
-    transition: none;
-  }
-}
-
-// Célula de status: julgamento em cima, fato do período embaixo. Mesma
-// densidade de duas linhas que a coluna "Startup" já usa (nome + setor).
+// Status cell: judgment on top, the period's fact below. Same two-line density
+// the "Startup" column already uses (name + sector).
 .status-cell {
   display: flex;
   flex-direction: column;
@@ -301,8 +155,8 @@
   gap: var(--space-2xs);
 }
 
-// Discreta de propósito: é uma nota de contexto, não um segundo estado. Quem
-// escaneia a tabela procura o pill; esta linha responde depois que o olho parou.
+// Understated on purpose: it is a context note, not a second state. Someone
+// scanning the table looks for the pill; this line answers once the eye stops.
 .status-note {
   color: var(--color-text-muted);
   font-family: var(--font-body);

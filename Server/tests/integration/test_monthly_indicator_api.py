@@ -1,5 +1,7 @@
 import pytest
 
+from app.repositories.monthly_indicator_repository import MonthlyIndicatorRepository
+
 
 @pytest.mark.asyncio
 async def test_list_indicators_empty(client, startup_id):
@@ -234,6 +236,89 @@ async def test_patch_onto_an_occupied_period_conflicts_instead_of_crashing(
 
     assert resp.status_code == 409
     assert "6/2026" in resp.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_patch_that_loses_a_race_for_the_period_still_conflicts(
+    client, startup_id, monkeypatch
+):
+    first = await client.post(
+        f"/api/startups/{startup_id}/monthly-indicators",
+        json={"month": 8, "year": 2026},
+    )
+    second = await client.post(
+        f"/api/startups/{startup_id}/monthly-indicators",
+        json={"month": 9, "year": 2026},
+    )
+    assert first.status_code == 201 and second.status_code == 201
+
+    # Another request takes the period between the check and the write: the
+    # check sees it free, so only the unique constraint can catch it.
+    async def period_looks_free(*_args, **_kwargs):
+        return None
+
+    monkeypatch.setattr(
+        MonthlyIndicatorRepository, "get_by_startup_and_period", period_looks_free
+    )
+
+    resp = await client.patch(
+        f"/api/startups/{startup_id}/monthly-indicators/{second.json()['id']}",
+        json={"month": 8, "year": 2026},
+    )
+
+    assert resp.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_create_that_loses_a_race_for_the_period_merges_into_the_winner(
+    client, startup_id, monkeypatch
+):
+    winner = await client.post(
+        f"/api/startups/{startup_id}/monthly-indicators",
+        json={"month": 10, "year": 2025, "total_revenue": 100},
+    )
+    assert winner.status_code == 201
+
+    # The second create checks while the period still looks free, then inserts
+    # after the first one committed. Creating is an upsert, so it must merge.
+    real_lookup = MonthlyIndicatorRepository.get_by_startup_and_period
+    calls = 0
+
+    async def free_on_first_look(self, *args, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return None
+        return await real_lookup(self, *args, **kwargs)
+
+    monkeypatch.setattr(
+        MonthlyIndicatorRepository, "get_by_startup_and_period", free_on_first_look
+    )
+
+    loser = await client.post(
+        f"/api/startups/{startup_id}/monthly-indicators",
+        json={"month": 10, "year": 2025, "headcount": 7},
+    )
+
+    assert loser.status_code == 201
+    assert loser.json()["id"] == winner.json()["id"]
+    assert loser.json()["headcount"] == 7
+    assert float(loser.json()["total_revenue"]) == 100
+
+
+@pytest.mark.asyncio
+async def test_patch_rejects_a_null_period(client, startup_id):
+    created = await client.post(
+        f"/api/startups/{startup_id}/monthly-indicators",
+        json={"month": 3, "year": 2025},
+    )
+
+    resp = await client.patch(
+        f"/api/startups/{startup_id}/monthly-indicators/{created.json()['id']}",
+        json={"month": None},
+    )
+
+    assert resp.status_code == 422
 
 
 @pytest.mark.asyncio

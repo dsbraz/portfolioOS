@@ -5,7 +5,8 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { Executive } from '../../../models/executive.model';
 import { MonthlyIndicatorToken } from '../../../models/monthly-indicator-token.model';
-import { MONTH_LABELS, MONTH_LABELS_FULL } from '../../../models/monthly-indicator.model';
+import { formatPeriod } from '../../../models/formatters';
+import { MONTH_LABELS_FULL } from '../../../models/monthly-indicator.model';
 
 /**
  * One executive and the single channel the link goes out by: WhatsApp when the
@@ -44,7 +45,7 @@ export class TokenPanel {
 
   private readonly snackBar = inject(MatSnackBar);
 
-  readonly period = computed(() => `${MONTH_LABELS[this.token().month]}/${this.token().year}`);
+  readonly period = computed(() => formatPeriod(this.token().month, this.token().year));
   // The fund's message names the month in full ("julho/2026"); the title and the
   // copy control keep the compact form.
   private readonly messagePeriod = computed(

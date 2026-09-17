@@ -33,6 +33,12 @@ Backend flow (required): `controllers -> application -> domain -> repos`.
 - `guards` (Auth layer): route protection (e.g. `auth.guard.ts`).
 - `interceptors` (HTTP layer): cross-cutting HTTP concerns (e.g. `auth.interceptor.ts` for JWT injection).
 
+### Dialog ↔ Page Data Flow
+Two shapes exist; pick by what the dialog must do after submitting.
+- **Form dialog** (default): collects input and closes with the form value; the page calls the service and shows the result. Use it when the dialog has nothing to show once the data is valid (e.g. `startup-form-dialog`, `meeting-form-dialog`).
+- **Transactional dialog**: calls the service itself and closes with `true` when something changed, so the page only reloads. Use it when a server error must keep the typed form open, or when the server's answer is shown inside the dialog (e.g. `user-form-dialog`, `add-indicator-dialog`, which displays the generated link).
+- Once a transactional dialog has changed server state, **every** way out must report it — the close button, `Escape` and the backdrop, not only the primary action. Route them through one result (`disableClose` plus `keydownEvents()`/`backdropClick()`, and `app-dialog-header`'s `closeResult`).
+
 ### Layering Rules
 - In backend, follow the chain strictly: `controllers -> application -> domain -> repos`.
 - Route handlers call use cases for business behavior; dependency wiring in controller modules composes repositories and use cases.
@@ -131,6 +137,8 @@ duplicated and drifted.
 | `.field` + `.field-label` | `styles.scss` | The boxed form field: a static label ABOVE the box, never a Material floating label. `.field-affix` carries the unit (`R$`, `%`). |
 | `.section-title` | `styles.scss` | Section eyebrow. Typography only — the vertical rhythm belongs to the context that stacks it. |
 | `.page-status` | `styles.scss` | Loading / error block on internal pages. |
+| `.page-head` + `-text`/`-title`/`-sub`/`-actions` | `styles.scss` | Internal page header. Pages keep only their deltas locally. |
+| `.table-shell` (+ `--card`) + `.data-table` | `styles.scss` | Scrollable table region and the `mat-table` body rules (header, numeric cells, zebra, `.clickable-row`). `--card` adds panel chrome when the table is not inside one. |
 | `.pill`, `.tag` | `styles.scss` | Status and label (see Component families). |
 | `app-dialog-header` | `components/dialog-header/` | Every dialog title. Keeps `mat-dialog-title` on the `<h2>` so Material's `aria-labelledby` wiring survives, and adds the close button. |
 | `app-read-view` | `components/read-view/` | Read-only view of a record: `ReadSection[]` of label/value pairs rendered as `dl`/`dt`/`dd`. |
@@ -159,13 +167,19 @@ loading is indistinguishable from "there is no data" — for a person and for an
 reading the DOM.
 
 ```
-@if (loading())      → .page-status role="status" + "Carregando…"
-@else if (data)      → content (which may itself be an empty state with text)
-@else                → .page-status with the failure message
+@if (loading() && !data) → .page-status role="status" + "Carregando…"
+@else if (data)          → content (which may itself be an empty state with text)
+@else                    → .page-status with the failure message
 ```
 
 `aria-busy` goes on the page container, which always exists. A live region created
 together with its content is usually not announced.
+
+Only the FIRST load shows the spinner. A refresh (after a create/edit/delete, or a
+period change) keeps the content mounted with `aria-busy="true"`: swapping the page for
+a spinner destroys tables, menus and sort headers and drops keyboard focus. Give tables
+a `trackBy` by id so reloaded rows keep their DOM nodes. If a refresh fails and the data
+no longer matches what the screen claims (e.g. another period), clear it.
 
 ### Responsiveness
 - **Intrinsic first.** `repeat(auto-fit, minmax(Xrem, 1fr))` over breakpoints. Set
@@ -225,9 +239,12 @@ The app is read by assistive tech and by agents. Both use the same contract.
 - Dark mode responds to both `[data-theme="dark"]` and `prefers-color-scheme`. Anything
   that switches with the theme (including image assets) must follow that same signal —
   `<picture media>` alone desyncs the moment an explicit toggle exists.
-- The theme has **three** states (`ThemeService`): `system | light | dark`. `system` must
-  leave `data-theme` OFF the root — stamping it always disables the
-  `prefers-color-scheme` branch and the app stops reacting to the OS.
+- The theme has **three** states (`ThemeService`): `system | light | dark`. JS always
+  stamps the RESOLVED theme on the root (`data-theme="light|dark"`), both in the
+  `index.html` bootstrap script (before first paint) and in `ThemeService`. In `system`,
+  live OS changes come from the service's `matchMedia` listener, which re-stamps the
+  root. The `prefers-color-scheme` CSS branch is only a no-JS fallback — do not remove
+  the listener or stop stamping the root.
 - **Material injects its component styles AFTER `styles.scss`**, so an equal-specificity
   rule loses. Redefining a **custom property in scope** wins where out-specifying does
   not:

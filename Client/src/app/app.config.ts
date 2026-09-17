@@ -16,19 +16,17 @@ import { authInterceptor } from './interceptors/auth.interceptor';
  * here is genuinely modal, so it has to say so.
  */
 export const dialogDefaults: MatDialogConfig = {
-  // `role` precisa estar AQUI. Este objeto substitui a configuração padrão do
-  // Material inteira, e sem ele o container saía com `aria-modal="true"` e
-  // nenhum `role` — e `aria-modal` só significa alguma coisa sobre um
-  // `role="dialog"`. Sem os dois juntos, o leitor de tela não anuncia diálogo.
-  role: 'dialog',
+  // This object REPLACES Material's whole default config instead of merging
+  // with it, so start from Material's defaults (`role: 'dialog'`,
+  // `restoreFocus`, `hasBackdrop`, `closeOnNavigation`...) and override only
+  // what the brand changes. Without `role`, `aria-modal` means nothing.
+  ...new MatDialogConfig(),
   ariaModal: true,
   // `first-tabbable` would land on the close button, since it leads the header
   // in DOM order. WAI-ARIA APG calls that out: when the first focusable element
   // is the dismiss control, focus the dialog itself instead. Doing so also gets
   // the title announced, and works for the dialogs that have no input at all.
   autoFocus: 'dialog',
-  restoreFocus: true,
-  hasBackdrop: true,
   maxWidth: 'min(92vw, 42rem)',
   width: 'min(34rem, 92vw)',
 };

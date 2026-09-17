@@ -5,9 +5,13 @@ import { THEME_STORAGE_KEY, ThemeService } from './theme.service';
 describe('ThemeService', () => {
   let listeners: ((e: { matches: boolean }) => void)[] = [];
   let systemDark = false;
+  // The stub must not outlive this file: specs share one window, and CDK's
+  // `BreakpointObserver` in later specs would call `addListener` on it.
+  const hadMatchMedia = 'matchMedia' in window;
+  const originalMatchMedia = window.matchMedia;
 
-  /** `matchMedia` falso que guarda o listener, para simular o SO trocando de
-   *  tema com a página aberta. */
+  /** Fake `matchMedia` that stores the listener, to simulate the OS switching
+   *  theme while the page is open. */
   const stubMatchMedia = () => {
     window.matchMedia = ((query: string) =>
       ({
@@ -36,6 +40,15 @@ describe('ThemeService', () => {
     document.documentElement.removeAttribute('data-theme');
     document.documentElement.style.colorScheme = '';
     stubMatchMedia();
+  });
+
+  afterEach(() => {
+    TestBed.resetTestingModule();
+    if (hadMatchMedia) {
+      window.matchMedia = originalMatchMedia;
+    } else {
+      delete (window as { matchMedia?: unknown }).matchMedia;
+    }
   });
 
   it('should default to following the system', () => {

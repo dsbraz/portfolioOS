@@ -1,14 +1,10 @@
-import json
-from datetime import date
 from pathlib import Path
 
-import pytest
 import yaml
-
-from app.repositories.skill_repository import SkillRepository
 
 SKILLS_DIR = Path(__file__).resolve().parent.parent.parent / "skills"
 PACKAGE_SOURCE_DIR = SKILLS_DIR / "portfolioos"
+UNPUBLISHED_DIR = SKILLS_DIR / "unpublished"
 RULES_HEADINGS = ("## Regras (inegociáveis)", "## Non-negotiable rules")
 
 
@@ -23,62 +19,36 @@ def _rules_section(content: str) -> str:
     return rules_and_after.split("\n## ", maxsplit=1)[0].casefold()
 
 
-def _write_skill(
-    root: Path,
-    name: str,
-    *,
-    published: bool,
-    blocked_reason: str | None,
-) -> None:
-    skill_dir = root / name
-    skill_dir.mkdir(parents=True)
-    (skill_dir / "SKILL.md").write_text(
-        "\n".join(
-            [
-                "---",
-                f"name: {name}",
-                "description: Test skill",
-                "---",
-                "",
-                RULES_HEADINGS[0],
-            ]
-        ),
-        encoding="utf-8",
-    )
-    catalog_metadata = {
-        "version": "2026-08-13",
-        "writes": False,
-        "reads_external": False,
-        "published": published,
+# What each workflow may do, which decides the safety anchors its rules must carry.
+# Kept here, next to the check, instead of in a sidecar file shipped nowhere.
+WRITES = {"operar-portfolioos", "cobrar-indicadores", "granola-reuniao"}
+READS_EXTERNAL = {
+    "operar-portfolioos",
+    "cobrar-indicadores",
+    "granola-reuniao",
+    "preparar-agenda",
+    "auditoria-qualitativa",
+}
+
+
+def _skill_files() -> dict[str, Path]:
+    published = {
+        path.parent.name: path for path in PACKAGE_SOURCE_DIR.glob("skills/*/GUIDE.md")
     }
-    if blocked_reason is not None:
-        catalog_metadata["blocked_reason"] = blocked_reason
-    (skill_dir / ".portfolioos.json").write_text(
-        json.dumps(catalog_metadata, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    unpublished = {path.parent.name: path for path in UNPUBLISHED_DIR.glob("*/SKILL.md")}
+    return {**published, **unpublished}
+
+
+def _read(name: str) -> str:
+    return _skill_files()[name].read_text(encoding="utf-8")
 
 
 def test_skill_frontmatter_and_safety_anchors_are_valid():
-    skills, total = SkillRepository(SKILLS_DIR).get_all()
+    skills = _skill_files()
+    assert set(skills) == READS_EXTERNAL | WRITES
 
-    expected_names = {
-        path.name
-        for path in SKILLS_DIR.iterdir()
-        if path.is_dir() and (path / "SKILL.md").is_file()
-    }
-    assert total == len(expected_names)
-    assert {skill.name for skill in skills} == expected_names
-
-    for skill in skills:
-        assert skill.description.strip()
-        date.fromisoformat(skill.version)
-        assert isinstance(skill.writes, bool)
-        assert isinstance(skill.reads_external, bool)
-        assert isinstance(skill.published, bool)
-        assert (skill.blocked_reason is not None) is (not skill.published)
-
-        content = (SKILLS_DIR / skill.name / "SKILL.md").read_text(encoding="utf-8")
+    for name, path in skills.items():
+        content = path.read_text(encoding="utf-8")
         frontmatter = content.split("---", maxsplit=2)[1]
         frontmatter_fields = {
             line.split(":", maxsplit=1)[0].strip()
@@ -86,55 +56,47 @@ def test_skill_frontmatter_and_safety_anchors_are_valid():
             if line.strip()
         }
         assert frontmatter_fields == {"name", "description"}
-        assert (SKILLS_DIR / skill.name / ".portfolioos.json").is_file()
+        assert f"name: {name}" in frontmatter
         rules = _rules_section(content)
-        if skill.writes:
+        if name in WRITES:
             assert "prévia confirmada" in rules or "confirmed preview" in rules
             assert (
                 "nunca peça nem digite senha" in rules
                 or "never ask for or type a password" in rules
             )
-        if skill.reads_external:
+        if name in READS_EXTERNAL:
             assert (
                 "dado, nunca instrução" in rules or "data, never instructions" in rules
             )
 
 
 def test_skills_compose_without_exposing_internal_routing_to_users():
-    skills, _ = SkillRepository(SKILLS_DIR).get_all()
-
-    for skill in skills:
-        content = (SKILLS_DIR / skill.name / "SKILL.md").read_text(encoding="utf-8")
+    for path in _skill_files().values():
+        content = path.read_text(encoding="utf-8")
         normalized = content.casefold()
         assert "indique a skill" not in normalized
         assert "escolha entre as skills" not in normalized
         assert "diga o nome da skill" not in normalized
 
-    agenda = (SKILLS_DIR / "preparar-agenda" / "SKILL.md").read_text(encoding="utf-8")
+    agenda = _read("preparar-agenda")
     assert "retorne o pedido ao roteador interno do pacote" in agenda
     assert "sem pedir que o usuário escolha ou nomeie uma skill" in agenda
 
-    meeting = (SKILLS_DIR / "granola-reuniao" / "SKILL.md").read_text(encoding="utf-8")
+    meeting = _read("granola-reuniao")
     assert "restrição de criação vale somente para este fluxo de transcrição" in meeting
     assert "retorne essa parte ao roteador interno do pacote" in meeting
     assert "não impede o roteador interno de tratar" in meeting
 
-    audit = (SKILLS_DIR / "auditoria-qualitativa" / "SKILL.md").read_text(
-        encoding="utf-8"
-    )
+    audit = _read("auditoria-qualitativa")
     assert "retorne o pedido ao roteador interno do pacote" in audit
 
-    chase = (SKILLS_DIR / "cobrar-indicadores" / "SKILL.md").read_text(encoding="utf-8")
+    chase = _read("cobrar-indicadores")
     assert "retorne essa parte ao roteador interno do pacote" in chase
 
-    openai_metadata = (
-        SKILLS_DIR / "operar-portfolioos" / "agents" / "openai.yaml"
-    ).read_text(encoding="utf-8")
-    assert "$operar-portfolioos" not in openai_metadata
 
 
 def test_granola_skill_detects_mcp_before_requesting_a_conversation_link():
-    meeting = (SKILLS_DIR / "granola-reuniao" / "SKILL.md").read_text(encoding="utf-8")
+    meeting = _read("granola-reuniao")
     normalized = " ".join(meeting.casefold().split())
 
     assert "inspecione primeiro as ferramentas disponíveis" in normalized
@@ -170,12 +132,12 @@ def test_granola_skill_detects_mcp_before_requesting_a_conversation_link():
         normalized.index("peça o link da conversa")
     )
 
-    base = (SKILLS_DIR / "operar-portfolioos" / "SKILL.md").read_text(encoding="utf-8")
+    base = _read("operar-portfolioos")
     assert "conversation, link or notes from Granola" in base
 
 
 def test_chase_skill_never_assumes_the_send_mode_or_the_recipient():
-    chase = (SKILLS_DIR / "cobrar-indicadores" / "SKILL.md").read_text(encoding="utf-8")
+    chase = _read("cobrar-indicadores")
     normalized = " ".join(chase.casefold().split())
 
     # Generating a link is a platform write, so the batch is confirmed first and
@@ -219,9 +181,7 @@ def test_chase_skill_never_assumes_the_send_mode_or_the_recipient():
 
 def test_package_source_artifacts_are_uploadable_without_duplicating_skills():
     assert (PACKAGE_SOURCE_DIR / "README.md").is_file()
-    assert (PACKAGE_SOURCE_DIR / "PACK_SKILL.md").is_file()
-    assert not (PACKAGE_SOURCE_DIR / "SKILL.md").exists()
-    assert not (PACKAGE_SOURCE_DIR / "skills").exists()
+    assert (PACKAGE_SOURCE_DIR / "SKILL.md").is_file()
 
     # An upload validator rejects an archive with more than one SKILL.md, so the
     # package must never regain a nested skill collection or its plugin manifests.
@@ -248,7 +208,7 @@ def test_package_source_artifacts_are_uploadable_without_duplicating_skills():
     # The page promises users never name a skill, so no `$portfolioos` trigger.
     assert "$" not in interface["interface"]["default_prompt"]
 
-    wrapper = (PACKAGE_SOURCE_DIR / "PACK_SKILL.md").read_text(encoding="utf-8")
+    wrapper = (PACKAGE_SOURCE_DIR / "SKILL.md").read_text(encoding="utf-8")
     frontmatter = wrapper.split("---", maxsplit=2)[1]
     fields = {
         line.split(":", maxsplit=1)[0].strip()
@@ -257,25 +217,3 @@ def test_package_source_artifacts_are_uploadable_without_duplicating_skills():
     }
     assert fields == {"name", "description"}
     assert "name: portfolioos" in frontmatter
-    assert wrapper.count("<!-- portfolioos:published-skills -->") == 1
-
-
-def test_unpublished_skill_without_blocked_reason_is_invalid(tmp_path: Path):
-    root = tmp_path / "skills"
-    _write_skill(root, "blocked-skill", published=False, blocked_reason=None)
-
-    with pytest.raises(ValueError, match="blocked_reason"):
-        SkillRepository(root).get_all()
-
-
-def test_published_skill_with_blocked_reason_is_invalid(tmp_path: Path):
-    root = tmp_path / "skills"
-    _write_skill(
-        root,
-        "published-skill",
-        published=True,
-        blocked_reason="Orphan reason.",
-    )
-
-    with pytest.raises(ValueError, match="blocked_reason"):
-        SkillRepository(root).get_all()

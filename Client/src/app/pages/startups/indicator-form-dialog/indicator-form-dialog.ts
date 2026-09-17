@@ -6,16 +6,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 
-import {
-  INDICATOR_LIMITS,
-  futurePeriodValidator,
-  integerValidator,
-} from '../../../models/indicator-form';
+import { buildReportedIndicatorForm, futurePeriodValidator } from '../../../models/indicator-form';
 import { MonthlyIndicator, MONTH_LABELS } from '../../../models/monthly-indicator.model';
 import {
   formatCurrencyBRL,
   formatInteger,
   formatPercent,
+  formatPeriod,
 } from '../../../models/formatters';
 import { ReadSection, ReadView } from '../../../components/read-view/read-view';
 import { CurrencyInput } from '../../../directives/currency-input';
@@ -54,61 +51,36 @@ export class IndicatorFormDialog implements OnInit {
   readonly monthLabels = MONTH_LABELS;
   readonly currentYear = new Date().getFullYear();
 
-  // The reportable fields carry the same limits as the shared factory, so an
-  // out-of-range value is caught here on edit and not only by the server's 422.
+  // The reportable fields come from the shared factory, so an out-of-range
+  // value is caught here on edit and not only by the server's 422.
   readonly form = this.fb.group(
     {
       month: [new Date().getMonth() + 1, [Validators.required, Validators.min(1), Validators.max(12)]],
       year: [this.currentYear, [Validators.required, Validators.min(2000), Validators.max(2100)]],
-      total_revenue: [
-        null as number | null,
-        [Validators.min(INDICATOR_LIMITS.MIN_MONEY), Validators.max(INDICATOR_LIMITS.MAX_MONEY)],
-      ],
-      recurring_revenue_pct: [
-        null as number | null,
-        [Validators.min(0), Validators.max(INDICATOR_LIMITS.MAX_PCT)],
-      ],
-      gross_margin_pct: [
-        null as number | null,
-        [Validators.min(0), Validators.max(INDICATOR_LIMITS.MAX_PCT)],
-      ],
-      cash_balance: [
-        null as number | null,
-        [Validators.min(INDICATOR_LIMITS.MIN_MONEY), Validators.max(INDICATOR_LIMITS.MAX_MONEY)],
-      ],
-      headcount: [
-        null as number | null,
-        [Validators.min(0), Validators.max(INDICATOR_LIMITS.MAX_HEADCOUNT), integerValidator],
-      ],
-      ebitda_burn: [
-        null as number | null,
-        [Validators.min(INDICATOR_LIMITS.MIN_MONEY), Validators.max(INDICATOR_LIMITS.MAX_MONEY)],
-      ],
-      achievements: [''],
-      challenges: [''],
+      ...buildReportedIndicatorForm(this.fb).controls,
       comments: [''],
     },
     { validators: [futurePeriodValidator] },
   );
 
   /**
-   * No modo leitura o formulário não é renderizado — o registro vira uma lista
-   * de definição. Antes ele era exibido com `form.disable()`, e o dado herdava a
-   * cor de controle inativo: 2,46:1 no tema claro, contra 18,7:1 do rótulo ao
-   * lado. A WCAG isenta componentes inativos, então a auditoria passava; só que
-   * o texto do controle era a informação inteira do diálogo.
+   * In read mode the form is not rendered — the record becomes a definition
+   * list. It used to be shown with `form.disable()`, and the data inherited the
+   * inactive control color: 2.46:1 in the light theme, against 18.7:1 for the
+   * label next to it. WCAG exempts inactive components, so the audit passed; but
+   * the control's text was the dialog's entire information.
    */
   readonly readSections: ReadSection[] = this.buildReadSections();
 
-  /** Mesmos grupos do modo de edição, na mesma ordem: o período solto no topo,
-   *  depois Quantitativos e Qualitativos. */
+  /** Same groups as edit mode, in the same order: the period on its own at the top,
+   *  then Quantitativos and Qualitativos. */
   private buildReadSections(): ReadSection[] {
     const ind = this.data?.indicator;
     if (!ind) return [];
 
     return [
       {
-        items: [{ label: 'Período', value: `${MONTH_LABELS[ind.month]}/${ind.year}` }],
+        items: [{ label: 'Período', value: formatPeriod(ind.month, ind.year) }],
       },
       {
         title: 'Quantitativos',
@@ -127,8 +99,8 @@ export class IndicatorFormDialog implements OnInit {
       },
       {
         title: 'Qualitativos',
-        // `|| null` porque texto em branco é ausência aqui: um textarea nunca
-        // preenchido chega como string vazia e renderizaria um valor vazio.
+        // `|| null` because blank text means absence here: a never-filled
+        // textarea arrives as an empty string and would render an empty value.
         items: [
           { label: 'Destaques do mês', value: ind.achievements || null, kind: 'long' },
           { label: 'Próximos passos e necessidades', value: ind.challenges || null, kind: 'long' },

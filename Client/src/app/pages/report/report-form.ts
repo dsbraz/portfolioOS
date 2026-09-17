@@ -11,8 +11,8 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { MonthlyIndicatorTokenService } from '../../services/monthly-indicator-token.service';
 import { PublicIndicatorForm } from '../../models/monthly-indicator-token.model';
-import { MONTH_LABELS } from '../../models/monthly-indicator.model';
 import { buildReportedIndicatorForm } from '../../models/indicator-form';
+import { formatPeriod } from '../../models/formatters';
 
 import { CurrencyInput } from '../../directives/currency-input';
 
@@ -44,7 +44,7 @@ export default class ReportForm implements OnInit {
   readonly submitting = signal(false);
   readonly submitted = signal(false);
   readonly error = signal<string | null>(null);
-  readonly monthLabels = MONTH_LABELS;
+  readonly formatPeriod = formatPeriod;
 
   private token = '';
 
@@ -79,20 +79,20 @@ export default class ReportForm implements OnInit {
   }
 
   private focusFirstInvalid(): void {
-    const alvo = this.host.nativeElement.querySelector<HTMLElement>(
+    const target = this.host.nativeElement.querySelector<HTMLElement>(
       '.ng-invalid[formControlName], .mat-mdc-form-field.mat-form-field-invalid input, .mat-mdc-form-field.mat-form-field-invalid textarea',
     );
-    alvo?.focus();
-    alvo?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    target?.focus();
+    target?.scrollIntoView({ block: 'center', behavior: 'smooth' });
   }
 
   onSubmit(): void {
     if (this.submitting()) return;
 
-    // Botão desabilitado enquanto inválido não diz ao usuário o QUE está
-    // errado — ele só não funciona. Com campos opcionais e validação de faixa,
-    // um valor fora do limite travava o envio sem apontar o campo. Agora o
-    // envio revela os erros e leva o foco para o primeiro deles.
+    // A button disabled while invalid does not tell the user WHAT is wrong —
+    // it just does not work. With optional fields and range validation, an
+    // out-of-range value blocked submission without pointing at the field. Now
+    // submitting reveals the errors and moves focus to the first one.
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.focusFirstInvalid();

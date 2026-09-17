@@ -142,8 +142,8 @@ Como você quer enviar?
 ```
 
 - **Um a um (padrão).** Para cada item, acione o controle de envio do
-  executivo. O programa abre com a mensagem pronta. **Pare aí** e diga ao usuário que é ele
-  quem confirma o envio. Só siga para o próximo item quando ele disser que
+  executivo. O programa abre com a mensagem pronta. **Pare aí** e diga ao
+  usuário que é ele quem confirma o envio. Só siga para o próximo item quando ele disser que
   enviou ou que quer pular.
 - **Automático.** Só depois de o usuário escolher explicitamente esta opção
   nesta execução. Para cada item: confira que o destinatário aberto é o mesmo

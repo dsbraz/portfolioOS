@@ -1,4 +1,4 @@
-<app-dialog-header [title]="'Adicionar indicador — ' + periodLabel()" />
+<app-dialog-header [title]="'Adicionar indicador — ' + periodLabel()" [closeResult]="changed()" />
 
 <mat-dialog-content>
   @if (generatedToken(); as token) {
@@ -13,7 +13,7 @@
       [startupName]="data.startupName"
     />
   } @else {
-    <form [formGroup]="form" class="add-indicator-form">
+    <form [formGroup]="form" class="dialog-form add-indicator-form">
       <div class="form-row">
         <div class="field">
           <label class="field-label" id="add-month">Mês</label>
@@ -35,6 +35,9 @@
               (wheel)="$event.target.blur()"
               formControlName="year"
             />
+            @if (form.controls.year.hasError('min') || form.controls.year.hasError('max')) {
+              <mat-error>Informe um ano entre 2000 e 2100.</mat-error>
+            }
           </mat-form-field>
         </div>
       </div>

@@ -1,15 +1,3 @@
-.user-form {
-  display: flex;
-  flex-direction: column;
-  min-width: min(25rem, 100%);
-  padding-top: 8px;
-
-  .field {
-    width: 100%;
-  }
-
-  mat-slide-toggle {
-    margin-top: 4px;
-  }
+.user-form mat-slide-toggle {
+  margin-top: 4px;
 }
-

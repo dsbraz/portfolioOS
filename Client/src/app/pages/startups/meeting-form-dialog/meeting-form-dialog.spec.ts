@@ -5,11 +5,11 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { BoardMeeting } from '../../../models/board-meeting.model';
 import { MeetingFormDialog } from './meeting-form-dialog';
 
-describe('MeetingFormDialog em modo leitura', () => {
-  // Aqui era o pior caso: quatro textareas de texto corrido, todas herdando a
-  // cor de controle inativo (2,46:1) por causa do `form.disable()`.
+describe('MeetingFormDialog in read mode', () => {
+  // This was the worst case: four free-text textareas, all inheriting the
+  // inactive-control color (2.46:1) because of `form.disable()`.
   it('should render the record as text instead of disabled form controls', async () => {
-    const reuniao = {
+    const meeting = {
       meeting_date: '2026-07-01',
       participants: 'Ana, Bruno',
       summary: 'Revisão do trimestre.',
@@ -22,7 +22,7 @@ describe('MeetingFormDialog em modo leitura', () => {
       providers: [
         provideNoopAnimations(),
         { provide: MatDialogRef, useValue: { close: vi.fn() } },
-        { provide: MAT_DIALOG_DATA, useValue: { meeting: reuniao, readonly: true } },
+        { provide: MAT_DIALOG_DATA, useValue: { meeting, readonly: true } },
       ],
     }).compileComponents();
 
@@ -33,7 +33,7 @@ describe('MeetingFormDialog em modo leitura', () => {
 
     expect(el.querySelector('form')).toBeNull();
     expect(el.querySelectorAll('input, textarea').length).toBe(0);
-    // A data ISO cai um dia se for lida como UTC; o Brasil é fuso negativo.
+    // The ISO date slips a day if read as UTC; Brazil is a negative timezone.
     expect(el.textContent).toContain('01/07/2026');
     expect(el.textContent).toContain('Revisão do trimestre.');
     expect(el.querySelectorAll('.read-value--empty').length).toBe(2);
