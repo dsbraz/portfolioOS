@@ -9,7 +9,7 @@ from app.application.executive.list_executives import ListExecutives
 from app.application.executive.update_executive import UpdateExecutive
 from app.controllers.dependencies import executive_builder, verify_startup_exists
 from app.domain.models.executive import Executive
-from app.domain.schemas.executive import (
+from app.controllers.schemas.executive import (
     ExecutiveCreate,
     ExecutiveListResponse,
     ExecutiveResponse,

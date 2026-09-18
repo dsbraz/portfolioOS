@@ -12,7 +12,7 @@ from pydantic import (
     StringConstraints,
 )
 
-from app.domain.schemas.common import PaginatedResponse
+from app.controllers.schemas.common import PaginatedResponse
 
 _PHONE_SEPARATORS = re.compile(r"[\s().\-/]")
 

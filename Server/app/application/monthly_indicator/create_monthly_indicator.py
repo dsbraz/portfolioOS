@@ -1,8 +1,7 @@
 from app.domain.models.monthly_indicator import MonthlyIndicator
+from app.domain.repositories import MonthlyIndicatorRepository
 from app.domain.validators import validate_period_not_future
-from app.repositories.monthly_indicator_repository import (
-    MonthlyIndicatorRepository,
-)
+
 
 # Fields an upsert overwrites when the incoming value is present; absence never
 # erases what is stored.

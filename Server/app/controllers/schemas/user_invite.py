@@ -3,7 +3,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-from app.domain.schemas.common import PaginatedResponse
+from app.controllers.schemas.common import PaginatedResponse
 
 
 class UserInviteCreate(BaseModel):

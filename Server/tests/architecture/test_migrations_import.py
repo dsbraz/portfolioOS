@@ -13,9 +13,8 @@ def test_migrations_directory_is_not_empty():
 
 @pytest.mark.parametrize("path", MIGRATIONS, ids=lambda p: p.stem)
 def test_migration_module_imports(path):
-    # Tests build the schema with `metadata.create_all`, so migrations never run
-    # here. Importing them at least catches a removed dependency (e.g. passlib)
-    # before `alembic upgrade` breaks on a fresh database.
+    # `conftest.py` runs `alembic upgrade head`, so a broken `upgrade` already
+    # fails the suite. This still pins `downgrade`, which nothing else calls.
     spec = importlib.util.spec_from_file_location(path.stem, path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)

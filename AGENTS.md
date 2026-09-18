@@ -6,6 +6,9 @@ Scope note: at this stage, this guide covers local development workflows only.
 This repository is split into two apps plus infrastructure:
 - `Client/`: Angular frontend (`src/` for app code, `public/` for static assets, `angular.json` for build/test targets).
 - `Server/`: FastAPI backend (`app/controllers/` for routes, `app/application/` for business operations, `app/repositories/` for persistence, `app/domain/` for models/schemas, `app/infrastructure/` for framework adapters, `alembic/` for migrations).
+- `skills/`: source of the AI skill package — product content shipped to an agent, not
+  backend code. `Server/scripts/build_skill_pack.py` packs it into the committed
+  `Server/static/portfolioos.zip`, which is what the server serves.
 - `docker-compose.yml`: local stack (client, server, PostgreSQL).
 
 Keep frontend and backend changes scoped to their folders; shared API contracts should be updated in both sides in the same PR.
@@ -16,7 +19,8 @@ Use clear boundaries between layers and keep dependencies pointing inward.
 ### Backend (`Server/app`)
 - `controllers/` (Presentation/API layer): define HTTP routes, validate/parse request/response contracts, map errors to HTTP status codes. Keep controllers thin; no business rules here.
 - `application/` (Application layer): single-purpose classes that implement business operations. Each use case has an `execute` method. Every entity has its own dedicated use cases (e.g. `CreateStartup`, `ListStartups`).
-- `domain/` (Domain layer): entities, business rules, and shared validators. Keep business logic framework-light even when persistence models use SQLAlchemy.
+- `domain/` (Domain layer): entities, business rules, shared validators, and the
+  **ports** the layers above depend on (`repositories.py`, `password_hasher.py`). Keep business logic framework-light even when persistence models use SQLAlchemy.
   - `domain/validators.py`: shared domain validation functions (e.g. `validate_period_not_future`).
 - `infrastructure/` (Adapter layer): concrete implementations of domain protocols for external concerns (e.g. `BcryptPasswordHasher`, `JwtTokenGenerator`).
 - `repositories/` (Persistence layer): database access and persistence implementations. Never leak ORM or infra details into domain models.
@@ -47,8 +51,13 @@ Two shapes exist; pick by what the dialog must do after submitting.
 
 ### Backend Import Boundaries
 - **Application layer must never import `fastapi`** — no `HTTPException`, no `status`, no `Depends`. Use cases work with domain models, repositories, infrastructure adapters, primitive types, and `dict`s.
-- **Application layer must never import schemas** (`app.domain.schemas.*`). Schema validation and serialization belong in controllers.
+- **Application layer must never import schemas** (`app.controllers.schemas.*`). Schema validation and serialization belong in controllers.
 - **Domain models and exceptions** (`app.domain.models.*`, `app.domain.exceptions`) are the shared language between layers.
+- **Application layer must never import `app.repositories`.** Use cases depend on the
+  `Protocol`s in `app.domain.repositories`; the SQLAlchemy classes that satisfy them are
+  wired in the controllers. Same shape as `PasswordHasher` in the domain and
+  `BcryptPasswordHasher` in `infrastructure/`.
+- **Schemas live in `app/controllers/schemas/`**, beside the layer that owns them.
 
 ### Error Handling Convention
 - **Use cases** raise domain exceptions for business-rule violations: `InvalidInputError` for invalid input, `ConflictError` for state conflicts (e.g. duplicates), both in `app.domain.exceptions`. A plain `ValueError` is reserved for invariants (e.g. `Period`): reaching one is a bug and answers 500.
@@ -75,9 +84,11 @@ Two shapes exist; pick by what the dialog must do after submitting.
   `scripts/seed_e2e.py`, nothing published to the host — so it can never read or write
   the development data. Tear down with
   `docker compose -f docker-compose.e2e.yml down -v`.
-- `docker compose -f docker-compose.e2e.yml run --rm --no-deps server pytest -q`: run the
-  backend suite against that same definition, without the database. This is what CI runs,
-  so CI cannot drift from local development.
+- `docker compose -f docker-compose.e2e.yml run --rm server pytest -q`: run the backend
+  suite against that same definition. This is what CI runs, so CI cannot drift from local
+  development. The suite uses **PostgreSQL**, on a `portfolio_test` database that
+  `tests/conftest.py` drops, recreates and migrates at each run — never the development
+  database, and never the e2e one.
 - `docker compose exec server uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`: run backend locally inside container.
 - `docker compose exec server pytest`: run backend automated tests.
 - `docker compose exec server alembic upgrade head`: apply database migrations.

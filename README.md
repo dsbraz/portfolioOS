@@ -81,12 +81,14 @@ portfolio/
 │   │   └── repositories/   # Acesso a dados
 │   ├── alembic/            # Migrations do banco
 │   ├── scripts/            # Ferramentas locais, incluindo o seed de demonstracao
-│   ├── skills/             # AI skill pack source (built into static/portfolioos.zip)
-│   ├── static/             # Committed build artifacts served as files
+│   ├── static/             # Artefatos versionados e servidos como arquivos
 │   └── tests/              # Testes automatizados (pytest)
 │       ├── integration/    # Testes de API (rotas end-to-end)
 │       ├── unit/           # Testes unitarios (use cases, validators)
 │       └── architecture/   # Fitness functions (boundaries entre camadas)
+│
+├── skills/                 # Fonte do pacote de skills de IA (conteudo de produto,
+│                           # empacotado em Server/static/portfolioos.zip)
 │
 ├── CLAUDE.md               # Convencoes e principios de engenharia
 ├── AGENTS.md               # Instrucoes para agentes AI
@@ -197,7 +199,7 @@ Respostas de listagem retornam `{ items: T[], total: number }`.
 
 The `/ia` page links to `/api/static/portfolioos.zip`: the committed
 `Server/static/portfolioos.zip`, served by FastAPI's `StaticFiles` mount. The same archive installs in
-Claude and ChatGPT. See `Server/skills/README.md` to change a skill.
+Claude and ChatGPT. See `skills/README.md` to change a skill.
 
 ## Comandos do dia a dia
 
@@ -222,7 +224,7 @@ docker compose exec server pytest
 # Restaurar o cenario deterministico para validar as skills de IA
 docker compose exec server python -m scripts.seed_demo
 
-# Regerar o pacote de skills apos alterar Server/skills/portfolioos
+# Regerar o pacote de skills apos alterar skills/portfolioos
 docker compose exec server python -m scripts.build_skill_pack
 
 # Logs de um servico especifico

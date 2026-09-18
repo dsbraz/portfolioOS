@@ -11,7 +11,7 @@ from app.controllers.dependencies import (
     user_invite_consume_builder,
     user_invite_create_builder,
 )
-from app.domain.schemas.user_invite import (
+from app.controllers.schemas.user_invite import (
     PublicUserInviteConsume,
     PublicUserInviteResponse,
     UserInviteCreate,

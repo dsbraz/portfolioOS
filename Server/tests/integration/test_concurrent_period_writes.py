@@ -8,7 +8,7 @@ import uuid
 from datetime import date
 
 import pytest
-from sqlalchemy import func, select, text
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -137,8 +137,9 @@ async def test_lost_race_without_a_visible_winner_raises_conflict(
 async def test_other_integrity_errors_are_not_reported_as_a_taken_period(
     session, model, finder, get_or_create
 ):
-    # SQLite only enforces foreign keys when asked, before the transaction starts.
-    await session.execute(text("PRAGMA foreign_keys = ON"))
+    # A foreign key that points nowhere: the violation is real, and it is not a
+    # taken period. The repository must let it through instead of reading every
+    # IntegrityError as "someone else got here first".
     upsert = getattr(MonthlyIndicatorRepository(session), get_or_create)
 
     with pytest.raises(IntegrityError):

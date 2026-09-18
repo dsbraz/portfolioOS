@@ -1,7 +1,7 @@
 import uuid
 
 from app.domain.models.deal import Deal
-from app.repositories.deal_repository import DealRepository
+from app.domain.repositories import DealRepository
 
 
 class GetDeal:

@@ -9,7 +9,7 @@ from app.application.board_meeting.list_board_meetings import ListBoardMeetings
 from app.application.board_meeting.update_board_meeting import UpdateBoardMeeting
 from app.controllers.dependencies import board_meeting_builder, verify_startup_exists
 from app.domain.models.board_meeting import BoardMeeting
-from app.domain.schemas.board_meeting import (
+from app.controllers.schemas.board_meeting import (
     BoardMeetingCreate,
     BoardMeetingListResponse,
     BoardMeetingResponse,

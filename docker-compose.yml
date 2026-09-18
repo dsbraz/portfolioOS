@@ -21,6 +21,10 @@ services:
       - "8000:8000"
     volumes:
       - ./Server:/app
+      # Source of the skill package: the builder and its tests read it from
+      # here. The served archive is `Server/static/portfolioos.zip`, already in
+      # the image.
+      - ./skills:/skills
     environment:
       DATABASE_URL: ${DATABASE_URL}
       SECRET_KEY: ${SECRET_KEY}

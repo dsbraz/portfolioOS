@@ -3,7 +3,7 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict
 
-from app.domain.schemas.common import PaginatedResponse
+from app.controllers.schemas.common import PaginatedResponse
 
 
 class BoardMeetingBase(BaseModel):

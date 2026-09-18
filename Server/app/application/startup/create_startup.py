@@ -1,5 +1,5 @@
 from app.domain.models.startup import Startup
-from app.repositories.startup_repository import StartupRepository
+from app.domain.repositories import StartupRepository
 
 
 class CreateStartup:

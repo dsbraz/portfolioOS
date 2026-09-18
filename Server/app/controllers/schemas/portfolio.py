@@ -3,7 +3,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from app.domain.schemas.startup import StartupResponse
+from app.controllers.schemas.startup import StartupResponse
 
 
 class StartupSummary(BaseModel):

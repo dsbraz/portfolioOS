@@ -2,8 +2,7 @@ from datetime import UTC, datetime, timedelta
 
 from app.domain.exceptions import ConflictError
 from app.domain.models.user_invite import UserInvite
-from app.repositories.user_invite_repository import UserInviteRepository
-from app.repositories.user_repository import UserRepository
+from app.domain.repositories import UserInviteRepository, UserRepository
 
 
 INVITE_TTL_HOURS = 72
