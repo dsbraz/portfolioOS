@@ -63,3 +63,22 @@ relative link is broken, or when a second `SKILL.md` appears.
   records match.
 - Navigate by visible text and accessible names, never by implementation
   selectors. The AGENTS.md machine-readable UI section is the contract.
+
+### Why some rules are written more than once
+
+`SKILL.md` routes every request through the base guide first, so a rule stated
+there reaches every task — that is where the address rules live, once.
+
+The Granola floor is the deliberate exception: the discovery probe, the
+read-only ceiling on the external system, the consent warning before a link
+travels, and the honest-coverage vocabulary are repeated verbatim in each guide
+that reads Granola. A guide is read on its own, and a safety rule that depends
+on the reader having loaded another file is a rule that fails exactly when a
+step is skipped.
+
+Duplication drifts, though, and this one already did: an audit found the
+consent warning in one copy and missing from the other two. So the floor is
+pinned by `test_every_granola_flow_carries_the_same_source_safety_anchors`,
+which derives the flows from the `reads_granola` flag in
+`scripts/build_skill_pack.py` — adding a Granola-reading workflow without the
+floor fails the suite. Anything beyond that floor belongs in one guide only.

@@ -14,6 +14,8 @@ export const CENARIO = {
   executivoSoEmail: 'Bruno Lima',
   /** Neither channel: exercises the blocked state. */
   executivoSemContato: 'Carla Reis',
+  /** `DEMO_STARTUP_ID` in `seed_demo.py`: lets a spec clean up after itself. */
+  auditadaId: '7a70e9fd-b17b-4ad2-9234-7cb0eb2b5da1',
   /**
    * The period the chase flow is about — `CHASE_MISSING_MONTH/YEAR` in
    * `seed_demo.py`, the one Aurora never reported.
@@ -129,4 +131,33 @@ export async function gerarLinkDeIndicador(
   // depender da área de transferência (PRD-001 6.5).
   const url = await dialogo.locator('.link-text').innerText();
   return { dialogo, url };
+}
+
+/**
+ * Deletes every executive of a startup with this name, if any.
+ *
+ * A spec that adds a record to the seeded scenario has to undo it: the seed
+ * runs once, when the server container starts, but the suite is run against
+ * that same stack again and again. Called before AND after, so a run left
+ * dirty by an earlier failure heals instead of poisoning the next one.
+ */
+export async function removerExecutivosPorNome(
+  request: APIRequestContext,
+  token: string,
+  startupId: string,
+  nome: string,
+): Promise<void> {
+  const lista = await request.get(`${API}/api/startups/${startupId}/executives`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  expect(lista.ok(), 'não consegui listar os executivos para limpar').toBeTruthy();
+
+  const { items } = (await lista.json()) as { items: { id: string; name: string }[] };
+  for (const executivo of items.filter((e) => e.name === nome)) {
+    const apagado = await request.delete(
+      `${API}/api/startups/${startupId}/executives/${executivo.id}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    expect(apagado.ok(), `não consegui apagar o executivo ${nome}`).toBeTruthy();
+  }
 }

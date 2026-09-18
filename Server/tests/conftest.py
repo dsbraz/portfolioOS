@@ -7,10 +7,18 @@ from urllib.parse import urlsplit, urlunsplit
 # from the postgresql dialect, the deal column is a native enum, and the
 # get-or-create race recovery rests on a unique violation inside a savepoint.
 #
-# `DATABASE_URL` is required and points at the server, not at the database the
+# `DATABASE_URL` is required and points at the SERVER, not at the database the
 # tests use: a suite that shared the e2e database would read its seeded
 # scenario as if it were its own fixtures. The tests get a database of their
-# own, created here and dropped at the end.
+# own, dropped and recreated at the start of every run.
+#
+# That last sentence is why the guard below exists. Importing this module
+# connects as admin to the maintenance database, terminates every session on
+# `portfolio_test` and drops it — already at `--collect-only`. Pointed at a
+# shared or staging server, a plain `pytest` would do that there. The previous
+# SQLite suite wrote a temporary file and could not reach anything.
+_TEST_DATABASE = "portfolio_test"
+
 _ADMIN_URL = os.environ.get("DATABASE_URL")
 if not _ADMIN_URL:
     raise RuntimeError(
@@ -18,7 +26,30 @@ if not _ADMIN_URL:
         "  docker compose -f docker-compose.e2e.yml run --rm server pytest"
     )
 
-_TEST_DATABASE = "portfolio_test"
+# The guard is on the TARGET, not on a label. `ENVIRONMENT` cannot carry this
+# weight: `docker-compose.yml` fills it with `development` by default, so a
+# developer whose `.env` points at a shared server would pass a check on the
+# label and lose databases on that server anyway. What has to be true is that
+# the host is this machine or the compose service — and when it legitimately is
+# not, saying so has to be deliberate.
+_LOCAL_HOSTS = frozenset({"db", "localhost", "127.0.0.1", "::1", ""})
+_HOST = (urlsplit(_ADMIN_URL).hostname or "").lower()
+_OPT_IN = os.environ.get("PYTEST_ALLOW_DESTRUCTIVE_DB", "").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+}
+if _HOST not in _LOCAL_HOSTS and not _OPT_IN:
+    raise RuntimeError(
+        "A suíte derruba e recria o banco "
+        f"'{_TEST_DATABASE}', e DATABASE_URL aponta para '{_HOST}', "
+        "que não é local.\n"
+        "Rode pelo compose:\n"
+        "  docker compose -f docker-compose.e2e.yml run --rm server pytest\n"
+        "Se esse host É descartável, diga explicitamente com "
+        "PYTEST_ALLOW_DESTRUCTIVE_DB=1."
+    )
+
 
 
 def _with_database(url: str, nome: str) -> str:
@@ -58,7 +89,12 @@ _RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 async def _recreate_database() -> None:
-    """A database of its own, from scratch, on the server compose provides."""
+    """A database of its own, from scratch, on the server compose provides.
+
+    Dropped at the START of a run, not at the end: leaving it behind is what
+    makes a failed run inspectable — connect and look at what the last test
+    saw. The next run wipes it before anything reads from it.
+    """
     admin = create_async_engine(
         _with_database(_ADMIN_URL, "postgres"), isolation_level="AUTOCOMMIT"
     )

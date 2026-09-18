@@ -159,6 +159,17 @@ describe('TokenPanel', () => {
     expect(hint).toContain('conexões separadas');
   });
 
+  // Symmetric to the WhatsApp case: with everyone reachable on WhatsApp, no
+  // mailto is rendered, so promising that an e-mail program opens sends the
+  // reader hunting for an affordance that is not there.
+  it('drops the e-mail guidance when no recipient falls back to it', async () => {
+    const element = await render([executive({})]);
+
+    const hint = element.querySelector('.message-preview')?.closest('section')?.textContent ?? '';
+    expect(hint).toContain('conexões separadas');
+    expect(hint).not.toContain('O e-mail abre no seu programa');
+  });
+
   // Describing a channel the panel is not offering sends the reader looking for
   // a WhatsApp button that is not there. The guidance follows the affordance.
   it('drops the WhatsApp guidance when no recipient can be reached there', async () => {

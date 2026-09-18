@@ -219,7 +219,7 @@ docker compose exec server alembic revision --autogenerate -m "descricao"
 docker compose exec client npx ng test
 
 # Testes backend
-docker compose exec server pytest
+docker compose -f docker-compose.e2e.yml run --rm server pytest
 
 # Restaurar o cenario deterministico para validar as skills de IA
 docker compose exec server python -m scripts.seed_demo

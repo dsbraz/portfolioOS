@@ -6,6 +6,7 @@ import {
   entrarComoOperador,
   gerarLinkDeIndicador,
   loginViaApi,
+  removerExecutivosPorNome,
 } from './support/app';
 
 /**
@@ -16,8 +17,34 @@ import {
  * on a stranger's line in Paraná, carrying write access to the period.
  */
 test.describe('cadastro de contato e canais de envio', () => {
+  /**
+   * O executivo que um dos testes cadastra. Nome fixo, não derivado do relógio:
+   * o que torna a suíte re-executável é a limpeza abaixo, não a unicidade do
+   * identificador — um sufixo de relógio só reduz a chance de colidir, e ainda
+   * deixa o registro para trás.
+   */
+  const EXECUTIVO_TEMPORARIO = 'John Miller';
+
   test.beforeEach(async ({ page, request }) => {
-    await entrarComoOperador(page, await loginViaApi(request));
+    const token = await loginViaApi(request);
+    await entrarComoOperador(page, token);
+    // Antes também: uma execução interrompida antes do gancho de saída não
+    // pode envenenar a próxima.
+    await removerExecutivosPorNome(
+      request,
+      token,
+      CENARIO.auditadaId,
+      EXECUTIVO_TEMPORARIO,
+    );
+  });
+
+  test.afterEach(async ({ request }) => {
+    await removerExecutivosPorNome(
+      request,
+      await loginViaApi(request),
+      CENARIO.auditadaId,
+      EXECUTIVO_TEMPORARIO,
+    );
   });
 
   test('recusa telefone sem código do país e aceita o mesmo número com prefixo', async ({
@@ -28,7 +55,7 @@ test.describe('cadastro de contato e canais de envio', () => {
     await page.getByRole('button', { name: 'Adicionar executivo' }).click();
     const dialogo = page.getByRole('dialog');
 
-    await dialogo.getByLabel('Nome').fill('John Miller');
+    await dialogo.getByLabel('Nome').fill(EXECUTIVO_TEMPORARIO);
     await dialogo.getByLabel('Telefone').fill('(415) 555-1234');
     await dialogo.getByRole('button', { name: 'Adicionar' }).click();
 
