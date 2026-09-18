@@ -92,7 +92,9 @@
          unconnected side dead-ends the send on a QR code. The warning is tied
          to the affordance: without a WhatsApp recipient there is no such step. -->
     <p class="panel-hint">
-      O e-mail abre no seu programa com a mensagem pronta.
+      @if (hasEmailChannel()) {
+        O e-mail abre no seu programa com a mensagem pronta.
+      }
       @if (hasWhatsAppChannel()) {
         O WhatsApp abre uma página dele com duas opções — o aplicativo do computador ou o
         WhatsApp Web — e você precisa estar conectado na que escolher: são conexões separadas.

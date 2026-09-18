@@ -7,10 +7,28 @@ from urllib.parse import urlsplit, urlunsplit
 # from the postgresql dialect, the deal column is a native enum, and the
 # get-or-create race recovery rests on a unique violation inside a savepoint.
 #
-# `DATABASE_URL` is required and points at the server, not at the database the
+# `DATABASE_URL` is required and points at the SERVER, not at the database the
 # tests use: a suite that shared the e2e database would read its seeded
 # scenario as if it were its own fixtures. The tests get a database of their
-# own, created here and dropped at the end.
+# own, dropped and recreated at the start of every run.
+#
+# That last sentence is why the guard below exists. Importing this module
+# connects as admin to the maintenance database, terminates every session on
+# `portfolio_test` and drops it — so pointed at a shared or staging server, a
+# plain `pytest` would do that there. The previous SQLite suite wrote a
+# temporary file and could not reach anything. `scripts/seed_demo.py` refuses
+# outside a local environment for the same reason; so does this.
+_ALLOWED_ENVIRONMENTS = frozenset({"development", "local", "test"})
+_ENVIRONMENT = os.environ.get("ENVIRONMENT", "").strip().lower()
+if _ENVIRONMENT not in _ALLOWED_ENVIRONMENTS:
+    raise RuntimeError(
+        "A suíte cria e derruba bancos, então só roda em ambiente local.\n"
+        f"ENVIRONMENT={os.environ.get('ENVIRONMENT') or '(vazia)'} — "
+        f"esperado um de {sorted(_ALLOWED_ENVIRONMENTS)}.\n"
+        "Rode pelo compose:\n"
+        "  docker compose -f docker-compose.e2e.yml run --rm server pytest"
+    )
+
 _ADMIN_URL = os.environ.get("DATABASE_URL")
 if not _ADMIN_URL:
     raise RuntimeError(
@@ -58,7 +76,12 @@ _RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 async def _recreate_database() -> None:
-    """A database of its own, from scratch, on the server compose provides."""
+    """A database of its own, from scratch, on the server compose provides.
+
+    Dropped at the START of a run, not at the end: leaving it behind is what
+    makes a failed run inspectable — connect and look at what the last test
+    saw. The next run wipes it before anything reads from it.
+    """
     admin = create_async_engine(
         _with_database(_ADMIN_URL, "postgres"), isolation_level="AUTOCOMMIT"
     )

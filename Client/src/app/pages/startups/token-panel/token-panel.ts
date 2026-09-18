@@ -90,6 +90,10 @@ export class TokenPanel {
   readonly hasWhatsAppChannel = computed(() =>
     this.reachable().some((r) => r.channel === 'whatsapp'),
   );
+  /** Same rule, other channel: guidance follows the affordance, both ways. */
+  readonly hasEmailChannel = computed(() =>
+    this.reachable().some((r) => r.channel === 'email'),
+  );
 
   copyLink(): void {
     // The link is always visible as text above, so a clipboard failure — common

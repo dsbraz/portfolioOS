@@ -23,13 +23,23 @@ test.describe('cadastro de contato e canais de envio', () => {
   test('recusa telefone sem código do país e aceita o mesmo número com prefixo', async ({
     page,
   }) => {
+    // Nome e número únicos por execução. O seed roda uma vez, quando o servidor
+    // sobe, mas a suíte é rodada várias vezes contra o mesmo stack — com um
+    // número fixo, a segunda execução acha duas células iguais e o Playwright
+    // para por ambiguidade. Mesmo padrão do `dealflow.spec.ts`.
+    const sufixo = `${Date.now()}`.slice(-7);
+    const nome = `John Miller ${sufixo}`;
+    const nacional = `(415) ${sufixo.slice(0, 3)}-${sufixo.slice(3)}`;
+    const internacional = `+1 415 ${sufixo.slice(0, 3)} ${sufixo.slice(3)}`;
+    const guardado = `+1415${sufixo}`;
+
     await abrirInvestida(page, CENARIO.auditada);
     await page.getByRole('tab', { name: /Executivos/ }).click();
     await page.getByRole('button', { name: 'Adicionar executivo' }).click();
     const dialogo = page.getByRole('dialog');
 
-    await dialogo.getByLabel('Nome').fill('John Miller');
-    await dialogo.getByLabel('Telefone').fill('(415) 555-1234');
+    await dialogo.getByLabel('Nome').fill(nome);
+    await dialogo.getByLabel('Telefone').fill(nacional);
     await dialogo.getByRole('button', { name: 'Adicionar' }).click();
 
     // Recusado — e dizendo o porquê, no campo.
@@ -39,12 +49,12 @@ test.describe('cadastro de contato e canais de envio', () => {
     ).toBeVisible();
 
     // O mesmo número, agora inequívoco, é aceito.
-    await dialogo.getByLabel('Telefone').fill('+1 415 555 1234');
+    await dialogo.getByLabel('Telefone').fill(internacional);
     await dialogo.getByRole('button', { name: 'Adicionar' }).click();
     await expect(dialogo).toBeHidden();
 
     // Guardado em E.164, a forma única que todo consumidor lê.
-    await expect(page.getByRole('cell', { name: '+14155551234' })).toBeVisible();
+    await expect(page.getByRole('cell', { name: guardado })).toBeVisible();
   });
 
   test('o painel oferece WhatsApp primeiro, e-mail como alternativa, e bloqueia quem não tem contato', async ({

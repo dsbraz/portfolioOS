@@ -93,7 +93,8 @@ Two shapes exist; pick by what the dialog must do after submitting.
   `tests/conftest.py` drops, recreates and migrates at each run — never the development
   database, and never the e2e one.
 - `docker compose exec server uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`: run backend locally inside container.
-- `docker compose exec server pytest`: run backend automated tests.
+- `docker compose -f docker-compose.e2e.yml run --rm server pytest -q`: run backend automated tests. The suite creates and drops its own
+  database, so it refuses to run outside a local `ENVIRONMENT`.
 - `docker compose exec server alembic upgrade head`: apply database migrations.
 - `docker compose build server client`: rebuild images after changing Python/Node dependencies.
 
@@ -356,7 +357,7 @@ Adopt Conventional Commits:
 PRs should include:
 - Clear summary and scope.
 - Linked issue/ticket (if available).
-- Test evidence (`docker compose exec client npx ng test`, `docker compose exec server pytest`, API checks, or manual verification steps).
+- Test evidence (`docker compose exec client npx ng test`, `docker compose -f docker-compose.e2e.yml run --rm server pytest -q`, API checks, or manual verification steps).
 - Screenshots/GIFs for UI changes.
 
 ## Security & Configuration Tips
