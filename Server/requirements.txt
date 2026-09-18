@@ -6,7 +6,6 @@ alembic
 pydantic-settings
 python-jose[cryptography]
 bcrypt
-python-multipart
 email-validator
 gunicorn
 pytest

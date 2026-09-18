@@ -20,6 +20,10 @@ jobs:
       # environment the suite is developed in — including the database: the
       # suite runs against PostgreSQL, on a database of its own that
       # `tests/conftest.py` creates and migrates.
+      # Before the suite, and without the database: a linter that fails in
+      # seconds should not wait on Postgres.
+      - name: Lint
+        run: docker compose -f docker-compose.e2e.yml run --rm --no-deps server ruff check app scripts tests
       - name: Run the suite
         run: docker compose -f docker-compose.e2e.yml run --rm server pytest -q
 
