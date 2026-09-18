@@ -63,12 +63,16 @@ request, apply it together with these shared safety rules.
 - **Public invite or monthly-report forms:** read
   [references/public-forms.md](references/public-forms.md).
 
-For a preparation brief before a startup conversation, also apply
-`preparar-agenda`. For a conversation, link or notes from Granola, also apply
+To analyse the last meeting with a startup, or to prepare the next conversation
+with it, also apply `preparar-agenda` — that workflow reads the conversation
+from Granola before it reads the platform, because a board-meeting record is a
+filtered summary and the conversation is the source. To turn a
+conversation, link or notes from Granola into a meeting record, also apply
 `granola-reuniao`. To chase the startups missing an indicator for a period, also
 apply `cobrar-indicadores`. For a deck, slides or committee material about the
-portfolio, also apply `apresentacao-portfolio`. Do not make the user select
-one; discover it from the request.
+portfolio, also apply `apresentacao-portfolio` — it reads the period's Granola
+conversations for the qualitative sections, which the platform does not hold.
+Do not make the user select one; discover it from the request.
 
 ## Resolve records before acting
 
@@ -119,9 +123,11 @@ executives and warn that reporting links are removed with it.
 - Do not perform a portfolio-wide qualitative audit. That capability remains
   unavailable pending the data-transit policy. Reading or changing the specific
   record explicitly requested is allowed under the normal preview rules.
-- Do not send email. Requesting an indicator over WhatsApp is covered by
-  `cobrar-indicadores`, which asks the user, in every run, whether to open each
-  message for them to send or to send the queue itself.
+- Do not send email yourself. Chasing an indicator is covered by
+  `cobrar-indicadores`: WhatsApp first, falling back to the platform's
+  `Enviar por e-mail para {nome}` control — which opens the person's own mail
+  draft, never sends — and it asks the user, in every run, whether to open each
+  message for them to send or to send the WhatsApp queue itself.
 
 ## Recovery
 

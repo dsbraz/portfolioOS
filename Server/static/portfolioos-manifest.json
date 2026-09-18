@@ -1,6 +1,6 @@
 {
-  "revised_at": "2026-09-17",
-  "content_sha256": "549299feef9b2277f3674e7eb774b4d23dbc19b62a900cb3dccf0a8c9198adc6",
+  "revised_at": "2026-09-18",
+  "content_sha256": "4d88411acc394c8d676e3868e878dc2f8ad6da83627ccd619a909ff2317b5e1e",
   "published": [
     {
       "name": "operar-portfolioos",
@@ -10,7 +10,7 @@
     },
     {
       "name": "preparar-agenda",
-      "description": "Prepara conversas com uma startup usando reuniões e indicadores do portfolioOS. Use para agenda, call, 1:1 ou para decidir o que acompanhar ou cobrar da investida.",
+      "description": "Prepara conversas com uma startup cruzando a conversa da reunião no Granola com os indicadores do portfolioOS. Use para analisar a última reunião, preparar agenda, call ou 1:1, e para decidir o que acompanhar ou cobrar da investida.",
       "title": "Preparar agenda de uma startup",
       "writes": false
     },
@@ -28,7 +28,7 @@
     },
     {
       "name": "apresentacao-portfolio",
-      "description": "Monta a Análise Crítica mensal do Corporate Venture — o deck que o fundo já apresenta hoje — a partir dos dados do portfolioOS, gerando o spec e construindo o .pptx pela skill brq-pptx. Use para análise crítica, deck, apresentação, slides ou material de comitê e de reunião de sócios sobre o portfólio.",
+      "description": "Monta a Análise Crítica mensal do Corporate Venture — o deck que o fundo já apresenta hoje — cruzando os números do portfolioOS com as conversas do mês no Granola, gerando o spec e construindo o .pptx pela skill brq-pptx. Use para análise crítica, deck, apresentação, slides ou material de comitê e de reunião de sócios sobre o portfólio.",
       "title": "Apresentar o portfólio",
       "writes": false
     }
