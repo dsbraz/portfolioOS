@@ -13,7 +13,9 @@ from scripts.build_skill_pack import (
     UNPUBLISHED,
     UNPUBLISHED_DIR,
     build_manifest,
+    guide_path,
     pack_entries,
+    read_frontmatter,
 )
 
 LINK_PATTERN = re.compile(r"\]\(([^)#\s]+)(?:#[^)]*)?\)")
@@ -68,6 +70,23 @@ def test_entrypoint_index_lists_every_bundled_guide():
 
     assert guides
     assert indexed == guides
+
+
+def test_entrypoint_index_repeats_each_guide_description_verbatim():
+    """The index is the routing surface; a stale copy sends the agent elsewhere.
+
+    Each line restates the guide's own frontmatter `description`, and nothing
+    regenerates it — so a guide whose purpose changed kept advertising the old
+    one, which is how `preparar-agenda` went on promising a brief built from
+    the platform after it had been rewritten to start from the conversation.
+    The manifest derives the same text from the same place, so the three copies
+    must agree.
+    """
+    wrapper = (PACK_SOURCE_DIR / "SKILL.md").read_text(encoding="utf-8")
+    for name in PUBLISHED:
+        descricao = read_frontmatter(guide_path(name))["description"]
+        linha = f"- [`{name}`](skills/{name}/GUIDE.md): {descricao}"
+        assert linha in wrapper, f"índice desatualizado para {name}"
 
 
 def test_every_relative_link_in_the_pack_resolves():

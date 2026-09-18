@@ -13,11 +13,21 @@ portfolioos/
 ├── SKILL.md              # the only SKILL.md; routes requests to the guides below
 ├── README.md
 ├── agents/openai.yaml    # ChatGPT UI metadata, read beside SKILL.md only
-└── skills/<name>/GUIDE.md
+└── skills/<name>/
+    ├── GUIDE.md
+    ├── references/       # long material the guide links to, read on demand
+    └── assets/           # files the agent copies, never rewrites
 ```
 
 - Claude and ChatGPT reject an archive with more than one `SKILL.md`, so each
   workflow is a `GUIDE.md`. Keep a guide's links relative to its own folder.
+- Everything under `portfolioos/` is packaged, so a new folder inside a workflow
+  ships with no change to the builder.
+- **An `assets/` file is copied, not regenerated.** `preparar-agenda` delivers a
+  branded `.html` briefing by copying the shell in its own `assets/` and
+  replacing one marked slot; it never writes CSS. Regenerating the page each run
+  would cost more tokens than the briefing itself and would drift off-brand and
+  off-contrast a little further every time.
 - `unpublished/` holds workflows kept out of the package.
   `auditoria-qualitativa` stays there until the data-transit policy is approved;
   until then, use it only with demonstration data.

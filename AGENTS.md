@@ -84,6 +84,9 @@ Two shapes exist; pick by what the dialog must do after submitting.
   `scripts/seed_e2e.py`, nothing published to the host — so it can never read or write
   the development data. Tear down with
   `docker compose -f docker-compose.e2e.yml down -v`.
+- `docker compose -f docker-compose.e2e.yml run --rm --no-deps server ruff check .`: lint
+  the backend. Correctness only — undefined names, unused imports, syntax — never style.
+  CI runs it before the suite, so a failure here is a red PR.
 - `docker compose -f docker-compose.e2e.yml run --rm server pytest -q`: run the backend
   suite against that same definition. This is what CI runs, so CI cannot drift from local
   development. The suite uses **PostgreSQL**, on a `portfolio_test` database that

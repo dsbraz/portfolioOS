@@ -25,6 +25,10 @@ services:
       # here. The served archive is `Server/static/portfolioos.zip`, already in
       # the image.
       - ./skills:/skills
+      # Read-only, and a single file: the briefing shell shipped inside the
+      # skill package snapshots the brand tokens, and a test pins the two so a
+      # token change cannot silently desync what the agent delivers.
+      - ./Client/src/styles.scss:/brand/styles.scss:ro
     environment:
       DATABASE_URL: ${DATABASE_URL}
       SECRET_KEY: ${SECRET_KEY}
