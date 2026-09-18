@@ -14,20 +14,10 @@ from urllib.parse import urlsplit, urlunsplit
 #
 # That last sentence is why the guard below exists. Importing this module
 # connects as admin to the maintenance database, terminates every session on
-# `portfolio_test` and drops it — so pointed at a shared or staging server, a
-# plain `pytest` would do that there. The previous SQLite suite wrote a
-# temporary file and could not reach anything. `scripts/seed_demo.py` refuses
-# outside a local environment for the same reason; so does this.
-_ALLOWED_ENVIRONMENTS = frozenset({"development", "local", "test"})
-_ENVIRONMENT = os.environ.get("ENVIRONMENT", "").strip().lower()
-if _ENVIRONMENT not in _ALLOWED_ENVIRONMENTS:
-    raise RuntimeError(
-        "A suíte cria e derruba bancos, então só roda em ambiente local.\n"
-        f"ENVIRONMENT={os.environ.get('ENVIRONMENT') or '(vazia)'} — "
-        f"esperado um de {sorted(_ALLOWED_ENVIRONMENTS)}.\n"
-        "Rode pelo compose:\n"
-        "  docker compose -f docker-compose.e2e.yml run --rm server pytest"
-    )
+# `portfolio_test` and drops it — already at `--collect-only`. Pointed at a
+# shared or staging server, a plain `pytest` would do that there. The previous
+# SQLite suite wrote a temporary file and could not reach anything.
+_TEST_DATABASE = "portfolio_test"
 
 _ADMIN_URL = os.environ.get("DATABASE_URL")
 if not _ADMIN_URL:
@@ -36,7 +26,30 @@ if not _ADMIN_URL:
         "  docker compose -f docker-compose.e2e.yml run --rm server pytest"
     )
 
-_TEST_DATABASE = "portfolio_test"
+# The guard is on the TARGET, not on a label. `ENVIRONMENT` cannot carry this
+# weight: `docker-compose.yml` fills it with `development` by default, so a
+# developer whose `.env` points at a shared server would pass a check on the
+# label and lose databases on that server anyway. What has to be true is that
+# the host is this machine or the compose service — and when it legitimately is
+# not, saying so has to be deliberate.
+_LOCAL_HOSTS = frozenset({"db", "localhost", "127.0.0.1", "::1", ""})
+_HOST = (urlsplit(_ADMIN_URL).hostname or "").lower()
+_OPT_IN = os.environ.get("PYTEST_ALLOW_DESTRUCTIVE_DB", "").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+}
+if _HOST not in _LOCAL_HOSTS and not _OPT_IN:
+    raise RuntimeError(
+        "A suíte derruba e recria o banco "
+        f"'{_TEST_DATABASE}', e DATABASE_URL aponta para '{_HOST}', "
+        "que não é local.\n"
+        "Rode pelo compose:\n"
+        "  docker compose -f docker-compose.e2e.yml run --rm server pytest\n"
+        "Se esse host É descartável, diga explicitamente com "
+        "PYTEST_ALLOW_DESTRUCTIVE_DB=1."
+    )
+
 
 
 def _with_database(url: str, nome: str) -> str:
