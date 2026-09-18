@@ -33,7 +33,7 @@ from app.controllers.dependencies import (
     verify_startup_exists,
 )
 from app.domain.models.monthly_indicator import MonthlyIndicator
-from app.domain.schemas.monthly_indicator import (
+from app.controllers.schemas.monthly_indicator import (
     MonthlyIndicatorCreate,
     MonthlyIndicatorListResponse,
     MonthlyIndicatorResponse,

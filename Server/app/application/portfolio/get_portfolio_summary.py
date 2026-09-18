@@ -14,12 +14,13 @@ from app.domain.exceptions import InvalidInputError
 from app.domain.models.monthly_indicator import MonthlyIndicator
 from app.domain.models.period import Period
 from app.domain.models.startup import Startup, StartupStatus
-from app.domain.validators import validate_period_not_future
-from app.repositories.board_meeting_repository import BoardMeetingRepository
-from app.repositories.monthly_indicator_repository import (
+from app.domain.repositories import (
+    BoardMeetingRepository,
     MonthlyIndicatorRepository,
+    StartupRepository,
 )
-from app.repositories.startup_repository import StartupRepository
+from app.domain.validators import validate_period_not_future
+
 
 MEETING_CUTOFF_DAYS = 90
 

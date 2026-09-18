@@ -1,5 +1,5 @@
 from app.domain.models.executive import Executive
-from app.repositories.executive_repository import ExecutiveRepository
+from app.domain.repositories import ExecutiveRepository
 
 
 class DeleteExecutive:

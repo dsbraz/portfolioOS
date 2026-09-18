@@ -16,7 +16,8 @@ Use clear boundaries between layers and keep dependencies pointing inward.
 ### Backend (`Server/app`)
 - `controllers/` (Presentation/API layer): define HTTP routes, validate/parse request/response contracts, map errors to HTTP status codes. Keep controllers thin; no business rules here.
 - `application/` (Application layer): single-purpose classes that implement business operations. Each use case has an `execute` method. Every entity has its own dedicated use cases (e.g. `CreateStartup`, `ListStartups`).
-- `domain/` (Domain layer): entities, business rules, and shared validators. Keep business logic framework-light even when persistence models use SQLAlchemy.
+- `domain/` (Domain layer): entities, business rules, shared validators, and the
+  **ports** the layers above depend on (`repositories.py`, `password_hasher.py`). Keep business logic framework-light even when persistence models use SQLAlchemy.
   - `domain/validators.py`: shared domain validation functions (e.g. `validate_period_not_future`).
 - `infrastructure/` (Adapter layer): concrete implementations of domain protocols for external concerns (e.g. `BcryptPasswordHasher`, `JwtTokenGenerator`).
 - `repositories/` (Persistence layer): database access and persistence implementations. Never leak ORM or infra details into domain models.
@@ -47,8 +48,13 @@ Two shapes exist; pick by what the dialog must do after submitting.
 
 ### Backend Import Boundaries
 - **Application layer must never import `fastapi`** — no `HTTPException`, no `status`, no `Depends`. Use cases work with domain models, repositories, infrastructure adapters, primitive types, and `dict`s.
-- **Application layer must never import schemas** (`app.domain.schemas.*`). Schema validation and serialization belong in controllers.
+- **Application layer must never import schemas** (`app.controllers.schemas.*`). Schema validation and serialization belong in controllers.
 - **Domain models and exceptions** (`app.domain.models.*`, `app.domain.exceptions`) are the shared language between layers.
+- **Application layer must never import `app.repositories`.** Use cases depend on the
+  `Protocol`s in `app.domain.repositories`; the SQLAlchemy classes that satisfy them are
+  wired in the controllers. Same shape as `PasswordHasher` in the domain and
+  `BcryptPasswordHasher` in `infrastructure/`.
+- **Schemas live in `app/controllers/schemas/`**, beside the layer that owns them.
 
 ### Error Handling Convention
 - **Use cases** raise domain exceptions for business-rule violations: `InvalidInputError` for invalid input, `ConflictError` for state conflicts (e.g. duplicates), both in `app.domain.exceptions`. A plain `ValueError` is reserved for invariants (e.g. `Period`): reaching one is a bug and answers 500.

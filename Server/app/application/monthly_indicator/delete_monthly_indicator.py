@@ -1,5 +1,5 @@
 from app.domain.models.monthly_indicator import MonthlyIndicator
-from app.repositories.monthly_indicator_repository import MonthlyIndicatorRepository
+from app.domain.repositories import MonthlyIndicatorRepository
 
 
 class DeleteMonthlyIndicator:

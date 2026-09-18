@@ -74,7 +74,7 @@ def test_application_must_not_import_schemas():
     violations = [
         (f, m)
         for f, m in _collect_imports(APP_ROOT / "application")
-        if m.startswith("app.domain.schemas")
+        if m.startswith("app.controllers.schemas")
     ]
     assert violations == [], "Application layer must not import schemas:\n" + "\n".join(
         f"  {f}: {m}" for f, m in violations
@@ -82,6 +82,26 @@ def test_application_must_not_import_schemas():
 
 
 # -- Domain layer --------------------------------------------------------------
+
+
+def test_application_must_not_import_concrete_repositories():
+    """Use cases depend on the ports in `app.domain.repositories`, not on SQLAlchemy.
+
+    The concrete classes live in `app/repositories/` and are wired in the
+    controllers. Importing one here would point the dependency outward and make
+    the layer untestable without a database — the same reason the password
+    hasher is a Protocol in the domain and bcrypt an adapter in infrastructure.
+    """
+    violations = [
+        (f, m)
+        for f, m in _collect_imports(APP_ROOT / "application")
+        if m.startswith("app.repositories")
+    ]
+    assert violations == [], (
+        "Application layer must depend on app.domain.repositories, "
+        "not on concrete repositories:\n"
+        + "\n".join(f"  {f}: {m}" for f, m in violations)
+    )
 
 
 def test_domain_must_not_import_upper_layers():

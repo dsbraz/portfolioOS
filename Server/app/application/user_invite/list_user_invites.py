@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 
 from app.domain.models.user_invite import UserInvite
-from app.repositories.user_invite_repository import UserInviteRepository
+from app.domain.repositories import UserInviteRepository
 
 
 class ListUserInvites:

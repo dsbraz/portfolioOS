@@ -1,8 +1,8 @@
 import uuid
 
 from app.domain.models.monthly_indicator_token import MonthlyIndicatorToken
+from app.domain.repositories import MonthlyIndicatorRepository
 from app.domain.validators import validate_period_not_future
-from app.repositories.monthly_indicator_repository import MonthlyIndicatorRepository
 
 
 class CreateMonthlyIndicatorToken:

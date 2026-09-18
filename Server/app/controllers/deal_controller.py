@@ -9,7 +9,7 @@ from app.application.deal.list_deals import ListDeals
 from app.application.deal.update_deal import UpdateDeal
 from app.controllers.dependencies import deal_builder
 from app.domain.models.deal import Deal
-from app.domain.schemas.deal import (
+from app.controllers.schemas.deal import (
     DealCreate,
     DealListResponse,
     DealResponse,
