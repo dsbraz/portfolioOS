@@ -18,7 +18,10 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 import yaml
 
 SERVER_DIR = Path(__file__).resolve().parent.parent
-SKILLS_DIR = SERVER_DIR / "skills"
+# At the repository root, beside Client/ and Server/: the guides are product
+# content shipped to an agent, not backend code. Only the built archive belongs
+# to the server, and it still lands in `Server/static/`.
+SKILLS_DIR = SERVER_DIR.parent / "skills"
 PACK_SOURCE_DIR = SKILLS_DIR / "portfolioos"
 UNPUBLISHED_DIR = SKILLS_DIR / "unpublished"
 PACK_PATH = SERVER_DIR / "static" / "portfolioos.zip"

@@ -6,6 +6,9 @@ Scope note: at this stage, this guide covers local development workflows only.
 This repository is split into two apps plus infrastructure:
 - `Client/`: Angular frontend (`src/` for app code, `public/` for static assets, `angular.json` for build/test targets).
 - `Server/`: FastAPI backend (`app/controllers/` for routes, `app/application/` for business operations, `app/repositories/` for persistence, `app/domain/` for models/schemas, `app/infrastructure/` for framework adapters, `alembic/` for migrations).
+- `skills/`: source of the AI skill package — product content shipped to an agent, not
+  backend code. `Server/scripts/build_skill_pack.py` packs it into the committed
+  `Server/static/portfolioos.zip`, which is what the server serves.
 - `docker-compose.yml`: local stack (client, server, PostgreSQL).
 
 Keep frontend and backend changes scoped to their folders; shared API contracts should be updated in both sides in the same PR.
