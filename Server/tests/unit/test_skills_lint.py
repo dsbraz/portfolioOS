@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 import yaml
@@ -498,4 +499,45 @@ def test_agenda_guide_delivers_a_branded_html_it_never_regenerates():
 
     # No file system is a degraded path, not a dead end.
     assert "sem meio de escrever arquivo" in normalized
+
+
+def test_the_briefing_shell_keeps_the_brand_accents_in_sync_with_the_app():
+    """The shell snapshots the brand; nothing regenerates it, so pin the seams.
+
+    `assets/preparacao.html` ships inside the uploaded package and runs in
+    someone else's Claude or ChatGPT session, where `Client/src/styles.scss`
+    cannot reach it — a snapshot is the right mechanism. What the snapshot
+    lacks is a way to notice that the source moved: the day a brand token
+    changes, the briefing silently stops matching the product it reports on,
+    and the one DELIBERATE deviation below becomes indistinguishable from an
+    accidental one.
+    """
+    # Mounted read-only by both compose files; on the host it is the real path.
+    fonte = Path("/brand/styles.scss")
+    if not fonte.is_file():
+        fonte = Path(__file__).resolve().parents[3] / "Client" / "src" / "styles.scss"
+    estilos = fonte.read_text(encoding="utf-8")
+    shell = (
+        _skill_files()["preparar-agenda"].parent / "assets" / "preparacao.html"
+    ).read_text(encoding="utf-8")
+
+    def token(nome: str, fonte: str) -> str:
+        achado = re.search(rf"--{nome}:\s*(#[0-9a-fA-F]{{3,8}})", fonte)
+        assert achado, f"token --{nome} não encontrado"
+        return achado.group(1).casefold()
+
+    # The functional accent and the brand accent travel verbatim.
+    assert token("color-purple", estilos) in shell.casefold()
+    assert token("color-orange", estilos) in shell.casefold()
+
+    # The documented deviation: on dark the app raises purple to
+    # `--color-accent-on-dark`, which clears 3:1 for non-text. The shell's
+    # accent carries 11px text, where 4.5:1 applies and that value gives 4.18:1
+    # — so the shell goes further. Pinned here so the difference stays a
+    # decision instead of becoming drift.
+    escuro = " ".join(shell.split("prefers-color-scheme:dark", 1)[1].split())
+    assert "--color-accent:#a670dd" in escuro
+    assert token("color-accent-on-dark", estilos) == "#a94fd6", (
+        "o acento escuro do app mudou: reveja o desvio documentado no shell"
+    )
 

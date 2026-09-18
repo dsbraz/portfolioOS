@@ -196,11 +196,22 @@ que nenhuma estava alcançável.
    lista de ferramentas e pela chamada.
 2. Com a conexão utilizável, liste as conversas do **período do deck** com
    `list_meetings`, filtrando pela janela de datas e pelos nomes das investidas
-   do escopo. Leia com `get_meetings` e, quando a ferramenta existir no plano,
-   `get_meeting_transcript`. Comece pelas investidas em destaque e pelas que
-   têm lacuna de dado — são as que mais mudam o deck. Uma resposta truncada ou
-   paginada só vira `transcrição completa` quando a ferramenta confirmar a
-   completude e todas as páginas ou cursores tiverem sido lidos.
+   do escopo.
+
+   **Leia as notas primeiro, com `get_meetings`, para todas.** As notas já
+   trazem o que o qualitativo do deck precisa — o que foi decidido, o que
+   travou, o que a investida pediu.
+
+   **A transcrição completa é a exceção, não a varredura.** Use
+   `get_meeting_transcript` só nas investidas em destaque e naquelas com lacuna
+   de dado, que são as que mais mudam o deck. Um deck mensal cobre o portfólio
+   inteiro: transcrever tudo custa dezenas de vezes mais para render os mesmos
+   poucos marcadores por investida, e não melhora o slide.
+
+   Marque a cobertura pelo que você de fato leu: `notas` para a varredura,
+   `transcrição completa` só quando a ferramenta confirmar a completude e todas
+   as páginas ou cursores tiverem sido lidos, `transcrição parcial` no meio do
+   caminho. Nunca declare mais do que leu.
 3. **Sem MCP utilizável, não peça um link por investida.** Um deck mensal cobre
    o portfólio inteiro, e uma fila de links é um pedido que ninguém completa:
    diga em uma frase que o qualitativo sai sem as conversas, registre a

@@ -162,15 +162,17 @@ como texto no chat. O shell pronto está em `assets/preparacao.html`.
 Sem meio de escrever arquivo, entregue o mesmo conteúdo em Markdown na conversa,
 na mesma ordem de blocos, e diga por que o `.html` não saiu.
 
-Os blocos, na ordem em que o shell já os traz:
+Os blocos, na ordem em que o shell já os traz. As classes de cada um estão
+comentadas no topo do próprio shell, que é onde elas vivem — esta tabela diz o
+que entra, não como marcar:
 
 | Bloco | O que entra |
 |---|---|
 | Cabeçalho | nome da startup e a data de hoje |
-| **Fonte da reunião** | título e data da conversa, com a pílula de cobertura (`.pill--full` para transcrição completa, `.pill--part` para transcrição parcial ou notas, `.pill--none` para **conversa não encontrada no Granola**, dizendo o que foi tentado) e o registro em Reuniões de Conselho, quando existir |
+| **Fonte da reunião** | título e data da conversa, com a pílula de cobertura — transcrição completa, transcrição parcial ou notas, ou **conversa não encontrada no Granola**, dizendo o que foi tentado — e o registro em Reuniões de Conselho, quando existir |
 | Recap da última reunião | 2–3 linhas do que foi discutido; pontos de atenção; próximos passos combinados, marcando o que os indicadores sugerem estar feito ou pendente; divergências entre a conversa e o registro |
-| Números desde então | receita, caixa com runway e headcount nos `.kpi`; conquistas e desafios do último mês no parágrafo abaixo |
-| Perguntas sugeridas | 4–7 perguntas, cada uma com sua `.origin` — `.origin--call` para a conversa, `.origin--platform` para a plataforma |
+| Números desde então | receita, caixa com runway e headcount na grade de números; conquistas e desafios do último mês no parágrafo abaixo |
+| Perguntas sugeridas | 4–7 perguntas, cada uma marcada com a origem do fato: a conversa ou a plataforma |
 | Não coberto | a lacuna declarada: sem conversa, sem reunião registrada, sem reporte desde {mês} |
 
 Regras do conteúdo:
