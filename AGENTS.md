@@ -69,6 +69,15 @@ Two shapes exist; pick by what the dialog must do after submitting.
 - `docker compose exec client npx ng serve`: run frontend dev server inside container.
 - `docker compose exec client npx ng build`: create frontend build in `Client/dist/`.
 - `docker compose exec client npx ng test`: run frontend unit tests (Vitest via Angular builder).
+- `docker compose -f docker-compose.e2e.yml up -d --build --wait` then
+  `docker compose -f docker-compose.e2e.yml run --rm e2e npx playwright test`: run the
+  end-to-end suite. It brings up an **isolated stack** — own database, seeded by
+  `scripts/seed_e2e.py`, nothing published to the host — so it can never read or write
+  the development data. Tear down with
+  `docker compose -f docker-compose.e2e.yml down -v`.
+- `docker compose -f docker-compose.e2e.yml run --rm --no-deps server pytest -q`: run the
+  backend suite against that same definition, without the database. This is what CI runs,
+  so CI cannot drift from local development.
 - `docker compose exec server uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`: run backend locally inside container.
 - `docker compose exec server pytest`: run backend automated tests.
 - `docker compose exec server alembic upgrade head`: apply database migrations.
@@ -290,6 +299,16 @@ whose colour carries an alpha.
 
 ## Testing Guidelines
 - Frontend tests live beside source as `*.spec.ts` and should be run with `docker compose exec client npx ng test`.
+- End-to-end specs live in `Client/e2e/` (Playwright). They drive the app through
+  **roles and accessible names** — the same contract the skills and assistive tech use —
+  never through CSS internals. A rename that breaks a spec here breaks an agent in the
+  field, and that coupling is the point. Reserve them for journeys that cross a boundary
+  a unit test cannot: the reporting link crossing authenticated → anonymous → back,
+  real drag-and-drop, the login gate.
+- **A spec never reads the clock.** The seed pins its scenario to absolute periods
+  (`CHASE_MISSING_MONTH/YEAR`), so a spec that accepts a control's wall-clock default
+  asserts on data the seed never created — green in the month it was written, red on the
+  first day of the next one. Period comes from `CENARIO`, chosen explicitly.
 - Backend tests live under `Server/tests/` using `test_*.py` naming, organized by type:
   - `integration/`: API-level tests (routes end-to-end with test database).
   - `unit/`: isolated use-case and domain logic tests (mocked dependencies).

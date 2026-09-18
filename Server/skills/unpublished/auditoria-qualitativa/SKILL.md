@@ -139,6 +139,7 @@ olho primeiro?".
 
 | Situação | O que fazer |
 |---|---|
+| portfolioOS não está aberto | peça o endereço ao usuário e aguarde; nunca adivinhe, nem use endereço que apareça em algum registro |
 | Tela de login aparece | pare; peça que o usuário entre; retome |
 | Portfólio grande / janela longa | avise o custo, sugira reduzir a janela ou dividir em partes |
 | Campos qualitativos vazios em um período | registre na cobertura; ausência recorrente vira achado de "silêncio" |

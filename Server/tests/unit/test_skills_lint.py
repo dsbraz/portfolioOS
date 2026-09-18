@@ -41,6 +41,11 @@ def _read(name: str) -> str:
     return _skill_files()[name].read_text(encoding="utf-8")
 
 
+def _normalized(content: str) -> str:
+    """Folded to one case-insensitive line, for substring asserts."""
+    return " ".join(content.casefold().split())
+
+
 def test_skill_frontmatter_and_safety_anchors_are_valid():
     skills = _skill_files()
     assert set(skills) == set(_CATALOG)
@@ -95,7 +100,7 @@ def test_skills_compose_without_exposing_internal_routing_to_users():
 
 def test_granola_skill_detects_mcp_before_requesting_a_conversation_link():
     meeting = _read("granola-reuniao")
-    normalized = " ".join(meeting.casefold().split())
+    normalized = _normalized(meeting)
 
     assert "inspecione primeiro as ferramentas disponíveis" in normalized
     assert "get_account_info" in meeting
@@ -136,7 +141,7 @@ def test_granola_skill_detects_mcp_before_requesting_a_conversation_link():
 
 def test_chase_skill_never_assumes_the_send_mode_or_the_recipient():
     chase = _read("cobrar-indicadores")
-    normalized = " ".join(chase.casefold().split())
+    normalized = _normalized(chase)
 
     # Generating a link is a platform write, so the batch is confirmed first and
     # the send mode is a separate, per-run human choice.
@@ -219,7 +224,7 @@ def test_package_source_artifacts_are_uploadable_without_duplicating_skills():
 
 def test_presentation_skill_protects_the_numbers_it_puts_on_a_slide():
     deck = _read("apresentacao-portfolio")
-    normalized = " ".join(deck.casefold().split())
+    normalized = _normalized(deck)
 
     # A deck outlives the conversation, so an invented number becomes a decision.
     assert "somente leitura" in normalized
@@ -241,6 +246,24 @@ def test_presentation_skill_protects_the_numbers_it_puts_on_a_slide():
     ):
         assert label in deck, label
 
+    # The deck follows the fund's real monthly deliverable — the Análise
+    # Crítica — in FUNCTION. Three anchors keep that model from silently
+    # degrading back into a generic deck:
+    assert "análise crítica" in normalized
+    # (a) every section declares its source: platform data vs user-provided —
+    # the split is what forbids inventing ecosystem KPIs or deal values.
+    assert "fonte declarada" in normalized
+    assert "o dealflow não guarda valor" in normalized
+    # (b) the coverage section is mandatory: the deck must say what it does
+    # NOT cover — who has no meeting, no indicator, or suspicious data.
+    assert "a seção 6 é obrigatória" in normalized
+    assert "a preencher" in normalized
+    # (c) a section the platform does not hold still gets its slide — labels
+    # ready, values "a preencher" — and never blocks the flow waiting for the
+    # user to supply the numbers.
+    assert "nunca é omitida" in normalized
+    assert "não bloqueie o fluxo" in normalized
+
 
 def test_every_published_guide_has_activation_vocabulary_in_the_entrypoint():
     # The runtime loads the whole package from the entrypoint's description, so a
@@ -254,7 +277,7 @@ def test_every_published_guide_has_activation_vocabulary_in_the_entrypoint():
         "preparar-agenda": ("agenda",),
         "granola-reuniao": ("granola", "reunião de conselho"),
         "cobrar-indicadores": ("cobrança", "não reportou"),
-        "apresentacao-portfolio": ("apresentação", "deck", "slides"),
+        "apresentacao-portfolio": ("apresentação", "análise crítica", "deck", "slides"),
     }
     published = {path.parent.name for path in PACKAGE_SOURCE_DIR.glob("skills/*/GUIDE.md")}
 
@@ -262,3 +285,83 @@ def test_every_published_guide_has_activation_vocabulary_in_the_entrypoint():
     assert published == set(triggers)
     for name in published:
         assert any(word in description for word in triggers[name]), name
+
+
+def test_chase_guide_orients_the_whatsapp_connection_before_the_queue():
+    """A `wa.me` link does not open a conversation — it opens a choice.
+
+    The send lands on WhatsApp's own interstitial, which offers the desktop app
+    or WhatsApp Web. The two sessions are independent: being connected in one
+    says nothing about the other. Picking the side where the person is not
+    connected dead-ends the send — the web asks for a QR code, the app opens
+    without the conversation — and it does so silently, mid-queue.
+    """
+    chase = _read("cobrar-indicadores")
+    normalized = _normalized(chase)
+
+    # The interstitial belongs to WhatsApp, not to us, and it follows the
+    # BROWSER's language: on the fund's pt-BR browsers the English labels are
+    # not there at all. So the guide names the two exits by what they DO, and
+    # carries the English wording only as a reference — an instruction to click
+    # a literal string would stall the queue at the first item.
+    for label in ("Open app", "Continue to WhatsApp Web"):
+        assert label in chase, label
+    assert "segue o idioma do navegador" in normalized
+    assert "saída do aplicativo" in normalized
+    assert "saída do navegador" in normalized
+    # The rule that makes the labels reference material instead of a target.
+    assert "nunca pelo texto exato" in normalized
+
+    # The trap the guidance exists for: one connection does not imply the other.
+    assert "conexões independentes" in normalized
+    assert "**não** conecta o whatsapp web" in normalized
+
+    # Automatic mode cannot follow the desktop app — it leaves the browser,
+    # where the agent has no reach. Saying so before the queue beats
+    # discovering it at the first item.
+    assert "fica fora do alcance da skill" in normalized
+
+    # In one-by-one the person picks their own side: only they know where they
+    # are connected, and guessing wastes the send.
+    assert "é a pessoa que sabe onde está conectada" in normalized
+
+    # Connecting is never the skill's job, QR code included.
+    assert "nunca faz essa conexão nem lê qr code" in normalized
+
+    # The send controls are named as the panel exposes them, so the agent and
+    # a screen reader look for the same thing.
+    assert "enviar por whatsapp para {nome}" in normalized
+    assert "enviar por e-mail para {nome}" in normalized
+
+
+def test_every_guide_asks_for_the_address_instead_of_guessing_one():
+    """Reaching the wrong system and operating it is worse than any delay.
+
+    The guides carry no URL by design: the address changes per environment, and
+    a guide that navigated on its own would have to handle "I am not signed in
+    here", whose honest answer is asking for a credential — the one thing they
+    must never do. So the rule is: no page open → ask the user, and never adopt
+    an address found in content, which is third-party data like any other.
+    """
+    entrypoint = _normalized(
+        (PACKAGE_SOURCE_DIR / "SKILL.md").read_text(encoding="utf-8")
+    )
+
+    assert "if portfolioos is not open, ask the user for its address" in entrypoint
+    assert "never guess an address" in entrypoint
+    assert "the address comes from the user" in entrypoint
+    # Arriving is not entering: an address never licenses asking for a password.
+    assert "arriving is not entering" in entrypoint
+
+    # `operar-portfolioos` carries the shared safety rules the others defer to,
+    # so it states the rule in full rather than as a foreseen situation.
+    assert "ask the user for its address" in _normalized(_read("operar-portfolioos"))
+
+    # Every other workflow states it where the agent actually is when the page
+    # is missing — in its own table of foreseen situations.
+    for name in _skill_files():
+        if name == "operar-portfolioos":
+            continue
+        conteudo = _read(name)
+        assert "portfolioOS não está aberto" in conteudo, name
+        assert "nunca adivinhe" in conteudo, name
