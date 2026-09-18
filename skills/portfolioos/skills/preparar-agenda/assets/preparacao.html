@@ -10,6 +10,7 @@
   nunca gere este shell do zero: ele já é a identidade da marca.
 
   Vocabulário de classes (é todo o que existe — não invente outras):
+    .head               cabeçalho do documento (traz a régua laranja da marca)
     .eyebrow            sobretítulo mono, caixa alta
     .meta               linha de metadados sob o título
     .source             bloco da fonte da reunião
@@ -34,7 +35,7 @@
 :root{
   --color-black:#121212; --color-white:#fff;
   --color-purple:#7f2ec9; --color-orange:#ee7c38; --color-gray:#626262;
-  --color-gray-100:#cecece; --color-gray-75:#ececec; --color-gray-50:#fafafa;
+  --color-gray-100:#cecece; --color-gray-50:#fafafa;
   --color-bg:var(--color-white); --color-surface:var(--color-gray-50);
   --color-text:var(--color-black); --color-text-muted:var(--color-gray);
   --color-border:var(--color-gray-100); --color-accent:var(--color-purple);
@@ -43,8 +44,7 @@
   --font-display:"Aspekta","Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
   --font-body:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   --font-mono:"Geist Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
-  --space-xs:.5rem; --space-sm:.75rem; --space-md:1rem; --space-lg:1.5rem;
-  --space-xl:2rem; --space-2xl:3rem;
+  --space-xs:.5rem; --space-sm:.75rem; --space-md:1rem; --space-lg:1.5rem; --space-2xl:3rem;
   --radius-md:8px; --radius-full:9999px;
 }
 /* Escuro: valores da paleta escura já validada da marca (o BRQ é light-first,
@@ -86,17 +86,18 @@ a{color:var(--color-accent)}
   border-radius:var(--radius-md); padding:var(--space-md);
   margin:var(--space-lg) 0 0; font-size:.9375rem;
 }
-.source p{margin:0}
+.source p,.gap p{margin:0}
 .source p + p{margin-top:var(--space-xs)}
-.pill{
+.pill,.origin{
   display:inline-block; font-family:var(--font-mono); font-size:.6875rem;
-  letter-spacing:.06em; text-transform:uppercase; padding:.15rem .55rem;
-  border-radius:var(--radius-full); margin-right:var(--space-xs);
+  letter-spacing:.06em; text-transform:uppercase;
 }
+.pill{padding:.15rem .55rem; border-radius:var(--radius-full); margin-right:var(--space-xs)}
 .pill--full{background:var(--color-good-bg); color:var(--color-good)}
 .pill--part,.pill--none{background:var(--color-warn-bg); color:var(--color-warn)}
 section{margin-top:var(--space-2xl)}
 .lead{color:var(--color-text-muted)}
+.kpis + .lead{margin-top:var(--space-md)}
 .points{margin:0; padding-left:1.15rem}
 .points li{margin-bottom:var(--space-xs)}
 .kpis{
@@ -109,19 +110,14 @@ section{margin-top:var(--space-2xl)}
 .kpi-note{font-size:.8125rem; color:var(--color-text-muted); display:block}
 .questions{margin:0; padding-left:1.3rem}
 .questions li{margin-bottom:var(--space-md)}
-.origin{
-  display:inline-block; font-family:var(--font-mono); font-size:.6875rem;
-  letter-spacing:.06em; text-transform:uppercase; margin-left:.4rem;
-  color:var(--color-text-muted);
-}
+.origin{margin-left:.4rem; color:var(--color-text-muted)}
 .origin--call{color:var(--color-accent)}
-.origin--platform::before,.origin--call::before{content:"· "}
+.origin::before{content:"· "}
 .gap{
   background:var(--color-warn-bg); color:var(--color-warn);
   border-radius:var(--radius-md); padding:var(--space-sm) var(--space-md);
   margin-top:var(--space-md); font-size:.9375rem;
 }
-.gap p{margin:0}
 @media print{
   body{background:#fff; color:#000; font-size:11pt}
   .wrap{max-width:none; padding:0}
@@ -174,7 +170,7 @@ section{margin-top:var(--space-2xl)}
       <span class="kpi-note">{{evolução}}</span>
     </div>
   </div>
-  <p class="lead" style="margin-top:1rem">{{conquistas e desafios do último mês}}</p>
+  <p class="lead">{{conquistas e desafios do último mês}}</p>
 </section>
 
 <section>

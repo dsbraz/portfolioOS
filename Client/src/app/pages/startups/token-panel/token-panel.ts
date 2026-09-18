@@ -44,12 +44,18 @@ type Recipient = ReachableRecipient | BlockedRecipient;
 export class TokenPanel {
   readonly token = input.required<MonthlyIndicatorToken>();
   readonly executives = input.required<Executive[]>();
-  /** Names the startup in the e-mail subject. */
+  /** Names the startup in the message body and in the e-mail subject. */
   readonly startupName = input.required<string>();
 
   private readonly snackBar = inject(MatSnackBar);
 
   readonly period = computed(() => formatPeriod(this.token().month, this.token().year));
+  /**
+   * The name as the message and the subject both use it. Derived once so the
+   * two cannot disagree about a blank one, and trimmed because the record can
+   * carry padding the reader would see.
+   */
+  private readonly startup = computed(() => this.startupName()?.trim() ?? '');
   // The fund's message names the month in full ("julho/2026"); the title and the
   // copy control keep the compact form.
   private readonly messagePeriod = computed(
@@ -113,14 +119,12 @@ export class TokenPanel {
     // can swallow neighbouring punctuation into the link or fail to linkify it
     // at all. (WhatsApp also needs a host with a dot, so `localhost` stays
     // plain text in development no matter the formatting.)
-    // Tolerates absence like the formatters next door: the dialog can mount the
-    // panel before the name is resolved, and a missing name degrades the
-    // sentence instead of breaking the panel.
-    const investida = this.startupName()?.trim() ?? '';
-    const doQue = investida === '' ? 'dos dados' : `dos dados de ${investida}`;
+    // A blank name degrades the sentence instead of breaking the panel.
+    const startup = this.startup();
+    const whose = startup ? `dos dados de ${startup}` : 'dos dados';
     const message = [
       `Olá ${firstName}. Tudo bem?`,
-      `Segue o link para atualizações ${doQue} referentes a ${this.messagePeriod()}:`,
+      `Segue o link para atualizações ${whose} referentes a ${this.messagePeriod()}:`,
       this.formUrl(),
       'Obrigado',
     ].join('\n');
@@ -137,7 +141,7 @@ export class TokenPanel {
       return { ...base, channel: null, notice };
     }
 
-    const subject = `${this.startupName()} — indicadores de ${this.messagePeriod()}`;
+    const subject = `${startup} — indicadores de ${this.messagePeriod()}`;
     // The address is encoded too: a "?" or "," in it would otherwise add
     // recipients to the mail. "@" stays literal for mail clients that do not
     // decode it.

@@ -29,31 +29,38 @@ MANIFEST_PATH = SERVER_DIR / "static" / "portfolioos-manifest.json"
 
 # What the guides' frontmatter cannot carry: upload validators accept only `name`
 # and `description` there. The order is the order the `/ia` page lists them in.
+# `reads_granola` marks the flows that must carry the shared Granola safety
+# floor, so adding one cannot silently escape `test_skills_lint.py`.
 PUBLISHED: dict[str, dict[str, Any]] = {
     "operar-portfolioos": {
         "title": "Operar toda a plataforma",
         "writes": True,
         "reads_external": True,
+        "reads_granola": False,
     },
     "preparar-agenda": {
         "title": "Preparar agenda de uma startup",
         "writes": False,
         "reads_external": True,
+        "reads_granola": True,
     },
     "granola-reuniao": {
         "title": "Registrar reunião de conselho",
         "writes": True,
         "reads_external": True,
+        "reads_granola": True,
     },
     "cobrar-indicadores": {
         "title": "Cobrar indicadores em falta",
         "writes": True,
         "reads_external": True,
+        "reads_granola": False,
     },
     "apresentacao-portfolio": {
         "title": "Apresentar o portfólio",
         "writes": False,
         "reads_external": True,
+        "reads_granola": True,
     },
 }
 UNPUBLISHED: dict[str, dict[str, Any]] = {
@@ -61,6 +68,7 @@ UNPUBLISHED: dict[str, dict[str, Any]] = {
         "title": "Auditar o portfólio",
         "writes": False,
         "reads_external": True,
+        "reads_granola": False,
         "reason": (
             "Aguardando aprovação da política de trânsito de dados. "
             "Até lá, use apenas com dados de demonstração."

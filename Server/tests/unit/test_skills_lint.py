@@ -27,6 +27,7 @@ def _rules_section(content: str) -> str:
 _CATALOG = {**PUBLISHED, **UNPUBLISHED}
 WRITES = {name for name, meta in _CATALOG.items() if meta["writes"]}
 READS_EXTERNAL = {name for name, meta in _CATALOG.items() if meta["reads_external"]}
+READS_GRANOLA = {name for name, meta in _CATALOG.items() if meta["reads_granola"]}
 
 
 def _skill_files() -> dict[str, Path]:
@@ -389,21 +390,13 @@ def test_agenda_guide_reads_the_conversation_before_the_platform():
     assert "mesmo que o usuário não cite o granola" in normalized
     assert "a reunião vem da conversa, não só da plataforma" in normalized
 
-    # Same source discovery as the recording flow: probe the MCP, never ask the
-    # user whether it is connected, fall back to a link on the exact host.
-    assert "inspecione primeiro as ferramentas disponíveis" in normalized
-    assert "não pergunte se o mcp está conectado" in normalized
-    for tool in ("get_account_info", "list_meetings", "get_meetings"):
-        assert tool in agenda, tool
-    assert "peça o link da conversa" in normalized
-    assert "https://notes.granola.ai/" in agenda
+    # The shared Granola floor (discovery, read-only, consent, honest coverage)
+    # has one owner: `test_every_granola_flow_carries_the_same_source_safety_anchors`.
+    # Only the ordering is asserted here, because it is what this flow gets
+    # wrong: asking for a link before probing the MCP.
     assert normalized.index("inspecione primeiro as ferramentas disponíveis") < (
         normalized.index("peça o link da conversa")
     )
-
-    # Read-only has to cover Granola too, or the guide's own promise leaks.
-    assert "use apenas operações **inequivocamente de leitura**" in normalized
-    assert "não diga que leu a transcrição completa" in normalized
 
     # Coming back empty is a reportable outcome, never a silent downgrade to
     # platform-only — and never a dead end either: the brief still ships.
@@ -432,7 +425,8 @@ def test_every_granola_flow_carries_the_same_source_safety_anchors():
     test pins the shared floor so a future edit to one flow fails loudly
     instead of quietly weakening it.
     """
-    granola_flows = ("granola-reuniao", "preparar-agenda", "apresentacao-portfolio")
+    # Derived from the catalog, never hand-listed: a fourth flow that reads
+    # Granola must not escape the floor by nobody remembering a tuple.
     shared_anchors = (
         # Discovery: probe the MCP, never interrogate the user about it.
         "inspecione primeiro as ferramentas disponíveis",
@@ -446,7 +440,8 @@ def test_every_granola_flow_carries_the_same_source_safety_anchors():
         # Honest coverage: never claim more than what was actually read.
         "transcrição completa",
     )
-    for name in granola_flows:
+    assert READS_GRANOLA, "o catálogo não marca nenhum fluxo como leitor do Granola"
+    for name in sorted(READS_GRANOLA):
         normalized = _normalized(_read(name))
         for anchor in shared_anchors:
             assert anchor in normalized, f"{name}: missing anchor {anchor!r}"
@@ -476,12 +471,16 @@ def test_agenda_guide_delivers_a_branded_html_it_never_regenerates():
     assert "http" not in shell
 
     # The accent contract, which is the part a regenerated shell always loses:
-    # purple is the functional accent, orange is brand-only, and purple is
-    # raised on dark because #7f2ec9 reaches only 2.8:1 there.
+    # purple is the functional accent and orange is brand-only. On dark, purple
+    # is raised — #7f2ec9 reaches only 2.8:1 there.
     assert "#7f2ec9" in shell
     assert "#ee7c38" in shell
-    assert "#a94fd6" in shell
-    assert "prefers-color-scheme:dark" in shell
+    # The DECLARED value inside the dark block, not a hex mentioned in prose:
+    # the shell explains in a comment why it does not use the chart accent
+    # #a94fd6, so asserting that string would pass on the explanation alone.
+    escuro = shell.split("prefers-color-scheme:dark", 1)
+    assert len(escuro) == 2, "o bloco de tema escuro sumiu do shell"
+    assert "--color-accent:#a670dd" in " ".join(escuro[1].split())
 
     # The instructions have to forbid the expensive path explicitly — an agent
     # that can write HTML will write HTML unless told plainly not to.

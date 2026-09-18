@@ -31,6 +31,16 @@ describe('TokenPanel', () => {
     ...over,
   });
 
+  /** The fund's message for the rendered fixture, defined once. */
+  function expectedMessage(): string {
+    return [
+      'Olá Ana. Tudo bem?',
+      'Segue o link para atualizações dos dados de Vertah referentes a julho/2026:',
+      `${window.location.origin}/monthly-indicator/abc123`,
+      'Obrigado',
+    ].join('\n');
+  }
+
   async function render(executives: Executive[]): Promise<HTMLElement> {
     await TestBed.configureTestingModule({
       imports: [TokenPanel],
@@ -68,12 +78,7 @@ describe('TokenPanel', () => {
     const href = element
       .querySelector('[aria-label="Enviar por WhatsApp para Ana Costa Ribeiro"]')
       ?.getAttribute('href');
-    const message =
-      'Olá Ana. Tudo bem?\n' +
-      'Segue o link para atualizações dos dados de Vertah referentes a julho/2026:\n' +
-      `${window.location.origin}/monthly-indicator/abc123\n` +
-      'Obrigado';
-    expect(href).toBe(`https://wa.me/5511912345678?text=${encodeURIComponent(message)}`);
+    expect(href).toBe(`https://wa.me/5511912345678?text=${encodeURIComponent(expectedMessage())}`);
   });
 
   // One channel per executive: WhatsApp when it resolves, e-mail only otherwise.
@@ -129,26 +134,16 @@ describe('TokenPanel', () => {
     expect(element.textContent).toContain('Telefone sem código do país');
   });
 
-  // A contact can answer for several investees, and the messages were identical
-  // but for the link. The name takes bare "de": a company name has no knowable
-  // grammatical gender, so "da Vertah" is a guess the template must not make.
-  it('names the startup in the message, with no gendered article', async () => {
+  // Two rules live in this one string, and both are invisible from a fragment.
+  // The name takes bare "de": a company name has no knowable grammatical
+  // gender, so "da Vertah" is a guess the template must not make — and a
+  // contact who answers for several investees needs to tell the requests apart.
+  // The URL stands alone on its own line: glued to a sentence, chat clients
+  // swallow neighbouring punctuation into the link or give up on linkifying it.
+  it('previews the exact message, naming the startup and isolating the link', async () => {
     const element = await render([executive({})]);
 
-    const message = element.querySelector('.message-preview')?.textContent ?? '';
-    expect(message).toContain('dos dados de Vertah');
-    expect(message).not.toContain('da Vertah');
-    expect(message).not.toContain('do Vertah');
-  });
-
-  // Glued to a sentence, chat clients swallow neighbouring punctuation into the
-  // URL or give up on linkifying it. A line with only the URL is the robust
-  // form — and the easiest to tap.
-  it('keeps the link alone on its own line so chat clients linkify it', async () => {
-    const element = await render([executive({})]);
-
-    const message = element.querySelector('.message-preview')?.textContent ?? '';
-    expect(message.split('\n')).toContain(`${window.location.origin}/monthly-indicator/abc123`);
+    expect(element.querySelector('.message-preview')?.textContent).toBe(expectedMessage());
   });
 
   // The WhatsApp button does not open a conversation — it opens WhatsApp's own
