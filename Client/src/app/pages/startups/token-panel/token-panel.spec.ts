@@ -70,7 +70,8 @@ describe('TokenPanel', () => {
       ?.getAttribute('href');
     const message =
       'Olá Ana. Tudo bem?\n' +
-      `Segue o link para atualizações dos dados referentes a julho/2026: ${window.location.origin}/monthly-indicator/abc123\n` +
+      'Segue o link para atualizações dos dados de Vertah referentes a julho/2026:\n' +
+      `${window.location.origin}/monthly-indicator/abc123\n` +
       'Obrigado';
     expect(href).toBe(`https://wa.me/5511912345678?text=${encodeURIComponent(message)}`);
   });
@@ -126,6 +127,28 @@ describe('TokenPanel', () => {
     expect(element.querySelector('[aria-label^="Enviar por"]')).toBeNull();
     expect(element.textContent).toContain('Sem canal de envio');
     expect(element.textContent).toContain('Telefone sem código do país');
+  });
+
+  // A contact can answer for several investees, and the messages were identical
+  // but for the link. The name takes bare "de": a company name has no knowable
+  // grammatical gender, so "da Vertah" is a guess the template must not make.
+  it('names the startup in the message, with no gendered article', async () => {
+    const element = await render([executive({})]);
+
+    const message = element.querySelector('.message-preview')?.textContent ?? '';
+    expect(message).toContain('dos dados de Vertah');
+    expect(message).not.toContain('da Vertah');
+    expect(message).not.toContain('do Vertah');
+  });
+
+  // Glued to a sentence, chat clients swallow neighbouring punctuation into the
+  // URL or give up on linkifying it. A line with only the URL is the robust
+  // form — and the easiest to tap.
+  it('keeps the link alone on its own line so chat clients linkify it', async () => {
+    const element = await render([executive({})]);
+
+    const message = element.querySelector('.message-preview')?.textContent ?? '';
+    expect(message.split('\n')).toContain(`${window.location.origin}/monthly-indicator/abc123`);
   });
 
   // The WhatsApp button does not open a conversation — it opens WhatsApp's own

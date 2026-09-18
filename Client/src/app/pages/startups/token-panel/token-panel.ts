@@ -103,10 +103,25 @@ export class TokenPanel {
     const phone = executive.phone?.trim();
     const email = executive.email?.trim();
     const firstName = executive.name.trim().split(/\s+/)[0];
-    // The fund's standard message, already in use before the platform existed.
+    // The fund's standard message, already in use before the platform existed —
+    // now naming the startup, so a contact who answers for several investees can
+    // tell the requests apart. The name takes bare "de" and never a gendered
+    // article: a company name has no knowable grammatical gender, and "da
+    // Payface" is a guess the template must not make.
+    //
+    // The URL stands alone on its own line: glued to a sentence, chat clients
+    // can swallow neighbouring punctuation into the link or fail to linkify it
+    // at all. (WhatsApp also needs a host with a dot, so `localhost` stays
+    // plain text in development no matter the formatting.)
+    // Tolerates absence like the formatters next door: the dialog can mount the
+    // panel before the name is resolved, and a missing name degrades the
+    // sentence instead of breaking the panel.
+    const investida = this.startupName()?.trim() ?? '';
+    const doQue = investida === '' ? 'dos dados' : `dos dados de ${investida}`;
     const message = [
       `Olá ${firstName}. Tudo bem?`,
-      `Segue o link para atualizações dos dados referentes a ${this.messagePeriod()}: ${this.formUrl()}`,
+      `Segue o link para atualizações ${doQue} referentes a ${this.messagePeriod()}:`,
+      this.formUrl(),
       'Obrigado',
     ].join('\n');
     const base = { name: executive.name, role: executive.role, message };
