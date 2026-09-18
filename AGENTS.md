@@ -75,9 +75,11 @@ Two shapes exist; pick by what the dialog must do after submitting.
   `scripts/seed_e2e.py`, nothing published to the host — so it can never read or write
   the development data. Tear down with
   `docker compose -f docker-compose.e2e.yml down -v`.
-- `docker compose -f docker-compose.e2e.yml run --rm --no-deps server pytest -q`: run the
-  backend suite against that same definition, without the database. This is what CI runs,
-  so CI cannot drift from local development.
+- `docker compose -f docker-compose.e2e.yml run --rm server pytest -q`: run the backend
+  suite against that same definition. This is what CI runs, so CI cannot drift from local
+  development. The suite uses **PostgreSQL**, on a `portfolio_test` database that
+  `tests/conftest.py` drops, recreates and migrates at each run — never the development
+  database, and never the e2e one.
 - `docker compose exec server uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`: run backend locally inside container.
 - `docker compose exec server pytest`: run backend automated tests.
 - `docker compose exec server alembic upgrade head`: apply database migrations.
