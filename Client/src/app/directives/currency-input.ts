@@ -1,5 +1,5 @@
 import { Directive, ElementRef, HostListener, forwardRef, inject } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, Validator } from '@angular/forms';
 
 const FORMATTER = new Intl.NumberFormat('pt-BR', {
   minimumFractionDigits: 2,
@@ -7,18 +7,10 @@ const FORMATTER = new Intl.NumberFormat('pt-BR', {
 });
 
 /**
- * pt-BR currency mask.
- *
- * The field DISPLAYS `1.250.000,00` and the control stores `1250000` — formatting
- * is presentational, the form still submits a number.
- *
- * Treats typing as CENTS: each digit enters from the right and the last two are
- * the fraction. That spares the user from placing the cursor between separators,
- * which is where naive masks break.
- *
- * Requires `type="text"` with `inputmode="decimal"`: a `type="number"` does not
- * accept a thousands separator in the displayed value — and, as a bonus, avoids
- * the mouse wheel changing the number.
+ * Brazilian currency input: ungrouped digits represent reais, commas separate
+ * cents, and periods group thousands. Keep the text and caret while editing;
+ * format only on blur. The form always receives a number or null.
+ * Requires type="text" and inputmode="decimal".
  */
 @Directive({
   selector: 'input[appCurrencyInput]',
@@ -28,15 +20,25 @@ const FORMATTER = new Intl.NumberFormat('pt-BR', {
       useExisting: forwardRef(() => CurrencyInput),
       multi: true,
     },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => CurrencyInput),
+      multi: true,
+    },
   ],
 })
-export class CurrencyInput implements ControlValueAccessor {
+export class CurrencyInput implements ControlValueAccessor, Validator {
   private readonly el = inject<ElementRef<HTMLInputElement>>(ElementRef);
+
+  private invalidFormat = false;
+  private value: number | null = null;
 
   private onChange: (value: number | null) => void = () => undefined;
   private onTouched: () => void = () => undefined;
 
   writeValue(value: number | null): void {
+    this.invalidFormat = false;
+    this.value = value;
     this.el.nativeElement.value = value == null ? '' : FORMATTER.format(value);
   }
 
@@ -52,33 +54,28 @@ export class CurrencyInput implements ControlValueAccessor {
     this.el.nativeElement.disabled = isDisabled;
   }
 
+  validate(): ValidationErrors | null {
+    return this.invalidFormat ? { currencyFormat: true } : null;
+  }
+
   @HostListener('input')
   onInput(): void {
-    const input = this.el.nativeElement;
-    // Each "-" flips the sign, wherever it lands: the cursor sits at the end, so
-    // a "-" typed after the number arrives last, and typing it again undoes it.
-    const isNegative = (input.value.match(/-/g)?.length ?? 0) % 2 === 1;
-    const digits = input.value.replace(/\D/g, '');
-
-    if (!digits) {
-      // Keep the sign while there is no digit yet. Clearing everything here dropped
-      // the "-" the moment it was typed, and the burn field — the only one that is
-      // usually negative — could never become negative.
-      input.value = isNegative ? '-' : '';
-      this.onChange(null);
-      return;
-    }
-
-    const value = (isNegative ? -1 : 1) * (Number(digits) / 100);
-    input.value = FORMATTER.format(value);
-    // Move the cursor to the end: with cents-based input the new digit always
-    // lands on the right, so that is where the cursor should go.
-    input.setSelectionRange(input.value.length, input.value.length);
-    this.onChange(value);
+    const raw = this.el.nativeElement.value.trim();
+    const text = raw.replace(/^R\$\s*/, '');
+    const valid = /^-?(?:\d+|\d{1,3}(?:\.\d{3})+)(?:,\d{0,2})?$/.test(text);
+    const value = valid ? Number(text.replace(/\./g, '').replace(',', '.')) : null;
+    this.invalidFormat = raw !== '' && (!valid || !Number.isFinite(value));
+    this.value = this.invalidFormat ? null : value;
+    // Set validation state before notifying Angular: optional fields must not
+    // turn malformed text into a valid null or retain a previous valid number.
+    this.onChange(this.value);
   }
 
   @HostListener('blur')
   onBlur(): void {
+    if (!this.invalidFormat) {
+      this.el.nativeElement.value = this.value == null ? '' : FORMATTER.format(this.value);
+    }
     this.onTouched();
   }
 }

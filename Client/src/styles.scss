@@ -927,6 +927,17 @@ input[type='number'] {
   }
 }
 
+// Keep sibling fields aligned when currency guidance increases a row's height.
+.form-row:has(.currency-field) {
+  align-items: start;
+}
+
+// Currency guidance wraps to three lines in narrow dialogs. Reserve that space
+// for both hints and errors, while allowing longer messages to grow naturally.
+.currency-field .mat-mdc-form-field-subscript-wrapper {
+  min-block-size: 3lh;
+}
+
 // A textarea sizes itself from its `rows`; forcing the container height here
 // detaches the floating label from the outline notch, leaving it struck through
 // by the top border. Material already handles this case — leave it alone.

@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -32,67 +32,88 @@ describe('CurrencyInput', () => {
     input = fixture.debugElement.query(By.directive(CurrencyInput)).nativeElement;
   });
 
-  it('should format what the user types as pt-BR currency', () => {
-    typeText('125000000');
-    expect(input.value).toBe('1.250.000,00');
+  it.each(['64000', '64.000', '64.000,00'])('should interpret %s as reais', (text) => {
+    typeText(text);
+    expect(host.control.value).toBe(64000);
+    expect(input.value).toBe(text);
+    input.dispatchEvent(new Event('blur'));
+    expect(input.value).toBe('64.000,00');
+    expect(host.control.touched).toBe(true);
   });
 
-  // The point of the component: the mask is for PRESENTATION only. If the control
-  // held the formatted string, the form would send "1.250.000,00" to the API.
-  it('should keep the control value numeric', () => {
-    typeText('125000000');
-    expect(host.control.value).toBe(1250000);
+  it.each([
+    ['64.000,50', 64000.5], ['64', 64], ['6,4', 6.4], ['64,', 64],
+    ['-64000', -64000], ['0', 0], ['0,01', 0.01],
+    [' R$\u00a064.000,50 ', 64000.5], ['R$ -64.000,50', -64000.5],
+  ])('should parse %s without changing its magnitude', (text, value) => {
+    typeText(text as string);
+    expect(host.control.value).toBe(value);
+    expect(host.control.valid).toBe(true);
   });
 
-  it('should treat the last two digits as cents', () => {
-    typeText('1234');
-    expect(input.value).toBe('12,34');
-    expect(host.control.value).toBe(12.34);
+  it.each(['64,000.50', '64000.50', '64,000', '6.40', '1.23.456', '64mil',
+    '64-', '--64', '-', 'R$', '64,001', '1e3', 'Infinity', '64 000'])
+  ('should preserve and reject invalid text %s', (text) => {
+    typeText('100');
+    typeText(text);
+    input.dispatchEvent(new Event('blur'));
+    expect(input.value).toBe(text);
+    expect(host.control.value).toBeNull();
+    expect(host.control.hasError('currencyFormat')).toBe(true);
   });
 
-  it('should support negative values for burn', () => {
-    typeText('-13820000');
-    expect(host.control.value).toBe(-138200);
-  });
-
-  // Regression: the "-" arrives on its own, before any digit. Clearing the field
-  // at that moment dropped the sign, and burn never became negative.
-  it('should keep the minus sign typed before any digit', () => {
+  it('should support incremental typing and recovery from incomplete grouping', () => {
+    for (const text of ['6', '64', '640', '6400', '64000']) {
+      typeText(text);
+      expect(host.control.value).toBe(Number(text));
+    }
+    typeText('64.');
+    expect(host.control.invalid).toBe(true);
+    typeText('64.000');
+    expect(host.control.value).toBe(64000);
+    expect(host.control.valid).toBe(true);
     typeText('-');
     expect(input.value).toBe('-');
-
-    typeText('-13820000');
-    expect(input.value).toBe('-138.200,00');
-    expect(host.control.value).toBe(-138200);
+    typeText('-64');
+    expect(host.control.value).toBe(-64);
   });
 
-  // Regression: the sign only counted when the text STARTED with "-". The cursor
-  // is moved to the end after every keystroke, so a "-" typed after the number
-  // landed at the end and was silently dropped — the burn was saved positive.
-  it('should make a typed number negative when "-" is typed after it', () => {
-    typeText('1234');
-    typeText('12,34-');
-    expect(input.value).toBe('-12,34');
-    expect(host.control.value).toBe(-12.34);
+  it('should preserve the caret when editing inside a value', () => {
+    host.control.setValue(64000);
+    input.value = '65.000,00';
+    input.setSelectionRange(2, 2);
+    input.dispatchEvent(new Event('input'));
+    expect(input.selectionStart).toBe(2);
+    expect(host.control.value).toBe(65000);
   });
 
-  it('should toggle back to positive when "-" is typed again', () => {
-    typeText('-1234');
-    typeText('-12,34-');
-    expect(input.value).toBe('12,34');
-    expect(host.control.value).toBe(12.34);
-  });
-
-  it('should clear to null when emptied', () => {
-    typeText('1234');
+  it('should allow selection replacement and deletion', () => {
+    host.control.setValue(64000);
+    input.select();
+    typeText('25,5');
+    expect(host.control.value).toBe(25.5);
+    typeText('25,');
+    expect(host.control.value).toBe(25);
     typeText('');
-    expect(input.value).toBe('');
     expect(host.control.value).toBeNull();
+    expect(host.control.valid).toBe(true);
   });
 
-  it('should format a value written by the form', () => {
+  it('should clear invalid state on reset or programmatic update', () => {
+    typeText('bad');
     host.control.setValue(980000);
-    fixture.detectChanges();
     expect(input.value).toBe('980.000,00');
+    expect(host.control.valid).toBe(true);
+    typeText('bad');
+    host.control.reset();
+    expect(input.value).toBe('');
+    expect(host.control.valid).toBe(true);
+  });
+
+  it('should propagate disabled state', () => {
+    host.control.disable();
+    expect(input.disabled).toBe(true);
+    host.control.enable();
+    expect(input.disabled).toBe(false);
   });
 });

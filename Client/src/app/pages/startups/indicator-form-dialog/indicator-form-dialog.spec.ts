@@ -138,6 +138,20 @@ describe('IndicatorFormDialog', () => {
     fixture.detectChanges();
   });
 
+  it('blocks invalid currency and returns corrected input in reais', () => {
+    dialogRefSpy.close.mockClear();
+    component.form.patchValue({ month: 2, year: 2026 });
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('[formControlName="ebitda_burn"]');
+    input.value = '64,000.50';
+    input.dispatchEvent(new Event('input'));
+    component.onSubmit();
+    expect(dialogRefSpy.close).not.toHaveBeenCalled();
+    input.value = '-64.000';
+    input.dispatchEvent(new Event('input'));
+    component.onSubmit();
+    expect(dialogRefSpy.close).toHaveBeenCalledWith(expect.objectContaining({ ebitda_burn: -64000 }));
+  });
+
   it('should have default month and year', () => {
     const now = new Date();
     expect(component.form.value.month).toBe(now.getMonth() + 1);

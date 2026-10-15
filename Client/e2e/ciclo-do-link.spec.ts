@@ -44,7 +44,8 @@ test.describe('ciclo do link de indicador', () => {
     await expect(paginaPublica.getByText('Comentários do fundo')).toHaveCount(0);
 
     // --- 3. A investida preenche e envia ----------------------------------
-    await paginaPublica.getByLabel('Receita do mês').fill('4210050');
+    await paginaPublica.getByLabel('Receita do mês').fill('42.100,50');
+    await paginaPublica.getByLabel('Saldo em caixa').fill('64000');
     await paginaPublica.getByLabel('Headcount').fill('33');
     await paginaPublica
       .getByLabel('Destaques do mês')
@@ -52,6 +53,9 @@ test.describe('ciclo do link de indicador', () => {
     await paginaPublica.getByRole('button', { name: /Enviar/ }).click();
 
     await expect(paginaPublica.getByText('Relatório enviado')).toBeVisible();
+    await paginaPublica.goto(caminho);
+    await expect(paginaPublica.getByLabel('Receita do mês')).toHaveValue('42.100,50');
+    await expect(paginaPublica.getByLabel('Saldo em caixa')).toHaveValue('64.000,00');
     await contextoAnonimo.close();
 
     // --- 4. O dado chega na tabela do fundo -------------------------------
@@ -60,7 +64,7 @@ test.describe('ciclo do link de indicador', () => {
       name: new RegExp(`${CENARIO.periodo.rotulo}/${CENARIO.periodo.ano}`),
     });
     await expect(linhaDoPeriodo).toBeVisible();
-    // A máscara pt-BR: 4210050 centavos viram R$ 42.100,50.
+    // Brazilian input preserves the amount through submission and persistence.
     await expect(linhaDoPeriodo).toContainText('42.100,50');
     await expect(linhaDoPeriodo).toContainText('33');
   });

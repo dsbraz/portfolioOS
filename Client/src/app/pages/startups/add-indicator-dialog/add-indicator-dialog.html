@@ -72,7 +72,7 @@
           <div class="form-row">
             <div class="field">
               <label class="field-label" for="add-total_revenue">Receita do mês</label>
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" class="currency-field" subscriptSizing="dynamic">
                 <input
                   id="add-total_revenue"
                   matInput
@@ -81,6 +81,10 @@
                   appCurrencyInput
                   formControlName="total_revenue"
                 />
+                <mat-hint>Informe em reais. Ex.: 64000 ou 64.000,00.</mat-hint>
+                @if (form.get('reported.total_revenue')?.hasError('currencyFormat')) {
+                  <mat-error>Use o formato brasileiro, por exemplo: 64.000,50.</mat-error>
+                }
                 <span matTextPrefix class="field-affix">R$&nbsp;</span>
                 @if (form.get('reported.total_revenue')?.hasError('min') || form.get('reported.total_revenue')?.hasError('max')) {
                   <mat-error>Valor fora do limite permitido.</mat-error>
@@ -126,7 +130,7 @@
             </div>
             <div class="field">
               <label class="field-label" for="add-cash_balance">Saldo em caixa</label>
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" class="currency-field" subscriptSizing="dynamic">
                 <input
                   id="add-cash_balance"
                   matInput
@@ -135,6 +139,10 @@
                   appCurrencyInput
                   formControlName="cash_balance"
                 />
+                <mat-hint>Informe em reais. Ex.: 64000 ou 64.000,00.</mat-hint>
+                @if (form.get('reported.cash_balance')?.hasError('currencyFormat')) {
+                  <mat-error>Use o formato brasileiro, por exemplo: 64.000,50.</mat-error>
+                }
                 <span matTextPrefix class="field-affix">R$&nbsp;</span>
                 @if (form.get('reported.cash_balance')?.hasError('min') || form.get('reported.cash_balance')?.hasError('max')) {
                   <mat-error>Valor fora do limite permitido.</mat-error>
@@ -161,7 +169,7 @@
             </div>
             <div class="field">
               <label class="field-label" for="add-ebitda_burn">Burn / EBITDA</label>
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" class="currency-field" subscriptSizing="dynamic">
                 <input
                   id="add-ebitda_burn"
                   matInput
@@ -170,6 +178,10 @@
                   appCurrencyInput
                   formControlName="ebitda_burn"
                 />
+                <mat-hint>Informe em reais. Ex.: 64000 ou 64.000,00. Negativo para burn, positivo para EBITDA.</mat-hint>
+                @if (form.get('reported.ebitda_burn')?.hasError('currencyFormat')) {
+                  <mat-error>Use o formato brasileiro, por exemplo: 64.000,50.</mat-error>
+                }
                 <span matTextPrefix class="field-affix">R$&nbsp;</span>
                 @if (form.get('reported.ebitda_burn')?.hasError('min') || form.get('reported.ebitda_burn')?.hasError('max')) {
                   <mat-error>Valor fora do limite permitido.</mat-error>

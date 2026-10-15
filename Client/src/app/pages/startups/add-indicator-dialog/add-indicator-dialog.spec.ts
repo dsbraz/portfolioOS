@@ -81,6 +81,20 @@ describe('AddIndicatorDialog', () => {
     vi.clearAllMocks();
   });
 
+  it('blocks invalid currency and sends corrected input in reais', async () => {
+    indicatorService.create.mockReturnValue(of({} as MonthlyIndicator));
+    const el = await render();
+    const input = el.querySelector<HTMLInputElement>('[formControlName="total_revenue"]')!;
+    input.value = '64,000.50';
+    input.dispatchEvent(new Event('input'));
+    component.submit();
+    expect(indicatorService.create).not.toHaveBeenCalled();
+    input.value = '64000';
+    input.dispatchEvent(new Event('input'));
+    component.submit();
+    expect(indicatorService.create.mock.calls[0][1].total_revenue).toBe(64000);
+  });
+
   it('defaults the period to the previous month', async () => {
     await render();
     expect(component.form.getRawValue().month).toBe(previousMonth().month);

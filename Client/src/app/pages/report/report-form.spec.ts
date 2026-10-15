@@ -46,6 +46,35 @@ describe('ReportForm', () => {
 
   afterEach(() => httpMock.verify());
 
+  it.each(['64000', '64.000', '64.000,00'])('submits %s from the input without requiring blur', (text) => {
+    fixture.detectChanges();
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('[formControlName="total_revenue"]');
+    input.value = text;
+    input.dispatchEvent(new Event('input'));
+    fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    const req = httpMock.expectOne('/api/monthly-indicator/test-token');
+    expect(req.request.body.total_revenue).toBe(64000);
+    req.flush(null);
+  });
+
+  it('blocks invalid optional currency and submits after correction', () => {
+    fixture.detectChanges();
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('[formControlName="cash_balance"]');
+    input.value = '64,000.50';
+    input.dispatchEvent(new Event('input'));
+    component.onSubmit();
+    fixture.detectChanges();
+    httpMock.expectNone('/api/monthly-indicator/test-token');
+    expect(input.value).toBe('64,000.50');
+    expect(fixture.nativeElement.textContent).toContain('Use o formato brasileiro');
+    input.value = '64.000,50';
+    input.dispatchEvent(new Event('input'));
+    component.onSubmit();
+    const req = httpMock.expectOne('/api/monthly-indicator/test-token');
+    expect(req.request.body.cash_balance).toBe(64000.5);
+    req.flush(null);
+  });
+
   it('should have a valid form when all fields are empty (all optional)', () => {
     expect(component.form.valid).toBe(true);
   });
