@@ -58,9 +58,23 @@ export interface TokenListDialogData {
             Links de relatório já gerados, por período, com os envios automáticos por
             e-mail.
           </caption>
+          <!-- The action sits under its period instead of in a column of its own:
+               beside the e-mail history, a third column pushed it out of a
+               phone-width dialog. -->
           <ng-container matColumnDef="period">
             <th mat-header-cell *matHeaderCellDef scope="col">Período</th>
-            <td mat-cell *matCellDef="let t">{{ formatPeriod(t.month, t.year) }}</td>
+            <td mat-cell *matCellDef="let t">
+              <span class="period-label">{{ formatPeriod(t.month, t.year) }}</span>
+              <button
+                mat-stroked-button
+                type="button"
+                [attr.aria-label]="'Abrir link de ' + formatPeriod(t.month, t.year)"
+                (click)="openPanel(t)"
+              >
+                <mat-icon aria-hidden="true">link</mat-icon>
+                Abrir
+              </button>
+            </td>
           </ng-container>
           <ng-container matColumnDef="dispatches">
             <th mat-header-cell *matHeaderCellDef scope="col">Envio automático</th>
@@ -105,22 +119,6 @@ export interface TokenListDialogData {
               }
             </td>
           </ng-container>
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef scope="col">
-              <span class="visually-hidden">Ações</span>
-            </th>
-            <td mat-cell *matCellDef="let t">
-              <button
-                mat-stroked-button
-                type="button"
-                [attr.aria-label]="'Abrir link de ' + formatPeriod(t.month, t.year)"
-                (click)="openPanel(t)"
-              >
-                <mat-icon aria-hidden="true">link</mat-icon>
-                Abrir
-              </button>
-            </td>
-          </ng-container>
           <tr mat-header-row *matHeaderRowDef="columns"></tr>
           <tr mat-row *matRowDef="let row; columns: columns"></tr>
         </table>
@@ -139,6 +137,14 @@ export interface TokenListDialogData {
     .token-table {
       width: 100%;
     }
+    .token-table td {
+      vertical-align: top;
+      padding-block: var(--space-sm);
+    }
+    .period-label {
+      display: block;
+      margin-block-end: var(--space-xs);
+    }
     .muted {
       color: var(--color-text-muted);
     }
@@ -150,6 +156,9 @@ export interface TokenListDialogData {
       flex-direction: column;
       gap: var(--space-xs);
       font-size: 0.875rem;
+      // An address has no break opportunity; at phone width it would run past
+      // the dialog's edge.
+      overflow-wrap: anywhere;
     }
     .history-warning {
       display: flex;
@@ -174,7 +183,7 @@ export class TokenListDialog {
   readonly data = inject<TokenListDialogData>(MAT_DIALOG_DATA);
   private readonly dialog = inject(MatDialog);
   readonly formatPeriod = formatPeriod;
-  readonly columns = ['period', 'dispatches', 'actions'];
+  readonly columns = ['period', 'dispatches'];
   readonly kindLabels = DISPATCH_KIND_LABELS;
   readonly status = dispatchStatus;
   readonly historyUnavailable = this.data.dispatches === null;
