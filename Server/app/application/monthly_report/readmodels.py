@@ -16,8 +16,9 @@ class MonthlyReportRecipient:
 class MonthlyReportPlan:
     """What one startup's monthly send needs, read once and committed.
 
-    Plain values, not ORM rows: each recipient is then sent in a transaction of
-    its own, and a plan must not depend on the session that built it.
+    Plain values, not ORM rows: each recipient is then claimed and recorded in
+    transactions of its own, and a plan must not depend on the session that
+    built it.
     """
 
     startup_id: uuid.UUID

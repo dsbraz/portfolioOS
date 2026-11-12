@@ -5,10 +5,15 @@ Run by a Cloud Run Job on a Cloud Scheduler trigger (see DEPLOY.md):
     python -m scripts.dispatch_monthly_report --kind initial    # day 10
     python -m scripts.dispatch_monthly_report --kind reminder   # day 20
 
-Each startup is planned in its own transaction and each recipient is sent in
-another, committed right after the e-mail leaves: a failure can neither undo
-the record of a mail already delivered nor stop the startups after it. A rerun
-skips every send already recorded and retries the ones that failed.
+Each startup is planned in its own transaction. Each recipient takes three
+steps: the send is claimed and committed, the e-mail leaves outside any
+transaction, and the outcome is recorded in another. A failure can stop
+neither the recipients nor the startups after it.
+
+A rerun retries the sends that failed and skips the delivered ones. A send
+whose outcome could not be recorded stays unconfirmed: it is reported as
+NÃO CONFIRMADO, shown as such in the history, and never resent by the job —
+a duplicate in an executive's inbox is worse than a gap the operator can see.
 
 `EMAIL_BACKEND` defaults to `console`, which prints instead of sending and is
 accepted only in local environments: it records the sends, and anywhere real it
@@ -18,9 +23,13 @@ would mark as delivered mail that never left.
 import argparse
 import asyncio
 import traceback
+import uuid
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 
+from app.application.monthly_report.claim_monthly_report_dispatch import (
+    ClaimMonthlyReportDispatch,
+)
 from app.application.monthly_report.list_startups_for_monthly_report import (
     ListStartupsForMonthlyReport,
 )
@@ -28,6 +37,9 @@ from app.application.monthly_report.plan_monthly_report import PlanMonthlyReport
 from app.application.monthly_report.readmodels import (
     MonthlyReportPlan,
     MonthlyReportRecipient,
+)
+from app.application.monthly_report.record_monthly_report_outcome import (
+    RecordMonthlyReportOutcome,
 )
 from app.application.monthly_report.send_monthly_report import SendMonthlyReport
 from app.config import LOCAL_ENVIRONMENTS, Settings, settings
@@ -81,6 +93,41 @@ PlanOne = Callable[[Startup], Awaitable[MonthlyReportPlan | None]]
 SendOne = Callable[
     [MonthlyReportPlan, MonthlyReportRecipient], Awaitable[MonthlyReportDispatch | None]
 ]
+Claim = Callable[
+    [MonthlyReportPlan, MonthlyReportRecipient], Awaitable[MonthlyReportDispatch | None]
+]
+Deliver = Callable[
+    [MonthlyReportPlan, MonthlyReportRecipient, DispatchKind], Awaitable[str | None]
+]
+Record = Callable[[uuid.UUID, str | None], Awaitable[MonthlyReportDispatch | None]]
+
+
+class OutcomeNotRecorded(Exception):
+    """The e-mail may have left, but the record still says unconfirmed."""
+
+
+def make_send_one(claim: Claim, deliver: Deliver, record: Record) -> SendOne:
+    """Claim, send, record — each step on its own, so none can undo another."""
+
+    async def send_one(
+        plan: MonthlyReportPlan, recipient: MonthlyReportRecipient
+    ) -> MonthlyReportDispatch | None:
+        dispatch = await claim(plan, recipient)
+        if dispatch is None:
+            return None
+        try:
+            error = await deliver(plan, recipient, dispatch.kind)
+        except Exception as exc:
+            # Raised before the relay took the message (the adapter turns its
+            # own failures into a returned error): safe to retry next run.
+            traceback.print_exc()
+            error = f"Erro inesperado: {exc.__class__.__name__}"
+        try:
+            return await record(dispatch.id, error)
+        except Exception as exc:
+            raise OutcomeNotRecorded() from exc
+
+    return send_one
 
 
 async def dispatch_all(
@@ -88,8 +135,8 @@ async def dispatch_all(
 ) -> DispatchSummary:
     """Visit every startup; an error is reported and the sweep goes on.
 
-    `plan_one` and `send_one` each run in a transaction of their own, so an
-    unexpected exception here loses only the step that raised it.
+    `plan_one` and each step of `send_one` run in a transaction of their own,
+    so an unexpected exception here loses only the step that raised it.
     """
     summary = DispatchSummary(startups=len(startups))
     for startup in startups:
@@ -106,6 +153,14 @@ async def dispatch_all(
         for recipient in plan.recipients:
             try:
                 record = await send_one(plan, recipient)
+            except OutcomeNotRecorded:
+                summary.failed += 1
+                print(
+                    f"NÃO CONFIRMADO {startup.name} → {recipient.email}: "
+                    "o e-mail pode ter saído, mas o resultado não foi registrado"
+                )
+                traceback.print_exc()
+                continue
             except Exception:
                 summary.failed += 1
                 print(f"FALHA {startup.name} → {recipient.email}: erro inesperado")
@@ -133,16 +188,26 @@ async def main(kind: DispatchKind) -> None:
                 ExecutiveRepository(session), MonthlyIndicatorRepository(session)
             ).execute(startup, kind)
 
-    async def send_one(
+    async def claim(
         plan: MonthlyReportPlan, recipient: MonthlyReportRecipient
     ) -> MonthlyReportDispatch | None:
         async with async_session() as session, session.begin():
-            return await SendMonthlyReport(
-                MonthlyReportDispatchRepository(session),
-                sender,
-                settings.app_base_url,
-                settings.email_signature,
+            return await ClaimMonthlyReportDispatch(
+                MonthlyReportDispatchRepository(session)
             ).execute(plan, recipient)
+
+    async def record(
+        dispatch_id: uuid.UUID, error: str | None
+    ) -> MonthlyReportDispatch | None:
+        async with async_session() as session, session.begin():
+            return await RecordMonthlyReportOutcome(
+                MonthlyReportDispatchRepository(session)
+            ).execute(dispatch_id, error)
+
+    deliver = SendMonthlyReport(
+        sender, settings.app_base_url, settings.email_signature
+    ).execute
+    send_one = make_send_one(claim, deliver, record)
 
     try:
         async with async_session() as session:
@@ -151,6 +216,7 @@ async def main(kind: DispatchKind) -> None:
             ).execute()
         summary = await dispatch_all(startups, plan_one, send_one)
     finally:
+        await sender.close()
         await engine.dispose()
 
     print(

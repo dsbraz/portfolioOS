@@ -12,7 +12,11 @@ from app.domain.models.monthly_report_dispatch import DispatchKind
 from app.domain.models.period import Period
 from app.infrastructure.console_email_sender import ConsoleEmailSender
 from app.infrastructure.smtp_email_sender import SmtpEmailSender
-from scripts.dispatch_monthly_report import build_email_sender, dispatch_all
+from scripts.dispatch_monthly_report import (
+    build_email_sender,
+    dispatch_all,
+    make_send_one,
+)
 
 
 def _settings(**overrides) -> Settings:
@@ -101,3 +105,100 @@ async def test_delivery_failures_and_skips_are_counted_apart():
     summary = await dispatch_all([startup], plan_one, send_one)
 
     assert (summary.sent, summary.failed) == (1, 1)
+
+
+def _claimed(kind=DispatchKind.INITIAL):
+    return MagicMock(id=uuid.uuid4(), kind=kind)
+
+
+@pytest.mark.asyncio
+async def test_send_one_claims_sends_the_claimed_kind_and_records_the_outcome():
+    startup = _startup("Payface")
+    plan = _plan_for(startup, "ana@x.com")
+    claimed = _claimed(DispatchKind.INITIAL)
+    calls = []
+
+    async def claim(p, r):
+        calls.append("claim")
+        return claimed
+
+    async def deliver(p, r, kind):
+        calls.append(("deliver", kind))
+        return None
+
+    async def record(dispatch_id, error):
+        calls.append(("record", dispatch_id, error))
+        return MagicMock(error=None)
+
+    await make_send_one(claim, deliver, record)(plan, plan.recipients[0])
+
+    assert calls == [
+        "claim",
+        ("deliver", DispatchKind.INITIAL),
+        ("record", claimed.id, None),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_nothing_claimed_sends_nothing():
+    deliver = MagicMock()
+
+    async def claim(p, r):
+        return None
+
+    send_one = make_send_one(claim, deliver, MagicMock())
+    plan = _plan_for(_startup("Payface"), "ana@x.com")
+
+    assert await send_one(plan, plan.recipients[0]) is None
+    deliver.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_an_unexpected_error_before_the_relay_is_recorded_as_a_failure():
+    recorded = []
+
+    async def claim(p, r):
+        return _claimed()
+
+    async def deliver(p, r, kind):
+        raise KeyError("template")
+
+    async def record(dispatch_id, error):
+        recorded.append(error)
+        return MagicMock(error=error, recipient_email="ana@x.com", kind=DispatchKind.INITIAL)
+
+    plan = _plan_for(_startup("Payface"), "ana@x.com")
+    await make_send_one(claim, deliver, record)(plan, plan.recipients[0])
+
+    # Recorded as failed, so the next run retries it instead of stranding it.
+    assert recorded == ["Erro inesperado: KeyError"]
+
+
+@pytest.mark.asyncio
+async def test_losing_the_outcome_after_sending_is_reported_as_unconfirmed(capsys):
+    # The crash between claim and outcome: the mail left, the record did not.
+    startup = _startup("Payface")
+    sent = []
+
+    async def plan_one(_):
+        return _plan_for(startup, "ana@x.com", "bruno@x.com")
+
+    async def claim(p, r):
+        return _claimed()
+
+    async def deliver(p, r, kind):
+        sent.append(r.email)
+        return None
+
+    async def record(dispatch_id, error):
+        if len(sent) == 1:
+            raise ConnectionError("banco caiu")
+        return MagicMock(error=None, recipient_email="bruno@x.com", kind=DispatchKind.INITIAL)
+
+    summary = await dispatch_all(
+        [startup], plan_one, make_send_one(claim, deliver, record)
+    )
+
+    assert sent == ["ana@x.com", "bruno@x.com"]
+    assert (summary.sent, summary.failed) == (1, 1)
+    assert "NÃO CONFIRMADO Payface → ana@x.com" in capsys.readouterr().out

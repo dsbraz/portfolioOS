@@ -22,7 +22,7 @@ def _sender(**overrides):
 @pytest.mark.asyncio
 async def test_sends_over_starttls_with_login():
     with patch("app.infrastructure.smtp_email_sender.smtplib.SMTP") as smtp_class:
-        smtp = smtp_class.return_value.__enter__.return_value
+        smtp = smtp_class.return_value
 
         await _sender().send("ana@payface.com", "Assunto", "Corpo")
 
@@ -39,23 +39,63 @@ async def test_sends_over_starttls_with_login():
 @pytest.mark.asyncio
 async def test_relay_without_authentication_skips_login():
     with patch("app.infrastructure.smtp_email_sender.smtplib.SMTP") as smtp_class:
-        smtp = smtp_class.return_value.__enter__.return_value
-
         await _sender(username=None, password=None).send("a@x.com", "s", "b")
 
-    smtp.login.assert_not_called()
+    smtp_class.return_value.login.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_one_connection_and_one_login_serve_the_whole_run():
+    with patch("app.infrastructure.smtp_email_sender.smtplib.SMTP") as smtp_class:
+        smtp = smtp_class.return_value
+        sender = _sender()
+
+        await sender.send("a@x.com", "s", "b")
+        await sender.send("b@x.com", "s", "b")
+        await sender.close()
+
+    smtp_class.assert_called_once()
+    smtp.login.assert_called_once()
+    assert smtp.send_message.call_count == 2
+    smtp.quit.assert_called_once()
 
 
 @pytest.mark.parametrize(
     "failure",
-    [smtplib.SMTPRecipientsRefused({"a@x.com": (550, b"no")}), ConnectionRefusedError()],
+    [smtplib.SMTPRecipientsRefused({"a@x.com": (550, b"no")}), ConnectionResetError()],
 )
 @pytest.mark.asyncio
-async def test_transport_failures_become_delivery_errors(failure):
-    with patch("app.infrastructure.smtp_email_sender.smtplib.SMTP") as smtp_class:
-        smtp_class.return_value.__enter__.return_value.send_message = MagicMock(
-            side_effect=failure
-        )
+async def test_a_failure_drops_the_connection_and_the_next_send_reconnects(failure):
+    first, second = MagicMock(), MagicMock()
+    first.send_message.side_effect = failure
+    with patch(
+        "app.infrastructure.smtp_email_sender.smtplib.SMTP",
+        side_effect=[first, second],
+    ) as smtp_class:
+        sender = _sender()
 
         with pytest.raises(EmailDeliveryError):
+            await sender.send("a@x.com", "s", "b")
+        await sender.send("b@x.com", "s", "b")
+
+    assert smtp_class.call_count == 2
+    first.quit.assert_called_once()
+    second.send_message.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_an_unreachable_relay_is_a_delivery_error():
+    with patch(
+        "app.infrastructure.smtp_email_sender.smtplib.SMTP",
+        side_effect=ConnectionRefusedError(),
+    ):
+        with pytest.raises(EmailDeliveryError):
             await _sender().send("a@x.com", "s", "b")
+
+
+@pytest.mark.asyncio
+async def test_close_without_a_connection_does_nothing():
+    with patch("app.infrastructure.smtp_email_sender.smtplib.SMTP") as smtp_class:
+        await _sender().close()
+
+    smtp_class.assert_not_called()

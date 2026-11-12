@@ -123,11 +123,12 @@ class MonthlyReportDispatchRepository(Protocol):
     async def find(
         self,
         startup_id: uuid.UUID,
-        executive_id: uuid.UUID | None,
+        recipient_email: str,
         month: int,
         year: int,
         kind: DispatchKind,
     ) -> MonthlyReportDispatch | None: ...
+    async def get_by_id(self, dispatch_id: uuid.UUID) -> MonthlyReportDispatch | None: ...
     async def update(self, dispatch: MonthlyReportDispatch) -> MonthlyReportDispatch: ...
     async def get_all_by_startup(
         self, startup_id: uuid.UUID

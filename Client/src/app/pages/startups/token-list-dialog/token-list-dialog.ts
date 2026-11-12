@@ -10,6 +10,7 @@ import { Executive } from '../../../models/executive.model';
 import { MonthlyIndicatorToken } from '../../../models/monthly-indicator-token.model';
 import {
   DISPATCH_KIND_LABELS,
+  dispatchStatus,
   MonthlyReportDispatch,
 } from '../../../models/monthly-report.model';
 import { formatPeriod } from '../../../models/formatters';
@@ -17,8 +18,12 @@ import { TokenPanelDialog, TokenPanelDialogData } from '../token-panel-dialog/to
 
 export interface TokenListDialogData {
   tokens: MonthlyIndicatorToken[];
-  /** Automatic e-mails of these links, sent by the monthly job. */
-  dispatches: MonthlyReportDispatch[];
+  /**
+   * Automatic e-mails of these links, sent by the monthly job. `null` when the
+   * history could not be loaded — never shown as "none", or the operator would
+   * resend by hand what the job already sent.
+   */
+  dispatches: MonthlyReportDispatch[] | null;
   executives: Executive[];
   startupName: string;
 }
@@ -39,6 +44,15 @@ export interface TokenListDialogData {
       @if (data.tokens.length === 0) {
         <p class="empty-text">Nenhum link gerado ainda.</p>
       } @else {
+        @if (historyUnavailable) {
+          <p class="history-warning" role="status">
+            <mat-icon aria-hidden="true">warning</mat-icon>
+            <span>
+              Não foi possível carregar o histórico de envios automáticos. Antes de enviar um
+              link à mão, recarregue a página para conferir se o e-mail já saiu.
+            </span>
+          </p>
+        }
         <table mat-table [dataSource]="data.tokens" class="token-table">
           <caption class="visually-hidden">
             Links de relatório já gerados, por período, com os envios automáticos por
@@ -52,19 +66,40 @@ export interface TokenListDialogData {
             <th mat-header-cell *matHeaderCellDef scope="col">Envio automático</th>
             <td mat-cell *matCellDef="let t">
               @let sent = dispatchesFor(t);
-              @if (sent.length === 0) {
+              @if (historyUnavailable) {
+                <span class="muted">Indisponível</span>
+              } @else if (sent.length === 0) {
                 <span class="muted">Nenhum</span>
               } @else {
                 <ul class="dispatch-list" role="list">
                   @for (d of sent; track d.id) {
-                    <li>
-                      {{ kindLabels[d.kind] }} em {{ d.sent_at | date: 'dd/MM' }} para
-                      {{ d.recipient_email }}
-                      @if (d.error) {
-                        <span class="pill pill--danger">Falhou</span>
-                        <span class="dispatch-error">{{ d.error }}</span>
+                    @switch (status(d)) {
+                      @case ('delivered') {
+                        <li>
+                          {{ kindLabels[d.kind] }} em {{ d.sent_at | date: 'dd/MM' }} para
+                          {{ d.recipient_email }}
+                        </li>
                       }
-                    </li>
+                      @case ('failed') {
+                        <li>
+                          {{ kindLabels[d.kind] }}: tentativa em
+                          {{ d.attempted_at | date: 'dd/MM' }} para {{ d.recipient_email }}
+                          <span class="pill pill--danger">Falhou</span>
+                          <span class="dispatch-detail">{{ d.error }}</span>
+                        </li>
+                      }
+                      @case ('unconfirmed') {
+                        <li>
+                          {{ kindLabels[d.kind] }}: tentativa em
+                          {{ d.attempted_at | date: 'dd/MM' }} para {{ d.recipient_email }}
+                          <span class="pill pill--warn">Não confirmado</span>
+                          <span class="dispatch-detail">
+                            O e-mail pode ter saído. Confirme com o destinatário antes de
+                            enviar de novo.
+                          </span>
+                        </li>
+                      }
+                    }
                   }
                 </ul>
               }
@@ -116,7 +151,18 @@ export interface TokenListDialogData {
       gap: var(--space-xs);
       font-size: 0.875rem;
     }
-    .dispatch-error {
+    .history-warning {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-xs);
+      margin: 0 0 var(--space-sm);
+      font-size: 0.875rem;
+    }
+    .history-warning mat-icon {
+      flex-shrink: 0;
+      color: var(--color-warn);
+    }
+    .dispatch-detail {
       display: block;
       color: var(--color-text-muted);
       font-size: 0.8125rem;
@@ -130,6 +176,8 @@ export class TokenListDialog {
   readonly formatPeriod = formatPeriod;
   readonly columns = ['period', 'dispatches', 'actions'];
   readonly kindLabels = DISPATCH_KIND_LABELS;
+  readonly status = dispatchStatus;
+  readonly historyUnavailable = this.data.dispatches === null;
 
   /** Grouped once by period; the template looks each row up instead of filtering. */
   private readonly dispatchesByPeriod = (this.data.dispatches ?? []).reduce(

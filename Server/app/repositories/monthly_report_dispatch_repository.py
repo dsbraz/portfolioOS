@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.models.monthly_report_dispatch import (
@@ -17,19 +17,25 @@ class MonthlyReportDispatchRepository:
     async def get_or_create(
         self, dispatch: MonthlyReportDispatch
     ) -> tuple[MonthlyReportDispatch, bool]:
-        """The stored send for this recipient, period and kind, or `dispatch` inserted."""
+        """The stored send for this address, period and kind, or `dispatch` inserted."""
         return await get_or_insert(
             self._session,
             dispatch,
             lambda: self.find(
                 dispatch.startup_id,
-                dispatch.executive_id,
+                dispatch.recipient_email,
                 dispatch.month,
                 dispatch.year,
                 dispatch.kind,
             ),
             f"Ja existe envio {dispatch.kind.value} para {dispatch.month}/{dispatch.year}",
         )
+
+    async def get_by_id(self, dispatch_id: uuid.UUID) -> MonthlyReportDispatch | None:
+        result = await self._session.execute(
+            select(MonthlyReportDispatch).where(MonthlyReportDispatch.id == dispatch_id)
+        )
+        return result.scalar_one_or_none()
 
     async def update(self, dispatch: MonthlyReportDispatch) -> MonthlyReportDispatch:
         await self._session.flush()
@@ -39,28 +45,23 @@ class MonthlyReportDispatchRepository:
     async def get_all_by_startup(
         self, startup_id: uuid.UUID
     ) -> tuple[list[MonthlyReportDispatch], int]:
-        count_result = await self._session.execute(
-            select(func.count())
-            .select_from(MonthlyReportDispatch)
-            .where(MonthlyReportDispatch.startup_id == startup_id)
-        )
-        total = count_result.scalar_one()
-
+        # Unpaginated: the history of one startup is a few rows a month.
         result = await self._session.execute(
             select(MonthlyReportDispatch)
             .where(MonthlyReportDispatch.startup_id == startup_id)
             .order_by(
                 MonthlyReportDispatch.year.desc(),
                 MonthlyReportDispatch.month.desc(),
-                MonthlyReportDispatch.sent_at.desc(),
+                MonthlyReportDispatch.attempted_at.desc(),
             )
         )
-        return list(result.scalars().all()), total
+        items = list(result.scalars().all())
+        return items, len(items)
 
     async def find(
         self,
         startup_id: uuid.UUID,
-        executive_id: uuid.UUID | None,
+        recipient_email: str,
         month: int,
         year: int,
         kind: DispatchKind,
@@ -68,7 +69,7 @@ class MonthlyReportDispatchRepository:
         result = await self._session.execute(
             select(MonthlyReportDispatch).where(
                 MonthlyReportDispatch.startup_id == startup_id,
-                MonthlyReportDispatch.executive_id == executive_id,
+                MonthlyReportDispatch.recipient_email == recipient_email,
                 MonthlyReportDispatch.month == month,
                 MonthlyReportDispatch.year == year,
                 MonthlyReportDispatch.kind == kind,

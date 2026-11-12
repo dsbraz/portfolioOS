@@ -21,7 +21,7 @@ describe('TokenListDialog', () => {
 
   async function render(
     tokens: MonthlyIndicatorToken[],
-    dispatches: MonthlyReportDispatch[] = [],
+    dispatches: MonthlyReportDispatch[] | null = [],
   ): Promise<HTMLElement> {
     await TestBed.configureTestingModule({
       imports: [TokenListDialog],
@@ -47,34 +47,62 @@ describe('TokenListDialog', () => {
     dialogSpy.open.mockClear();
   });
 
-  it('should show the automatic e-mails of each period, failures in text', async () => {
-    const dispatch = (
-      month: number,
-      kind: 'initial' | 'reminder',
-      error: string | null = null,
-    ): MonthlyReportDispatch => ({
-      id: `d${month}${kind}`,
-      startup_id: 's1',
-      executive_id: 'e1',
-      recipient_email: 'ana@payface.com',
-      month,
-      year: 2026,
-      kind,
-      error,
-      sent_at: `2026-0${month + 1}-05T12:00:00Z`,
-    });
+  const dispatch = (
+    month: number,
+    kind: 'initial' | 'reminder',
+    outcome: { sent?: boolean; error?: string } = { sent: true },
+  ): MonthlyReportDispatch => ({
+    id: `d${month}${kind}`,
+    startup_id: 's1',
+    executive_id: 'e1',
+    recipient_email: 'ana@payface.com',
+    month,
+    year: 2026,
+    kind,
+    error: outcome.error ?? null,
+    attempted_at: `2026-0${month + 1}-05T12:00:00Z`,
+    sent_at: outcome.sent ? `2026-0${month + 1}-05T12:00:04Z` : null,
+  });
 
+  const rowsOf = (element: HTMLElement) =>
+    Array.from(element.querySelectorAll('tr[mat-row], tr.mat-mdc-row'));
+
+  it('should show the automatic e-mails of each period, failures in text', async () => {
     const element = await render(
       [token(6), token(7)],
-      [dispatch(7, 'initial'), dispatch(7, 'reminder', 'SMTPRecipientsRefused')],
+      [dispatch(7, 'initial'), dispatch(7, 'reminder', { error: 'SMTPRecipientsRefused' })],
     );
-    const rows = Array.from(element.querySelectorAll('tr[mat-row], tr.mat-mdc-row'));
+    const rows = rowsOf(element);
 
     expect(rows[0].textContent).toContain('Nenhum');
     expect(rows[1].textContent).toContain('Envio em 05/08 para ana@payface.com');
-    expect(rows[1].textContent).toContain('Lembrete em');
+    expect(rows[1].textContent).toContain('Lembrete: tentativa em 05/08');
     expect(rows[1].textContent).toContain('Falhou');
     expect(rows[1].textContent).toContain('SMTPRecipientsRefused');
+  });
+
+  // The job could not record the outcome: the mail may have left. Saying so is
+  // what keeps the operator from sending a duplicate.
+  it('should say in text when a send is unconfirmed', async () => {
+    const element = await render([token(7)], [dispatch(7, 'initial', {})]);
+    const row = rowsOf(element)[0];
+
+    expect(row.textContent).toContain('Envio: tentativa em 05/08');
+    expect(row.textContent).toContain('Não confirmado');
+    expect(row.textContent).toContain('pode ter saído');
+    expect(row.textContent).not.toContain('Envio em');
+  });
+
+  // "Nenhum" would tell the operator nothing went out, and they would resend
+  // by hand what the job already sent.
+  it('should say the history is unavailable instead of showing none', async () => {
+    const element = await render([token(7)], null);
+
+    expect(element.querySelector('[role="status"]')?.textContent).toContain(
+      'Não foi possível carregar o histórico',
+    );
+    expect(rowsOf(element)[0].textContent).toContain('Indisponível');
+    expect(rowsOf(element)[0].textContent).not.toContain('Nenhum');
   });
 
   it('should name every row action by its period', async () => {

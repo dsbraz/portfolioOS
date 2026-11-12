@@ -9,9 +9,25 @@ export interface MonthlyReportDispatch {
   month: number;
   year: number;
   kind: DispatchKind;
-  /** Why the relay refused it; `null` when it went out. */
+  /** Why the relay refused it; the job retries it on its next run. */
   error: string | null;
-  sent_at: string;
+  /** When the job claimed it and tried to send. */
+  attempted_at: string;
+  /** When the relay accepted it. */
+  sent_at: string | null;
+}
+
+/**
+ * Delivered (`sent_at`), failed (`error`), or unconfirmed: the job tried but
+ * could not record the outcome, so the e-mail may or may not have left and the
+ * job will not resend it on its own.
+ */
+export type DispatchStatus = 'delivered' | 'failed' | 'unconfirmed';
+
+export function dispatchStatus(dispatch: MonthlyReportDispatch): DispatchStatus {
+  if (dispatch.sent_at != null) return 'delivered';
+  if (dispatch.error != null) return 'failed';
+  return 'unconfirmed';
 }
 
 export interface MonthlyReportDispatchListResponse {

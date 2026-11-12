@@ -7,3 +7,6 @@ class ConsoleEmailSender:
 
     async def send(self, to: str, subject: str, body: str) -> None:
         print(f"--- e-mail (não enviado) ---\nPara: {to}\nAssunto: {subject}\n\n{body}\n")
+
+    async def close(self) -> None:
+        return None

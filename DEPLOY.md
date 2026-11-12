@@ -214,14 +214,25 @@ nenhuma rota HTTP.
 
 Só recebem as startups com **Enviar o link de indicadores por e-mail todo mês**
 ligado, e só os executivos marcados como **Recebe o link mensal** que tenham
-e-mail. Cada envio é gravado logo depois que o e-mail sai, então rodar o job de
-novo pula tudo que já foi enviado. Um envio que falhou é tentado outra vez (no
-e-mail atual do cadastro), e o histórico aparece em **Links anteriores**. Um
-erro inesperado numa startup é registrado no log e o job segue para as demais.
+e-mail. Cada endereço recebe um e-mail só, mesmo que dois executivos o
+compartilhem. O histórico aparece em **Links anteriores**. Um erro inesperado
+numa startup é registrado no log e o job segue para as demais.
 
-O lembrete do dia 20 só sai para quem recebeu o e-mail do dia 10. Quem não
-recebeu (envio ligado depois, executivo marcado depois, ou envio do dia 10 com
-falha) recebe o e-mail do dia 10 no lugar do lembrete.
+Cada envio é **reservado** no banco antes de o e-mail sair e o **resultado** é
+gravado depois, em transações separadas. Rodar o job de novo é seguro: o que já
+foi entregue é pulado, e o que falhou é tentado outra vez. Se o resultado não
+puder ser gravado (o processo caiu, o banco caiu), o envio fica
+**Não confirmado**: o log mostra `NÃO CONFIRMADO`, a execução termina com
+código 1, e o job **não reenvia** esse e-mail sozinho — um e-mail repetido na
+caixa de um executivo é pior do que uma lacuna visível. Confirme com o
+destinatário; se não chegou, mande o link pelo painel. O lembrete do dia 20, se
+o mês continuar sem preenchimento, sai normalmente.
+
+O lembrete do dia 20 só sai para um endereço que recebeu o e-mail do dia 10 num
+dia anterior. Quem não recebeu (envio ligado depois, executivo marcado depois,
+e-mail trocado, ou envio do dia 10 com falha) recebe o e-mail do dia 10 no
+lugar do lembrete; rodar o job de lembrete de novo no mesmo dia não manda o
+lembrete logo em seguida.
 
 `EMAIL_BACKEND=console` só imprime e é aceito apenas com `ENVIRONMENT`
 `development` ou `local`; em qualquer outro ambiente o job se recusa a rodar.
@@ -297,9 +308,10 @@ A service account do Scheduler precisa de `roles/run.invoker` (ou
 `./deploy.sh`, atualize a imagem do job com
 `gcloud run jobs update portfolioos-monthly-report --image ... --region REGION`.
 
-Quando algum envio falha, o job termina com código 1 e a execução aparece como
-falha no console do Cloud Run. O motivo fica no log e na coluna
-**Envio automático** de **Links anteriores**.
+Quando algum envio falha ou fica não confirmado, o job termina com código 1 e a
+execução aparece como falha no console do Cloud Run. O motivo fica no log e na
+coluna **Envio automático** de **Links anteriores**. O job abre uma conexão SMTP
+só e a reaproveita para todos os destinatários.
 
 ## 9. Troubleshooting
 

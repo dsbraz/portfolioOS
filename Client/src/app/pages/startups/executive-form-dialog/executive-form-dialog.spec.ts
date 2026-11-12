@@ -74,6 +74,14 @@ describe('ExecutiveFormDialog', () => {
     );
   });
 
+  // Marked after day 10, the link only arrives with the day-20 run.
+  it('should tell when the link arrives, including for a late marking', () => {
+    const hint = (fixture.nativeElement as HTMLElement).querySelector('.toggle-field-hint');
+
+    expect(hint?.textContent).toContain('no dia 10');
+    expect(hint?.textContent).toContain('chega no dia 20');
+  });
+
   it('should refuse the monthly link without an e-mail', () => {
     dialogRefSpy.close.mockClear();
     component.form.patchValue({ name: 'Ana Souza', receives_monthly_report: true });

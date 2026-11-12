@@ -65,18 +65,19 @@ def upgrade() -> None:
         sa.Column("kind", dispatch_kind, nullable=False),
         sa.Column("error", sa.Text(), nullable=True),
         sa.Column(
-            "sent_at",
+            "attempted_at",
             sa.DateTime(timezone=True),
             server_default=sa.func.now(),
             nullable=False,
         ),
+        sa.Column("sent_at", sa.DateTime(timezone=True), nullable=True),
         sa.UniqueConstraint(
             "startup_id",
-            "executive_id",
+            "recipient_email",
             "month",
             "year",
             "kind",
-            name="uq_monthly_report_dispatch_recipient_period_kind",
+            name="uq_monthly_report_dispatch_address_period_kind",
         ),
     )
 

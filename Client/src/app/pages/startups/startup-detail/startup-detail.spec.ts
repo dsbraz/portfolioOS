@@ -147,6 +147,8 @@ describe('StartupDetail (loading and ARIA)', () => {
 
   const page = (items: unknown[]) => ({ items, total: items.length });
 
+  let mounted: ComponentFixture<StartupDetail>;
+
   /** `pending` keeps the calls from emitting, which is the loading state. */
   const mount = async (pending = false, dispatches?: Observable<unknown>) => {
     const respond = <T>(value: T) => (pending ? NEVER : of(value));
@@ -176,6 +178,7 @@ describe('StartupDetail (loading and ARIA)', () => {
     }).compileComponents();
 
     const fixture = TestBed.createComponent(StartupDetail);
+    mounted = fixture;
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();

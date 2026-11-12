@@ -93,3 +93,23 @@ async def test_skips_a_period_already_reported(use_case, indicators, kind):
 
     assert await use_case.execute(_startup(), kind) is None
     indicators.get_or_create_token.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_one_e_mail_per_inbox_with_a_normalised_address(use_case, executives):
+    # Founder and CFO share contato@: the inbox gets one request, not two.
+    executives.get_all_by_startup.return_value = (
+        [
+            _executive(name="Ana", email=" Contato@Payface.com "),
+            _executive(name="Bruno", email="contato@payface.com"),
+            _executive(name="Carla", email="carla@payface.com"),
+        ],
+        3,
+    )
+
+    plan = await use_case.execute(_startup(), DispatchKind.INITIAL)
+
+    assert [(r.name, r.email) for r in plan.recipients] == [
+        ("Ana", "contato@payface.com"),
+        ("Carla", "carla@payface.com"),
+    ]

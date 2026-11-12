@@ -177,6 +177,8 @@ def test_chase_skill_never_assumes_the_send_mode_or_the_recipient():
         "Sem canal de envio",
         "Executivos",
         "Envio automático",
+        "Não confirmado",
+        "Indisponível",
     ):
         assert label in chase, label
 

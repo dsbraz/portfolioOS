@@ -26,21 +26,29 @@ class DispatchKind(str, enum.Enum):
 
 
 class MonthlyReportDispatch(Base):
-    """One automatic e-mail of the reporting link: who, which period, which send.
+    """One automatic e-mail of the reporting link: which address, period and send.
 
     The unique key is what makes the monthly job safe to run twice: a send that
-    already went out is found, not repeated.
+    already went out is found, not repeated. It is keyed by address, not by
+    executive: two executives sharing an inbox get one e-mail, and a changed
+    address is a new recipient that has not seen the request.
+
+    The job claims the row before the e-mail leaves and records the outcome
+    after, so a row is in one of three states: delivered (`sent_at`), failed
+    (`error`, retried by the next run), or unconfirmed (neither — the outcome
+    was never recorded, so the mail may or may not have left; never resent
+    automatically).
     """
 
     __tablename__ = "monthly_report_dispatches"
     __table_args__ = (
         UniqueConstraint(
             "startup_id",
-            "executive_id",
+            "recipient_email",
             "month",
             "year",
             "kind",
-            name="uq_monthly_report_dispatch_recipient_period_kind",
+            name="uq_monthly_report_dispatch_address_period_kind",
         ),
     )
 
@@ -52,12 +60,14 @@ class MonthlyReportDispatch(Base):
         ForeignKey("startups.id", ondelete="CASCADE"),
         nullable=False,
     )
+    # Who it was addressed to, for the history; the address is the identity.
     # Kept when the executive is deleted: the history says the mail went out.
     executive_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("executives.id", ondelete="SET NULL"),
         nullable=True,
     )
+    # Trimmed and lower-cased by the plan, so the unique key compares addresses.
     recipient_email: Mapped[str] = mapped_column(String(255), nullable=False)
     month: Mapped[int] = mapped_column(SmallInteger, nullable=False)
     year: Mapped[int] = mapped_column(SmallInteger, nullable=False)
@@ -70,6 +80,19 @@ class MonthlyReportDispatch(Base):
         nullable=False,
     )
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
-    sent_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    # Both set explicitly by the job, never by `onupdate`: a retry that fails
+    # with the same error changes no column, and would keep the old date.
+    attempted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+    sent_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    @property
+    def delivered(self) -> bool:
+        return self.sent_at is not None
+
+    @property
+    def failed(self) -> bool:
+        return self.error is not None

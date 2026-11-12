@@ -4,6 +4,7 @@ from app.application.monthly_report.readmodels import (
     MonthlyReportPlan,
     MonthlyReportRecipient,
 )
+from app.domain.models.executive import Executive
 from app.domain.models.monthly_indicator_token import MonthlyIndicatorToken
 from app.domain.models.monthly_report_dispatch import DispatchKind
 from app.domain.models.period import Period
@@ -41,11 +42,7 @@ class PlanMonthlyReport:
             return None
 
         executives, _ = await self._executive_repository.get_all_by_startup(startup.id)
-        recipients = tuple(
-            MonthlyReportRecipient(e.id, e.name, e.email.strip())
-            for e in executives
-            if e.receives_monthly_report and e.email and e.email.strip()
-        )
+        recipients = _recipients(executives)
         if not recipients:
             return None
 
@@ -63,3 +60,21 @@ class PlanMonthlyReport:
             form_token=token.token,
             recipients=recipients,
         )
+
+
+def _recipients(executives: list[Executive]) -> tuple[MonthlyReportRecipient, ...]:
+    """The marked executives with an address, one per inbox.
+
+    The address is normalised once here, so the send record keyed by it treats
+    `Ana@X.com ` and `ana@x.com` as the same inbox. When two executives share
+    one, the first listed is the one greeted.
+    """
+    by_address: dict[str, MonthlyReportRecipient] = {}
+    for executive in executives:
+        address = (executive.email or "").strip().lower()
+        if executive.receives_monthly_report and address:
+            by_address.setdefault(
+                address,
+                MonthlyReportRecipient(executive.id, executive.name, address),
+            )
+    return tuple(by_address.values())

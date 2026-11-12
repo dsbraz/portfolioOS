@@ -92,7 +92,8 @@ export class StartupDetail implements OnInit {
   readonly meetings = signal<BoardMeeting[]>([]);
   readonly executives = signal<Executive[]>([]);
   readonly tokens = signal<MonthlyIndicatorToken[]>([]);
-  readonly dispatches = signal<MonthlyReportDispatch[]>([]);
+  /** `null` when the history failed to load: unknown, not empty. */
+  readonly dispatches = signal<MonthlyReportDispatch[] | null>([]);
   readonly monthlyReportDays = MONTHLY_REPORT_DAYS;
   /** Who the monthly job would e-mail: marked, and with an address to send to. */
   readonly monthlyRecipients = computed(() =>
@@ -203,10 +204,11 @@ export class StartupDetail implements OnInit {
       meetings: this.meetingService.list(this.startupId),
       executives: this.executiveService.list(this.startupId),
       tokens: this.tokenService.list(this.startupId),
-      // Ancillary history: if it fails, the page still renders with none.
+      // Ancillary history: if it fails, the page still renders, and the links
+      // dialog says the history is unavailable instead of showing none.
       dispatches: this.monthlyReportService
         .listDispatches(this.startupId)
-        .pipe(catchError(() => of({ items: [], total: 0 }))),
+        .pipe(catchError(() => of(null))),
     }).subscribe({
       next: ({ startup, indicators, meetings, executives, tokens, dispatches }) => {
         this.startup.set(startup);
@@ -214,7 +216,7 @@ export class StartupDetail implements OnInit {
         this.meetings.set(meetings.items);
         this.executives.set(executives.items);
         this.tokens.set(tokens.items);
-        this.dispatches.set(dispatches.items);
+        this.dispatches.set(dispatches?.items ?? null);
         this.loading.set(false);
       },
       error: (err) => {

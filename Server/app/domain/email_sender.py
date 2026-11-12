@@ -11,3 +11,7 @@ class EmailDeliveryError(Exception):
 
 class EmailSender(Protocol):
     async def send(self, to: str, subject: str, body: str) -> None: ...
+
+    async def close(self) -> None:
+        """Release whatever the sender kept open between messages."""
+        ...

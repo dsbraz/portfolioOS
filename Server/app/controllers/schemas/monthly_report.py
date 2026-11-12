@@ -17,8 +17,10 @@ class MonthlyReportDispatchResponse(BaseModel):
     month: int
     year: int
     kind: DispatchKind
+    # Delivered: `sent_at`. Failed: `error`. Neither: unconfirmed.
     error: str | None
-    sent_at: datetime
+    attempted_at: datetime
+    sent_at: datetime | None
 
 
 class MonthlyReportDispatchListResponse(

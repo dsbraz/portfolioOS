@@ -1,13 +1,23 @@
 import uuid
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 from httpx import AsyncClient
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.application.monthly_report.claim_monthly_report_dispatch import (
+    ClaimMonthlyReportDispatch,
+)
 from app.application.monthly_report.plan_monthly_report import PlanMonthlyReport
+from app.application.monthly_report.record_monthly_report_outcome import (
+    RecordMonthlyReportOutcome,
+)
 from app.application.monthly_report.send_monthly_report import SendMonthlyReport
-from app.domain.models.monthly_report_dispatch import DispatchKind
+from app.domain.models.monthly_report_dispatch import (
+    DispatchKind,
+    MonthlyReportDispatch,
+)
 from app.domain.models.period import Period
 from app.repositories.executive_repository import ExecutiveRepository
 from app.repositories.monthly_indicator_repository import MonthlyIndicatorRepository
@@ -15,6 +25,7 @@ from app.repositories.monthly_report_dispatch_repository import (
     MonthlyReportDispatchRepository,
 )
 from app.repositories.startup_repository import StartupRepository
+from scripts.dispatch_monthly_report import make_send_one
 
 
 class _Outbox:
@@ -31,20 +42,40 @@ def _closed_period() -> Period:
 
 
 async def _run(session: AsyncSession, startup_id: str, kind: DispatchKind, outbox):
-    """The job's two steps, against the real repositories and unique keys."""
+    """The job's steps, against the real repositories and unique keys."""
     startup = await StartupRepository(session).get_by_id(uuid.UUID(startup_id))
     plan = await PlanMonthlyReport(
         ExecutiveRepository(session), MonthlyIndicatorRepository(session)
     ).execute(startup, kind)
     if plan is None:
         return []
-    send = SendMonthlyReport(
-        MonthlyReportDispatchRepository(session),
-        outbox,
-        "https://portfolio.example.com",
+    dispatches = MonthlyReportDispatchRepository(session)
+    send_one = make_send_one(
+        ClaimMonthlyReportDispatch(dispatches).execute,
+        SendMonthlyReport(outbox, "https://portfolio.example.com").execute,
+        RecordMonthlyReportOutcome(dispatches).execute,
     )
-    sent = [await send.execute(plan, r) for r in plan.recipients]
+    sent = [await send_one(plan, r) for r in plan.recipients]
     return [d for d in sent if d is not None]
+
+
+async def _backdate_sends(session: AsyncSession, days: int) -> None:
+    """As if every send on record had gone out `days` ago."""
+    rows = (await session.execute(select(MonthlyReportDispatch))).scalars().all()
+    for row in rows:
+        row.attempted_at -= timedelta(days=days)
+        if row.sent_at is not None:
+            row.sent_at -= timedelta(days=days)
+    await session.flush()
+
+
+async def _add_executive(client, startup_id, name, email):
+    resp = await client.post(
+        f"/api/startups/{startup_id}/executives",
+        json={"name": name, "email": email, "receives_monthly_report": True},
+    )
+    assert resp.status_code == 201, resp.text
+    return resp.json()
 
 
 async def _opt_in(client: AsyncClient, startup_id: str) -> None:
@@ -123,6 +154,7 @@ async def test_dispatch_sends_once_and_is_listed(client, session, startup_id):
         "initial",
     )
     assert item["error"] is None
+    assert item["sent_at"] is not None and item["attempted_at"] is not None
 
 
 @pytest.mark.asyncio
@@ -150,6 +182,7 @@ async def test_reminder_after_the_initial_sends_the_reminder_once(
     await _opt_in(client, startup_id)
     outbox = _Outbox()
     await _run(session, startup_id, DispatchKind.INITIAL, outbox)
+    await _backdate_sends(session, days=10)
 
     first = await _run(session, startup_id, DispatchKind.REMINDER, outbox)
     again = await _run(session, startup_id, DispatchKind.REMINDER, outbox)
@@ -159,16 +192,55 @@ async def test_reminder_after_the_initial_sends_the_reminder_once(
 
 
 @pytest.mark.asyncio
-async def test_reminder_without_an_initial_sends_the_initial_instead(
+async def test_reminder_without_an_initial_sends_the_initial_and_a_rerun_sends_nothing(
     client, session, startup_id
 ):
     await _opt_in(client, startup_id)
     outbox = _Outbox()
 
     sent = await _run(session, startup_id, DispatchKind.REMINDER, outbox)
+    # The operator reruns the job the same day (another recipient failed).
+    rerun = await _run(session, startup_id, DispatchKind.REMINDER, outbox)
 
     assert [d.kind for d in sent] == [DispatchKind.INITIAL]
     assert not outbox.sent[0][1].startswith("Lembrete:")
+    assert rerun == [] and len(outbox.sent) == 1
+
+
+@pytest.mark.asyncio
+async def test_a_shared_inbox_gets_one_e_mail(client, session, startup_id):
+    await _opt_in(client, startup_id)
+    await _add_executive(client, startup_id, "Bruno Lima", "Ana@Payface.com")
+    outbox = _Outbox()
+
+    await _run(session, startup_id, DispatchKind.INITIAL, outbox)
+
+    assert [to for to, _, _ in outbox.sent] == ["ana@payface.com"]
+
+
+@pytest.mark.asyncio
+async def test_a_changed_address_gets_the_request_not_the_reminder(
+    client, session, startup_id
+):
+    await _opt_in(client, startup_id)
+    outbox = _Outbox()
+    await _run(session, startup_id, DispatchKind.INITIAL, outbox)
+    await _backdate_sends(session, days=10)
+    executive = (await client.get(f"/api/startups/{startup_id}/executives")).json()[
+        "items"
+    ][0]
+    resp = await client.patch(
+        f"/api/startups/{startup_id}/executives/{executive['id']}",
+        json={"email": "ana.souza@payface.com"},
+    )
+    assert resp.status_code == 200
+
+    sent = await _run(session, startup_id, DispatchKind.REMINDER, outbox)
+
+    assert [(d.kind, d.recipient_email) for d in sent] == [
+        (DispatchKind.INITIAL, "ana.souza@payface.com")
+    ]
+    assert not outbox.sent[1][1].startswith("Lembrete:")
 
 
 @pytest.mark.asyncio
