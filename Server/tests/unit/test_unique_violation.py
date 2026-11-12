@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from app.repositories.monthly_indicator_repository import _is_unique_violation
+from app.repositories.get_or_insert import is_unique_violation
 
 
 class _PostgresError(Exception):
@@ -23,4 +23,4 @@ class _PostgresError(Exception):
 def test_only_a_duplicate_key_counts_as_a_conflict(orig: Exception, expected: bool):
     error = IntegrityError("INSERT ...", {}, orig)
 
-    assert _is_unique_violation(error) is expected
+    assert is_unique_violation(error) is expected

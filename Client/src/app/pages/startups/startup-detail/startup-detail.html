@@ -374,6 +374,26 @@
       aria-labelledby="tab-executivos"
       [hidden]="activeSection() !== 'executivos'"
     >
+      @if (startup()?.monthly_report_enabled) {
+        <p class="monthly-report-note" [class.monthly-report-note--warn]="monthlyRecipients().length === 0">
+          <mat-icon aria-hidden="true">{{ monthlyRecipients().length ? 'schedule_send' : 'warning' }}</mat-icon>
+          @if (monthlyRecipients().length) {
+            <span>
+              Envio mensal ligado: o link de indicadores vai por e-mail no dia {{ monthlyReportDays.initial }} para
+              {{ monthlyRecipientNames() }}. Quem for marcado depois disso recebe no dia
+              {{ monthlyReportDays.reminder }}.
+              @if (monthlySharedInboxNames()) {
+                Mesmo e-mail de quem já recebe, sem cópia: {{ monthlySharedInboxNames() }}.
+              }
+            </span>
+          } @else {
+            <span>
+              Envio mensal ligado, mas nenhum executivo com e-mail está marcado como
+              <strong>Recebe o link mensal</strong>. Nada será enviado.
+            </span>
+          }
+        </p>
+      }
       @if (executives().length === 0) {
         <div class="empty-state">
           <p class="empty-text">Nenhum executivo cadastrado ainda.</p>
@@ -411,6 +431,9 @@
                 >
                   {{ e.name }}
                 </button>
+                @if (e.receives_monthly_report) {
+                  <span class="pill pill--info exec-monthly-pill">Link mensal</span>
+                }
               </td>
             </ng-container>
             <ng-container matColumnDef="role">

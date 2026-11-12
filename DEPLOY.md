@@ -157,7 +157,9 @@ O script vai:
 3. Buildar e enviar a imagem do frontend
 4. Fazer deploy do frontend no Cloud Run com `API_URL` apontando para o backend
 5. Atualizar o CORS do backend para permitir a URL do frontend
-6. Imprimir as URLs dos dois serviços
+6. Com `EMAIL_BACKEND=smtp`, criar ou atualizar os jobs e agendamentos do envio
+   mensal por e-mail (seção 8); sem isso, pausar os que existirem
+7. Imprimir as URLs dos dois serviços
 
 ## 6. Deploys Seguintes
 
@@ -204,7 +206,110 @@ cloud-sql-proxy YOUR_PROJECT:YOUR_REGION:portfolioos-db &
 alembic upgrade head
 ```
 
-## 8. Troubleshooting
+## 8. Envio mensal do link de indicadores
+
+O link de indicadores do mês anterior é enviado por e-mail por dois **Cloud Run
+Jobs** que rodam `scripts/dispatch_monthly_report.py` com a mesma imagem do
+backend. O **Cloud Scheduler** dispara um no dia 10 (`--kind initial`) e o outro no
+dia 20 (`--kind reminder`, só para quem ainda não preencheu). Nenhuma rota HTTP é
+exposta, e o `./deploy.sh` cria e atualiza tudo isso (veja **Configuração**).
+
+Só recebem as startups com **Enviar o link de indicadores por e-mail todo mês**
+ligado, e só os executivos marcados como **Recebe o link mensal** que tenham
+e-mail. Cada endereço recebe um e-mail só, mesmo que dois executivos o
+compartilhem. O histórico aparece em **Links anteriores**. Um erro inesperado
+numa startup é registrado no log e o job segue para as demais.
+
+Cada envio é **reservado** no banco antes de o e-mail sair e o **resultado** é
+gravado depois, em transações separadas. Rodar o job de novo é seguro: o que já
+foi entregue é pulado, e só o que o servidor de e-mail **recusou** é tentado
+outra vez — duas execuções ao mesmo tempo não reenviam a mesma falha. Se a
+transmissão cair antes da resposta do servidor de e-mail (a mensagem pode ter
+sido aceita) ou o resultado não puder ser gravado, o envio fica
+**Não confirmado**: o log mostra `NÃO CONFIRMADO`, a execução termina com
+código 1, e o job **não reenvia** esse e-mail sozinho — um e-mail repetido na
+caixa de um executivo é pior do que uma lacuna visível. Confirme com o
+destinatário; se não chegou, mande o link pelo painel. O lembrete do dia 20, se
+o mês continuar sem preenchimento, sai normalmente.
+
+O lembrete do dia 20 só sai para um endereço que recebeu o e-mail do dia 10 num
+dia anterior. Quem não recebeu (envio ligado depois, executivo marcado depois,
+e-mail trocado, ou envio do dia 10 com falha) recebe o e-mail do dia 10 no
+lugar do lembrete; rodar o job de lembrete de novo no mesmo dia não manda o
+lembrete logo em seguida.
+
+`EMAIL_BACKEND=console` só imprime e é aceito apenas com `ENVIRONMENT`
+`development` ou `local`; em qualquer outro ambiente o job se recusa a rodar.
+
+### Configuração
+
+O `./deploy.sh` cria e mantém tudo o que o envio precisa, a partir do
+`.env.production`. Basta preencher as variáveis abaixo e rodar o deploy:
+
+| Variável | Descrição | Exemplo |
+|----------|-----------|---------|
+| `EMAIL_BACKEND` | `smtp` liga o envio; `console` ou ausente, desliga; outro valor interrompe o deploy | `smtp` |
+| `SMTP_HOST` / `SMTP_PORT` | relay SMTP corporativo (porta padrão `587`) | `smtp.gmail.com` / `587` |
+| `SMTP_USERNAME` / `SMTP_PASSWORD` | conta remetente (senha de app); opcionais num relay por IP | `portfolio@empresa.com` |
+| `SMTP_SENDER` | remetente exibido | `portfolioOS <portfolio@empresa.com>` |
+| `SMTP_STARTTLS` | STARTTLS (padrão `true`) | `true` |
+| `EMAIL_SIGNATURE` | assinatura no fim do e-mail; vazia, termina no agradecimento | `Equipe de Portfólio` |
+| `APP_BASE_URL` | opcional: base do link enviado; padrão, a URL do frontend que o deploy obtém | `https://portfolio.empresa.com` |
+| `SCHEDULER_REGION` | opcional: região do Cloud Scheduler; padrão, `GCP_REGION` | `southamerica-east1` |
+| `SCHEDULER_SERVICE_ACCOUNT` | opcional: conta que dispara os jobs; padrão, a service account padrão do Compute | — |
+| `MONTHLY_REPORT_JOB_NAME` | opcional: prefixo dos jobs e agendamentos (`-initial`, `-reminder`); padrão `portfolioos-monthly-report` | — |
+
+`DATABASE_URL`, `SECRET_KEY` e `CLOUD_SQL_CONNECTION` são as mesmas do backend.
+
+O relay pode ser o do Google Workspace (`smtp.gmail.com`, ou `smtp-relay.gmail.com`
+com IP liberado) ou o do Microsoft 365 (`smtp.office365.com`). O domínio remetente
+precisa de SPF/DKIM configurados para que os e-mails não caiam no spam — isso é
+DNS do domínio, fora do deploy.
+
+Com `EMAIL_BACKEND=smtp`, cada deploy:
+1. ativa a API do Cloud Scheduler;
+2. cria ou atualiza os Cloud Run Jobs `portfolioos-monthly-report-initial` e
+   `portfolioos-monthly-report-reminder`, com a imagem recém-publicada e as
+   variáveis acima (sem novas tentativas automáticas: o próprio job decide o que
+   repetir);
+3. dá `roles/run.invoker` nos jobs à conta que os dispara;
+4. cria ou atualiza os agendamentos, dia 10 e dia 20 às 9h de
+   `America/Sao_Paulo`, e reativa um agendamento pausado.
+
+Sem `EMAIL_BACKEND=smtp`, o deploy não cria nada e **pausa** agendamentos que um
+deploy anterior tenha criado: desligar o envio também é só uma mudança no
+`.env.production`.
+
+Os dias ficam em `MONTHLY_REPORT_SCHEDULES` no `deploy.sh`. Se mudar, mude também
+`MONTHLY_REPORT_DAYS` em `Client/src/app/models/monthly-report.model.ts` (o
+texto das telas).
+
+### Rodar manualmente
+
+```bash
+gcloud run jobs execute portfolioos-monthly-report-initial --region REGION
+```
+
+Quando algum envio falha ou fica não confirmado, o job termina com código 1 e a
+execução aparece como falha no console do Cloud Run. O motivo fica no log e na
+coluna **Envio automático** de **Links anteriores**. O job abre uma conexão SMTP
+só e a reaproveita para todos os destinatários; se o servidor de e-mail encerrar
+a sessão antes de uma mensagem, ele reconecta e tenta de novo uma vez.
+
+Uma startup com o envio ligado e nenhum executivo marcado com e-mail aparece no
+log como `SEM DESTINATÁRIO` e no resumo final, sem marcar a execução como falha:
+corrija o cadastro.
+
+O período é sempre o mês anterior ao dia da execução. Para rodar de novo **depois
+da virada do mês** (por exemplo, um lembrete que falhou no dia 20 e só foi
+reexecutado no dia 1º), informe o mês, senão o job começa o mês seguinte:
+
+```bash
+gcloud run jobs execute portfolioos-monthly-report-reminder --region REGION \
+  --args="-m,scripts.dispatch_monthly_report,--kind,reminder,--period,2026-10"
+```
+
+## 9. Troubleshooting
 
 ### Conexão recusada ao Cloud SQL
 

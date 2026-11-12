@@ -77,6 +77,22 @@
   <textarea id="f-2ea6-notes" matInput formControlName="notes" rows="3"></textarea>
       </mat-form-field>
     </div>
+
+    <div class="toggle-field">
+      <mat-slide-toggle
+        formControlName="monthly_report_enabled"
+        color="primary"
+        aria-describedby="h-2ea6-monthly_report"
+      >
+        Enviar o link de indicadores por e-mail todo mês
+      </mat-slide-toggle>
+      <p class="toggle-field-hint" id="h-2ea6-monthly_report">
+        No dia {{ days.initial }}, o link do mês anterior vai para os executivos marcados
+        como <strong>Recebe o link mensal</strong>. No dia {{ days.reminder }}, se o mês ainda
+        não tiver sido preenchido, vai um lembrete — ou o próprio link, para quem ainda não o
+        recebeu (envio ligado ou executivo marcado depois do dia {{ days.initial }}).
+      </p>
+    </div>
   </form>
 </mat-dialog-content>
 

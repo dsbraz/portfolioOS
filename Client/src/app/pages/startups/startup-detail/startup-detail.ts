@@ -9,7 +9,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSortModule } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { MatMenuModule } from '@angular/material/menu';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 
 import { Startup } from '../../../models/startup.model';
 import { MonthlyIndicator } from '../../../models/monthly-indicator.model';
@@ -24,6 +24,11 @@ import { BoardMeetingService } from '../../../services/board-meeting.service';
 import { ExecutiveService } from '../../../services/executive.service';
 import { MonthlyIndicatorTokenService } from '../../../services/monthly-indicator-token.service';
 import { MonthlyIndicatorToken } from '../../../models/monthly-indicator-token.model';
+import {
+  MONTHLY_REPORT_DAYS,
+  MonthlyReportDispatch,
+} from '../../../models/monthly-report.model';
+import { MonthlyReportService } from '../../../services/monthly-report.service';
 import { StatusBadge } from '../../../components/status-badge/status-badge';
 import {
   StartupFormDialog,
@@ -80,12 +85,43 @@ export class StartupDetail implements OnInit {
   private readonly meetingService = inject(BoardMeetingService);
   private readonly executiveService = inject(ExecutiveService);
   private readonly tokenService = inject(MonthlyIndicatorTokenService);
+  private readonly monthlyReportService = inject(MonthlyReportService);
 
   readonly startup = signal<Startup | null>(null);
   readonly indicators = signal<MonthlyIndicator[]>([]);
   readonly meetings = signal<BoardMeeting[]>([]);
   readonly executives = signal<Executive[]>([]);
   readonly tokens = signal<MonthlyIndicatorToken[]>([]);
+  /** `null` when the history failed to load: unknown, not empty. */
+  readonly dispatches = signal<MonthlyReportDispatch[] | null>([]);
+  readonly monthlyReportDays = MONTHLY_REPORT_DAYS;
+  /**
+   * Who the monthly job would e-mail: marked, with an address, one per inbox.
+   * Mirrors the job, which greets the first executive listed for an address
+   * and sends that inbox a single copy.
+   */
+  private readonly monthlyInboxes = computed(() => {
+    const byAddress = new Map<string, Executive[]>();
+    for (const e of this.executives()) {
+      const address = e.email?.trim().toLowerCase();
+      if (!e.receives_monthly_report || !address) continue;
+      byAddress.set(address, [...(byAddress.get(address) ?? []), e]);
+    }
+    return [...byAddress.values()];
+  });
+  readonly monthlyRecipients = computed(() => this.monthlyInboxes().map(([first]) => first));
+  readonly monthlyRecipientNames = computed(() =>
+    this.monthlyRecipients()
+      .map((e) => e.name)
+      .join(', '),
+  );
+  /** Marked, but sharing an inbox that someone listed earlier already gets. */
+  readonly monthlySharedInboxNames = computed(() =>
+    this.monthlyInboxes()
+      .flatMap(([, ...rest]) => rest)
+      .map((e) => e.name)
+      .join(', '),
+  );
   readonly loading = signal(false);
   /** Reloads return new objects; tracking by id keeps rows (and the menu button
    *  a dialog returns focus to) in the DOM. */
@@ -186,13 +222,19 @@ export class StartupDetail implements OnInit {
       meetings: this.meetingService.list(this.startupId),
       executives: this.executiveService.list(this.startupId),
       tokens: this.tokenService.list(this.startupId),
+      // Ancillary history: if it fails, the page still renders, and the links
+      // dialog says the history is unavailable instead of showing none.
+      dispatches: this.monthlyReportService
+        .listDispatches(this.startupId)
+        .pipe(catchError(() => of(null))),
     }).subscribe({
-      next: ({ startup, indicators, meetings, executives, tokens }) => {
+      next: ({ startup, indicators, meetings, executives, tokens, dispatches }) => {
         this.startup.set(startup);
         this.indicators.set(indicators.items);
         this.meetings.set(meetings.items);
         this.executives.set(executives.items);
         this.tokens.set(tokens.items);
+        this.dispatches.set(dispatches?.items ?? null);
         this.loading.set(false);
       },
       error: (err) => {
@@ -434,9 +476,10 @@ export class StartupDetail implements OnInit {
 
   openTokenListDialog(): void {
     this.dialog.open(TokenListDialog, {
-      width: '400px',
+      width: '560px',
       data: {
         tokens: this.tokens(),
+        dispatches: this.dispatches(),
         executives: this.executives(),
         startupName: this.startup()?.name ?? '',
       } as TokenListDialogData,

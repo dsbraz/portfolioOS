@@ -276,6 +276,38 @@ app-status-badge {
   padding: var(--space-2xl) var(--space-lg);
 }
 
+// Says what the monthly job will do for this startup, or why it will do nothing.
+// Status in text, with the icon only reinforcing it.
+.monthly-report-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+
+  mat-icon {
+    flex: none;
+    width: 1.25rem;
+    height: 1.25rem;
+    font-size: 1.25rem;
+  }
+}
+
+.monthly-report-note--warn {
+  color: var(--color-text);
+
+  mat-icon {
+    color: var(--color-warn);
+  }
+}
+
+.exec-monthly-pill {
+  margin-inline-start: var(--space-xs);
+}
+
 .empty-text {
   color: var(--color-text-muted);
   text-align: center;

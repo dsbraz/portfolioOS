@@ -1,12 +1,22 @@
 from datetime import date
 
 from app.domain.exceptions import InvalidInputError
+from app.domain.models.period import Period
 
 
 def validate_period_not_future(month: int, year: int) -> None:
     today = date.today()
     if year > today.year or (year == today.year and month > today.month):
         raise InvalidInputError(f"Periodo {month}/{year} nao pode ser no futuro")
+
+
+def validate_period_closed(period: Period) -> None:
+    """The month is over: only a closed month can be chased."""
+    today = date.today()
+    if period >= Period(year=today.year, month=today.month):
+        raise InvalidInputError(
+            f"Periodo {period.month}/{period.year} ainda nao fechou"
+        )
 
 
 def validate_username_no_spaces(username: str) -> None:
@@ -21,3 +31,14 @@ PASSWORD_MAX_BYTES = 72
 def validate_password_max_bytes(password: str) -> None:
     if len(password.encode("utf-8")) > PASSWORD_MAX_BYTES:
         raise InvalidInputError(f"Senha nao pode ter mais de {PASSWORD_MAX_BYTES} bytes")
+
+
+def validate_monthly_report_recipient(receives: bool, email: str | None) -> None:
+    """The monthly job sends by e-mail only: a marked recipient needs an address.
+
+    Without this, the executive would show as receiving and never get anything.
+    """
+    if receives and not (email and email.strip()):
+        raise InvalidInputError(
+            "Executivo que recebe o link mensal precisa de e-mail cadastrado"
+        )

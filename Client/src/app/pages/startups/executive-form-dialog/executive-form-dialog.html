@@ -63,6 +63,26 @@
   <input id="f-886c-linkedin" matInput formControlName="linkedin" placeholder="https://linkedin.com/in/..." />
       </mat-form-field>
     </div>
+
+    <div class="toggle-field">
+      <mat-slide-toggle
+        formControlName="receives_monthly_report"
+        color="primary"
+        aria-describedby="h-886c-monthly_report"
+      >
+        Recebe o link mensal
+      </mat-slide-toggle>
+      @if (form.hasError('monthlyReportNeedsEmail')) {
+        <p class="toggle-field-error" id="h-886c-monthly_report" role="alert">
+          Informe o e-mail: o link mensal é enviado só por e-mail.
+        </p>
+      } @else {
+        <p class="toggle-field-hint" id="h-886c-monthly_report">
+          Quando a startup tem o envio mensal ligado, o link de indicadores chega a este
+          e-mail no dia {{ days.initial }}. Marcado depois disso, chega no dia {{ days.reminder }}.
+        </p>
+      }
+    </div>
   </form>
   }
 </mat-dialog-content>
