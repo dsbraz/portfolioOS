@@ -3,6 +3,7 @@ from datetime import date
 from app.application.monthly_report.readmodels import (
     MonthlyReportPlan,
     MonthlyReportRecipient,
+    MonthlyReportSkip,
 )
 from app.domain.models.executive import Executive
 from app.domain.models.monthly_indicator_token import MonthlyIndicatorToken
@@ -10,15 +11,20 @@ from app.domain.models.monthly_report_dispatch import DispatchKind
 from app.domain.models.period import Period
 from app.domain.models.startup import Startup
 from app.domain.repositories import ExecutiveRepository, MonthlyIndicatorRepository
+from app.domain.validators import validate_period_closed
 
 
 class PlanMonthlyReport:
     """Who gets the link of the month that just closed, and which link.
 
-    `None` when there is nothing to send: the period is already reported (who is
-    missing comes from the platform, never from the channel), or nobody marked
-    has an address. Generating the link is a write, so it only happens when
-    someone will receive it.
+    A `MonthlyReportSkip` when there is nothing to send: the period is already
+    reported (who is missing comes from the platform, never from the channel),
+    or nobody marked has an address. Generating the link is a write, so it only
+    happens when someone will receive it.
+
+    The period defaults to the month before today; a manual rerun after the
+    month turned passes the one it means, so it retries that month instead of
+    starting the next.
     """
 
     def __init__(
@@ -30,21 +36,23 @@ class PlanMonthlyReport:
         self._indicator_repository = indicator_repository
 
     async def execute(
-        self, startup: Startup, kind: DispatchKind
-    ) -> MonthlyReportPlan | None:
-        today = date.today()
-        period = Period(year=today.year, month=today.month).previous()
+        self, startup: Startup, kind: DispatchKind, period: Period | None = None
+    ) -> MonthlyReportPlan | MonthlyReportSkip:
+        if period is None:
+            today = date.today()
+            period = Period(year=today.year, month=today.month).previous()
+        validate_period_closed(period)
 
         reported = await self._indicator_repository.get_by_startup_and_period(
             startup.id, period.month, period.year
         )
         if reported is not None:
-            return None
+            return MonthlyReportSkip.ALREADY_REPORTED
 
         executives, _ = await self._executive_repository.get_all_by_startup(startup.id)
         recipients = _recipients(executives)
         if not recipients:
-            return None
+            return MonthlyReportSkip.NO_RECIPIENTS
 
         # One link per (startup, period): the same one the panel shows.
         token, _ = await self._indicator_repository.get_or_create_token(

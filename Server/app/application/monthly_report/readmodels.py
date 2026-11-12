@@ -1,3 +1,4 @@
+import enum
 import uuid
 from dataclasses import dataclass
 
@@ -27,3 +28,14 @@ class MonthlyReportPlan:
     kind: DispatchKind
     form_token: uuid.UUID
     recipients: tuple[MonthlyReportRecipient, ...]
+
+
+class MonthlyReportSkip(str, enum.Enum):
+    """Why a startup with the monthly send on gets nothing this run.
+
+    Told apart because they mean opposite things: one is the job working, the
+    other a gap the operator has to close in the registry.
+    """
+
+    ALREADY_REPORTED = "already_reported"
+    NO_RECIPIENTS = "no_recipients"

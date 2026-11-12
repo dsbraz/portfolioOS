@@ -382,6 +382,9 @@
               Envio mensal ligado: o link de indicadores vai por e-mail no dia {{ monthlyReportDays.initial }} para
               {{ monthlyRecipientNames() }}. Quem for marcado depois disso recebe no dia
               {{ monthlyReportDays.reminder }}.
+              @if (monthlySharedInboxNames()) {
+                Mesmo e-mail de quem já recebe, sem cópia: {{ monthlySharedInboxNames() }}.
+              }
             </span>
           } @else {
             <span>

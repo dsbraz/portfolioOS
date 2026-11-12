@@ -1,6 +1,7 @@
 import uuid
+from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.models.monthly_report_dispatch import (
@@ -36,6 +37,32 @@ class MonthlyReportDispatchRepository:
             select(MonthlyReportDispatch).where(MonthlyReportDispatch.id == dispatch_id)
         )
         return result.scalar_one_or_none()
+
+    async def reclaim_failed(
+        self,
+        dispatch: MonthlyReportDispatch,
+        executive_id: uuid.UUID | None,
+        attempted_at: datetime,
+    ) -> MonthlyReportDispatch | None:
+        """Claim a failed send for a retry, only if it is still failed.
+
+        A conditional UPDATE, not read-then-write: when two runs overlap, the
+        second waits on the row lock, re-reads it as no longer failed and
+        updates nothing — so only one of them sends.
+        """
+        result = await self._session.execute(
+            update(MonthlyReportDispatch)
+            .where(
+                MonthlyReportDispatch.id == dispatch.id,
+                MonthlyReportDispatch.error.is_not(None),
+            )
+            .values(error=None, executive_id=executive_id, attempted_at=attempted_at)
+            .execution_options(synchronize_session=False)
+        )
+        if result.rowcount == 0:
+            return None
+        await self._session.refresh(dispatch)
+        return dispatch
 
     async def update(self, dispatch: MonthlyReportDispatch) -> MonthlyReportDispatch:
         await self._session.flush()

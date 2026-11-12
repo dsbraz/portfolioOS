@@ -58,6 +58,7 @@ def dispatches():
     repo = AsyncMock()
     repo.get_or_create.side_effect = lambda dispatch: (dispatch, True)
     repo.update.side_effect = lambda dispatch: dispatch
+    repo.reclaim_failed.side_effect = lambda dispatch, executive_id, at: dispatch
     repo.find.return_value = _stored(sent_at=DAY_10)  # the request went out on day 10
     return repo
 
@@ -93,7 +94,7 @@ async def test_never_resends_a_delivered_or_unconfirmed_send(
     dispatches.get_or_create.return_value = (stored, False)
 
     assert await use_case.execute(_plan(), RECIPIENT) is None
-    dispatches.update.assert_not_awaited()
+    dispatches.reclaim_failed.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -105,9 +106,22 @@ async def test_retries_a_failed_send_as_a_fresh_attempt(use_case, dispatches):
     dispatch = await use_case.execute(_plan(), RECIPIENT)
 
     assert dispatch is failed
-    assert failed.error is None
-    assert failed.attempted_at == NOW
-    dispatches.update.assert_awaited_once_with(failed)
+    # Conditional: only if it is still failed when the row is written.
+    dispatches.reclaim_failed.assert_awaited_once_with(
+        failed, RECIPIENT.executive_id, NOW
+    )
+
+
+@pytest.mark.asyncio
+async def test_a_failed_send_reclaimed_by_an_overlapping_run_is_left_to_it(
+    use_case, dispatches
+):
+    dispatches.get_or_create.side_effect = None
+    dispatches.get_or_create.return_value = (_stored(error="timeout"), False)
+    dispatches.reclaim_failed.side_effect = None
+    dispatches.reclaim_failed.return_value = None
+
+    assert await use_case.execute(_plan(), RECIPIENT) is None
 
 
 @pytest.mark.asyncio

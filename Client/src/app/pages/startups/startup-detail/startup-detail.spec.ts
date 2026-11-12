@@ -148,6 +148,8 @@ describe('StartupDetail (loading and ARIA)', () => {
   const page = (items: unknown[]) => ({ items, total: items.length });
 
   let mounted: ComponentFixture<StartupDetail>;
+  /** Overrides the executives the page loads; reset after each test. */
+  let executivesList: Executive[] | null = null;
 
   /** `pending` keeps the calls from emitting, which is the loading state. */
   const mount = async (pending = false, dispatches?: Observable<unknown>) => {
@@ -168,7 +170,10 @@ describe('StartupDetail (loading and ARIA)', () => {
           useValue: { list: () => respond(page([indicatorFixture])) },
         },
         { provide: BoardMeetingService, useValue: { list: () => respond(page([])) } },
-        { provide: ExecutiveService, useValue: { list: () => respond(page([executiveFixture])) } },
+        {
+          provide: ExecutiveService,
+          useValue: { list: () => respond(page(executivesList ?? [executiveFixture])) },
+        },
         { provide: MonthlyIndicatorTokenService, useValue: { list: () => respond(page([])) } },
         {
           provide: MonthlyReportService,
@@ -229,6 +234,7 @@ describe('StartupDetail (loading and ARIA)', () => {
     afterEach(() => {
       startup.monthly_report_enabled = false;
       executiveFixture.receives_monthly_report = false;
+      executivesList = null;
     });
 
     it('should say nothing about it while the startup has it off', async () => {
@@ -245,6 +251,25 @@ describe('StartupDetail (loading and ARIA)', () => {
 
       expect(el.querySelector('.monthly-report-note')?.textContent).toContain('Ana Costa');
       expect(el.querySelector('#panel-executivos .pill')?.textContent).toContain('Link mensal');
+    });
+
+    // The job sends one copy per inbox: the banner must not promise two.
+    it('should name one recipient per inbox and say who shares it', async () => {
+      startup.monthly_report_enabled = true;
+      executiveFixture.receives_monthly_report = true;
+      const sharing: Executive = {
+        ...executiveFixture,
+        id: 'e2',
+        name: 'Bruno Lima',
+        email: ' ANA@lumina.example ',
+      };
+      executivesList = [executiveFixture, sharing];
+
+      const el = await mount();
+      const note = el.querySelector('.monthly-report-note')?.textContent ?? '';
+
+      expect(note).toContain('para Ana Costa.');
+      expect(note).toContain('Mesmo e-mail de quem já recebe, sem cópia: Bruno Lima.');
     });
 
     it('should warn in text when nobody would receive it', async () => {

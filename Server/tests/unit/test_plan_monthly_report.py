@@ -5,6 +5,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from app.application.monthly_report.plan_monthly_report import PlanMonthlyReport
+from app.application.monthly_report.readmodels import MonthlyReportSkip
+from app.domain.exceptions import InvalidInputError
+from app.domain.models.period import Period
 from app.domain.models.monthly_report_dispatch import DispatchKind
 
 TOKEN = uuid.UUID("00000000-0000-0000-0000-000000000001")
@@ -79,7 +82,10 @@ async def test_skips_executives_not_marked_or_without_email(
         3,
     )
 
-    assert await use_case.execute(_startup(), DispatchKind.INITIAL) is None
+    assert (
+        await use_case.execute(_startup(), DispatchKind.INITIAL)
+        is MonthlyReportSkip.NO_RECIPIENTS
+    )
     # No recipient, no link: generating one is a write nobody asked for.
     indicators.get_or_create_token.assert_not_awaited()
 
@@ -91,7 +97,7 @@ async def test_skips_a_period_already_reported(use_case, indicators, kind):
     # the month gets neither the request nor the reminder.
     indicators.get_by_startup_and_period.return_value = MagicMock()
 
-    assert await use_case.execute(_startup(), kind) is None
+    assert await use_case.execute(_startup(), kind) is MonthlyReportSkip.ALREADY_REPORTED
     indicators.get_or_create_token.assert_not_awaited()
 
 
@@ -113,3 +119,27 @@ async def test_one_e_mail_per_inbox_with_a_normalised_address(use_case, executiv
         ("Ana", "contato@payface.com"),
         ("Carla", "carla@payface.com"),
     ]
+
+
+@pytest.mark.asyncio
+async def test_a_manual_rerun_names_the_period_it_means(use_case, indicators):
+    # A failed reminder rerun on the 1st must retry the month it was about,
+    # not start the one that just closed.
+    plan = await use_case.execute(
+        _startup(), DispatchKind.REMINDER, Period(year=2025, month=10)
+    )
+
+    assert (plan.period.month, plan.period.year) == (10, 2025)
+    token = indicators.get_or_create_token.await_args.args[0]
+    assert (token.month, token.year) == (10, 2025)
+
+
+@pytest.mark.asyncio
+async def test_a_month_not_closed_yet_is_refused(use_case, indicators):
+    today = date.today()
+
+    with pytest.raises(InvalidInputError, match="ainda nao fechou"):
+        await use_case.execute(
+            _startup(), DispatchKind.INITIAL, Period(year=today.year, month=today.month)
+        )
+    indicators.get_or_create_token.assert_not_awaited()

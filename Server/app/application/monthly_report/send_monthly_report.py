@@ -12,7 +12,8 @@ class SendMonthlyReport:
 
     No repository: it runs outside any transaction, so a slow relay holds no
     database connection. Returns why the relay refused the message, or `None`
-    when it left.
+    when it left. A transfer that may have left (`EmailDeliveryUncertain`)
+    propagates: it is not a failure to retry, but a send to confirm.
     """
 
     def __init__(

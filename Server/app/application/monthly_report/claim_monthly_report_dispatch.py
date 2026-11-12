@@ -51,11 +51,11 @@ class ClaimMonthlyReportDispatch:
         if not dispatch.failed:
             return None
 
-        # A failed send is retried, and the history shows this attempt.
-        dispatch.executive_id = recipient.executive_id
-        dispatch.error = None
-        dispatch.attempted_at = now
-        return await self._dispatch_repository.update(dispatch)
+        # A failed send is retried, and the history shows this attempt. `None`
+        # when an overlapping run reclaimed it first.
+        return await self._dispatch_repository.reclaim_failed(
+            dispatch, recipient.executive_id, now
+        )
 
     async def _effective_kind(
         self,

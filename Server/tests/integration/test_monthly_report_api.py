@@ -10,6 +10,7 @@ from app.application.monthly_report.claim_monthly_report_dispatch import (
     ClaimMonthlyReportDispatch,
 )
 from app.application.monthly_report.plan_monthly_report import PlanMonthlyReport
+from app.application.monthly_report.readmodels import MonthlyReportSkip
 from app.application.monthly_report.record_monthly_report_outcome import (
     RecordMonthlyReportOutcome,
 )
@@ -18,6 +19,7 @@ from app.domain.models.monthly_report_dispatch import (
     DispatchKind,
     MonthlyReportDispatch,
 )
+from app.domain.email_sender import EmailDeliveryError
 from app.domain.models.period import Period
 from app.repositories.executive_repository import ExecutiveRepository
 from app.repositories.monthly_indicator_repository import MonthlyIndicatorRepository
@@ -47,7 +49,7 @@ async def _run(session: AsyncSession, startup_id: str, kind: DispatchKind, outbo
     plan = await PlanMonthlyReport(
         ExecutiveRepository(session), MonthlyIndicatorRepository(session)
     ).execute(startup, kind)
-    if plan is None:
+    if isinstance(plan, MonthlyReportSkip):
         return []
     dispatches = MonthlyReportDispatchRepository(session)
     send_one = make_send_one(
@@ -298,3 +300,24 @@ async def test_explicit_null_flags_are_a_validation_error_not_a_500(
         json={"receives_monthly_report": None},
     )
     assert resp.status_code == 422
+
+
+class _RefusingOutbox(_Outbox):
+    async def send(self, to: str, subject: str, body: str) -> None:
+        raise EmailDeliveryError("SMTPRecipientsRefused")
+
+
+@pytest.mark.asyncio
+async def test_a_failed_send_is_reclaimed_only_once(client, session, startup_id):
+    # Two overlapping runs read the same failed row; only one may resend it.
+    await _opt_in(client, startup_id)
+    await _run(session, startup_id, DispatchKind.INITIAL, _RefusingOutbox())
+    dispatches = MonthlyReportDispatchRepository(session)
+    failed = (await session.execute(select(MonthlyReportDispatch))).scalar_one()
+    assert failed.failed
+
+    first = await dispatches.reclaim_failed(failed, failed.executive_id, failed.attempted_at)
+    second = await dispatches.reclaim_failed(failed, failed.executive_id, failed.attempted_at)
+
+    assert first is failed and not first.failed
+    assert second is None

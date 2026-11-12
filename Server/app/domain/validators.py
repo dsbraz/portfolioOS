@@ -1,12 +1,22 @@
 from datetime import date
 
 from app.domain.exceptions import InvalidInputError
+from app.domain.models.period import Period
 
 
 def validate_period_not_future(month: int, year: int) -> None:
     today = date.today()
     if year > today.year or (year == today.year and month > today.month):
         raise InvalidInputError(f"Periodo {month}/{year} nao pode ser no futuro")
+
+
+def validate_period_closed(period: Period) -> None:
+    """The month is over: only a closed month can be chased."""
+    today = date.today()
+    if period >= Period(year=today.year, month=today.month):
+        raise InvalidInputError(
+            f"Periodo {period.month}/{period.year} ainda nao fechou"
+        )
 
 
 def validate_username_no_spaces(username: str) -> None:

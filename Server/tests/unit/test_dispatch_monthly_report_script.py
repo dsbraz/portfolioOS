@@ -1,3 +1,4 @@
+import argparse
 import uuid
 from unittest.mock import MagicMock
 
@@ -6,8 +7,10 @@ import pytest
 from app.application.monthly_report.readmodels import (
     MonthlyReportPlan,
     MonthlyReportRecipient,
+    MonthlyReportSkip,
 )
 from app.config import Settings
+from app.domain.email_sender import EmailDeliveryUncertain
 from app.domain.models.monthly_report_dispatch import DispatchKind
 from app.domain.models.period import Period
 from app.infrastructure.console_email_sender import ConsoleEmailSender
@@ -16,6 +19,7 @@ from scripts.dispatch_monthly_report import (
     build_email_sender,
     dispatch_all,
     make_send_one,
+    parse_period,
 )
 
 
@@ -153,25 +157,74 @@ async def test_nothing_claimed_sends_nothing():
     deliver.assert_not_called()
 
 
+@pytest.mark.parametrize(
+    "interruption",
+    [EmailDeliveryUncertain("SMTPServerDisconnected"), KeyError("inesperado")],
+    ids=["uncertain-transfer", "unexpected"],
+)
 @pytest.mark.asyncio
-async def test_an_unexpected_error_before_the_relay_is_recorded_as_a_failure():
-    recorded = []
+async def test_a_send_that_may_have_left_stays_unconfirmed(interruption, capsys):
+    # Neither recorded as failed (the next run would resend it) nor as sent.
+    startup = _startup("Payface")
+    record = MagicMock()
+
+    async def plan_one(_):
+        return _plan_for(startup, "ana@x.com")
 
     async def claim(p, r):
         return _claimed()
 
     async def deliver(p, r, kind):
-        raise KeyError("template")
+        raise interruption
 
-    async def record(dispatch_id, error):
-        recorded.append(error)
-        return MagicMock(error=error, recipient_email="ana@x.com", kind=DispatchKind.INITIAL)
+    summary = await dispatch_all(
+        [startup], plan_one, make_send_one(claim, deliver, record)
+    )
 
-    plan = _plan_for(_startup("Payface"), "ana@x.com")
-    await make_send_one(claim, deliver, record)(plan, plan.recipients[0])
+    record.assert_not_called()
+    assert (summary.sent, summary.failed) == (0, 1)
+    out = capsys.readouterr().out
+    assert "NÃO CONFIRMADO Payface → ana@x.com: envio interrompido" in out
+    assert "confirme antes de reenviar" in out
 
-    # Recorded as failed, so the next run retries it instead of stranding it.
-    assert recorded == ["Erro inesperado: KeyError"]
+
+@pytest.mark.asyncio
+async def test_a_startup_without_recipients_is_reported_not_silent(capsys):
+    startup = _startup("Payface")
+
+    async def plan_one(_):
+        return MonthlyReportSkip.NO_RECIPIENTS
+
+    summary = await dispatch_all([startup], plan_one, MagicMock())
+
+    assert (summary.failed, summary.without_recipients) == (0, 1)
+    assert "SEM DESTINATÁRIO Payface" in capsys.readouterr().out
+
+
+@pytest.mark.asyncio
+async def test_a_reported_startup_is_skipped_quietly(capsys):
+    async def plan_one(_):
+        return MonthlyReportSkip.ALREADY_REPORTED
+
+    summary = await dispatch_all([_startup("Payface")], plan_one, MagicMock())
+
+    assert (summary.sent, summary.failed, summary.without_recipients) == (0, 0, 0)
+    assert capsys.readouterr().out == ""
+
+
+def test_period_flag_takes_a_closed_month():
+    assert parse_period("2025-10") == Period(year=2025, month=10)
+
+
+@pytest.mark.parametrize("value", ["2025-13", "outubro", "2025"])
+def test_period_flag_refuses_a_malformed_month(value):
+    with pytest.raises(argparse.ArgumentTypeError, match="use AAAA-MM"):
+        parse_period(value)
+
+
+def test_period_flag_refuses_a_month_not_closed_yet():
+    with pytest.raises(argparse.ArgumentTypeError, match="ainda nao fechou"):
+        parse_period("9999-01")
 
 
 @pytest.mark.asyncio
@@ -201,4 +254,5 @@ async def test_losing_the_outcome_after_sending_is_reported_as_unconfirmed(capsy
 
     assert sent == ["ana@x.com", "bruno@x.com"]
     assert (summary.sent, summary.failed) == (1, 1)
-    assert "NÃO CONFIRMADO Payface → ana@x.com" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "NÃO CONFIRMADO Payface → ana@x.com: o resultado não foi registrado" in out

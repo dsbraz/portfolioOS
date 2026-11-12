@@ -220,8 +220,10 @@ numa startup é registrado no log e o job segue para as demais.
 
 Cada envio é **reservado** no banco antes de o e-mail sair e o **resultado** é
 gravado depois, em transações separadas. Rodar o job de novo é seguro: o que já
-foi entregue é pulado, e o que falhou é tentado outra vez. Se o resultado não
-puder ser gravado (o processo caiu, o banco caiu), o envio fica
+foi entregue é pulado, e só o que o servidor de e-mail **recusou** é tentado
+outra vez — duas execuções ao mesmo tempo não reenviam a mesma falha. Se a
+transmissão cair antes da resposta do servidor de e-mail (a mensagem pode ter
+sido aceita) ou o resultado não puder ser gravado, o envio fica
 **Não confirmado**: o log mostra `NÃO CONFIRMADO`, a execução termina com
 código 1, e o job **não reenvia** esse e-mail sozinho — um e-mail repetido na
 caixa de um executivo é pior do que uma lacuna visível. Confirme com o
@@ -311,7 +313,21 @@ A service account do Scheduler precisa de `roles/run.invoker` (ou
 Quando algum envio falha ou fica não confirmado, o job termina com código 1 e a
 execução aparece como falha no console do Cloud Run. O motivo fica no log e na
 coluna **Envio automático** de **Links anteriores**. O job abre uma conexão SMTP
-só e a reaproveita para todos os destinatários.
+só e a reaproveita para todos os destinatários; se o servidor de e-mail encerrar
+a sessão antes de uma mensagem, ele reconecta e tenta de novo uma vez.
+
+Uma startup com o envio ligado e nenhum executivo marcado com e-mail aparece no
+log como `SEM DESTINATÁRIO` e no resumo final, sem marcar a execução como falha:
+corrija o cadastro.
+
+O período é sempre o mês anterior ao dia da execução. Para rodar de novo **depois
+da virada do mês** (por exemplo, um lembrete que falhou no dia 20 e só foi
+reexecutado no dia 1º), informe o mês, senão o job começa o mês seguinte:
+
+```bash
+gcloud run jobs execute portfolioos-monthly-report --region REGION \
+  --args="-m,scripts.dispatch_monthly_report,--kind,reminder,--period,2026-10"
+```
 
 ## 9. Troubleshooting
 

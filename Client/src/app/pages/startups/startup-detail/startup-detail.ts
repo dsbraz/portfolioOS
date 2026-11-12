@@ -95,12 +95,30 @@ export class StartupDetail implements OnInit {
   /** `null` when the history failed to load: unknown, not empty. */
   readonly dispatches = signal<MonthlyReportDispatch[] | null>([]);
   readonly monthlyReportDays = MONTHLY_REPORT_DAYS;
-  /** Who the monthly job would e-mail: marked, and with an address to send to. */
-  readonly monthlyRecipients = computed(() =>
-    this.executives().filter((e) => e.receives_monthly_report && e.email?.trim()),
-  );
+  /**
+   * Who the monthly job would e-mail: marked, with an address, one per inbox.
+   * Mirrors the job, which greets the first executive listed for an address
+   * and sends that inbox a single copy.
+   */
+  private readonly monthlyInboxes = computed(() => {
+    const byAddress = new Map<string, Executive[]>();
+    for (const e of this.executives()) {
+      const address = e.email?.trim().toLowerCase();
+      if (!e.receives_monthly_report || !address) continue;
+      byAddress.set(address, [...(byAddress.get(address) ?? []), e]);
+    }
+    return [...byAddress.values()];
+  });
+  readonly monthlyRecipients = computed(() => this.monthlyInboxes().map(([first]) => first));
   readonly monthlyRecipientNames = computed(() =>
     this.monthlyRecipients()
+      .map((e) => e.name)
+      .join(', '),
+  );
+  /** Marked, but sharing an inbox that someone listed earlier already gets. */
+  readonly monthlySharedInboxNames = computed(() =>
+    this.monthlyInboxes()
+      .flatMap(([, ...rest]) => rest)
       .map((e) => e.name)
       .join(', '),
   );
