@@ -176,12 +176,18 @@ def test_chase_skill_never_assumes_the_send_mode_or_the_recipient():
         "Enviar por e-mail para {nome}",
         "Sem canal de envio",
         "Executivos",
+        "Envio automático",
     ):
         assert label in chase, label
 
     # The panel picks the channel; the skill only follows it and never sends.
     assert "o painel já escolhe o canal" in normalized
-    assert "a plataforma nunca envia nada sozinha" in normalized
+    assert "o painel nunca envia nada sozinho" in normalized
+
+    # The monthly job may already have e-mailed the link: the skill reads that
+    # off the screen and asks, instead of chasing the same person twice.
+    assert "confira se o e-mail automático já saiu" in normalized
+    assert "nunca reenvie por conta própria" in normalized
 
 
 def test_package_source_artifacts_are_uploadable_without_duplicating_skills():

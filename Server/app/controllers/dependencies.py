@@ -11,6 +11,9 @@ from app.repositories.board_meeting_repository import BoardMeetingRepository
 from app.repositories.deal_repository import DealRepository
 from app.repositories.executive_repository import ExecutiveRepository
 from app.repositories.monthly_indicator_repository import MonthlyIndicatorRepository
+from app.repositories.monthly_report_dispatch_repository import (
+    MonthlyReportDispatchRepository,
+)
 from app.repositories.startup_repository import StartupRepository
 from app.repositories.user_invite_repository import UserInviteRepository
 from app.repositories.user_repository import UserRepository
@@ -69,6 +72,7 @@ deal_builder = _use_case_builder(DealRepository)
 board_meeting_builder = _use_case_builder(BoardMeetingRepository)
 executive_builder = _use_case_builder(ExecutiveRepository)
 monthly_indicator_builder = _use_case_builder(MonthlyIndicatorRepository)
+monthly_report_dispatch_builder = _use_case_builder(MonthlyReportDispatchRepository)
 portfolio_builder = _multi_repo_use_case_builder(
     StartupRepository, MonthlyIndicatorRepository, BoardMeetingRepository
 )

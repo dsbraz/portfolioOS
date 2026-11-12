@@ -1,11 +1,26 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 import { Executive } from '../../../models/executive.model';
+import { MONTHLY_REPORT_DAYS } from '../../../models/monthly-report.model';
+
+/** The monthly job sends by e-mail only, so the recipient needs an address. */
+function emailRequiredForMonthlyReport(group: AbstractControl): ValidationErrors | null {
+  const receives = group.get('receives_monthly_report')?.value;
+  const email = (group.get('email')?.value ?? '').trim();
+  return receives && !email ? { monthlyReportNeedsEmail: true } : null;
+}
 
 export interface ExecutiveFormDialogData {
   executive?: Executive;
@@ -25,6 +40,7 @@ import { ReadSection, ReadView } from '../../../components/read-view/read-view';
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    MatSlideToggleModule,
   ],
   templateUrl: './executive-form-dialog.html',
 })
@@ -35,6 +51,7 @@ export class ExecutiveFormDialog implements OnInit {
 
   readonly isEditMode = !!this.data?.executive;
   readonly isReadonly = !!this.data?.readonly;
+  readonly days = MONTHLY_REPORT_DAYS;
 
   readonly form = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(255)]],
@@ -43,7 +60,8 @@ export class ExecutiveFormDialog implements OnInit {
     // Mirrors `InternationalPhone` in the server schema: "+" and 8 to 15 digits.
     phone: ['', [Validators.pattern(/^\s*\+[\s().\-/]*(\d[\s().\-/]*){8,15}$/)]],
     linkedin: [''],
-  });
+    receives_monthly_report: [false],
+  }, { validators: emailRequiredForMonthlyReport });
 
   /** See [[ReadView]]: read mode is no longer a disabled form. */
   readonly readSections: ReadSection[] = this.buildReadSections();
@@ -61,6 +79,10 @@ export class ExecutiveFormDialog implements OnInit {
           { label: 'Email', value: e.email || null },
           { label: 'Telefone', value: e.phone || null },
           { label: 'LinkedIn', value: e.linkedin || null, kind: 'long' },
+          {
+            label: 'Link mensal por e-mail',
+            value: e.receives_monthly_report ? 'Recebe' : 'Não recebe',
+          },
         ],
       },
     ];

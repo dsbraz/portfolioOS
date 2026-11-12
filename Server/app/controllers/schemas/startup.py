@@ -17,6 +17,7 @@ class StartupBase(BaseModel):
     investment_date: date
     equity_stake: Decimal | None = Field(None, ge=0, le=100)
     notes: str | None = None
+    monthly_report_enabled: bool = False
 
 
 class StartupCreate(StartupBase):
@@ -32,6 +33,10 @@ class StartupUpdate(BaseModel):
     investment_date: date | None = None
     equity_stake: Decimal | None = Field(None, ge=0, le=100)
     notes: str | None = None
+    # Optional in a PATCH but never null: the column is NOT NULL, and an
+    # explicit null must be a 422, not a database error. The default is not
+    # validated, so omitting the field still leaves it out of the update.
+    monthly_report_enabled: bool = None  # type: ignore[assignment]
 
 
 class StartupResponse(StartupBase):

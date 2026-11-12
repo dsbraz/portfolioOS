@@ -21,3 +21,14 @@ PASSWORD_MAX_BYTES = 72
 def validate_password_max_bytes(password: str) -> None:
     if len(password.encode("utf-8")) > PASSWORD_MAX_BYTES:
         raise InvalidInputError(f"Senha nao pode ter mais de {PASSWORD_MAX_BYTES} bytes")
+
+
+def validate_monthly_report_recipient(receives: bool, email: str | None) -> None:
+    """The monthly job sends by e-mail only: a marked recipient needs an address.
+
+    Without this, the executive would show as receiving and never get anything.
+    """
+    if receives and not (email and email.strip()):
+        raise InvalidInputError(
+            "Executivo que recebe o link mensal precisa de e-mail cadastrado"
+        )

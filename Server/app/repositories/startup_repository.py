@@ -41,3 +41,11 @@ class StartupRepository:
     async def delete(self, startup: Startup) -> None:
         await self._session.delete(startup)
         await self._session.flush()
+
+    async def get_all_with_monthly_report_enabled(self) -> list[Startup]:
+        result = await self._session.execute(
+            select(Startup)
+            .where(Startup.monthly_report_enabled.is_(True))
+            .order_by(Startup.name.asc())
+        )
+        return list(result.scalars().all())

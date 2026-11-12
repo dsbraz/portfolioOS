@@ -34,6 +34,8 @@ describe('ExecutiveFormDialog in read mode', () => {
     expect(el.textContent).toContain('Ana Ribeiro');
     expect(el.textContent).toContain('ana@cardume.com.br');
     expect(el.querySelectorAll('.read-value--empty').length).toBe(2);
+    expect(el.textContent).toContain('Link mensal por e-mail');
+    expect(el.textContent).toContain('Não recebe');
   });
 });
 
@@ -69,6 +71,33 @@ describe('ExecutiveFormDialog', () => {
     component.onSubmit();
     expect(dialogRefSpy.close).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'Joao Silva', role: 'CEO' }),
+    );
+  });
+
+  it('should refuse the monthly link without an e-mail', () => {
+    dialogRefSpy.close.mockClear();
+    component.form.patchValue({ name: 'Ana Souza', receives_monthly_report: true });
+    fixture.detectChanges();
+
+    component.onSubmit();
+
+    expect(dialogRefSpy.close).not.toHaveBeenCalled();
+    const alert = fixture.nativeElement.querySelector('[role="alert"]');
+    expect(alert.textContent).toContain('Informe o e-mail');
+  });
+
+  it('should submit the monthly link choice with an e-mail', () => {
+    dialogRefSpy.close.mockClear();
+    component.form.patchValue({
+      name: 'Ana Souza',
+      email: 'ana@payface.com',
+      receives_monthly_report: true,
+    });
+
+    component.onSubmit();
+
+    expect(dialogRefSpy.close).toHaveBeenCalledWith(
+      expect.objectContaining({ receives_monthly_report: true }),
     );
   });
 

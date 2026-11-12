@@ -3,6 +3,7 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 
 import { MonthlyIndicatorToken } from '../../../models/monthly-indicator-token.model';
+import { MonthlyReportDispatch } from '../../../models/monthly-report.model';
 import { TokenListDialog } from './token-list-dialog';
 
 describe('TokenListDialog', () => {
@@ -18,14 +19,17 @@ describe('TokenListDialog', () => {
     created_at: '',
   });
 
-  async function render(tokens: MonthlyIndicatorToken[]): Promise<HTMLElement> {
+  async function render(
+    tokens: MonthlyIndicatorToken[],
+    dispatches: MonthlyReportDispatch[] = [],
+  ): Promise<HTMLElement> {
     await TestBed.configureTestingModule({
       imports: [TokenListDialog],
       providers: [
         provideNoopAnimations(),
         { provide: MatDialogRef, useValue: { close: vi.fn() } },
         { provide: MatDialog, useValue: dialogSpy },
-        { provide: MAT_DIALOG_DATA, useValue: { tokens, executives: [] } },
+        { provide: MAT_DIALOG_DATA, useValue: { tokens, dispatches, executives: [] } },
       ],
     })
       // The component imports MatDialogModule, which brings its own MatDialog
@@ -41,6 +45,36 @@ describe('TokenListDialog', () => {
   afterEach(() => {
     TestBed.resetTestingModule();
     dialogSpy.open.mockClear();
+  });
+
+  it('should show the automatic e-mails of each period, failures in text', async () => {
+    const dispatch = (
+      month: number,
+      kind: 'initial' | 'reminder',
+      error: string | null = null,
+    ): MonthlyReportDispatch => ({
+      id: `d${month}${kind}`,
+      startup_id: 's1',
+      executive_id: 'e1',
+      recipient_email: 'ana@payface.com',
+      month,
+      year: 2026,
+      kind,
+      error,
+      sent_at: `2026-0${month + 1}-05T12:00:00Z`,
+    });
+
+    const element = await render(
+      [token(6), token(7)],
+      [dispatch(7, 'initial'), dispatch(7, 'reminder', 'SMTPRecipientsRefused')],
+    );
+    const rows = Array.from(element.querySelectorAll('tr[mat-row], tr.mat-mdc-row'));
+
+    expect(rows[0].textContent).toContain('Nenhum');
+    expect(rows[1].textContent).toContain('Envio em 05/08 para ana@payface.com');
+    expect(rows[1].textContent).toContain('Lembrete em');
+    expect(rows[1].textContent).toContain('Falhou');
+    expect(rows[1].textContent).toContain('SMTPRecipientsRefused');
   });
 
   it('should name every row action by its period', async () => {

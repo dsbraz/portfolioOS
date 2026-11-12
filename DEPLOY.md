@@ -204,7 +204,104 @@ cloud-sql-proxy YOUR_PROJECT:YOUR_REGION:portfolioos-db &
 alembic upgrade head
 ```
 
-## 8. Troubleshooting
+## 8. Envio mensal do link de indicadores
+
+O link de indicadores do mês anterior é enviado por e-mail por um **Cloud Run Job**
+que roda `scripts/dispatch_monthly_report.py` com a mesma imagem do backend. O
+**Cloud Scheduler** dispara o job duas vezes por mês: no dia 10 (`--kind initial`) e
+no dia 20 (`--kind reminder`, só para quem ainda não preencheu). O job não expõe
+nenhuma rota HTTP.
+
+Só recebem as startups com **Enviar o link de indicadores por e-mail todo mês**
+ligado, e só os executivos marcados como **Recebe o link mensal** que tenham
+e-mail. Cada envio é gravado logo depois que o e-mail sai, então rodar o job de
+novo pula tudo que já foi enviado. Um envio que falhou é tentado outra vez (no
+e-mail atual do cadastro), e o histórico aparece em **Links anteriores**. Um
+erro inesperado numa startup é registrado no log e o job segue para as demais.
+
+O lembrete do dia 20 só sai para quem recebeu o e-mail do dia 10. Quem não
+recebeu (envio ligado depois, executivo marcado depois, ou envio do dia 10 com
+falha) recebe o e-mail do dia 10 no lugar do lembrete.
+
+`EMAIL_BACKEND=console` só imprime e é aceito apenas com `ENVIRONMENT`
+`development` ou `local`; em qualquer outro ambiente o job se recusa a rodar.
+
+### Variáveis do job
+
+| Variável | Descrição | Exemplo |
+|----------|-----------|---------|
+| `DATABASE_URL`, `SECRET_KEY` | as mesmas do backend | — |
+| `APP_BASE_URL` | URL do frontend, base do link enviado | `https://portfolioos-client-xxxx.run.app` |
+| `EMAIL_BACKEND` | `smtp` envia; `console` (padrão) só imprime no log | `smtp` |
+| `SMTP_HOST` / `SMTP_PORT` | relay SMTP corporativo | `smtp.gmail.com` / `587` |
+| `SMTP_USERNAME` / `SMTP_PASSWORD` | conta remetente (senha de app) | `portfolio@empresa.com` |
+| `SMTP_SENDER` | remetente exibido | `portfolioOS <portfolio@empresa.com>` |
+| `SMTP_STARTTLS` | STARTTLS na porta 587 (padrão `true`) | `true` |
+| `EMAIL_SIGNATURE` | assinatura no fim do e-mail; vazia, termina no agradecimento | `Equipe de Portfólio` |
+
+O relay pode ser o do Google Workspace (`smtp.gmail.com`, ou `smtp-relay.gmail.com`
+com IP liberado) ou o do Microsoft 365 (`smtp.office365.com`). O domínio remetente
+precisa de SPF/DKIM configurados para que os e-mails não caiam no spam.
+
+### Criar o job e os agendamentos
+
+```bash
+# Arquivo de variáveis no formato do deploy.sh (não versionar)
+cat > /tmp/monthly-report-env.yaml <<ENVEOF
+DATABASE_URL: "${DATABASE_URL}"
+SECRET_KEY: "${SECRET_KEY}"
+ENVIRONMENT: "production"
+APP_BASE_URL: "https://SEU-FRONTEND.run.app"
+EMAIL_BACKEND: "smtp"
+SMTP_HOST: "smtp.gmail.com"
+SMTP_PORT: "587"
+SMTP_USERNAME: "portfolio@empresa.com"
+SMTP_PASSWORD: "SENHA_DE_APP"
+SMTP_SENDER: "portfolioOS <portfolio@empresa.com>"
+EMAIL_SIGNATURE: "Equipe de Portfólio"
+ENVEOF
+
+gcloud run jobs create portfolioos-monthly-report \
+    --image REGION-docker.pkg.dev/PROJECT/portfolioos/server:latest \
+    --region REGION \
+    --set-cloudsql-instances PROJECT:REGION:portfolioos-db \
+    --env-vars-file /tmp/monthly-report-env.yaml \
+    --command python \
+    --args=-m,scripts.dispatch_monthly_report,--kind,initial \
+    --max-retries 0
+rm -f /tmp/monthly-report-env.yaml
+
+# Teste manual (o --args sobrescreve o tipo de envio)
+gcloud run jobs execute portfolioos-monthly-report --region REGION \
+    --args=-m,scripts.dispatch_monthly_report,--kind,initial
+
+# Agendamentos: dia 10 e dia 20, às 9h de Brasília.
+# Se mudar os dias, mude também MONTHLY_REPORT_DAYS em
+# Client/src/app/models/monthly-report.model.ts (o texto das telas).
+SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+for KIND_DAY in initial:10 reminder:20; do
+  KIND=${KIND_DAY%%:*}; DAY=${KIND_DAY##*:}
+  gcloud scheduler jobs create http "portfolioos-monthly-report-${KIND}" \
+      --location REGION \
+      --schedule "0 9 ${DAY} * *" \
+      --time-zone "America/Sao_Paulo" \
+      --http-method POST \
+      --uri "https://run.googleapis.com/v2/projects/PROJECT/locations/REGION/jobs/portfolioos-monthly-report:run" \
+      --message-body "{\"overrides\":{\"containerOverrides\":[{\"args\":[\"-m\",\"scripts.dispatch_monthly_report\",\"--kind\",\"${KIND}\"]}]}}" \
+      --oauth-service-account-email "$SA"
+done
+```
+
+A service account do Scheduler precisa de `roles/run.invoker` (ou
+`roles/run.developer`, para sobrescrever os argumentos) no job. Depois de cada
+`./deploy.sh`, atualize a imagem do job com
+`gcloud run jobs update portfolioos-monthly-report --image ... --region REGION`.
+
+Quando algum envio falha, o job termina com código 1 e a execução aparece como
+falha no console do Cloud Run. O motivo fica no log e na coluna
+**Envio automático** de **Links anteriores**.
+
+## 9. Troubleshooting
 
 ### Conexão recusada ao Cloud SQL
 

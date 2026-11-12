@@ -149,7 +149,17 @@ Do painel de cada startup, registre para a fila:
 envio: WhatsApp quando o telefone tem código do país, e-mail quando não tem.
 Use o controle que aparece e leve o aviso do painel para a fila, para que quem
 opera possa corrigir o cadastro. Os dois abrem o programa da própria pessoa com
-a mensagem pronta — **a plataforma nunca envia nada sozinha**.
+a mensagem pronta — o painel nunca envia nada sozinho.
+
+**Confira se o e-mail automático já saiu.** A startup pode ter o envio mensal
+ligado: aí a plataforma manda o link do mês anterior por e-mail no dia 10 e um
+lembrete no dia 20. Em **Mais ações** → **Links anteriores**, a coluna
+**Envio automático** do período diz o que já foi (`Envio em dd/mm para
+{e-mail}`, `Lembrete em dd/mm…`) ou `Nenhum`. Leve isso para a fila: um item
+que já recebeu o e-mail automático sem `Falhou` entra marcado como tal, e você
+pergunta se quer cobrar de novo por outro canal — nunca reenvie por conta
+própria. Um envio com `Falhou` é cobrança que não chegou: trate como pendente e
+relate o motivo mostrado.
 
 Mostre a fila completa antes de qualquer envio. **Item impedido aparece na fila
 com o motivo e nunca entra no envio** — diga que o caminho é cadastrar, na aba
@@ -237,4 +247,6 @@ Ao final, reporte item a item: enviado, pulado ou impedido, com o motivo.
 | Mais de um executivo alcançável | pergunte para quem enviar |
 | Usuário oferece um número avulso | recuse; explique que o destinatário vem do cadastro |
 | Link já existe para o período | reaproveite por Links anteriores; não gere de novo nem trate como duplicidade |
+| O período já tem envio automático sem `Falhou` | marque na fila e pergunte se quer cobrar de novo; não reenvie por conta própria |
+| O envio automático do período tem `Falhou` | trate como pendente e relate o motivo mostrado |
 | Usuário pede para editar ou excluir algo durante a cobrança | conclua ou pause esta fila e retorne essa parte ao roteador interno do pacote, que segue com o fluxo aplicável e sua prévia |

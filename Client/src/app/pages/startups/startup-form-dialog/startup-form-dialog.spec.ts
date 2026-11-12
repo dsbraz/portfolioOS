@@ -51,6 +51,24 @@ describe('StartupFormDialog', () => {
         expect.objectContaining({ name: 'Test', sector: 'Tech' }),
       );
     });
+
+    it('should leave the monthly e-mail off by default and submit the choice', () => {
+      expect(component.form.controls.monthly_report_enabled.value).toBe(false);
+      const toggle = fixture.nativeElement.querySelector('mat-slide-toggle button');
+      expect(toggle.getAttribute('aria-describedby')).toContain('h-2ea6-monthly_report');
+
+      component.form.patchValue({
+        name: 'Test',
+        sector: 'Tech',
+        investment_date: new Date('2024-01-01'),
+        monthly_report_enabled: true,
+      });
+      component.onSubmit();
+
+      expect(dialogRefSpy.close).toHaveBeenLastCalledWith(
+        expect.objectContaining({ monthly_report_enabled: true }),
+      );
+    });
   });
 
   describe('edit mode', () => {
@@ -63,6 +81,7 @@ describe('StartupFormDialog', () => {
       sector: 'Fintech',
       investment_date: '2024-06-15',
       notes: 'Some note',
+      monthly_report_enabled: true,
       created_at: '2024-01-01T00:00:00Z',
       updated_at: '2024-01-01T00:00:00Z',
     };
@@ -85,6 +104,7 @@ describe('StartupFormDialog', () => {
       expect(component.isEditMode).toBe(true);
       expect(component.form.controls.name.value).toBe('EditCorp');
       expect(component.form.controls.status.value).toBe(StartupStatus.WARNING);
+      expect(component.form.controls.monthly_report_enabled.value).toBe(true);
     });
   });
 });

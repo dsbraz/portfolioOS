@@ -24,6 +24,10 @@ from app.domain.models.deal import Deal
 from app.domain.models.executive import Executive
 from app.domain.models.monthly_indicator import MonthlyIndicator
 from app.domain.models.monthly_indicator_token import MonthlyIndicatorToken
+from app.domain.models.monthly_report_dispatch import (
+    DispatchKind,
+    MonthlyReportDispatch,
+)
 from app.domain.models.period import Period
 from app.domain.models.startup import Startup
 from app.domain.models.user import User
@@ -36,6 +40,7 @@ class StartupRepository(Protocol):
     async def create(self, startup: Startup) -> Startup: ...
     async def update(self, startup: Startup) -> Startup: ...
     async def delete(self, startup: Startup) -> None: ...
+    async def get_all_with_monthly_report_enabled(self) -> list[Startup]: ...
 
 
 class BoardMeetingRepository(Protocol):
@@ -109,6 +114,24 @@ class MonthlyIndicatorRepository(Protocol):
     async def get_or_create_token(
         self, token: MonthlyIndicatorToken
     ) -> tuple[MonthlyIndicatorToken, bool]: ...
+
+
+class MonthlyReportDispatchRepository(Protocol):
+    async def get_or_create(
+        self, dispatch: MonthlyReportDispatch
+    ) -> tuple[MonthlyReportDispatch, bool]: ...
+    async def find(
+        self,
+        startup_id: uuid.UUID,
+        executive_id: uuid.UUID | None,
+        month: int,
+        year: int,
+        kind: DispatchKind,
+    ) -> MonthlyReportDispatch | None: ...
+    async def update(self, dispatch: MonthlyReportDispatch) -> MonthlyReportDispatch: ...
+    async def get_all_by_startup(
+        self, startup_id: uuid.UUID
+    ) -> tuple[list[MonthlyReportDispatch], int]: ...
 
 
 class UserRepository(Protocol):
