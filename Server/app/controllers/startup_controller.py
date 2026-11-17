@@ -6,11 +6,14 @@ from app.application.startup.create_startup import CreateStartup
 from app.application.startup.delete_startup import DeleteStartup
 from app.application.startup.get_startup import GetStartup
 from app.application.startup.list_startups import ListStartups
+from app.application.startup.record_startup_exit import RecordStartupExit
+from app.application.startup.undo_startup_exit import UndoStartupExit
 from app.application.startup.update_startup import UpdateStartup
-from app.controllers.dependencies import startup_builder
+from app.controllers.dependencies import startup_builder, startup_exit_builder
 from app.domain.models.startup import Startup
 from app.controllers.schemas.startup import (
     StartupCreate,
+    StartupExitRecord,
     StartupListResponse,
     StartupResponse,
     StartupUpdate,
@@ -21,9 +24,11 @@ router = APIRouter(prefix="/startups", tags=["Startups"])
 
 @router.get("", response_model=StartupListResponse)
 async def list_startups(
+    tracked: bool | None = None,
     use_case: ListStartups = Depends(startup_builder(ListStartups)),
 ):
-    items, total = await use_case.execute()
+    """`tracked=true` lists the startups still followed, `false` the exited ones."""
+    items, total = await use_case.execute(tracked=tracked)
     return StartupListResponse(
         items=[StartupResponse.model_validate(s) for s in items],
         total=total,
@@ -84,3 +89,40 @@ async def delete_startup(
             detail=f"Startup com id {startup_id} não encontrada",
         )
     await delete_uc.execute(startup)
+
+
+@router.put("/{startup_id}/exit", response_model=StartupResponse)
+async def record_startup_exit(
+    startup_id: uuid.UUID,
+    data: StartupExitRecord,
+    get_uc: GetStartup = Depends(startup_builder(GetStartup)),
+    record_uc: RecordStartupExit = Depends(
+        startup_exit_builder(RecordStartupExit)
+    ),
+):
+    startup = await get_uc.execute(startup_id)
+    if not startup:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Startup com id {startup_id} não encontrada",
+        )
+    updated = await record_uc.execute(
+        startup, data.exited_on, data.exit_type, data.exit_notes
+    )
+    return StartupResponse.model_validate(updated)
+
+
+@router.delete("/{startup_id}/exit", response_model=StartupResponse)
+async def undo_startup_exit(
+    startup_id: uuid.UUID,
+    get_uc: GetStartup = Depends(startup_builder(GetStartup)),
+    undo_uc: UndoStartupExit = Depends(startup_builder(UndoStartupExit)),
+):
+    startup = await get_uc.execute(startup_id)
+    if not startup:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Startup com id {startup_id} não encontrada",
+        )
+    updated = await undo_uc.execute(startup)
+    return StartupResponse.model_validate(updated)

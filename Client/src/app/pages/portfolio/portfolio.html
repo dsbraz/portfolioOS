@@ -71,8 +71,10 @@
       <mat-card class="empty-state">
         <mat-card-content>
           <mat-icon class="empty-icon">rocket_launch</mat-icon>
-          <h2>Nenhuma startup cadastrada</h2>
-          <p>Clique em "Nova Startup" para adicionar a primeira.</p>
+          <h2>Nenhuma startup acompanhada neste período</h2>
+          @if (exitedStartups()?.length) {
+            <p>As startups encerradas estão listadas abaixo.</p>
+          }
         </mat-card-content>
       </mat-card>
     } @else {
@@ -170,4 +172,45 @@
       <span>Não foi possível carregar o monitoramento deste período.</span>
     </div>
   }
+
+  <section class="exited-section" aria-labelledby="exited-title" [attr.aria-busy]="exitedLoading() ? 'true' : null">
+    <h2 class="exited-title" id="exited-title">Encerradas</h2>
+    @if (exitedLoading() && !exitedStartups()) {
+      <div class="page-status" role="status">
+        <span>Carregando startups encerradas…</span>
+      </div>
+    } @else if (exitedStartups(); as exited) {
+      @if (exited.length === 0) {
+        <p class="exited-empty">Nenhuma startup encerrada.</p>
+      } @else {
+        <div class="table-shell table-shell--card" tabindex="0" role="region" aria-label="Tabela de startups encerradas (rolável)">
+          <table mat-table [dataSource]="exited" [trackBy]="trackStartupById" class="data-table">
+            <caption class="visually-hidden">
+              Startups que deixaram de ser acompanhadas, com data e tipo de saída.
+            </caption>
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef scope="col">Startup</th>
+              <td mat-cell *matCellDef="let s">
+                <a class="startup-name" [routerLink]="['/startup', s.id]">{{ s.name }}</a>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="exited_on">
+              <th mat-header-cell *matHeaderCellDef scope="col">Saída</th>
+              <td mat-cell *matCellDef="let s">{{ exitedOnLabel(s) }}</td>
+            </ng-container>
+            <ng-container matColumnDef="exit_type">
+              <th mat-header-cell *matHeaderCellDef scope="col">Tipo</th>
+              <td mat-cell *matCellDef="let s">{{ exitTypeLabel(s) }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="exitedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: exitedColumns"></tr>
+          </table>
+        </div>
+      }
+    } @else {
+      <div class="page-status" role="status">
+        <span>Não foi possível carregar as startups encerradas.</span>
+      </div>
+    }
+  </section>
 </div>

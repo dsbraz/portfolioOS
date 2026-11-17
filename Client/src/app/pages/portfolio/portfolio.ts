@@ -20,9 +20,9 @@ import { participationValue } from '../../models/participation';
 import { PortfolioService } from '../../services/portfolio.service';
 import { StartupService } from '../../services/startup.service';
 import { StatusBadge } from '../../components/status-badge/status-badge';
-import { formatCurrencyBRL, formatPeriod } from '../../models/formatters';
+import { formatCurrencyBRL, formatIsoDate, formatPeriod } from '../../models/formatters';
 import { SortState, applySort } from '../../models/sorting';
-import { STARTUP_STATUS_SEVERITY } from '../../models/startup.model';
+import { EXIT_TYPE_LABELS, STARTUP_STATUS_SEVERITY, Startup } from '../../models/startup.model';
 import { KpiCard } from '../../components/kpi-card/kpi-card';
 import { HealthBar } from '../../components/health-bar/health-bar';
 import {
@@ -78,6 +78,20 @@ export class Portfolio implements OnInit {
 
   readonly sort = signal<SortState>({ active: '', direction: '' });
 
+  private readonly allExitedStartups = signal<Startup[] | null>(null);
+  /** Exits effective by the selected month, keeping historical lists disjoint. */
+  readonly exitedStartups = computed(() => {
+    const period = this.selectedYear() * 12 + this.selectedMonth();
+    return this.allExitedStartups()?.filter((startup) => {
+      if (!startup.exited_on) return false;
+      const [year, month] = startup.exited_on.split('-').map(Number);
+      return year * 12 + month <= period;
+    }) ?? null;
+  });
+  readonly exitedLoading = signal(false);
+  readonly exitedColumns = ['name', 'exited_on', 'exit_type'];
+  readonly trackStartupById = (_: number, s: Startup) => s.id;
+
   /** Each column sorts by what it IS, not by the text it shows: status by
    *  severity, money by the number. See `models/sorting.ts`. */
   readonly sortedStartups = computed(() =>
@@ -103,6 +117,26 @@ export class Portfolio implements OnInit {
       this.selectedYear.set(period.year);
       this.loadSummary();
     });
+    this.loadExited();
+  }
+
+  loadExited(): void {
+    this.exitedLoading.set(true);
+    this.startupService.list({ tracked: false }).subscribe({
+      next: (data) => {
+        this.allExitedStartups.set(data.items);
+        this.exitedLoading.set(false);
+      },
+      error: () => this.exitedLoading.set(false),
+    });
+  }
+
+  exitedOnLabel(s: Startup): string {
+    return formatIsoDate(s.exited_on) ?? '-';
+  }
+
+  exitTypeLabel(s: Startup): string {
+    return s.exit_type ? EXIT_TYPE_LABELS[s.exit_type] : '-';
   }
 
   loadSummary(): void {

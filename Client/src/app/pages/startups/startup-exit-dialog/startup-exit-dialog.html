@@ -1,0 +1,74 @@
+<app-dialog-header
+  title="Registrar saída"
+  [description]="'A ' + data.startup.name + ' deixa de ser acompanhada e seus links de resposta param de funcionar. O histórico continua disponível.'"
+/>
+
+<mat-dialog-content>
+  <form [formGroup]="form" id="startup-exit-form" class="dialog-form" (ngSubmit)="onSubmit()">
+    <div class="field">
+      <label class="field-label" for="f-exit-date">Data da saída<span class="field-required" aria-hidden="true">*</span></label>
+      <mat-form-field appearance="outline">
+        <input
+          id="f-exit-date"
+          matInput
+          [matDatepicker]="picker"
+          [min]="minDate"
+          [max]="today"
+          formControlName="exited_on"
+        />
+        <mat-datepicker-toggle matIconSuffix [for]="picker" />
+        <mat-datepicker #picker />
+        @if (form.controls.exited_on.hasError('required')) {
+          <mat-error>Data é obrigatória</mat-error>
+        } @else if (form.controls.exited_on.hasError('matDatepickerMin')) {
+          <mat-error>Não pode ser anterior ao investimento</mat-error>
+        } @else if (form.controls.exited_on.hasError('matDatepickerMax')) {
+          <mat-error>Não pode ser no futuro</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="field">
+      <label class="field-label" id="l-exit-type">Tipo de saída<span class="field-required" aria-hidden="true">*</span></label>
+      <mat-form-field appearance="outline">
+        <mat-select aria-labelledby="l-exit-type" formControlName="exit_type">
+          @for (type of exitTypes; track type) {
+            <mat-option [value]="type">{{ exitTypeLabels[type] }}</mat-option>
+          }
+        </mat-select>
+        @if (form.controls.exit_type.hasError('required')) {
+          <mat-error>Tipo é obrigatório</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="field">
+      <label class="field-label" for="f-exit-notes">Observações</label>
+      <mat-form-field appearance="outline">
+        <textarea
+          id="f-exit-notes"
+          matInput
+          formControlName="exit_notes"
+          rows="3"
+          placeholder="Comprador, valor, contexto"
+        ></textarea>
+      </mat-form-field>
+    </div>
+
+    @if (error(); as message) {
+      <mat-error class="dialog-error" role="alert">{{ message }}</mat-error>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-stroked-button mat-dialog-close type="button">Cancelar</button>
+  <button
+    mat-flat-button
+    type="submit"
+    form="startup-exit-form"
+    [disabled]="form.invalid || saving()"
+  >
+    {{ saving() ? 'Registrando...' : 'Registrar saída' }}
+  </button>
+</mat-dialog-actions>

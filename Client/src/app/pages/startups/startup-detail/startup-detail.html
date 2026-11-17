@@ -29,6 +29,9 @@
               </a>
             }
             <app-status-badge [status]="s.status" />
+            @if (s.exited_on) {
+              <span class="pill pill--neutral">Encerrada</span>
+            }
           </div>
 
           <p class="page-head-sub">
@@ -46,14 +49,27 @@
           <mat-icon>edit</mat-icon>
           Editar
         </button>
-        <button mat-icon-button [matMenuTriggerFor]="moreMenu" aria-label="Mais ações">
+        <button #moreTrigger mat-icon-button [matMenuTriggerFor]="moreMenu" aria-label="Mais ações">
           <mat-icon>more_horiz</mat-icon>
         </button>
         <mat-menu #moreMenu="matMenu">
-          <button mat-menu-item (click)="openTokenListDialog()">
-            <mat-icon>history</mat-icon>
-            Links anteriores
-          </button>
+          @if (!s.exited_on) {
+            <button mat-menu-item (click)="openTokenListDialog()">
+              <mat-icon>history</mat-icon>
+              Links anteriores
+            </button>
+          }
+          @if (s.exited_on) {
+            <button mat-menu-item (click)="undoExit()">
+              <mat-icon>undo</mat-icon>
+              Desfazer saída
+            </button>
+          } @else {
+            <button mat-menu-item (click)="openRecordExit()">
+              <mat-icon>logout</mat-icon>
+              Registrar saída
+            </button>
+          }
           <button mat-menu-item class="menu-item-danger" (click)="deleteStartup()">
             <mat-icon>delete</mat-icon>
             Excluir startup
@@ -61,6 +77,25 @@
         </mat-menu>
       </div>
     </header>
+
+    @if (s.exited_on) {
+      <section class="exit-notice" aria-labelledby="exit-notice-title">
+        <mat-icon class="exit-notice-icon" aria-hidden="true">logout</mat-icon>
+        <div>
+          <p class="exit-notice-title" id="exit-notice-title">
+            Acompanhamento encerrado
+          </p>
+          <p class="exit-notice-text">
+            Saiu em {{ s.exited_on | date: 'dd/MM/yyyy' }}
+            <span aria-hidden="true">&middot;</span>
+            {{ exitTypeLabel(s) }}
+          </p>
+          @if (s.exit_notes) {
+            <p class="exit-notice-text">{{ s.exit_notes }}</p>
+          }
+        </div>
+      </section>
+    }
 
     <section class="kpi-grid" aria-label="Resumo do último período">
       <app-kpi-card
@@ -114,6 +149,8 @@
       </div>
 
       <!-- Outside the tablist: a role="tablist" only allows tabs as children. -->
+      <!-- An exited startup is no longer chased by link, but still takes its
+           numbers by hand up to the exit month; the dialog enforces the limit. -->
       @if (activeSection() === 'indicadores') {
         <button mat-flat-button class="section-action" (click)="openCreateIndicator()">
           <mat-icon>add</mat-icon>

@@ -27,9 +27,11 @@ from app.application.monthly_indicator.list_monthly_indicators import (
 from app.application.monthly_indicator.update_monthly_indicator import (
     UpdateMonthlyIndicator,
 )
+from app.application.startup.get_startup import GetStartup
 from app.controllers.dependencies import (
     monthly_indicator_builder,
     public_form_builder,
+    startup_builder,
     verify_startup_exists,
 )
 from app.domain.models.monthly_indicator import MonthlyIndicator
@@ -103,6 +105,7 @@ async def public_create_monthly_indicator(
     get_token: GetMonthlyIndicatorToken = Depends(
         monthly_indicator_builder(GetMonthlyIndicatorToken)
     ),
+    get_startup: GetStartup = Depends(startup_builder(GetStartup)),
     create: CreateMonthlyIndicator = Depends(
         monthly_indicator_builder(CreateMonthlyIndicator)
     ),
@@ -114,13 +117,21 @@ async def public_create_monthly_indicator(
             detail="Token invalido ou expirado",
         )
 
+    startup = await get_startup.execute(indicator_token.startup_id)
+    if not startup:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Startup nao encontrada",
+        )
+
     indicator = MonthlyIndicator(
         startup_id=indicator_token.startup_id,
         month=indicator_token.month,
         year=indicator_token.year,
         **data.model_dump(),
     )
-    await create.execute(indicator)
+    # An exited startup has no reporting link, whatever the period (409).
+    await create.execute(startup, indicator, through_link=True)
 
 
 # --- Protected routes: indicators ---
@@ -149,14 +160,22 @@ async def list_indicators(
     status_code=status.HTTP_201_CREATED,
 )
 async def create_indicator(
+    startup_id: uuid.UUID,
     data: MonthlyIndicatorCreate,
-    startup_id: uuid.UUID = Depends(verify_startup_exists),
+    get_startup: GetStartup = Depends(startup_builder(GetStartup)),
     use_case: CreateMonthlyIndicator = Depends(
         monthly_indicator_builder(CreateMonthlyIndicator)
     ),
 ):
+    startup = await get_startup.execute(startup_id)
+    if not startup:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Startup com id {startup_id} não encontrada",
+        )
     indicator = MonthlyIndicator(startup_id=startup_id, **data.model_dump())
-    created = await use_case.execute(indicator)
+    # By hand: an exited startup still takes periods up to its exit month (409 after).
+    created = await use_case.execute(startup, indicator, through_link=False)
     return MonthlyIndicatorResponse.model_validate(created)
 
 
@@ -239,13 +258,20 @@ async def delete_indicator(
     status_code=status.HTTP_200_OK,
 )
 async def create_monthly_indicator_token(
+    startup_id: uuid.UUID,
     data: MonthlyIndicatorTokenCreate,
-    startup_id: uuid.UUID = Depends(verify_startup_exists),
+    get_startup: GetStartup = Depends(startup_builder(GetStartup)),
     create: CreateMonthlyIndicatorToken = Depends(
         monthly_indicator_builder(CreateMonthlyIndicatorToken)
     ),
 ):
-    token = await create.execute(startup_id, data.month, data.year)
+    startup = await get_startup.execute(startup_id)
+    if not startup:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Startup com id {startup_id} não encontrada",
+        )
+    token = await create.execute(startup, data.month, data.year)
     return MonthlyIndicatorTokenResponse.model_validate(token)
 
 

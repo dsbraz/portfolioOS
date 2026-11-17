@@ -3,7 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { StartupService } from './startup.service';
-import { StartupStatus } from '../models/startup.model';
+import { ExitType, StartupStatus } from '../models/startup.model';
 
 describe('StartupService', () => {
   let service: StartupService;
@@ -28,6 +28,29 @@ describe('StartupService', () => {
     const req = httpMock.expectOne('/api/startups');
     expect(req.request.method).toBe('GET');
     req.flush(mockResponse);
+  });
+
+  it('should list only the exited startups', () => {
+    service.list({ tracked: false }).subscribe();
+    const req = httpMock.expectOne('/api/startups?tracked=false');
+    expect(req.request.method).toBe('GET');
+    req.flush({ items: [], total: 0 });
+  });
+
+  it('should record an exit', () => {
+    const payload = { exited_on: '2026-03-20', exit_type: ExitType.SALE, exit_notes: null };
+    service.recordExit('s1', payload).subscribe();
+    const req = httpMock.expectOne('/api/startups/s1/exit');
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual(payload);
+    req.flush({});
+  });
+
+  it('should undo an exit', () => {
+    service.undoExit('s1').subscribe();
+    const req = httpMock.expectOne('/api/startups/s1/exit');
+    expect(req.request.method).toBe('DELETE');
+    req.flush({});
   });
 
   it('should create a startup', () => {

@@ -42,3 +42,11 @@ def validate_monthly_report_recipient(receives: bool, email: str | None) -> None
         raise InvalidInputError(
             "Executivo que recebe o link mensal precisa de e-mail cadastrado"
         )
+
+
+def validate_exit_not_before_investment(investment_date: date, exited_on: date) -> None:
+    """Checked from both sides: recording the exit and editing the investment."""
+    if exited_on < investment_date:
+        raise InvalidInputError(
+            "Data da saída não pode ser anterior à data do investimento"
+        )

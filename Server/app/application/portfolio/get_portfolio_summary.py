@@ -43,15 +43,17 @@ class GetPortfolioSummary:
     ) -> PortfolioSummary:
         selected = self._resolve_period(month, year)
 
-        startups, total = await self._startup_repo.get_all()
+        all_startups, _ = await self._startup_repo.get_all()
+        startups = [s for s in all_startups if s.is_tracked_in(selected)]
+        total = len(startups)
         if total == 0:
             return _empty_summary()
 
         startup_ids = [s.id for s in startups]
-        previous = selected.previous()
         indicators = await self._indicator_repo.get_by_startups_and_period(
             startup_ids, selected.month, selected.year
         )
+        previous = selected.previous()
         previous_indicators = await self._indicator_repo.get_by_startups_and_period(
             startup_ids, previous.month, previous.year
         )

@@ -6,5 +6,5 @@ class ListStartups:
     def __init__(self, repository: StartupRepository) -> None:
         self._repository = repository
 
-    async def execute(self) -> tuple[list[Startup], int]:
-        return await self._repository.get_all()
+    async def execute(self, tracked: bool | None = None) -> tuple[list[Startup], int]:
+        return await self._repository.get_all(tracked=tracked)

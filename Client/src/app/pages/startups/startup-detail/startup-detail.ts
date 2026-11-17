@@ -1,4 +1,13 @@
-import { Component, ElementRef, computed, inject, OnInit, signal, viewChildren } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  computed,
+  inject,
+  OnInit,
+  signal,
+  viewChild,
+  viewChildren,
+} from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -11,7 +20,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatMenuModule } from '@angular/material/menu';
 import { catchError, forkJoin, of } from 'rxjs';
 
-import { Startup } from '../../../models/startup.model';
+import { EXIT_TYPE_LABELS, Startup } from '../../../models/startup.model';
 import { MonthlyIndicator } from '../../../models/monthly-indicator.model';
 import { formatCurrencyBRL, formatPeriod } from '../../../models/formatters';
 import { SortState, applySort } from '../../../models/sorting';
@@ -54,6 +63,11 @@ import {
   AddIndicatorDialog,
   AddIndicatorDialogData,
 } from '../add-indicator-dialog/add-indicator-dialog';
+
+import {
+  StartupExitDialog,
+  StartupExitDialogData,
+} from '../startup-exit-dialog/startup-exit-dialog';
 
 import { KpiCard } from '../../../components/kpi-card/kpi-card';
 
@@ -131,6 +145,9 @@ export class StartupDetail implements OnInit {
   private startupId = '';
 
   readonly tabButtons = viewChildren<ElementRef<HTMLButtonElement>>('tabBtn');
+  /** Dialogs opened from the menu return focus here: the menu item that opened
+   *  them no longer exists when they close, so focus would fall to the body. */
+  private readonly moreTrigger = viewChild('moreTrigger', { read: ElementRef<HTMLButtonElement> });
 
   /** Page sections. The order defines the tablist's arrow-key navigation. */
   readonly sections = [
@@ -295,6 +312,39 @@ export class StartupDetail implements OnInit {
     });
   }
 
+  exitTypeLabel(s: Startup): string {
+    return s.exit_type ? EXIT_TYPE_LABELS[s.exit_type] : '';
+  }
+
+  // Exit: the startup stops being tracked, nothing is deleted.
+  openRecordExit(): void {
+    const s = this.startup();
+    if (!s) return;
+    const dialogRef = this.dialog.open(StartupExitDialog, {
+      width: '480px',
+      data: { startup: s } as StartupExitDialogData,
+    });
+    dialogRef.afterClosed().subscribe((changed) => {
+      this.focusMoreTrigger();
+      if (!changed) return;
+      this.snackBar.open('Saída registrada', 'Fechar', { duration: 3000 });
+      this.loadAll();
+    });
+  }
+
+  undoExit(): void {
+    const s = this.startup();
+    if (!s) return;
+    if (!confirm(`Desfazer a saída da "${s.name}"? Ela volta a ser acompanhada.`)) return;
+    this.startupService.undoExit(this.startupId).subscribe({
+      next: () => {
+        this.snackBar.open('Saída desfeita', 'Fechar', { duration: 3000 });
+        this.loadAll();
+      },
+      error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao desfazer saída', 'Fechar', { duration: 3000 }),
+    });
+  }
+
   deleteStartup(): void {
     const s = this.startup();
     if (!s) return;
@@ -328,6 +378,7 @@ export class StartupDetail implements OnInit {
         indicators: this.indicators(),
         tokens: this.tokens(),
         executives: this.executives(),
+        exitedOn: this.startup()?.exited_on ?? null,
       } as AddIndicatorDialogData,
     });
     dialogRef.afterClosed().subscribe((changed) => {
@@ -475,7 +526,7 @@ export class StartupDetail implements OnInit {
   }
 
   openTokenListDialog(): void {
-    this.dialog.open(TokenListDialog, {
+    const dialogRef = this.dialog.open(TokenListDialog, {
       width: '560px',
       data: {
         tokens: this.tokens(),
@@ -484,5 +535,10 @@ export class StartupDetail implements OnInit {
         startupName: this.startup()?.name ?? '',
       } as TokenListDialogData,
     });
+    dialogRef.afterClosed().subscribe(() => this.focusMoreTrigger());
+  }
+
+  private focusMoreTrigger(): void {
+    this.moreTrigger()?.nativeElement.focus();
   }
 }

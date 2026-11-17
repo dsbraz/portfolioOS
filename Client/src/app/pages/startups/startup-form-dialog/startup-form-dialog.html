@@ -51,11 +51,14 @@
       <div class="field">
         <label class="field-label" id="l-2ea6-investment_date" for="f-2ea6-investment_date">Data do Investimento<span class="field-required" aria-hidden="true">*</span></label>
         <mat-form-field appearance="outline">
-  <input id="f-2ea6-investment_date" matInput [matDatepicker]="picker" formControlName="investment_date" />
+  <input id="f-2ea6-investment_date" matInput [matDatepicker]="picker" [max]="maxInvestmentDate" formControlName="investment_date" />
           <mat-datepicker-toggle matIconSuffix [for]="picker" />
           <mat-datepicker #picker />
           @if (form.controls.investment_date.hasError('required')) {
             <mat-error>Data é obrigatória</mat-error>
+          }
+          @if (form.controls.investment_date.hasError('matDatepickerMax')) {
+            <mat-error>Não pode ser posterior à data da saída</mat-error>
           }
         </mat-form-field>
       </div>

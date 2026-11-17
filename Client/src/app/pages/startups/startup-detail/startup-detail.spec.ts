@@ -33,6 +33,9 @@ describe('StartupDetail (totalParticipation)', () => {
     equity_stake: equityStake,
     notes: null,
     monthly_report_enabled: false,
+    exited_on: null,
+    exit_type: null,
+    exit_notes: null,
     created_at: '2025-01-01T00:00:00Z',
     updated_at: '2025-01-01T00:00:00Z',
   });
@@ -141,6 +144,9 @@ describe('StartupDetail (loading and ARIA)', () => {
     equity_stake: 5,
     notes: null,
     monthly_report_enabled: false,
+    exited_on: null,
+    exit_type: null,
+    exit_notes: null,
     created_at: '2025-01-01T00:00:00Z',
     updated_at: '2025-01-01T00:00:00Z',
   };
@@ -481,6 +487,9 @@ describe('StartupDetail (refresh after a change)', () => {
     equity_stake: 5,
     notes: null,
     monthly_report_enabled: false,
+    exited_on: null,
+    exit_type: null,
+    exit_notes: null,
     created_at: '2025-01-01T00:00:00Z',
     updated_at: '2025-01-01T00:00:00Z',
   };

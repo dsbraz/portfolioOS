@@ -29,6 +29,7 @@ describe('Portfolio', () => {
   };
   const startupServiceSpy = {
     create: vi.fn(),
+    list: vi.fn(() => of({ items: [], total: 0 })),
   };
   const routerSpy = routerStub();
   const dialogSpy = {
@@ -280,7 +281,7 @@ describe('Portfolio (loading state)', () => {
                   } as PortfolioSummary),
           },
         },
-        { provide: StartupService, useValue: { create: vi.fn() } },
+        { provide: StartupService, useValue: { create: vi.fn(), list: vi.fn(() => of({ items: [], total: 0 })) } },
       ],
     }).compileComponents();
 
@@ -300,7 +301,7 @@ describe('Portfolio (loading state)', () => {
   it('should drop the busy state and show the empty state once loaded', async () => {
     const el = await mount(false);
     expect(el.querySelector('[aria-busy="true"]')).toBeNull();
-    expect(el.textContent).toContain('Nenhuma startup cadastrada');
+    expect(el.textContent).toContain('Nenhuma startup acompanhada neste período');
   });
 });
 
@@ -334,7 +335,7 @@ describe('Portfolio (sorting)', () => {
               } as unknown as PortfolioSummary),
           },
         },
-        { provide: StartupService, useValue: { create: vi.fn() } },
+        { provide: StartupService, useValue: { create: vi.fn(), list: vi.fn(() => of({ items: [], total: 0 })) } },
       ],
     }).compileComponents();
 
@@ -436,7 +437,7 @@ describe('Portfolio (report state in the status column)', () => {
               } as unknown as PortfolioSummary),
           },
         },
-        { provide: StartupService, useValue: { create: vi.fn() } },
+        { provide: StartupService, useValue: { create: vi.fn(), list: vi.fn(() => of({ items: [], total: 0 })) } },
       ],
     }).compileComponents();
     const fixture = TestBed.createComponent(Portfolio);
@@ -514,7 +515,7 @@ describe('Portfolio (refresh when the period changes)', () => {
           provide: PortfolioService,
           useValue: { getSummary: (month: number, year: number) => getSummary(month, year) },
         },
-        { provide: StartupService, useValue: { create: vi.fn() } },
+        { provide: StartupService, useValue: { create: vi.fn(), list: vi.fn(() => of({ items: [], total: 0 })) } },
       ],
     }).compileComponents();
 

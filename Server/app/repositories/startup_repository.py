@@ -10,14 +10,23 @@ class StartupRepository:
     def __init__(self, session: AsyncSession):
         self._session = session
 
-    async def get_all(self) -> tuple[list[Startup], int]:
+    async def get_all(
+        self, tracked: bool | None = None
+    ) -> tuple[list[Startup], int]:
+        """All startups, or only those still tracked (`True`) or exited (`False`)."""
+        query = select(Startup)
+        if tracked is True:
+            query = query.where(Startup.exited_on.is_(None))
+        elif tracked is False:
+            query = query.where(Startup.exited_on.is_not(None))
+
         count_result = await self._session.execute(
-            select(func.count()).select_from(Startup)
+            select(func.count()).select_from(query.subquery())
         )
         total = count_result.scalar_one()
 
         result = await self._session.execute(
-            select(Startup).order_by(Startup.created_at.desc())
+            query.order_by(Startup.created_at.desc())
         )
         return list(result.scalars().all()), total
 

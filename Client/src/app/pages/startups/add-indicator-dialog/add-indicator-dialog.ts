@@ -1,6 +1,14 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  FormControl,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -32,6 +40,13 @@ export interface AddIndicatorDialogData {
   indicators: MonthlyIndicator[];
   tokens: MonthlyIndicatorToken[];
   executives: Executive[];
+  /** The startup's exit date (`YYYY-MM-DD`), or null while it is tracked. */
+  exitedOn: string | null;
+}
+
+interface PeriodValue {
+  month: number;
+  year: number;
 }
 
 type Mode = 'fill' | 'link';
@@ -80,7 +95,14 @@ export class AddIndicatorDialog {
    *  sent, because closing before the response must not drop what it creates. */
   readonly changed = signal(false);
 
-  private readonly previousPeriod = AddIndicatorDialog.previousMonthPeriod();
+  /** An exited startup takes indicators by hand up to its exit month, and no
+   *  link at all — its numbers often arrive after the exit is recorded. */
+  readonly exitPeriod = AddIndicatorDialog.periodOf(this.data.exitedOn);
+  readonly exitPeriodLabel = this.exitPeriod
+    ? formatPeriod(this.exitPeriod.month, this.exitPeriod.year)
+    : null;
+
+  private readonly previousPeriod = AddIndicatorDialog.initialPeriod(this.exitPeriod);
 
   // month/year live on the parent group so futurePeriodValidator can read them;
   // the reportable zone comes from the shared factory (nested), so its limits
@@ -95,7 +117,7 @@ export class AddIndicatorDialog {
       reported: buildReportedIndicatorForm(this.fb),
       comments: [''],
     },
-    { validators: [futurePeriodValidator] },
+    { validators: [futurePeriodValidator, AddIndicatorDialog.notAfter(this.exitPeriod)] },
   );
 
   /** The selected period, read from the form as signals so context updates live.
@@ -162,6 +184,8 @@ export class AddIndicatorDialog {
 
   private generateLink(): void {
     const { month, year } = this.form.controls;
+    // An exited startup has no reporting link; the mode is not even offered.
+    if (this.exitPeriod) return;
     if (this.form.hasError('futurePeriod') || month.invalid || year.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -210,7 +234,33 @@ export class AddIndicatorDialog {
     });
   }
 
-  private static previousMonthPeriod(): { month: number; year: number } {
+  private static periodOf(isoDate: string | null): PeriodValue | null {
+    if (!isoDate) return null;
+    const [year, month] = isoDate.split('-').map(Number);
+    return { month, year };
+  }
+
+  /** Last month by default, but never past the exit month. */
+  private static initialPeriod(exit: PeriodValue | null): PeriodValue {
+    const previous = AddIndicatorDialog.previousMonthPeriod();
+    if (!exit) return previous;
+    const afterExit =
+      previous.year > exit.year || (previous.year === exit.year && previous.month > exit.month);
+    return afterExit ? exit : previous;
+  }
+
+  private static notAfter(exit: PeriodValue | null): ValidatorFn {
+    return (group: AbstractControl): ValidationErrors | null => {
+      if (!exit) return null;
+      const month = group.get('month')?.value as number | null;
+      const year = group.get('year')?.value as number | null;
+      if (month == null || year == null) return null;
+      const after = year > exit.year || (year === exit.year && month > exit.month);
+      return after ? { afterExit: true } : null;
+    };
+  }
+
+  private static previousMonthPeriod(): PeriodValue {
     const today = new Date();
     // getMonth() is 0-indexed, so its 1-based value already names last month.
     if (today.getMonth() === 0) {

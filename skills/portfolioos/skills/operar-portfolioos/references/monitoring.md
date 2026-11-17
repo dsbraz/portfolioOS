@@ -15,6 +15,13 @@ the startup name, which is a link. Read:
 - each startup's name, status, revenue, cash, EBITDA/burn, headcount, and latest
   reported period.
 
+The table lists startups from their investment month (inclusive) until their
+exit month (exclusive), regardless of whether the exit month has a report.
+Before investment they do not appear. From the exit month onward they appear
+only under `Encerradas`, with exit date and type and a link to their history.
+Both lists follow the selected period, so a startup never appears in both.
+Exit-month reports remain available in the startup's history.
+
 `Total da Participação` is an estimate based on annualized revenue times five and
 the ownership percentage. Describe it as an estimate, not a recorded valuation.
 
@@ -30,6 +37,28 @@ date are required. Participation must be between 0 and 100. Status values are
 
 For read-only access to fields visible only in `Editar Startup`, open the dialog,
 read without changing anything, and close with `Cancelar`.
+
+## Record an exit
+
+When the fund leaves a startup (sale, IPO, buyback, or the company shut down),
+record the exit instead of deleting it: the history stays readable and the
+startup stops being tracked. On the startup page, `Mais ações` → `Registrar
+saída`. Fields: `Data da saída` (required; not in the future, not before the
+investment date, not before the last month already reported — the message
+names that month), `Tipo de saída` (required) and `Observações` (buyer, amount,
+context). Types: `Venda (M&A ou secundária)`, `IPO`, `Recompra pelos
+fundadores`, `Baixa (encerrou)` — a write-off is an exit of type `Baixa`.
+
+Once recorded, the page shows `Acompanhamento encerrado` with the date and type,
+and the header shows the `Encerrada` pill. `Adicionar indicador` stays, for
+the numbers that arrive late: it fills by hand only (no link mode), and only
+periods up to the exit month; a later period is refused. Existing indicators,
+meetings and executives stay editable. An exited
+startup has no reporting link: every link already sent stops working, whatever
+its period, a new one cannot be generated, and `Links anteriores` is no longer
+offered. Undoing the exit brings the old links back. A startup can exit only
+once; to correct an entry, `Mais ações` → `Desfazer saída`, which makes it
+tracked again, then record it anew.
 
 Deleting a startup permanently cascades to its monthly indicators, meetings,
 executives, and reporting links. It does not remove an independent deal with the

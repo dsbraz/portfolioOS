@@ -72,7 +72,7 @@ describe('Portfolio (sort header wiring)', () => {
               } as unknown as PortfolioSummary),
           },
         },
-        { provide: StartupService, useValue: { create: vi.fn() } },
+        { provide: StartupService, useValue: { create: vi.fn(), list: vi.fn(() => of({ items: [], total: 0 })) } },
       ],
     }).compileComponents();
 

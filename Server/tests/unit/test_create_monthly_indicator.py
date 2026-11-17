@@ -2,9 +2,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from datetime import date
+
 from app.application.monthly_indicator.create_monthly_indicator import (
     CreateMonthlyIndicator,
 )
+from app.domain.exceptions import ConflictError
+from app.domain.models.startup import ExitType, Startup
 
 
 @pytest.fixture
@@ -33,7 +37,7 @@ async def test_creates_new_indicator(use_case, repo):
     indicator = MagicMock(month=1, year=2025, startup_id="abc")
     repo.get_or_create.return_value = (indicator, True)
 
-    result = await use_case.execute(indicator)
+    result = await use_case.execute(MagicMock(), indicator, through_link=False)
 
     assert result is indicator
     repo.get_or_create.assert_awaited_once_with(indicator)
@@ -60,7 +64,7 @@ async def test_merges_into_the_stored_indicator(use_case, repo):
         comments=None,
     )
 
-    result = await use_case.execute(indicator)
+    result = await use_case.execute(MagicMock(), indicator, through_link=False)
 
     assert result is existing
     assert existing.headcount == 10
@@ -73,6 +77,47 @@ async def test_validates_period_not_future(use_case, repo):
     indicator = MagicMock(month=12, year=2099, startup_id="abc")
 
     with pytest.raises(ValueError, match="futuro"):
-        await use_case.execute(indicator)
+        await use_case.execute(MagicMock(), indicator, through_link=False)
 
     repo.get_or_create.assert_not_awaited()
+
+
+def _exited_startup() -> Startup:
+    return Startup(
+        name="Acme",
+        sector="tech",
+        investment_date=date(2024, 1, 10),
+        exited_on=date(2026, 3, 20),
+        exit_type=ExitType.SALE,
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("any_period")
+async def test_an_exited_startup_refuses_a_period_after_its_exit(use_case, repo):
+    indicator = MagicMock(month=4, year=2026, startup_id="abc")
+
+    with pytest.raises(ConflictError):
+        await use_case.execute(_exited_startup(), indicator, through_link=False)
+    repo.get_or_create.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("any_period")
+async def test_an_exited_startup_refuses_any_report_through_a_link(use_case, repo):
+    indicator = MagicMock(month=3, year=2026, startup_id="abc")
+
+    with pytest.raises(ConflictError):
+        await use_case.execute(_exited_startup(), indicator, through_link=True)
+    repo.get_or_create.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("any_period")
+async def test_an_exited_startup_takes_its_exit_month_by_hand(use_case, repo):
+    indicator = MagicMock(month=3, year=2026, startup_id="abc")
+    repo.get_or_create.return_value = (indicator, True)
+
+    result = await use_case.execute(_exited_startup(), indicator, through_link=False)
+
+    assert result is indicator
