@@ -27,9 +27,11 @@ from app.application.monthly_indicator.list_monthly_indicators import (
 from app.application.monthly_indicator.update_monthly_indicator import (
     UpdateMonthlyIndicator,
 )
+from app.application.startup.get_startup import GetStartup
 from app.controllers.dependencies import (
     monthly_indicator_builder,
     public_form_builder,
+    startup_builder,
     verify_startup_exists,
 )
 from app.domain.models.monthly_indicator import MonthlyIndicator
@@ -103,6 +105,9 @@ async def public_create_monthly_indicator(
     get_token: GetMonthlyIndicatorToken = Depends(
         monthly_indicator_builder(GetMonthlyIndicatorToken)
     ),
+    get_form: GetPublicIndicatorForm = Depends(
+        public_form_builder(GetPublicIndicatorForm)
+    ),
     create: CreateMonthlyIndicator = Depends(
         monthly_indicator_builder(CreateMonthlyIndicator)
     ),
@@ -112,6 +117,15 @@ async def public_create_monthly_indicator(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Token invalido ou expirado",
+        )
+
+    # The same check the form ran when it opened: a link for a period after the
+    # startup's exit is refused (409), and a deleted startup answers 404.
+    startup, _ = await get_form.execute(indicator_token)
+    if not startup:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Startup nao encontrada",
         )
 
     indicator = MonthlyIndicator(
@@ -239,13 +253,20 @@ async def delete_indicator(
     status_code=status.HTTP_200_OK,
 )
 async def create_monthly_indicator_token(
+    startup_id: uuid.UUID,
     data: MonthlyIndicatorTokenCreate,
-    startup_id: uuid.UUID = Depends(verify_startup_exists),
+    get_startup: GetStartup = Depends(startup_builder(GetStartup)),
     create: CreateMonthlyIndicatorToken = Depends(
         monthly_indicator_builder(CreateMonthlyIndicatorToken)
     ),
 ):
-    token = await create.execute(startup_id, data.month, data.year)
+    startup = await get_startup.execute(startup_id)
+    if not startup:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Startup com id {startup_id} não encontrada",
+        )
+    token = await create.execute(startup, data.month, data.year)
     return MonthlyIndicatorTokenResponse.model_validate(token)
 
 

@@ -17,6 +17,8 @@ class GetPublicIndicatorForm:
         self, token: MonthlyIndicatorToken
     ) -> tuple[Startup | None, MonthlyIndicator | None]:
         startup = await self._startup_repo.get_by_id(token.startup_id)
+        if startup:
+            startup.ensure_accepts_reports()
         indicator = await self._indicator_repo.get_by_startup_and_period(
             token.startup_id, token.month, token.year
         )

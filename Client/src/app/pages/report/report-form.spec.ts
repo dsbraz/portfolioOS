@@ -220,6 +220,21 @@ describe('ReportForm page flow', () => {
     expect(el.querySelector('form')).toBeNull();
   });
 
+  it('says the startup no longer reports when its link was closed by an exit', async () => {
+    await render();
+    const detail =
+      'Esta startup deixou de ser acompanhada e não recebe mais indicadores por link.';
+    httpMock
+      .expectOne('/api/monthly-indicator/tok-1')
+      .flush({ detail }, { status: 409, statusText: 'Conflict' });
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.textContent).toContain(detail);
+    expect(el.textContent).not.toContain('Link invalido');
+    expect(el.querySelector('form')).toBeNull();
+  });
+
   it('prefills the reportable zone from a previous submission', async () => {
     await render();
     httpMock.expectOne('/api/monthly-indicator/tok-1').flush({

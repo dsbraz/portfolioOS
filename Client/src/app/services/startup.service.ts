@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import {
   Startup,
   StartupCreate,
+  StartupExitRecord,
   StartupListResponse,
   StartupUpdate,
 } from '../models/startup.model';
@@ -14,8 +15,14 @@ export class StartupService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = '/api/startups';
 
-  list(): Observable<StartupListResponse> {
-    return this.http.get<StartupListResponse>(this.baseUrl);
+  /** `tracked: true` lists the startups still followed, `false` the exited ones. */
+  list(options: { tracked?: boolean } = {}): Observable<StartupListResponse> {
+    if (options.tracked === undefined) {
+      return this.http.get<StartupListResponse>(this.baseUrl);
+    }
+    return this.http.get<StartupListResponse>(this.baseUrl, {
+      params: { tracked: String(options.tracked) },
+    });
   }
 
   getById(id: string): Observable<Startup> {
@@ -28,6 +35,14 @@ export class StartupService {
 
   update(id: string, data: StartupUpdate): Observable<Startup> {
     return this.http.patch<Startup>(`${this.baseUrl}/${id}`, data);
+  }
+
+  recordExit(id: string, data: StartupExitRecord): Observable<Startup> {
+    return this.http.put<Startup>(`${this.baseUrl}/${id}/exit`, data);
+  }
+
+  undoExit(id: string): Observable<Startup> {
+    return this.http.delete<Startup>(`${this.baseUrl}/${id}/exit`);
   }
 
   delete(id: string): Observable<void> {

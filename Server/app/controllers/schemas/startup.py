@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.domain.models.startup import StartupStatus
+from app.domain.models.startup import ExitType, StartupStatus
 from app.controllers.schemas.common import PaginatedResponse
 
 
@@ -34,10 +34,19 @@ class StartupUpdate(BaseModel):
     notes: str | None = None
 
 
+class StartupExitRecord(BaseModel):
+    exited_on: date
+    exit_type: ExitType
+    exit_notes: str | None = None
+
+
 class StartupResponse(StartupBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
+    exited_on: date | None = None
+    exit_type: ExitType | None = None
+    exit_notes: str | None = None
     created_at: datetime
     updated_at: datetime
 

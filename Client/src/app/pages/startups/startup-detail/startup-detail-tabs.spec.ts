@@ -26,6 +26,9 @@ describe('StartupDetail (tablist keyboard navigation)', () => {
     investment_date: '2025-01-01',
     equity_stake: 5,
     notes: null,
+    exited_on: null,
+    exit_type: null,
+    exit_notes: null,
     created_at: '2025-01-01T00:00:00Z',
     updated_at: '2025-01-01T00:00:00Z',
   };

@@ -31,6 +31,9 @@ describe('StartupDetail (totalParticipation)', () => {
     investment_date: '2025-01-01',
     equity_stake: equityStake,
     notes: null,
+    exited_on: null,
+    exit_type: null,
+    exit_notes: null,
     created_at: '2025-01-01T00:00:00Z',
     updated_at: '2025-01-01T00:00:00Z',
   });
@@ -137,6 +140,9 @@ describe('StartupDetail (loading and ARIA)', () => {
     investment_date: '2025-01-01',
     equity_stake: 5,
     notes: null,
+    exited_on: null,
+    exit_type: null,
+    exit_notes: null,
     created_at: '2025-01-01T00:00:00Z',
     updated_at: '2025-01-01T00:00:00Z',
   };
@@ -400,6 +406,9 @@ describe('StartupDetail (refresh after a change)', () => {
     investment_date: '2025-01-01',
     equity_stake: 5,
     notes: null,
+    exited_on: null,
+    exit_type: null,
+    exit_notes: null,
     created_at: '2025-01-01T00:00:00Z',
     updated_at: '2025-01-01T00:00:00Z',
   };

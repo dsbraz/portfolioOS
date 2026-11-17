@@ -11,7 +11,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatMenuModule } from '@angular/material/menu';
 import { forkJoin } from 'rxjs';
 
-import { Startup } from '../../../models/startup.model';
+import { EXIT_TYPE_LABELS, Startup } from '../../../models/startup.model';
 import { MonthlyIndicator } from '../../../models/monthly-indicator.model';
 import { formatCurrencyBRL, formatPeriod } from '../../../models/formatters';
 import { SortState, applySort } from '../../../models/sorting';
@@ -49,6 +49,11 @@ import {
   AddIndicatorDialog,
   AddIndicatorDialogData,
 } from '../add-indicator-dialog/add-indicator-dialog';
+
+import {
+  StartupExitDialog,
+  StartupExitDialogData,
+} from '../startup-exit-dialog/startup-exit-dialog';
 
 import { KpiCard } from '../../../components/kpi-card/kpi-card';
 
@@ -250,6 +255,38 @@ export class StartupDetail implements OnInit {
           error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao atualizar startup', 'Fechar', { duration: 3000 }),
         });
       }
+    });
+  }
+
+  exitTypeLabel(s: Startup): string {
+    return s.exit_type ? EXIT_TYPE_LABELS[s.exit_type] : '';
+  }
+
+  // Exit: the startup stops being tracked, nothing is deleted.
+  openRecordExit(): void {
+    const s = this.startup();
+    if (!s) return;
+    const dialogRef = this.dialog.open(StartupExitDialog, {
+      width: '480px',
+      data: { startup: s } as StartupExitDialogData,
+    });
+    dialogRef.afterClosed().subscribe((changed) => {
+      if (!changed) return;
+      this.snackBar.open('Saída registrada', 'Fechar', { duration: 3000 });
+      this.loadAll();
+    });
+  }
+
+  undoExit(): void {
+    const s = this.startup();
+    if (!s) return;
+    if (!confirm(`Desfazer a saída da "${s.name}"? Ela volta a ser acompanhada.`)) return;
+    this.startupService.undoExit(this.startupId).subscribe({
+      next: () => {
+        this.snackBar.open('Saída desfeita', 'Fechar', { duration: 3000 });
+        this.loadAll();
+      },
+      error: (err) => this.snackBar.open(err.error?.detail || 'Erro ao desfazer saída', 'Fechar', { duration: 3000 }),
     });
   }
 

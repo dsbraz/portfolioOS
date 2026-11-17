@@ -15,6 +15,11 @@ the startup name, which is a link. Read:
 - each startup's name, status, revenue, cash, EBITDA/burn, headcount, and latest
   reported period.
 
+The table lists only the startups tracked in the selected period. A startup that
+exited still appears up to its exit month and disappears from the month after;
+exited startups are listed below the table, under `Encerradas`, with exit date
+and type, each name a link to the startup page.
+
 `Total da Participação` is an estimate based on annualized revenue times five and
 the ownership percentage. Describe it as an estimate, not a recorded valuation.
 
@@ -30,6 +35,25 @@ date are required. Participation must be between 0 and 100. Status values are
 
 For read-only access to fields visible only in `Editar Startup`, open the dialog,
 read without changing anything, and close with `Cancelar`.
+
+## Record an exit
+
+When the fund leaves a startup (sale, IPO, buyback, or the company shut down),
+record the exit instead of deleting it: the history stays readable and the
+startup stops being tracked. On the startup page, `Mais ações` → `Registrar
+saída`. Fields: `Data da saída` (required; not in the future, not before the
+investment date), `Tipo de saída` (required) and `Observações` (buyer, amount,
+context). Types: `Venda (M&A ou secundária)`, `IPO`, `Recompra pelos
+fundadores`, `Baixa (encerrou)` — a write-off is an exit of type `Baixa`.
+
+Once recorded, the page shows `Acompanhamento encerrado` with the date and type,
+the header shows the `Encerrada` pill, and `Adicionar indicador` is no longer
+offered. Existing indicators, meetings and executives stay editable. An exited
+startup has no reporting link: every link already sent stops working, whatever
+its period, a new one cannot be generated, and `Links anteriores` is no longer
+offered. Undoing the exit brings the old links back. A startup can exit only
+once; to correct an entry, `Mais ações` → `Desfazer saída`, which makes it
+tracked again, then record it anew.
 
 Deleting a startup permanently cascades to its monthly indicators, meetings,
 executives, and reporting links. It does not remove an independent deal with the

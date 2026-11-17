@@ -43,7 +43,11 @@ class GetPortfolioSummary:
     ) -> PortfolioSummary:
         selected = self._resolve_period(month, year)
 
-        startups, total = await self._startup_repo.get_all()
+        all_startups, _ = await self._startup_repo.get_all()
+        # The past stays as it was: a startup that exited in March still counts
+        # in January, and stops counting from April on.
+        startups = [s for s in all_startups if s.is_tracked_in(selected)]
+        total = len(startups)
         if total == 0:
             return _empty_summary()
 

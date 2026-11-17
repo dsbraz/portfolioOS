@@ -15,6 +15,27 @@ export const STARTUP_STATUS_SEVERITY: Record<StartupStatus, number> = {
   [StartupStatus.CRITICAL]: 2,
 };
 
+/** How the fund left the startup. A write-off is an exit, not another flow. */
+export enum ExitType {
+  SALE = 'venda',
+  IPO = 'ipo',
+  BUYBACK = 'recompra',
+  WRITE_OFF = 'baixa',
+}
+
+export const EXIT_TYPE_LABELS: Record<ExitType, string> = {
+  [ExitType.SALE]: 'Venda (M&A ou secundária)',
+  [ExitType.IPO]: 'IPO',
+  [ExitType.BUYBACK]: 'Recompra pelos fundadores',
+  [ExitType.WRITE_OFF]: 'Baixa (encerrou)',
+};
+
+export interface StartupExitRecord {
+  exited_on: string;
+  exit_type: ExitType;
+  exit_notes?: string | null;
+}
+
 export interface Startup {
   id: string;
   name: string;
@@ -25,6 +46,10 @@ export interface Startup {
   investment_date: string;
   equity_stake: number | null;
   notes: string | null;
+  /** Set when the fund left: the startup is no longer tracked after that month. */
+  exited_on: string | null;
+  exit_type: ExitType | null;
+  exit_notes: string | null;
   created_at: string;
   updated_at: string;
 }

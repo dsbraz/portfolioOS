@@ -10,7 +10,9 @@ from sqlalchemy import Date, DateTime, Enum, Numeric, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.domain.exceptions import ConflictError
 from app.domain.models import Base
+from app.domain.models.period import Period
 
 if TYPE_CHECKING:
     from app.domain.models.board_meeting import BoardMeeting
@@ -23,6 +25,20 @@ class StartupStatus(str, enum.Enum):
     HEALTHY = "saudavel"
     WARNING = "atencao"
     CRITICAL = "critico"
+
+
+EXITED_STARTUP_HAS_NO_LINK = (
+    "Esta startup deixou de ser acompanhada e não recebe mais indicadores por link."
+)
+
+
+class ExitType(str, enum.Enum):
+    """How the fund left the startup. A write-off is an exit, not another flow."""
+
+    SALE = "venda"
+    IPO = "ipo"
+    BUYBACK = "recompra"
+    WRITE_OFF = "baixa"
 
 
 class Startup(Base):
@@ -43,6 +59,19 @@ class Startup(Base):
     investment_date: Mapped[date] = mapped_column(Date, nullable=False)
     equity_stake: Mapped[Optional[Decimal]] = mapped_column(Numeric(5, 2), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # The exit is a separate dimension from `status`, which stays a health signal.
+    # `exited_on` set means the fund left: the startup stops being tracked after
+    # that month, and its history stays readable.
+    exited_on: Mapped[date | None] = mapped_column(Date, nullable=True)
+    exit_type: Mapped[ExitType | None] = mapped_column(
+        Enum(
+            ExitType,
+            name="exit_type",
+            values_callable=lambda cls: [e.value for e in cls],
+        ),
+        nullable=True,
+    )
+    exit_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -62,3 +91,17 @@ class Startup(Base):
     monthly_indicator_tokens: Mapped[list["MonthlyIndicatorToken"]] = relationship(
         "MonthlyIndicatorToken", back_populates="startup", cascade="all, delete-orphan"
     )
+
+    def ensure_accepts_reports(self) -> None:
+        """An exited startup has no reporting link at all, old or new."""
+        if self.exited_on is not None:
+            raise ConflictError(EXITED_STARTUP_HAS_NO_LINK)
+
+    def is_tracked_in(self, period: Period) -> bool:
+        """Whether the startup is still followed in `period`.
+
+        The exit month itself still counts: the startup usually reported it.
+        """
+        if self.exited_on is None:
+            return True
+        return period <= Period(year=self.exited_on.year, month=self.exited_on.month)

@@ -71,8 +71,14 @@ export default class ReportForm implements OnInit {
         }
         this.loading.set(false);
       },
-      error: () => {
-        this.error.set('Link invalido ou expirado.');
+      error: (err) => {
+        // 409: the link exists but the startup exited, so it no longer reports.
+        // Saying so beats "invalid link", which would send the founder chasing
+        // a new one.
+        const detail = err?.error?.detail;
+        this.error.set(
+          err?.status === 409 && typeof detail === 'string' ? detail : 'Link invalido ou expirado.',
+        );
         this.loading.set(false);
       },
     });

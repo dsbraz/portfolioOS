@@ -93,7 +93,10 @@ Isso separa os dois modos de envio do Passo 5:
 4. **Nunca deduza pelas colunas numéricas.** Um relatório enviado em branco
    mostra `-` em Receita, Caixa, EBITDA/Burn e Headcount, exatamente igual a
    quem não reportou. Célula vazia não é prova de ausência.
-5. Confira o total contra o cartão **Report Mensal** do topo, que conta quantas
+5. Startups encerradas (saída registrada) não são pendência: a tabela já as
+   omite a partir do mês seguinte ao da saída, e a seção **Encerradas**, abaixo
+   dela, não entra na lista de faltantes.
+6. Confira o total contra o cartão **Report Mensal** do topo, que conta quantas
    startups reportaram no período da tela. Se a sua lista não fechar com ele,
    pare e releia — não siga com número que não bate.
 

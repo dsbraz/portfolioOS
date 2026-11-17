@@ -161,3 +161,29 @@ export async function removerExecutivosPorNome(
     expect(apagado.ok(), `não consegui apagar o executivo ${nome}`).toBeTruthy();
   }
 }
+
+/** Creates a startup straight through the API; returns its id. */
+export async function criarInvestidaViaApi(
+  request: APIRequestContext,
+  token: string,
+  nome: string,
+): Promise<string> {
+  const resposta = await request.post(`${API}/api/startups`, {
+    headers: { Authorization: `Bearer ${token}` },
+    data: { name: nome, sector: 'E2E', investment_date: '2026-01-10' },
+  });
+  expect(resposta.ok(), `não consegui criar a investida ${nome}`).toBeTruthy();
+  return (await resposta.json()).id as string;
+}
+
+/** Deletes a startup a spec planted, so the shared stack stays as seeded. */
+export async function removerInvestidaViaApi(
+  request: APIRequestContext,
+  token: string,
+  id: string,
+): Promise<void> {
+  const resposta = await request.delete(`${API}/api/startups/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  expect(resposta.ok(), `não consegui apagar a investida ${id}`).toBeTruthy();
+}
