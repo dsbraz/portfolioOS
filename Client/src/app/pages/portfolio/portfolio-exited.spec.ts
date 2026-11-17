@@ -102,6 +102,19 @@ describe('Portfolio (exited startups)', () => {
     expect(el.textContent).not.toContain('Nenhuma startup cadastrada');
   });
 
+  it('does not claim the portfolio is empty while the exited list is unknown', async () => {
+    const { el } = await mount(() => throwError(() => new Error('boom')));
+
+    expect(el.textContent).toContain('Nenhuma startup acompanhada neste período');
+    expect(el.textContent).not.toContain('Nenhuma startup cadastrada');
+  });
+
+  it('calls the portfolio empty only when nothing has exited either', async () => {
+    const { el } = await mount(() => of({ items: [], total: 0 }));
+
+    expect(el.textContent).toContain('Nenhuma startup cadastrada');
+  });
+
   it('says so when no startup has exited', async () => {
     const { el } = await mount(() => of({ items: [], total: 0 }));
 

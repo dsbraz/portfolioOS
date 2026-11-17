@@ -21,3 +21,11 @@ PASSWORD_MAX_BYTES = 72
 def validate_password_max_bytes(password: str) -> None:
     if len(password.encode("utf-8")) > PASSWORD_MAX_BYTES:
         raise InvalidInputError(f"Senha nao pode ter mais de {PASSWORD_MAX_BYTES} bytes")
+
+
+def validate_exit_not_before_investment(investment_date: date, exited_on: date) -> None:
+    """Checked from both sides: recording the exit and editing the investment."""
+    if exited_on < investment_date:
+        raise InvalidInputError(
+            "Data da saída não pode ser anterior à data do investimento"
+        )

@@ -3,6 +3,7 @@ from datetime import date
 from app.domain.exceptions import ConflictError, InvalidInputError
 from app.domain.models.startup import ExitType, Startup
 from app.domain.repositories import StartupRepository
+from app.domain.validators import validate_exit_not_before_investment
 
 
 class RecordStartupExit:
@@ -25,10 +26,7 @@ class RecordStartupExit:
             raise ConflictError("Saída da startup já registrada")
         if exited_on > date.today():
             raise InvalidInputError("Data da saída não pode ser no futuro")
-        if exited_on < startup.investment_date:
-            raise InvalidInputError(
-                "Data da saída não pode ser anterior ao investimento"
-            )
+        validate_exit_not_before_investment(startup.investment_date, exited_on)
 
         startup.exited_on = exited_on
         startup.exit_type = exit_type
