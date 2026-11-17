@@ -580,6 +580,29 @@ h5 {
   text-transform: uppercase;
 }
 
+// A switch with the sentence that explains it. The note sits under the switch
+// and is wired to it by `aria-describedby`; the error variant replaces it (same
+// id) while the value is invalid, so the switch always announces the current one.
+.toggle-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.toggle-field-hint,
+.toggle-field-error {
+  margin: 0;
+  font-size: 0.8125rem;
+}
+
+.toggle-field-hint {
+  color: var(--color-text-muted);
+}
+
+.toggle-field-error {
+  color: var(--color-danger);
+}
+
 // Loading state for internal screens.
 //
 // Without it the page rendered NOTHING while data had not arrived, and an

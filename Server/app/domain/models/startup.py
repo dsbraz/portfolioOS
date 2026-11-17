@@ -7,6 +7,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     Date,
     DateTime,
@@ -14,6 +15,7 @@ from sqlalchemy import (
     Numeric,
     String,
     Text,
+    false,
     func,
 )
 from sqlalchemy.dialects.postgresql import UUID
@@ -79,6 +81,10 @@ class Startup(Base):
     investment_date: Mapped[date] = mapped_column(Date, nullable=False)
     equity_stake: Mapped[Optional[Decimal]] = mapped_column(Numeric(5, 2), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Opt-in: the monthly job e-mails the reporting link only where this is on.
+    monthly_report_enabled: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=false()
+    )
     # The exit is a separate dimension from `status`, which stays a health signal.
     # `exited_on` set means the fund left: the startup stops being tracked from
     # that month, and its history stays readable.
@@ -139,6 +145,21 @@ class Startup(Base):
         if period < investment_month:
             return False
         return self.exited_on is None or period < self._exit_month()
+
+    def receives_monthly_report_for(self, period: Period) -> bool:
+        """Whether the monthly job may e-mail the reporting link for `period`.
+
+        Only where the send is on, and never once the startup exited — it has no
+        reporting link at all, so an e-mail would carry a link that answers 409.
+        Nor for a month it is not tracked in, such as one before the investment.
+        `monthly_report_enabled` is left as it was on exit, so undoing the exit
+        restores the send exactly as it stood.
+        """
+        return (
+            self.monthly_report_enabled
+            and self.exited_on is None
+            and self.is_tracked_in(period)
+        )
 
     def _exit_month(self) -> Period:
         return Period(year=self.exited_on.year, month=self.exited_on.month)

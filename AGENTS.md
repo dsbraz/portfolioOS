@@ -160,6 +160,7 @@ duplicated and drifted.
 | Piece | Where | Use it for |
 | --- | --- | --- |
 | `.field` + `.field-label` | `styles.scss` | The boxed form field: a static label ABOVE the box, never a Material floating label. `.field-affix` carries the unit (`R$`, `%`). |
+| `.toggle-field` + `-hint`/`-error` | `styles.scss` | A `mat-slide-toggle` with the sentence that explains it, wired by `aria-describedby`; the error variant takes the hint's id while the value is invalid. |
 | `.section-title` | `styles.scss` | Section eyebrow. Typography only — the vertical rhythm belongs to the context that stacks it. |
 | `.page-status` | `styles.scss` | Loading / error block on internal pages. |
 | `.page-head` + `-text`/`-title`/`-sub`/`-actions` | `styles.scss` | Internal page header. Pages keep only their deltas locally. |

@@ -40,6 +40,7 @@ class ExecutiveBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     role: str | None = Field(None, max_length=255)
     linkedin: str | None = Field(None, max_length=512)
+    receives_monthly_report: bool = False
 
 
 class ExecutiveCreate(ExecutiveBase):
@@ -53,6 +54,8 @@ class ExecutiveUpdate(BaseModel):
     email: ContactEmail = None
     phone: InternationalPhone = None
     linkedin: str | None = Field(None, max_length=512)
+    # Optional in a PATCH but never null (NOT NULL column): see StartupUpdate.
+    receives_monthly_report: bool = None  # type: ignore[assignment]
 
 
 class ExecutiveResponse(ExecutiveBase):

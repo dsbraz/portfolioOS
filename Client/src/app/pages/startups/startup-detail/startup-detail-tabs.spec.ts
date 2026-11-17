@@ -11,6 +11,7 @@ import { MonthlyIndicatorService } from '../../../services/monthly-indicator.ser
 import { BoardMeetingService } from '../../../services/board-meeting.service';
 import { ExecutiveService } from '../../../services/executive.service';
 import { MonthlyIndicatorTokenService } from '../../../services/monthly-indicator-token.service';
+import { MonthlyReportService } from '../../../services/monthly-report.service';
 import { Startup, StartupStatus } from '../../../models/startup.model';
 
 // WAI-ARIA APG tablist: arrow keys move between tabs (wrapping), Home/End jump
@@ -26,6 +27,7 @@ describe('StartupDetail (tablist keyboard navigation)', () => {
     investment_date: '2025-01-01',
     equity_stake: 5,
     notes: null,
+    monthly_report_enabled: false,
     exited_on: null,
     exit_type: null,
     exit_notes: null,
@@ -71,6 +73,7 @@ describe('StartupDetail (tablist keyboard navigation)', () => {
         { provide: BoardMeetingService, useValue: { list: () => of(list([])) } },
         { provide: ExecutiveService, useValue: { list: () => of(list([])) } },
         { provide: MonthlyIndicatorTokenService, useValue: { list: () => of(list([])) } },
+        { provide: MonthlyReportService, useValue: { listDispatches: () => of(list([])) } },
       ],
     }).compileComponents();
 

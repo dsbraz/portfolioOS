@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { NEVER, Observable, delay, of } from 'rxjs';
+import { NEVER, Observable, delay, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -12,6 +12,7 @@ import { BoardMeetingService } from '../../../services/board-meeting.service';
 import { Executive } from '../../../models/executive.model';
 import { ExecutiveService } from '../../../services/executive.service';
 import { MonthlyIndicatorTokenService } from '../../../services/monthly-indicator-token.service';
+import { MonthlyReportService } from '../../../services/monthly-report.service';
 import { MonthlyIndicator } from '../../../models/monthly-indicator.model';
 import { Startup, StartupStatus } from '../../../models/startup.model';
 import { participationValue } from '../../../models/participation';
@@ -31,6 +32,7 @@ describe('StartupDetail (totalParticipation)', () => {
     investment_date: '2025-01-01',
     equity_stake: equityStake,
     notes: null,
+    monthly_report_enabled: false,
     exited_on: null,
     exit_type: null,
     exit_notes: null,
@@ -68,6 +70,7 @@ describe('StartupDetail (totalParticipation)', () => {
         { provide: BoardMeetingService, useValue: {} },
         { provide: ExecutiveService, useValue: {} },
         { provide: MonthlyIndicatorTokenService, useValue: {} },
+        { provide: MonthlyReportService, useValue: {} },
       ],
     });
     component = TestBed.createComponent(StartupDetail).componentInstance;
@@ -140,6 +143,7 @@ describe('StartupDetail (loading and ARIA)', () => {
     investment_date: '2025-01-01',
     equity_stake: 5,
     notes: null,
+    monthly_report_enabled: false,
     exited_on: null,
     exit_type: null,
     exit_notes: null,
@@ -149,8 +153,12 @@ describe('StartupDetail (loading and ARIA)', () => {
 
   const page = (items: unknown[]) => ({ items, total: items.length });
 
+  let mounted: ComponentFixture<StartupDetail>;
+  /** Overrides the executives the page loads; reset after each test. */
+  let executivesList: Executive[] | null = null;
+
   /** `pending` keeps the calls from emitting, which is the loading state. */
-  const mount = async (pending = false) => {
+  const mount = async (pending = false, dispatches?: Observable<unknown>) => {
     const respond = <T>(value: T) => (pending ? NEVER : of(value));
 
     TestBed.resetTestingModule();
@@ -168,12 +176,20 @@ describe('StartupDetail (loading and ARIA)', () => {
           useValue: { list: () => respond(page([indicatorFixture])) },
         },
         { provide: BoardMeetingService, useValue: { list: () => respond(page([])) } },
-        { provide: ExecutiveService, useValue: { list: () => respond(page([executiveFixture])) } },
+        {
+          provide: ExecutiveService,
+          useValue: { list: () => respond(page(executivesList ?? [executiveFixture])) },
+        },
         { provide: MonthlyIndicatorTokenService, useValue: { list: () => respond(page([])) } },
+        {
+          provide: MonthlyReportService,
+          useValue: { listDispatches: () => dispatches ?? respond(page([])) },
+        },
       ],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(StartupDetail);
+    mounted = fixture;
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -188,6 +204,7 @@ describe('StartupDetail (loading and ARIA)', () => {
     email: 'ana@lumina.example',
     phone: '(11) 91234-5678',
     linkedin: null,
+    receives_monthly_report: false,
     created_at: '',
     updated_at: '',
   };
@@ -209,6 +226,83 @@ describe('StartupDetail (loading and ARIA)', () => {
     created_at: '',
     updated_at: '',
   };
+
+  // The dispatch history is ancillary: its failure must not take the startup,
+  // its indicators and its executives down with it.
+  it('should still render the page when the dispatch history fails', async () => {
+    const el = await mount(false, throwError(() => new Error('500')));
+
+    expect(el.querySelector('h1')?.textContent).toContain('Acme');
+    expect(el.querySelector('#panel-executivos')?.textContent).toContain('Ana Costa');
+  });
+
+  describe('monthly e-mail', () => {
+    afterEach(() => {
+      startup.monthly_report_enabled = false;
+      startup.exited_on = null;
+      executiveFixture.receives_monthly_report = false;
+      executivesList = null;
+    });
+
+    it('should say nothing about it while the startup has it off', async () => {
+      const el = await mount();
+
+      expect(el.querySelector('.monthly-report-note')).toBeNull();
+    });
+
+    it('should name who receives it and mark them in the table', async () => {
+      startup.monthly_report_enabled = true;
+      executiveFixture.receives_monthly_report = true;
+
+      const el = await mount();
+
+      expect(el.querySelector('.monthly-report-note')?.textContent).toContain('Ana Costa');
+      expect(el.querySelector('#panel-executivos .pill')?.textContent).toContain('Link mensal');
+    });
+
+    // The job sends one copy per inbox: the banner must not promise two.
+    it('should name one recipient per inbox and say who shares it', async () => {
+      startup.monthly_report_enabled = true;
+      executiveFixture.receives_monthly_report = true;
+      const sharing: Executive = {
+        ...executiveFixture,
+        id: 'e2',
+        name: 'Bruno Lima',
+        email: ' ANA@lumina.example ',
+      };
+      executivesList = [executiveFixture, sharing];
+
+      const el = await mount();
+      const note = el.querySelector('.monthly-report-note')?.textContent ?? '';
+
+      expect(note).toContain('para Ana Costa.');
+      expect(note).toContain('Mesmo e-mail de quem já recebe, sem cópia: Bruno Lima.');
+    });
+
+    // The job skips an exited startup; promising a send it will not make would
+    // mislead whoever reads the page.
+    it('should say the send is suspended once the startup exited', async () => {
+      startup.monthly_report_enabled = true;
+      startup.exited_on = '2026-03-20';
+      executiveFixture.receives_monthly_report = true;
+
+      const el = await mount();
+      const note = el.querySelector('.monthly-report-note')?.textContent ?? '';
+
+      expect(note).toContain('Envio mensal suspenso');
+      expect(note).not.toContain('vai por e-mail no dia');
+    });
+
+    it('should warn in text when nobody would receive it', async () => {
+      startup.monthly_report_enabled = true;
+
+      const el = await mount();
+
+      expect(el.querySelector('.monthly-report-note')?.textContent).toContain(
+        'Nada será enviado',
+      );
+    });
+  });
 
   // The page used to render NOTHING while loading, and an empty container is
   // indistinguishable from "no data" — for anyone reading the screen and for
@@ -340,6 +434,7 @@ describe('StartupDetail (sorting)', () => {
         { provide: BoardMeetingService, useValue: {} },
         { provide: ExecutiveService, useValue: {} },
         { provide: MonthlyIndicatorTokenService, useValue: {} },
+        { provide: MonthlyReportService, useValue: {} },
       ],
     });
     return TestBed.createComponent(StartupDetail).componentInstance;
@@ -406,6 +501,7 @@ describe('StartupDetail (refresh after a change)', () => {
     investment_date: '2025-01-01',
     equity_stake: 5,
     notes: null,
+    monthly_report_enabled: false,
     exited_on: null,
     exit_type: null,
     exit_notes: null,
@@ -467,6 +563,10 @@ describe('StartupDetail (refresh after a change)', () => {
         { provide: BoardMeetingService, useValue: { list: () => respond(() => list([])) } },
         { provide: ExecutiveService, useValue: { list: () => respond(() => list([])) } },
         { provide: MonthlyIndicatorTokenService, useValue: { list: () => respond(() => list([])) } },
+        {
+          provide: MonthlyReportService,
+          useValue: { listDispatches: () => respond(() => list([])) },
+        },
       ],
     }).compileComponents();
 

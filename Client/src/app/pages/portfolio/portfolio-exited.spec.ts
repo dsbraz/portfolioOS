@@ -42,6 +42,7 @@ const exited: Startup = {
   exited_on: '2026-03-20',
   exit_type: ExitType.SALE,
   exit_notes: null,
+  monthly_report_enabled: false,
   created_at: '',
   updated_at: '',
 };

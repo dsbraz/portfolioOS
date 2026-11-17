@@ -62,6 +62,37 @@ def test_the_model_declares_that_date_and_type_travel_together():
     assert "ck_startups_exit_complete" in names
 
 
+# --- Startup.receives_monthly_report_for ---
+
+
+def test_an_opted_in_tracked_startup_receives_the_monthly_report():
+    startup = _startup(monthly_report_enabled=True)
+
+    assert startup.receives_monthly_report_for(Period(year=2026, month=2))
+
+
+def test_a_startup_that_did_not_opt_in_receives_nothing():
+    startup = _startup(monthly_report_enabled=False)
+
+    assert not startup.receives_monthly_report_for(Period(year=2026, month=2))
+
+
+@pytest.mark.parametrize("month", [1, 2, 3, 4], ids=["before", "before", "exit", "after"])
+def test_an_exited_startup_receives_nothing_for_any_period(month):
+    # It has no reporting link at all, whatever the period: an e-mail would
+    # carry a link that answers 409.
+    startup = _startup(monthly_report_enabled=True, exited_on=date(2026, 3, 20))
+
+    assert not startup.receives_monthly_report_for(Period(year=2026, month=month))
+
+
+def test_no_monthly_report_for_a_month_before_the_investment():
+    startup = _startup(monthly_report_enabled=True, investment_date=date(2026, 3, 10))
+
+    assert not startup.receives_monthly_report_for(Period(year=2026, month=2))
+    assert startup.receives_monthly_report_for(Period(year=2026, month=3))
+
+
 # --- Startup.ensure_accepts_indicator ---
 
 

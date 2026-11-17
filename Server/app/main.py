@@ -19,6 +19,7 @@ from app.controllers.monthly_indicator_controller import (
 from app.controllers.monthly_indicator_controller import (
     router as monthly_indicator_router,
 )
+from app.controllers.monthly_report_controller import router as monthly_report_router
 from app.controllers.portfolio_controller import router as portfolio_router
 from app.controllers.startup_controller import router as startup_router
 from app.controllers.user_controller import router as user_router
@@ -67,6 +68,7 @@ app.include_router(user_router, prefix="/api", dependencies=protected)
 app.include_router(user_invite_router, prefix="/api", dependencies=protected)
 app.include_router(startup_router, prefix="/api", dependencies=protected)
 app.include_router(monthly_indicator_router, prefix="/api", dependencies=protected)
+app.include_router(monthly_report_router, prefix="/api", dependencies=protected)
 app.include_router(board_meeting_router, prefix="/api", dependencies=protected)
 app.include_router(executive_router, prefix="/api", dependencies=protected)
 app.include_router(portfolio_router, prefix="/api", dependencies=protected)

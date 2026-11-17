@@ -6,9 +6,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatButtonModule } from '@angular/material/button';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { provideNativeDateAdapter } from '@angular/material/core';
 
 import { Startup, StartupStatus, STARTUP_STATUS_CONFIG } from '../../../models/startup.model';
+import { MONTHLY_REPORT_DAYS } from '../../../models/monthly-report.model';
 
 export interface StartupFormDialogData {
   startup?: Startup;
@@ -27,6 +29,7 @@ import { DialogHeader } from '../../../components/dialog-header/dialog-header';
     MatSelectModule,
     MatDatepickerModule,
     MatButtonModule,
+    MatSlideToggleModule,
   ],
   providers: [provideNativeDateAdapter()],
   templateUrl: './startup-form-dialog.html',
@@ -39,6 +42,7 @@ export class StartupFormDialog implements OnInit {
 
   readonly statusOptions = Object.values(StartupStatus);
   readonly statusConfig = STARTUP_STATUS_CONFIG;
+  readonly days = MONTHLY_REPORT_DAYS;
   readonly isEditMode = !!this.data?.startup;
   /** After an exit the investment cannot move past it; the server refuses it
    *  too, but this form closes before the answer, so the limit lives here. */
@@ -55,6 +59,7 @@ export class StartupFormDialog implements OnInit {
     investment_date: [null as Date | null, Validators.required],
     equity_stake: [null as number | null, [Validators.min(0), Validators.max(100)]],
     notes: [''],
+    monthly_report_enabled: [false],
   });
 
   ngOnInit(): void {

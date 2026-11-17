@@ -11,6 +11,7 @@ from typing import Any
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import LOCAL_ENVIRONMENTS
 from app.domain.models.board_meeting import BoardMeeting
 from app.domain.models.executive import Executive
 from app.domain.models.monthly_indicator import MonthlyIndicator
@@ -212,7 +213,6 @@ _OWNED_SEEDS: tuple[tuple[type, tuple[dict[str, Any], ...], uuid.UUID], ...] = (
     (Executive, _CHASE_EXECUTIVE_SEEDS, CHASE_STARTUP_ID),
 )
 _DEMO_STARTUP_IDS = tuple(startup_id for startup_id, _ in _DEMO_STARTUPS)
-_ALLOWED_ENVIRONMENTS = frozenset({"development", "local"})
 
 
 def _apply_values(record: object, values: Mapping[str, Any]) -> None:
@@ -293,7 +293,7 @@ async def seed_demo(session: AsyncSession) -> Startup:
 def ensure_development_environment(environment: str) -> None:
     """Allow the command-line seed only in explicitly local environments."""
     normalized_environment = environment.strip().lower()
-    if normalized_environment not in _ALLOWED_ENVIRONMENTS:
+    if normalized_environment not in LOCAL_ENVIRONMENTS:
         raise RuntimeError(
             "The demo seed requires ENVIRONMENT=development or ENVIRONMENT=local"
         )

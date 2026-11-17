@@ -26,6 +26,7 @@ describe('TokenPanel', () => {
     email: null,
     phone: '+5511912345678',
     linkedin: null,
+    receives_monthly_report: false,
     created_at: '',
     updated_at: '',
     ...over,

@@ -46,6 +46,8 @@ export interface Startup {
   investment_date: string;
   equity_stake: number | null;
   notes: string | null;
+  /** Opt-in for the monthly job that e-mails the reporting link. */
+  monthly_report_enabled: boolean;
   /** Set when the fund left: the startup is no longer tracked after that month. */
   exited_on: string | null;
   exit_type: ExitType | null;
@@ -68,6 +70,7 @@ export interface StartupCreate {
   investment_date: string;
   equity_stake?: number | null;
   notes?: string | null;
+  monthly_report_enabled?: boolean;
 }
 
 export interface StartupUpdate {
@@ -79,6 +82,7 @@ export interface StartupUpdate {
   investment_date?: string;
   equity_stake?: number | null;
   notes?: string | null;
+  monthly_report_enabled?: boolean;
 }
 
 /** Status tone. Drives the `.pill--*` class, which pairs the text color with

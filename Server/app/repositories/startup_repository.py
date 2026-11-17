@@ -50,3 +50,16 @@ class StartupRepository:
     async def delete(self, startup: Startup) -> None:
         await self._session.delete(startup)
         await self._session.flush()
+
+    async def get_all_with_monthly_report_enabled(self) -> list[Startup]:
+        result = await self._session.execute(
+            select(Startup)
+            .where(
+                Startup.monthly_report_enabled.is_(True),
+                # An exited startup has no reporting link; the plan re-checks
+                # each one, since an exit can be recorded during the run.
+                Startup.exited_on.is_(None),
+            )
+            .order_by(Startup.name.asc())
+        )
+        return list(result.scalars().all())

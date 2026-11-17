@@ -6,7 +6,10 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Executive } from '../../../models/executive.model';
 import { MonthlyIndicatorToken } from '../../../models/monthly-indicator-token.model';
 import { formatPeriod } from '../../../models/formatters';
-import { MONTH_LABELS_FULL } from '../../../models/monthly-indicator.model';
+import {
+  buildReportingChatMessage,
+  buildReportingEmail,
+} from '../../../models/reporting-message';
 
 interface RecipientBase {
   name: string;
@@ -50,17 +53,6 @@ export class TokenPanel {
   private readonly snackBar = inject(MatSnackBar);
 
   readonly period = computed(() => formatPeriod(this.token().month, this.token().year));
-  /**
-   * The name as the message and the subject both use it. Derived once so the
-   * two cannot disagree about a blank one, and trimmed because the record can
-   * carry padding the reader would see.
-   */
-  private readonly startup = computed(() => this.startupName()?.trim() ?? '');
-  // The fund's message names the month in full ("julho/2026"); the title and the
-  // copy control keep the compact form.
-  private readonly messagePeriod = computed(
-    () => `${MONTH_LABELS_FULL[this.token().month]}/${this.token().year}`,
-  );
   readonly formUrl = computed(
     () => `${window.location.origin}/monthly-indicator/${this.token().token}`,
   );
@@ -112,40 +104,33 @@ export class TokenPanel {
   private toRecipient(executive: Executive): Recipient {
     const phone = executive.phone?.trim();
     const email = executive.email?.trim();
-    const firstName = executive.name.trim().split(/\s+/)[0];
-    // The fund's standard message, already in use before the platform existed —
-    // now naming the startup, so a contact who answers for several investees can
-    // tell the requests apart. The name takes bare "de" and never a gendered
-    // article: a company name has no knowable grammatical gender, and "da
-    // Payface" is a guess the template must not make.
-    //
-    // The URL stands alone on its own line: glued to a sentence, chat clients
-    // can swallow neighbouring punctuation into the link or fail to linkify it
-    // at all. (WhatsApp also needs a host with a dot, so `localhost` stays
-    // plain text in development no matter the formatting.)
-    // A blank name degrades the sentence instead of breaking the panel.
-    const startup = this.startup();
-    const whose = startup ? `dos dados de ${startup}` : 'dos dados';
-    const message = [
-      `Olá ${firstName}. Tudo bem?`,
-      `Segue o link para atualizações ${whose} referentes a ${this.messagePeriod()}:`,
-      this.formUrl(),
-      'Obrigado',
-    ].join('\n');
-    const base = { name: executive.name, role: executive.role, message };
+    const input = {
+      executiveName: executive.name,
+      startupName: this.startupName(),
+      month: this.token().month,
+      year: this.token().year,
+      formUrl: this.formUrl(),
+    };
 
     // Records saved before the country code became mandatory may lack it.
     if (phone?.startsWith('+')) {
+      // Chat gets the short standard text.
+      const message = buildReportingChatMessage(input);
+      const base = { name: executive.name, role: executive.role, message };
       const url = `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
       return { ...base, channel: 'whatsapp', contact: phone, url };
     }
 
     const notice = phone ? 'Telefone sem código do país' : 'Sem telefone cadastrado';
     if (!email) {
-      return { ...base, channel: null, notice };
+      const message = buildReportingChatMessage(input);
+      return { name: executive.name, role: executive.role, message, channel: null, notice };
     }
 
-    const subject = `${startup} — indicadores de ${this.messagePeriod()}`;
+    // E-mail gets the same text the monthly job sends (shared contract).
+    const { subject, body: message } = buildReportingEmail(input);
+    const base = { name: executive.name, role: executive.role, message };
+
     // The address is encoded too: a "?" or "," in it would otherwise add
     // recipients to the mail. "@" stays literal for mail clients that do not
     // decode it.

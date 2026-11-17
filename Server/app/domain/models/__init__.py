@@ -13,3 +13,4 @@ from app.domain.models.deal import Deal  # noqa: E402, F401
 from app.domain.models.monthly_indicator_token import MonthlyIndicatorToken  # noqa: E402, F401
 from app.domain.models.user import User  # noqa: E402, F401
 from app.domain.models.user_invite import UserInvite  # noqa: E402, F401
+from app.domain.models.monthly_report_dispatch import MonthlyReportDispatch  # noqa: E402, F401

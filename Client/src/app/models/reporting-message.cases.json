@@ -1,0 +1,67 @@
+[
+  {
+    "name": "initial e-mail",
+    "kind": "initial",
+    "input": {
+      "executiveName": "Ana Souza",
+      "startupName": "Payface",
+      "month": 7,
+      "year": 2026,
+      "formUrl": "https://portfolio.example.com/monthly-indicator/abc"
+    },
+    "subject": "Payface — indicadores de julho/2026",
+    "body": "Olá, Ana.\n\nJá está disponível o formulário de indicadores de Payface referentes a julho/2026:\nhttps://portfolio.example.com/monthly-indicator/abc\n\nO preenchimento leva poucos minutos. Se algum número ainda não estiver fechado, envie o que tiver e complete depois pelo mesmo link.\n\nObrigado pela parceria."
+  },
+  {
+    "name": "initial e-mail trims names and ignores extra spaces",
+    "kind": "initial",
+    "input": {
+      "executiveName": "  Bruno   Lima ",
+      "startupName": "  Ksys  ",
+      "month": 3,
+      "year": 2026,
+      "formUrl": "https://portfolio.example.com/monthly-indicator/def"
+    },
+    "subject": "Ksys — indicadores de março/2026",
+    "body": "Olá, Bruno.\n\nJá está disponível o formulário de indicadores de Ksys referentes a março/2026:\nhttps://portfolio.example.com/monthly-indicator/def\n\nO preenchimento leva poucos minutos. Se algum número ainda não estiver fechado, envie o que tiver e complete depois pelo mesmo link.\n\nObrigado pela parceria."
+  },
+  {
+    "name": "initial e-mail degrades a blank startup name",
+    "kind": "initial",
+    "input": {
+      "executiveName": "Carla",
+      "startupName": " ",
+      "month": 12,
+      "year": 2025,
+      "formUrl": "https://portfolio.example.com/monthly-indicator/ghi"
+    },
+    "subject": "Indicadores de dezembro/2025",
+    "body": "Olá, Carla.\n\nJá está disponível o formulário de indicadores referentes a dezembro/2025:\nhttps://portfolio.example.com/monthly-indicator/ghi\n\nO preenchimento leva poucos minutos. Se algum número ainda não estiver fechado, envie o que tiver e complete depois pelo mesmo link.\n\nObrigado pela parceria."
+  },
+  {
+    "name": "reminder e-mail",
+    "kind": "reminder",
+    "input": {
+      "executiveName": "Ana Souza",
+      "startupName": "Payface",
+      "month": 7,
+      "year": 2026,
+      "formUrl": "https://portfolio.example.com/monthly-indicator/abc"
+    },
+    "subject": "Lembrete: Payface — indicadores de julho/2026",
+    "body": "Olá, Ana.\n\nPassando para lembrar dos indicadores de Payface referentes a julho/2026, que ainda não recebemos. O formulário continua no mesmo link:\nhttps://portfolio.example.com/monthly-indicator/abc\n\nSe ajudar, envie o que já estiver fechado e complete depois. Se esta mensagem cruzou com o seu envio, por favor desconsidere.\n\nObrigado."
+  },
+  {
+    "name": "reminder e-mail degrades a blank startup name",
+    "kind": "reminder",
+    "input": {
+      "executiveName": "Carla",
+      "startupName": "",
+      "month": 12,
+      "year": 2025,
+      "formUrl": "https://portfolio.example.com/monthly-indicator/ghi"
+    },
+    "subject": "Lembrete: indicadores de dezembro/2025",
+    "body": "Olá, Carla.\n\nPassando para lembrar dos indicadores referentes a dezembro/2025, que ainda não recebemos. O formulário continua no mesmo link:\nhttps://portfolio.example.com/monthly-indicator/ghi\n\nSe ajudar, envie o que já estiver fechado e complete depois. Se esta mensagem cruzou com o seu envio, por favor desconsidere.\n\nObrigado."
+  }
+]

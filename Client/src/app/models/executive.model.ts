@@ -6,6 +6,8 @@ export interface Executive {
   email: string | null;
   phone: string | null;
   linkedin: string | null;
+  /** Who the monthly job e-mails the reporting link to. */
+  receives_monthly_report: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -21,6 +23,7 @@ export interface ExecutiveCreate {
   email?: string | null;
   phone?: string | null;
   linkedin?: string | null;
+  receives_monthly_report?: boolean;
 }
 
 export interface ExecutiveUpdate {
@@ -29,4 +32,5 @@ export interface ExecutiveUpdate {
   email?: string | null;
   phone?: string | null;
   linkedin?: string | null;
+  receives_monthly_report?: boolean;
 }

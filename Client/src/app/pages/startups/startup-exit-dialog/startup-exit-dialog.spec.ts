@@ -21,6 +21,7 @@ describe('StartupExitDialog', () => {
     exited_on: null,
     exit_type: null,
     exit_notes: null,
+    monthly_report_enabled: false,
     created_at: '',
     updated_at: '',
   };
