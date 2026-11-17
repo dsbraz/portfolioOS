@@ -15,11 +15,12 @@ the startup name, which is a link. Read:
 - each startup's name, status, revenue, cash, EBITDA/burn, headcount, and latest
   reported period.
 
-The table lists only the startups tracked in the selected period. A startup that
-exited appears in every month before its exit; in the exit month it appears only
-if it already reported that month, and from then on it no longer appears;
-exited startups are listed below the table, under `Encerradas`, with exit date
-and type, each name a link to the startup page.
+The table lists startups from their investment month (inclusive) until their
+exit month (exclusive), regardless of whether the exit month has a report.
+Before investment they do not appear. From the exit month onward they appear
+only under `Encerradas`, with exit date and type and a link to their history.
+Both lists follow the selected period, so a startup never appears in both.
+Exit-month reports remain available in the startup's history.
 
 `Total da Participação` is an estimate based on annualized revenue times five and
 the ownership percentage. Describe it as an estimate, not a recorded valuation.

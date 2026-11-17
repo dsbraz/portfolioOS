@@ -112,6 +112,8 @@
 }
 
 .startup-setor {
+  display: block;
+  margin-top: var(--space-2xs);
   font-size: var(--fs-body-xs);
   color: var(--color-text-muted);
 }

@@ -169,7 +169,7 @@ async def test_unreported_exit_month_is_not_a_pending_report(client: AsyncClient
 
 
 @pytest.mark.asyncio
-async def test_reported_exit_month_keeps_its_numbers(client: AsyncClient):
+async def test_reported_exit_month_leaves_monitoring_but_keeps_history(client: AsyncClient):
     await _create_startup(client, "Ativa")
     exited_id = await _create_startup(client, "Vendida")
     await client.post(
@@ -180,9 +180,12 @@ async def test_reported_exit_month_keeps_its_numbers(client: AsyncClient):
 
     in_exit_month = await _summary(client, 3)
 
-    assert in_exit_month["total_startups"] == 2
-    assert float(in_exit_month["revenue"]) == 5000
-    assert in_exit_month["monthly_report_pct"] == 50.0
+    assert in_exit_month["total_startups"] == 1
+    assert float(in_exit_month["revenue"]) == 0
+    assert in_exit_month["monthly_report_pct"] == 0.0
+    history = (await client.get(f"/api/startups/{exited_id}/monthly-indicators")).json()
+    assert history["total"] == 1
+    assert float(history["items"][0]["total_revenue"]) == 5000
 
 
 @pytest.mark.asyncio
@@ -209,7 +212,7 @@ async def test_exit_month_numbers_can_still_be_entered_by_hand(client: AsyncClie
     )
 
     assert resp.status_code == 201
-    assert (await _summary(client, 3))["total_startups"] == 2
+    assert (await _summary(client, 3))["total_startups"] == 1
 
 
 @pytest.mark.asyncio
@@ -311,3 +314,16 @@ async def test_undoing_the_exit_brings_the_links_back(
     resp = await anon_client.get(f"/api/monthly-indicator/{token}")
 
     assert resp.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_portfolio_starts_in_investment_month_even_with_earlier_reports(client):
+    startup_id = await _create_startup(client, "New investment")
+    await client.patch(f"/api/startups/{startup_id}", json={"investment_date": "2026-03-31"})
+    await client.post(f"/api/startups/{startup_id}/monthly-indicators",
+                      json={"month": 2, "year": 2026, "total_revenue": 5000})
+    before = await _summary(client, 2)
+    assert before["startups"] == []
+    assert before["total_startups"] == 0
+    assert float(before["revenue"]) == 0
+    assert (await _summary(client, 3))["total_startups"] == 1

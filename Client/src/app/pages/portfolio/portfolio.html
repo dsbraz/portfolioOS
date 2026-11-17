@@ -71,17 +71,9 @@
       <mat-card class="empty-state">
         <mat-card-content>
           <mat-icon class="empty-icon">rocket_launch</mat-icon>
-          <!-- An empty period is not an empty portfolio when every startup has
-               exited: "none registered" is said only once the exited list is
-               known to be empty, never while it loads or after it fails. -->
-          @if (exitedStartups()?.length === 0) {
-            <h2>Nenhuma startup cadastrada</h2>
-            <p>Clique em "Nova Startup" para adicionar a primeira.</p>
-          } @else {
-            <h2>Nenhuma startup acompanhada neste período</h2>
-            @if (exitedStartups()?.length) {
-              <p>As startups encerradas estão listadas abaixo.</p>
-            }
+          <h2>Nenhuma startup acompanhada neste período</h2>
+          @if (exitedStartups()?.length) {
+            <p>As startups encerradas estão listadas abaixo.</p>
           }
         </mat-card-content>
       </mat-card>

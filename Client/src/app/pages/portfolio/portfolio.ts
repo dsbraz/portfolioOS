@@ -78,8 +78,16 @@ export class Portfolio implements OnInit {
 
   readonly sort = signal<SortState>({ active: '', direction: '' });
 
-  /** Startups the fund left. Not tracked any more, but still one click away. */
-  readonly exitedStartups = signal<Startup[] | null>(null);
+  private readonly allExitedStartups = signal<Startup[] | null>(null);
+  /** Exits effective by the selected month, keeping historical lists disjoint. */
+  readonly exitedStartups = computed(() => {
+    const period = this.selectedYear() * 12 + this.selectedMonth();
+    return this.allExitedStartups()?.filter((startup) => {
+      if (!startup.exited_on) return false;
+      const [year, month] = startup.exited_on.split('-').map(Number);
+      return year * 12 + month <= period;
+    }) ?? null;
+  });
   readonly exitedLoading = signal(false);
   readonly exitedColumns = ['name', 'exited_on', 'exit_type'];
   readonly trackStartupById = (_: number, s: Startup) => s.id;
@@ -116,7 +124,7 @@ export class Portfolio implements OnInit {
     this.exitedLoading.set(true);
     this.startupService.list({ tracked: false }).subscribe({
       next: (data) => {
-        this.exitedStartups.set(data.items);
+        this.allExitedStartups.set(data.items);
         this.exitedLoading.set(false);
       },
       error: () => this.exitedLoading.set(false),

@@ -80,7 +80,7 @@ class Startup(Base):
     equity_stake: Mapped[Optional[Decimal]] = mapped_column(Numeric(5, 2), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     # The exit is a separate dimension from `status`, which stays a health signal.
-    # `exited_on` set means the fund left: the startup stops being tracked after
+    # `exited_on` set means the fund left: the startup stops being tracked from
     # that month, and its history stays readable.
     exited_on: Mapped[date | None] = mapped_column(Date, nullable=True)
     exit_type: Mapped[ExitType | None] = mapped_column(
@@ -122,7 +122,7 @@ class Startup(Base):
 
         Through a link, never once the startup exited. By hand, up to the exit
         month: its numbers often arrive after the exit is recorded, and that
-        month counts only if reported. A later month would never be counted.
+        history remains available even though monitoring has ended.
         """
         if self.exited_on is None:
             return
@@ -131,22 +131,14 @@ class Startup(Base):
         if period > self._exit_month():
             raise ConflictError(EXITED_STARTUP_TAKES_NO_LATER_PERIOD)
 
-    def is_tracked_in(self, period: Period, *, reported: bool) -> bool:
-        """Whether the startup is still followed in `period`.
-
-        Every month before the exit counts and every month after it does not.
-        The exit month counts only if the startup `reported` it: its links close
-        with the exit, so an unreported exit month would be a pending report
-        nobody could ever send — while a reported one keeps its numbers.
-        `reported` has no default on purpose: leaving it out would silently drop
-        a startup that did report its exit month.
-        """
-        if self.exited_on is None:
-            return True
-        exit_month = self._exit_month()
-        if period < exit_month:
-            return True
-        return period == exit_month and reported
+    def is_tracked_in(self, period: Period) -> bool:
+        """Track from the investment month (inclusive) to the exit month (exclusive)."""
+        investment_month = Period(
+            year=self.investment_date.year, month=self.investment_date.month
+        )
+        if period < investment_month:
+            return False
+        return self.exited_on is None or period < self._exit_month()
 
     def _exit_month(self) -> Period:
         return Period(year=self.exited_on.year, month=self.exited_on.month)

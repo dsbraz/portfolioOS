@@ -301,7 +301,7 @@ describe('Portfolio (loading state)', () => {
   it('should drop the busy state and show the empty state once loaded', async () => {
     const el = await mount(false);
     expect(el.querySelector('[aria-busy="true"]')).toBeNull();
-    expect(el.textContent).toContain('Nenhuma startup cadastrada');
+    expect(el.textContent).toContain('Nenhuma startup acompanhada neste período');
   });
 });
 

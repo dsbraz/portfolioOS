@@ -38,38 +38,22 @@ def indicator_repo():
 # --- Startup.is_tracked_in ---
 
 
-def test_a_startup_without_exit_is_tracked_in_any_period():
-    assert _startup().is_tracked_in(Period(year=2030, month=1), reported=False)
-
-
-def test_a_startup_is_tracked_before_the_month_it_exited():
+@pytest.mark.parametrize("year,month,expected", [
+    (2023, 12, False), (2024, 2, False), (2024, 3, True),
+    (2026, 2, True), (2026, 3, False), (2026, 4, False),
+])
+def test_tracking_runs_from_investment_month_until_before_exit(year, month, expected):
     startup = _startup(exited_on=date(2026, 3, 20))
-
-    assert startup.is_tracked_in(Period(year=2026, month=2), reported=False)
-    assert startup.is_tracked_in(Period(year=2025, month=12), reported=False)
+    assert startup.is_tracked_in(Period(year=year, month=month)) is expected
 
 
-def test_the_exit_month_counts_only_if_the_startup_reported_it():
-    # Its links are closed, so an unreported exit month could never be resolved:
-    # counting it would leave a pending report nobody can send.
-    startup = _startup(exited_on=date(2026, 3, 20))
-
-    assert startup.is_tracked_in(Period(year=2026, month=3), reported=True)
-    assert not startup.is_tracked_in(Period(year=2026, month=3), reported=False)
+def test_startup_without_exit_stays_tracked_after_investment():
+    assert _startup().is_tracked_in(Period(year=2030, month=1))
 
 
-def test_whether_the_startup_reported_must_always_be_said():
-    # A silent default would drop a startup that did report its exit month.
-    with pytest.raises(TypeError):
-        _startup().is_tracked_in(Period(year=2026, month=3))
-
-
-def test_a_startup_is_not_tracked_after_the_month_it_exited():
-    startup = _startup(exited_on=date(2026, 3, 20))
-
-    assert not startup.is_tracked_in(Period(year=2026, month=4), reported=False)
-    assert not startup.is_tracked_in(Period(year=2026, month=4), reported=True)
-    assert not startup.is_tracked_in(Period(year=2027, month=1), reported=False)
+def test_entry_and_exit_in_same_month_never_count_as_active():
+    startup = _startup(exited_on=date(2024, 3, 20))
+    assert not startup.is_tracked_in(Period(year=2024, month=3))
 
 
 def test_the_model_declares_that_date_and_type_travel_together():

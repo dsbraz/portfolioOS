@@ -44,31 +44,15 @@ class GetPortfolioSummary:
         selected = self._resolve_period(month, year)
 
         all_startups, _ = await self._startup_repo.get_all()
-        # Months before the exit stay as they were: a startup that exited in
-        # March still counts in January. Whether it counts in March depends on its report, so the
-        # candidates are those that MAY count, and the report settles it.
-        candidates = [
-            s for s in all_startups if s.is_tracked_in(selected, reported=True)
-        ]
-        if not candidates:
-            return _empty_summary()
-
-        indicators = await self._indicator_repo.get_by_startups_and_period(
-            [s.id for s in candidates], selected.month, selected.year
-        )
-        startups = [
-            s
-            for s in candidates
-            if s.is_tracked_in(selected, reported=s.id in indicators)
-        ]
+        startups = [s for s in all_startups if s.is_tracked_in(selected)]
         total = len(startups)
         if total == 0:
             return _empty_summary()
 
         startup_ids = [s.id for s in startups]
-        # Keep only the counted startups' reports, so the totals below never
-        # depend on how the candidates were filtered.
-        indicators = {sid: indicators[sid] for sid in startup_ids if sid in indicators}
+        indicators = await self._indicator_repo.get_by_startups_and_period(
+            startup_ids, selected.month, selected.year
+        )
         previous = selected.previous()
         previous_indicators = await self._indicator_repo.get_by_startups_and_period(
             startup_ids, previous.month, previous.year

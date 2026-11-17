@@ -3,7 +3,7 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Observable, Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 
 import { Portfolio } from './portfolio';
 import { PortfolioSummary } from '../../models/portfolio.model';
@@ -49,6 +49,8 @@ const exited: Startup = {
 // Exited startups leave the monitoring but must stay reachable: the section
 // below the table is the only way back to their history.
 describe('Portfolio (exited startups)', () => {
+  const period = new BehaviorSubject(convertToParamMap({ month: '7', year: '2026' }));
+  beforeEach(() => period.next(convertToParamMap({ month: '7', year: '2026' })));
   const mount = async (list: () => Observable<StartupListResponse>) => {
     const startupService = { create: vi.fn(), list: vi.fn(list) };
     TestBed.resetTestingModule();
@@ -58,7 +60,7 @@ describe('Portfolio (exited startups)', () => {
         provideNoopAnimations(),
         {
           provide: ActivatedRoute,
-          useValue: { queryParamMap: of(convertToParamMap({ month: '7', year: '2026' })) },
+          useValue: { queryParamMap: period },
         },
         { provide: Router, useValue: routerStub() },
         { provide: MatDialog, useValue: { open: vi.fn() } },
@@ -72,11 +74,21 @@ describe('Portfolio (exited startups)', () => {
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
-    return { el: fixture.nativeElement as HTMLElement, startupService };
+    return { el: fixture.nativeElement as HTMLElement, startupService, fixture };
   };
 
   const section = (el: HTMLElement) =>
     el.querySelector<HTMLElement>('section[aria-labelledby="exited-title"]')!;
+
+  it('moves the exited list with the selected month, including the exit month', async () => {
+    const { el, fixture } = await mount(() => of({ items: [exited], total: 1 }));
+    for (const [month, year, visible] of [[2, 2026, false], [3, 2026, true], [4, 2026, true], [12, 2025, false]] as const) {
+      period.next(convertToParamMap({ month: String(month), year: String(year) }));
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(section(el).textContent?.includes('Vendida SA')).toBe(visible);
+    }
+  });
 
   it('asks only for the exited startups', async () => {
     const { startupService } = await mount(() => of({ items: [], total: 0 }));
@@ -109,10 +121,10 @@ describe('Portfolio (exited startups)', () => {
     expect(el.textContent).not.toContain('Nenhuma startup cadastrada');
   });
 
-  it('calls the portfolio empty only when nothing has exited either', async () => {
+  it('describes an empty period without claiming no startups exist', async () => {
     const { el } = await mount(() => of({ items: [], total: 0 }));
 
-    expect(el.textContent).toContain('Nenhuma startup cadastrada');
+    expect(el.textContent).toContain('Nenhuma startup acompanhada neste período');
   });
 
   it('says so when no startup has exited', async () => {

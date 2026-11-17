@@ -71,12 +71,22 @@ test.describe('saída da investida', () => {
     const monitoradas = page.getByRole('region', { name: /startups monitoradas/ });
     const encerradas = page.getByRole('region', { name: /startups encerradas/ });
 
+    // Before investment it belongs to neither list, including across years.
+    await page.goto('/portfolio?month=12&year=2025');
+    await expect(monitoradas).toBeVisible();
+    await expect(page.getByRole('link', { name: nome, exact: true })).toHaveCount(0);
+
+    await page.goto('/portfolio?month=1&year=2026');
+    await expect(monitoradas.getByRole('link', { name: nome, exact: true })).toBeVisible();
+    await expect(encerradas.getByRole('link', { name: nome, exact: true })).toHaveCount(0);
+
     // Before the exit it was tracked, and the past stays as it was.
     await page.goto(`/portfolio?month=6&year=${CENARIO.periodo.ano}`);
     await expect(monitoradas.getByRole('link', { name: nome, exact: true })).toBeVisible();
 
-    // It never reported July and its links are closed, so the exit month is not
-    // a pending report — it leaves the monitoring, but stays one click away.
+    await expect(encerradas.getByRole('link', { name: nome, exact: true })).toHaveCount(0);
+
+    // The exit month belongs only to the exited list, regardless of reports.
     await page.goto(`/portfolio?month=7&year=${CENARIO.periodo.ano}`);
     await expect(monitoradas).toBeVisible();
     await expect(monitoradas.getByRole('link', { name: nome, exact: true })).toHaveCount(0);
