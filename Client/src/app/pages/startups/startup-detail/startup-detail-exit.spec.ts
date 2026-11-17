@@ -3,6 +3,7 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { ComponentFixture } from '@angular/core/testing';
 import { of } from 'rxjs';
 
 import { StartupDetail } from './startup-detail';
@@ -32,6 +33,8 @@ describe('StartupDetail (exit)', () => {
     updated_at: '2025-01-01T00:00:00Z',
   };
   const list = (items: unknown[]) => ({ items, total: items.length });
+  const dialog = { open: vi.fn(() => ({ afterClosed: () => of(undefined) })) };
+  let fixture: ComponentFixture<StartupDetail>;
 
   const mount = async (startup: Startup) => {
     TestBed.resetTestingModule();
@@ -41,7 +44,7 @@ describe('StartupDetail (exit)', () => {
         provideNoopAnimations(),
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => 's1' } } } },
         { provide: Router, useValue: {} },
-        { provide: MatDialog, useValue: {} },
+        { provide: MatDialog, useValue: dialog },
         { provide: MatSnackBar, useValue: { open: vi.fn() } },
         { provide: StartupService, useValue: { getById: () => of(startup) } },
         { provide: MonthlyIndicatorService, useValue: { list: () => of(list([])) } },
@@ -49,9 +52,14 @@ describe('StartupDetail (exit)', () => {
         { provide: ExecutiveService, useValue: { list: () => of(list([])) } },
         { provide: MonthlyIndicatorTokenService, useValue: { list: () => of(list([])) } },
       ],
-    }).compileComponents();
+    })
+      // MatDialogModule (imported by the component) provides its own MatDialog;
+      // overrideProvider wins over that, a plain provider does not.
+      .overrideProvider(MatDialog, { useValue: dialog })
+      .compileComponents();
 
-    const fixture = TestBed.createComponent(StartupDetail);
+    dialog.open.mockClear();
+    fixture = TestBed.createComponent(StartupDetail);
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -85,5 +93,17 @@ describe('StartupDetail (exit)', () => {
     expect(el.querySelector('.header-name-row')?.textContent).toContain('Encerrada');
     // The dialog limits the period to the exit month and offers no link.
     expect(buttonTexts(el).some((t) => t.includes('Adicionar indicador'))).toBe(true);
+  });
+
+  it('returns focus to "Mais ações" when the exit dialog closes', async () => {
+    // The menu item that opened it is gone by then; without this, focus falls
+    // to the body and a keyboard user loses their place.
+    const el = await mount(base);
+    const trigger = el.querySelector<HTMLElement>('button[aria-label="Mais ações"]')!;
+    const focus = vi.spyOn(trigger, 'focus');
+
+    fixture.componentInstance.openRecordExit();
+
+    expect(focus).toHaveBeenCalled();
   });
 });

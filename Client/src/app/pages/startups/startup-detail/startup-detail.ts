@@ -1,4 +1,13 @@
-import { Component, ElementRef, computed, inject, OnInit, signal, viewChildren } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  computed,
+  inject,
+  OnInit,
+  signal,
+  viewChild,
+  viewChildren,
+} from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -100,6 +109,9 @@ export class StartupDetail implements OnInit {
   private startupId = '';
 
   readonly tabButtons = viewChildren<ElementRef<HTMLButtonElement>>('tabBtn');
+  /** Dialogs opened from the menu return focus here: the menu item that opened
+   *  them no longer exists when they close, so focus would fall to the body. */
+  private readonly moreTrigger = viewChild('moreTrigger', { read: ElementRef<HTMLButtonElement> });
 
   /** Page sections. The order defines the tablist's arrow-key navigation. */
   readonly sections = [
@@ -271,6 +283,7 @@ export class StartupDetail implements OnInit {
       data: { startup: s } as StartupExitDialogData,
     });
     dialogRef.afterClosed().subscribe((changed) => {
+      this.focusMoreTrigger();
       if (!changed) return;
       this.snackBar.open('Saída registrada', 'Fechar', { duration: 3000 });
       this.loadAll();
@@ -471,7 +484,7 @@ export class StartupDetail implements OnInit {
   }
 
   openTokenListDialog(): void {
-    this.dialog.open(TokenListDialog, {
+    const dialogRef = this.dialog.open(TokenListDialog, {
       width: '400px',
       data: {
         tokens: this.tokens(),
@@ -479,5 +492,10 @@ export class StartupDetail implements OnInit {
         startupName: this.startup()?.name ?? '',
       } as TokenListDialogData,
     });
+    dialogRef.afterClosed().subscribe(() => this.focusMoreTrigger());
+  }
+
+  private focusMoreTrigger(): void {
+    this.moreTrigger()?.nativeElement.focus();
   }
 }
