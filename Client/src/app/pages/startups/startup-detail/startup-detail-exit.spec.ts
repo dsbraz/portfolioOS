@@ -68,7 +68,7 @@ describe('StartupDetail (exit)', () => {
     expect(buttonTexts(el).some((t) => t.includes('Adicionar indicador'))).toBe(true);
   });
 
-  it('announces the exit and stops offering new indicators', async () => {
+  it('announces the exit and still lets the exit month be entered by hand', async () => {
     const el = await mount({
       ...base,
       exited_on: '2026-03-20',
@@ -83,6 +83,7 @@ describe('StartupDetail (exit)', () => {
     expect(notice.textContent).toContain('IPO');
     expect(notice.textContent).toContain('Listada na B3');
     expect(el.querySelector('.header-name-row')?.textContent).toContain('Encerrada');
-    expect(buttonTexts(el).some((t) => t.includes('Adicionar indicador'))).toBe(false);
+    // The dialog limits the period to the exit month and offers no link.
+    expect(buttonTexts(el).some((t) => t.includes('Adicionar indicador'))).toBe(true);
   });
 });

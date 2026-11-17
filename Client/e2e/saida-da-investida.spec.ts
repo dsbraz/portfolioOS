@@ -53,7 +53,14 @@ test.describe('saída da investida', () => {
     const aviso = page.getByRole('region', { name: 'Acompanhamento encerrado' });
     await expect(aviso).toContainText('15/07/2026');
     await expect(aviso).toContainText('Venda (M&A ou secundária)');
-    await expect(page.getByRole('button', { name: 'Adicionar indicador' })).toHaveCount(0);
+
+    // Its numbers can still be entered by hand up to the exit month — never by link.
+    await page.getByRole('button', { name: 'Adicionar indicador' }).first().click();
+    const indicador = page.getByRole('dialog');
+    await expect(indicador.getByRole('status').filter({ hasText: 'aceita indicadores até' })).toBeVisible();
+    await expect(indicador.getByRole('radio', { name: 'Gerar link para a investida' })).toHaveCount(0);
+    await indicador.getByRole('button', { name: 'Cancelar' }).click();
+    await expect(indicador).toBeHidden();
 
     // No reporting link survives the exit: neither a new one nor the history.
     await page.getByRole('button', { name: 'Mais ações' }).click();

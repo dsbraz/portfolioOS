@@ -9,7 +9,7 @@ from app.application.startup.list_startups import ListStartups
 from app.application.startup.record_startup_exit import RecordStartupExit
 from app.application.startup.undo_startup_exit import UndoStartupExit
 from app.application.startup.update_startup import UpdateStartup
-from app.controllers.dependencies import startup_builder
+from app.controllers.dependencies import startup_builder, startup_exit_builder
 from app.domain.models.startup import Startup
 from app.controllers.schemas.startup import (
     StartupCreate,
@@ -96,7 +96,9 @@ async def record_startup_exit(
     startup_id: uuid.UUID,
     data: StartupExitRecord,
     get_uc: GetStartup = Depends(startup_builder(GetStartup)),
-    record_uc: RecordStartupExit = Depends(startup_builder(RecordStartupExit)),
+    record_uc: RecordStartupExit = Depends(
+        startup_exit_builder(RecordStartupExit)
+    ),
 ):
     startup = await get_uc.execute(startup_id)
     if not startup:

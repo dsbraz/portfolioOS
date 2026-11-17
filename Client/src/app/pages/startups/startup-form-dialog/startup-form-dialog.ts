@@ -40,6 +40,11 @@ export class StartupFormDialog implements OnInit {
   readonly statusOptions = Object.values(StartupStatus);
   readonly statusConfig = STARTUP_STATUS_CONFIG;
   readonly isEditMode = !!this.data?.startup;
+  /** After an exit the investment cannot move past it; the server refuses it
+   *  too, but this form closes before the answer, so the limit lives here. */
+  readonly maxInvestmentDate = this.data?.startup?.exited_on
+    ? new Date(this.data.startup.exited_on + 'T00:00:00')
+    : null;
 
   readonly form = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(255)]],
@@ -63,7 +68,11 @@ export class StartupFormDialog implements OnInit {
   }
 
   onSubmit(): void {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      // Show why it did not submit, instead of a button that seems to do nothing.
+      this.form.markAllAsTouched();
+      return;
+    }
     const raw = this.form.getRawValue();
     const result = {
       ...raw,

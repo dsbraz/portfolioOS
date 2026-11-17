@@ -105,9 +105,7 @@ async def public_create_monthly_indicator(
     get_token: GetMonthlyIndicatorToken = Depends(
         monthly_indicator_builder(GetMonthlyIndicatorToken)
     ),
-    get_form: GetPublicIndicatorForm = Depends(
-        public_form_builder(GetPublicIndicatorForm)
-    ),
+    get_startup: GetStartup = Depends(startup_builder(GetStartup)),
     create: CreateMonthlyIndicator = Depends(
         monthly_indicator_builder(CreateMonthlyIndicator)
     ),
@@ -119,9 +117,7 @@ async def public_create_monthly_indicator(
             detail="Token invalido ou expirado",
         )
 
-    # The same check the form ran when it opened: an exited startup has no
-    # reporting link, whatever the period (409); a deleted one answers 404.
-    startup, _ = await get_form.execute(indicator_token)
+    startup = await get_startup.execute(indicator_token.startup_id)
     if not startup:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -134,7 +130,8 @@ async def public_create_monthly_indicator(
         year=indicator_token.year,
         **data.model_dump(),
     )
-    await create.execute(indicator)
+    # An exited startup has no reporting link, whatever the period (409).
+    await create.execute(startup, indicator, through_link=True)
 
 
 # --- Protected routes: indicators ---
@@ -163,14 +160,22 @@ async def list_indicators(
     status_code=status.HTTP_201_CREATED,
 )
 async def create_indicator(
+    startup_id: uuid.UUID,
     data: MonthlyIndicatorCreate,
-    startup_id: uuid.UUID = Depends(verify_startup_exists),
+    get_startup: GetStartup = Depends(startup_builder(GetStartup)),
     use_case: CreateMonthlyIndicator = Depends(
         monthly_indicator_builder(CreateMonthlyIndicator)
     ),
 ):
+    startup = await get_startup.execute(startup_id)
+    if not startup:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Startup com id {startup_id} não encontrada",
+        )
     indicator = MonthlyIndicator(startup_id=startup_id, **data.model_dump())
-    created = await use_case.execute(indicator)
+    # By hand: an exited startup still takes periods up to its exit month (409 after).
+    created = await use_case.execute(startup, indicator, through_link=False)
     return MonthlyIndicatorResponse.model_validate(created)
 
 

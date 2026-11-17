@@ -28,18 +28,25 @@ def repo():
     return mock
 
 
+@pytest.fixture
+def indicator_repo():
+    mock = AsyncMock()
+    mock.get_last_reported_period_by_startups.return_value = {}
+    return mock
+
+
 # --- Startup.is_tracked_in ---
 
 
 def test_a_startup_without_exit_is_tracked_in_any_period():
-    assert _startup().is_tracked_in(Period(year=2030, month=1))
+    assert _startup().is_tracked_in(Period(year=2030, month=1), reported=False)
 
 
 def test_a_startup_is_tracked_before_the_month_it_exited():
     startup = _startup(exited_on=date(2026, 3, 20))
 
-    assert startup.is_tracked_in(Period(year=2026, month=2))
-    assert startup.is_tracked_in(Period(year=2025, month=12))
+    assert startup.is_tracked_in(Period(year=2026, month=2), reported=False)
+    assert startup.is_tracked_in(Period(year=2025, month=12), reported=False)
 
 
 def test_the_exit_month_counts_only_if_the_startup_reported_it():
@@ -49,25 +56,70 @@ def test_the_exit_month_counts_only_if_the_startup_reported_it():
 
     assert startup.is_tracked_in(Period(year=2026, month=3), reported=True)
     assert not startup.is_tracked_in(Period(year=2026, month=3), reported=False)
-    assert not startup.is_tracked_in(Period(year=2026, month=3))
+
+
+def test_whether_the_startup_reported_must_always_be_said():
+    # A silent default would drop a startup that did report its exit month.
+    with pytest.raises(TypeError):
+        _startup().is_tracked_in(Period(year=2026, month=3))
 
 
 def test_a_startup_is_not_tracked_after_the_month_it_exited():
     startup = _startup(exited_on=date(2026, 3, 20))
 
-    assert not startup.is_tracked_in(Period(year=2026, month=4))
+    assert not startup.is_tracked_in(Period(year=2026, month=4), reported=False)
     assert not startup.is_tracked_in(Period(year=2026, month=4), reported=True)
-    assert not startup.is_tracked_in(Period(year=2027, month=1))
+    assert not startup.is_tracked_in(Period(year=2027, month=1), reported=False)
+
+
+def test_the_model_declares_that_date_and_type_travel_together():
+    names = {c.name for c in Startup.__table__.constraints}
+
+    assert "ck_startups_exit_complete" in names
+
+
+# --- Startup.ensure_accepts_indicator ---
+
+
+def test_a_startup_without_exit_accepts_any_indicator():
+    startup = _startup()
+
+    startup.ensure_accepts_indicator(Period(year=2030, month=1), through_link=True)
+    startup.ensure_accepts_indicator(Period(year=2030, month=1), through_link=False)
+
+
+def test_an_exited_startup_takes_manual_indicators_up_to_its_exit_month():
+    # The exit month's numbers often arrive after the exit is recorded.
+    startup = _startup(exited_on=date(2026, 3, 20))
+
+    startup.ensure_accepts_indicator(Period(year=2026, month=3), through_link=False)
+    startup.ensure_accepts_indicator(Period(year=2026, month=1), through_link=False)
+
+
+def test_an_exited_startup_refuses_manual_indicators_after_its_exit_month():
+    startup = _startup(exited_on=date(2026, 3, 20))
+
+    with pytest.raises(ConflictError):
+        startup.ensure_accepts_indicator(
+            Period(year=2026, month=4), through_link=False
+        )
+
+
+def test_an_exited_startup_refuses_every_link_report():
+    startup = _startup(exited_on=date(2026, 3, 20))
+
+    with pytest.raises(ConflictError):
+        startup.ensure_accepts_indicator(Period(year=2026, month=2), through_link=True)
 
 
 # --- RecordStartupExit ---
 
 
 @pytest.mark.asyncio
-async def test_records_the_exit(repo):
+async def test_records_the_exit(repo, indicator_repo):
     startup = _startup()
 
-    result = await RecordStartupExit(repo).execute(
+    result = await RecordStartupExit(repo, indicator_repo).execute(
         startup, date(2026, 3, 20), ExitType.SALE, "Comprada pela Big Co"
     )
 
@@ -78,8 +130,8 @@ async def test_records_the_exit(repo):
 
 
 @pytest.mark.asyncio
-async def test_blank_notes_are_stored_as_absent(repo):
-    result = await RecordStartupExit(repo).execute(
+async def test_blank_notes_are_stored_as_absent(repo, indicator_repo):
+    result = await RecordStartupExit(repo, indicator_repo).execute(
         _startup(), date(2026, 3, 20), ExitType.WRITE_OFF, "   "
     )
 
@@ -87,34 +139,63 @@ async def test_blank_notes_are_stored_as_absent(repo):
 
 
 @pytest.mark.asyncio
-async def test_recording_twice_is_a_conflict(repo):
+async def test_recording_twice_is_a_conflict(repo, indicator_repo):
     startup = _startup(exited_on=date(2026, 3, 20), exit_type=ExitType.SALE)
 
     with pytest.raises(ConflictError):
-        await RecordStartupExit(repo).execute(
+        await RecordStartupExit(repo, indicator_repo).execute(
             startup, date(2026, 4, 1), ExitType.IPO, None
         )
     repo.update.assert_not_awaited()
 
 
 @pytest.mark.asyncio
-async def test_exit_date_cannot_be_in_the_future(repo):
+async def test_exit_date_cannot_be_in_the_future(repo, indicator_repo):
     tomorrow = date.today() + timedelta(days=1)
 
     with pytest.raises(InvalidInputError):
-        await RecordStartupExit(repo).execute(_startup(), tomorrow, ExitType.SALE, None)
+        await RecordStartupExit(repo, indicator_repo).execute(_startup(), tomorrow, ExitType.SALE, None)
     repo.update.assert_not_awaited()
 
 
 @pytest.mark.asyncio
-async def test_exit_date_cannot_precede_the_investment(repo):
+async def test_exit_date_cannot_precede_the_investment(repo, indicator_repo):
     startup = _startup(investment_date=date(2024, 3, 10))
 
     with pytest.raises(InvalidInputError):
-        await RecordStartupExit(repo).execute(
+        await RecordStartupExit(repo, indicator_repo).execute(
             startup, date(2024, 3, 9), ExitType.SALE, None
         )
     repo.update.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_exit_cannot_precede_a_month_already_reported(repo, indicator_repo):
+    # Reports after the exit month would silently drop out of the portfolio.
+    startup = _startup()
+    indicator_repo.get_last_reported_period_by_startups.return_value = {
+        startup.id: Period(year=2026, month=5)
+    }
+
+    with pytest.raises(InvalidInputError, match="05/2026"):
+        await RecordStartupExit(repo, indicator_repo).execute(
+            startup, date(2026, 3, 20), ExitType.SALE, None
+        )
+    repo.update.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_exit_in_the_last_reported_month_is_accepted(repo, indicator_repo):
+    startup = _startup()
+    indicator_repo.get_last_reported_period_by_startups.return_value = {
+        startup.id: Period(year=2026, month=3)
+    }
+
+    result = await RecordStartupExit(repo, indicator_repo).execute(
+        startup, date(2026, 3, 1), ExitType.SALE, None
+    )
+
+    assert result.exited_on == date(2026, 3, 1)
 
 
 # --- UndoStartupExit ---

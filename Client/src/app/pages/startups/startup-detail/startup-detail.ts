@@ -323,6 +323,7 @@ export class StartupDetail implements OnInit {
         indicators: this.indicators(),
         tokens: this.tokens(),
         executives: this.executives(),
+        exitedOn: this.startup()?.exited_on ?? null,
       } as AddIndicatorDialogData,
     });
     dialogRef.afterClosed().subscribe((changed) => {

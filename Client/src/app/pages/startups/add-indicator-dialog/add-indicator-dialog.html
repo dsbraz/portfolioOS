@@ -44,6 +44,11 @@
       @if (form.hasError('futurePeriod')) {
         <mat-error class="period-error">Período não pode ser no futuro.</mat-error>
       }
+      @if (form.hasError('afterExit')) {
+        <mat-error class="period-error">
+          Startup encerrada: só aceita indicadores até {{ exitPeriodLabel }}.
+        </mat-error>
+      }
 
       <!-- Context derived from what the page already loaded — never overwrites -->
       <!-- silently, and the link mode reuses an existing token per period. -->
@@ -56,6 +61,12 @@
         <p class="period-note" role="status">Já existe um link para este período.</p>
       }
 
+      @if (exitPeriod) {
+        <p class="period-note" role="status">
+          Startup encerrada: aceita indicadores até {{ exitPeriodLabel }}, preenchidos aqui.
+          Não há link para a investida.
+        </p>
+      } @else {
       <mat-radio-group
         class="mode-selector"
         aria-label="O que fazer com este período"
@@ -65,6 +76,7 @@
         <mat-radio-button value="fill">Preencher agora</mat-radio-button>
         <mat-radio-button value="link">Gerar link para a investida</mat-radio-button>
       </mat-radio-group>
+      }
 
       @if (mode() === 'fill') {
         <div class="mode-panel" formGroupName="reported">

@@ -6,7 +6,16 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import Date, DateTime, Enum, Numeric, String, Text, func
+from sqlalchemy import (
+    CheckConstraint,
+    Date,
+    DateTime,
+    Enum,
+    Numeric,
+    String,
+    Text,
+    func,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -30,6 +39,10 @@ class StartupStatus(str, enum.Enum):
 EXITED_STARTUP_HAS_NO_LINK = (
     "Esta startup deixou de ser acompanhada e não recebe mais indicadores por link."
 )
+EXITED_STARTUP_TAKES_NO_LATER_PERIOD = (
+    "Esta startup deixou de ser acompanhada e não recebe indicadores de meses "
+    "posteriores à saída."
+)
 
 
 class ExitType(str, enum.Enum):
@@ -43,6 +56,13 @@ class ExitType(str, enum.Enum):
 
 class Startup(Base):
     __tablename__ = "startups"
+    __table_args__ = (
+        # Date and type travel together: one without the other is not an exit.
+        CheckConstraint(
+            "(exited_on IS NULL) = (exit_type IS NULL)",
+            name="ck_startups_exit_complete",
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
@@ -97,17 +117,36 @@ class Startup(Base):
         if self.exited_on is not None:
             raise ConflictError(EXITED_STARTUP_HAS_NO_LINK)
 
-    def is_tracked_in(self, period: Period, reported: bool = False) -> bool:
+    def ensure_accepts_indicator(self, period: Period, *, through_link: bool) -> None:
+        """Whether an indicator for `period` may still be stored.
+
+        Through a link, never once the startup exited. By hand, up to the exit
+        month: its numbers often arrive after the exit is recorded, and that
+        month counts only if reported. A later month would never be counted.
+        """
+        if self.exited_on is None:
+            return
+        if through_link:
+            raise ConflictError(EXITED_STARTUP_HAS_NO_LINK)
+        if period > self._exit_month():
+            raise ConflictError(EXITED_STARTUP_TAKES_NO_LATER_PERIOD)
+
+    def is_tracked_in(self, period: Period, *, reported: bool) -> bool:
         """Whether the startup is still followed in `period`.
 
         Every month before the exit counts and every month after it does not.
         The exit month counts only if the startup `reported` it: its links close
         with the exit, so an unreported exit month would be a pending report
         nobody could ever send — while a reported one keeps its numbers.
+        `reported` has no default on purpose: leaving it out would silently drop
+        a startup that did report its exit month.
         """
         if self.exited_on is None:
             return True
-        exit_month = Period(year=self.exited_on.year, month=self.exited_on.month)
+        exit_month = self._exit_month()
         if period < exit_month:
             return True
         return period == exit_month and reported
+
+    def _exit_month(self) -> Period:
+        return Period(year=self.exited_on.year, month=self.exited_on.month)

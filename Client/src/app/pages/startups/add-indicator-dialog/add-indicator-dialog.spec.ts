@@ -53,6 +53,7 @@ describe('AddIndicatorDialog', () => {
       indicators: [],
       tokens: [],
       executives: [],
+      exitedOn: null,
       ...over,
     };
     await TestBed.configureTestingModule({
@@ -333,5 +334,45 @@ describe('AddIndicatorDialog', () => {
     );
     expect(send?.tagName).toBe('A');
     expect(send?.getAttribute('href')).toContain('https://wa.me/5511912345678?text=');
+  });
+
+  describe('for an exited startup', () => {
+    it('offers no link, only filling by hand', async () => {
+      const el = await render({ exitedOn: '2026-03-20' });
+
+      expect(el.querySelector('[role="radiogroup"]')).toBeNull();
+      expect(el.textContent).not.toContain('Gerar link para a investida');
+      expect(el.textContent).toContain('aceita indicadores até');
+      expect(component.mode()).toBe('fill');
+    });
+
+    it('starts on the exit month when last month is after it', async () => {
+      await render({ exitedOn: '2026-03-20' });
+
+      expect(component.form.getRawValue().month).toBe(3);
+      expect(component.form.getRawValue().year).toBe(2026);
+    });
+
+    it('refuses a period after the exit month, without calling the server', async () => {
+      const el = await render({ exitedOn: '2026-03-20' });
+      component.form.patchValue({ month: 4, year: 2026 });
+      fixture.detectChanges();
+
+      component.submit();
+      fixture.detectChanges();
+
+      expect(indicatorService.create).not.toHaveBeenCalled();
+      expect(el.textContent).toContain('só aceita indicadores até');
+    });
+
+    it('saves the exit month', async () => {
+      indicatorService.create.mockReturnValue(of({} as MonthlyIndicator));
+      await render({ exitedOn: '2026-03-20' });
+
+      component.submit();
+
+      expect(indicatorService.create.mock.calls[0][1]).toMatchObject({ month: 3, year: 2026 });
+      expect(dialogRef.close).toHaveBeenCalledWith(true);
+    });
   });
 });

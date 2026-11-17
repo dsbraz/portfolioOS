@@ -197,6 +197,55 @@ async def test_investment_date_after_the_exit_is_400(client: AsyncClient, startu
 
 
 @pytest.mark.asyncio
+async def test_exit_month_numbers_can_still_be_entered_by_hand(client: AsyncClient):
+    # The numbers often arrive after the exit is recorded.
+    await _create_startup(client, "Ativa")
+    exited_id = await _create_startup(client, "Vendida")
+    await client.put(f"/api/startups/{exited_id}/exit", json=EXIT)
+
+    resp = await client.post(
+        f"/api/startups/{exited_id}/monthly-indicators",
+        json={"month": 3, "year": 2026, "total_revenue": 5000},
+    )
+
+    assert resp.status_code == 201
+    assert (await _summary(client, 3))["total_startups"] == 2
+
+
+@pytest.mark.asyncio
+async def test_no_indicator_after_the_exit_month_is_accepted(
+    client: AsyncClient, startup_id: str
+):
+    await client.put(f"/api/startups/{startup_id}/exit", json=EXIT)
+
+    resp = await client.post(
+        f"/api/startups/{startup_id}/monthly-indicators",
+        json={"month": 4, "year": 2026, "total_revenue": 5000},
+    )
+
+    assert resp.status_code == 409
+    indicators = (
+        await client.get(f"/api/startups/{startup_id}/monthly-indicators")
+    ).json()
+    assert indicators["total"] == 0
+
+
+@pytest.mark.asyncio
+async def test_exit_before_a_reported_month_is_400(client: AsyncClient, startup_id: str):
+    await client.post(
+        f"/api/startups/{startup_id}/monthly-indicators",
+        json={"month": 5, "year": 2026, "total_revenue": 5000},
+    )
+
+    resp = await client.put(f"/api/startups/{startup_id}/exit", json=EXIT)
+
+    assert resp.status_code == 400
+    assert "05/2026" in resp.json()["detail"]
+    fetched = (await client.get(f"/api/startups/{startup_id}")).json()
+    assert fetched["exited_on"] is None
+
+
+@pytest.mark.asyncio
 async def test_portfolio_with_only_exited_startups_is_empty(client: AsyncClient):
     exited_id = await _create_startup(client, "Vendida")
     await client.put(f"/api/startups/{exited_id}/exit", json=EXIT)

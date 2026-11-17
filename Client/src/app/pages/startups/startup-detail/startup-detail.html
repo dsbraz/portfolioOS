@@ -149,15 +149,13 @@
       </div>
 
       <!-- Outside the tablist: a role="tablist" only allows tabs as children. -->
-      <!-- An exited startup is no longer chased: no new periods, no new links.
-           Existing indicators stay editable, for corrections. -->
+      <!-- An exited startup is no longer chased by link, but still takes its
+           numbers by hand up to the exit month; the dialog enforces the limit. -->
       @if (activeSection() === 'indicadores') {
-        @if (!s.exited_on) {
         <button mat-flat-button class="section-action" (click)="openCreateIndicator()">
           <mat-icon>add</mat-icon>
           Adicionar indicador
         </button>
-        }
       } @else if (activeSection() === 'reunioes') {
         <button mat-flat-button class="section-action" (click)="openCreateMeeting()">
           <mat-icon>add</mat-icon>
@@ -186,12 +184,10 @@
       @if (indicators().length === 0) {
         <div class="empty-state">
           <p class="empty-text">Nenhum indicador cadastrado ainda.</p>
-          @if (!s.exited_on) {
-            <button mat-flat-button (click)="openCreateIndicator()">
-              <mat-icon>add</mat-icon>
-              Adicionar indicador
-            </button>
-          }
+          <button mat-flat-button (click)="openCreateIndicator()">
+            <mat-icon>add</mat-icon>
+            Adicionar indicador
+          </button>
         </div>
       } @else {
         <div

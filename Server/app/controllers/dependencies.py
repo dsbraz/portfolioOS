@@ -75,6 +75,9 @@ portfolio_builder = _multi_repo_use_case_builder(
 public_form_builder = _multi_repo_use_case_builder(
     StartupRepository, MonthlyIndicatorRepository
 )
+startup_exit_builder = _multi_repo_use_case_builder(
+    StartupRepository, MonthlyIndicatorRepository
+)
 user_builder = _use_case_builder(UserRepository)
 user_invite_builder = _use_case_builder(UserInviteRepository)
 user_invite_create_builder = _multi_repo_use_case_builder(
