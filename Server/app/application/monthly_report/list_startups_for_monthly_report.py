@@ -3,7 +3,7 @@ from app.domain.repositories import StartupRepository
 
 
 class ListStartupsForMonthlyReport:
-    """The startups the monthly job visits: only those that opted in."""
+    """The startups the monthly job visits: those that opted in and did not exit."""
 
     def __init__(self, repository: StartupRepository) -> None:
         self._repository = repository

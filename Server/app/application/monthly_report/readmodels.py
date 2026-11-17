@@ -39,3 +39,6 @@ class MonthlyReportSkip(str, enum.Enum):
 
     ALREADY_REPORTED = "already_reported"
     NO_RECIPIENTS = "no_recipients"
+    # Exited, switched off or deleted since the job listed it, or a month it is
+    # not tracked in: the platform working, not a gap to close.
+    NOT_FOLLOWED = "not_followed"

@@ -141,6 +141,15 @@ describe('StartupFormDialog', () => {
       dialogRefSpy.close.mockClear();
     });
 
+    it('says no e-mail goes out while the exit stands', () => {
+      const el = fixture.nativeElement as HTMLElement;
+
+      expect(el.textContent).toContain('nenhum e-mail é enviado enquanto a saída estiver');
+      expect(
+        el.querySelector('mat-slide-toggle button')?.getAttribute('aria-describedby'),
+      ).toContain('h-2ea6-monthly_report_exited');
+    });
+
     it('keeps the dialog open when the investment moves past the exit', () => {
       // The server would refuse it too, but only after this form had closed.
       component.form.controls.investment_date.setValue(new Date(2026, 2, 21));

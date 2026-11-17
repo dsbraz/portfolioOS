@@ -9,6 +9,7 @@ from app.application.monthly_report.readmodels import MonthlyReportSkip
 from app.domain.exceptions import InvalidInputError
 from app.domain.models.period import Period
 from app.domain.models.monthly_report_dispatch import DispatchKind
+from app.domain.models.startup import ExitType, Startup
 
 TOKEN = uuid.UUID("00000000-0000-0000-0000-000000000001")
 
@@ -45,8 +46,25 @@ def indicators():
 
 
 @pytest.fixture
-def use_case(executives, indicators):
-    return PlanMonthlyReport(executives, indicators)
+def startups():
+    # The job's list is read once, at the start of the run: the plan re-reads
+    # the startup, and by default finds it still followed.
+    repo = AsyncMock()
+
+    async def current(startup_id):
+        fresh = MagicMock()
+        fresh.id = startup_id
+        fresh.name = "Payface"
+        fresh.receives_monthly_report_for.return_value = True
+        return fresh
+
+    repo.get_by_id.side_effect = current
+    return repo
+
+
+@pytest.fixture
+def use_case(startups, executives, indicators):
+    return PlanMonthlyReport(startups, executives, indicators)
 
 
 @pytest.fixture(autouse=True)
@@ -142,4 +160,89 @@ async def test_a_month_not_closed_yet_is_refused(use_case, indicators):
         await use_case.execute(
             _startup(), DispatchKind.INITIAL, Period(year=today.year, month=today.month)
         )
+    indicators.get_or_create_token.assert_not_awaited()
+
+
+def _real_startup(**overrides) -> Startup:
+    fields = {
+        "id": uuid.uuid4(),
+        "name": "Payface",
+        "sector": "tech",
+        "investment_date": date(2024, 3, 10),
+        "monthly_report_enabled": True,
+    }
+    fields.update(overrides)
+    return Startup(**fields)
+
+
+@pytest.mark.parametrize("kind", list(DispatchKind))
+@pytest.mark.asyncio
+async def test_an_exited_startup_gets_nothing(use_case, startups, executives, indicators, kind):
+    # Neither the request nor the reminder: it has no reporting link at all.
+    exited = _real_startup(exited_on=date(2025, 11, 20), exit_type=ExitType.SALE)
+    startups.get_by_id.side_effect = None
+    startups.get_by_id.return_value = exited
+
+    assert await use_case.execute(exited, kind) is MonthlyReportSkip.NOT_FOLLOWED
+    indicators.get_or_create_token.assert_not_awaited()
+    executives.get_all_by_startup.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_an_exit_recorded_after_the_job_listed_the_startup_stops_it(
+    use_case, startups, indicators
+):
+    # The job lists once and then e-mails startup after startup; an exit
+    # recorded meanwhile must stop the send, so the plan reads it fresh.
+    listed = _real_startup()
+    startups.get_by_id.side_effect = None
+    startups.get_by_id.return_value = _real_startup(
+        id=listed.id, exited_on=date(2026, 1, 5), exit_type=ExitType.WRITE_OFF
+    )
+
+    assert (
+        await use_case.execute(listed, DispatchKind.INITIAL)
+        is MonthlyReportSkip.NOT_FOLLOWED
+    )
+    indicators.get_or_create_token.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_a_send_switched_off_after_listing_stops_it(use_case, startups, indicators):
+    listed = _real_startup()
+    startups.get_by_id.side_effect = None
+    startups.get_by_id.return_value = _real_startup(
+        id=listed.id, monthly_report_enabled=False
+    )
+
+    assert (
+        await use_case.execute(listed, DispatchKind.INITIAL)
+        is MonthlyReportSkip.NOT_FOLLOWED
+    )
+    indicators.get_or_create_token.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_a_startup_deleted_after_listing_gets_nothing(use_case, startups, indicators):
+    startups.get_by_id.side_effect = None
+    startups.get_by_id.return_value = None
+
+    assert (
+        await use_case.execute(_real_startup(), DispatchKind.INITIAL)
+        is MonthlyReportSkip.NOT_FOLLOWED
+    )
+    indicators.get_or_create_token.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_no_request_for_a_month_before_the_investment(use_case, startups, indicators):
+    # Invested in January: December, the month the job asks for, precedes it.
+    invested = _real_startup(investment_date=date(2026, 1, 5))
+    startups.get_by_id.side_effect = None
+    startups.get_by_id.return_value = invested
+
+    assert (
+        await use_case.execute(invested, DispatchKind.INITIAL)
+        is MonthlyReportSkip.NOT_FOLLOWED
+    )
     indicators.get_or_create_token.assert_not_awaited()

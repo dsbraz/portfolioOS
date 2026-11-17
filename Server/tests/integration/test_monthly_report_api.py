@@ -47,7 +47,9 @@ async def _run(session: AsyncSession, startup_id: str, kind: DispatchKind, outbo
     """The job's steps, against the real repositories and unique keys."""
     startup = await StartupRepository(session).get_by_id(uuid.UUID(startup_id))
     plan = await PlanMonthlyReport(
-        ExecutiveRepository(session), MonthlyIndicatorRepository(session)
+        StartupRepository(session),
+        ExecutiveRepository(session),
+        MonthlyIndicatorRepository(session),
     ).execute(startup, kind)
     if isinstance(plan, MonthlyReportSkip):
         return []
@@ -124,6 +126,54 @@ async def test_only_opted_in_startups_are_listed_for_the_job(
     ids = {str(s.id) for s in startups}
     assert startup_id in ids
     assert other.json()["id"] not in ids
+
+
+EXIT = {"exited_on": "2026-03-20", "exit_type": "venda"}
+
+
+@pytest.mark.asyncio
+async def test_an_exited_startup_is_not_listed_for_the_job(client, session, startup_id):
+    await _opt_in(client, startup_id)
+    await client.put(f"/api/startups/{startup_id}/exit", json=EXIT)
+
+    startups = await StartupRepository(session).get_all_with_monthly_report_enabled()
+
+    assert startup_id not in {str(s.id) for s in startups}
+
+
+@pytest.mark.asyncio
+async def test_an_exit_recorded_during_the_run_stops_the_send(client, session, startup_id):
+    await _opt_in(client, startup_id)
+    listed = await StartupRepository(session).get_all_with_monthly_report_enabled()
+    snapshot = next(s for s in listed if str(s.id) == startup_id)
+    session.expunge(snapshot)
+    await client.put(f"/api/startups/{startup_id}/exit", json=EXIT)
+
+    plan = await PlanMonthlyReport(
+        StartupRepository(session),
+        ExecutiveRepository(session),
+        MonthlyIndicatorRepository(session),
+    ).execute(snapshot, DispatchKind.INITIAL)
+
+    assert plan is MonthlyReportSkip.NOT_FOLLOWED
+    tokens = (
+        await client.get(f"/api/startups/{startup_id}/monthly-indicator-tokens")
+    ).json()
+    assert tokens["total"] == 0
+
+
+@pytest.mark.asyncio
+async def test_no_reminder_after_the_exit(client, session, startup_id):
+    await _opt_in(client, startup_id)
+    outbox = _Outbox()
+    await _run(session, startup_id, DispatchKind.INITIAL, outbox)
+    await _backdate_sends(session, days=10)
+    await client.put(f"/api/startups/{startup_id}/exit", json=EXIT)
+
+    reminders = await _run(session, startup_id, DispatchKind.REMINDER, outbox)
+
+    assert reminders == []
+    assert len(outbox.sent) == 1
 
 
 @pytest.mark.asyncio

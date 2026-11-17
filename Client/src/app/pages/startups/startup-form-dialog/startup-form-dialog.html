@@ -85,7 +85,7 @@
       <mat-slide-toggle
         formControlName="monthly_report_enabled"
         color="primary"
-        aria-describedby="h-2ea6-monthly_report"
+        [aria-describedby]="data?.startup?.exited_on ? 'h-2ea6-monthly_report h-2ea6-monthly_report_exited' : 'h-2ea6-monthly_report'"
       >
         Enviar o link de indicadores por e-mail todo mês
       </mat-slide-toggle>
@@ -95,6 +95,12 @@
         não tiver sido preenchido, vai um lembrete — ou o próprio link, para quem ainda não o
         recebeu (envio ligado ou executivo marcado depois do dia {{ days.initial }}).
       </p>
+      @if (data?.startup?.exited_on) {
+        <p class="toggle-field-hint" id="h-2ea6-monthly_report_exited">
+          <strong>Startup encerrada:</strong> nenhum e-mail é enviado enquanto a saída estiver
+          registrada. Esta opção fica guardada e volta a valer se a saída for desfeita.
+        </p>
+      }
     </div>
   </form>
 </mat-dialog-content>

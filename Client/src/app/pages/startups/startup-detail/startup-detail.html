@@ -411,7 +411,16 @@
       aria-labelledby="tab-executivos"
       [hidden]="activeSection() !== 'executivos'"
     >
-      @if (startup()?.monthly_report_enabled) {
+      @if (startup()?.monthly_report_enabled && startup()?.exited_on) {
+        <!-- The preference is kept as it was, so undoing the exit restores it. -->
+        <p class="monthly-report-note">
+          <mat-icon aria-hidden="true">pause_circle</mat-icon>
+          <span>
+            Envio mensal suspenso: a startup está encerrada e não recebe mais o link por
+            e-mail. Se a saída for desfeita, o envio volta como estava.
+          </span>
+        </p>
+      } @else if (startup()?.monthly_report_enabled) {
         <p class="monthly-report-note" [class.monthly-report-note--warn]="monthlyRecipients().length === 0">
           <mat-icon aria-hidden="true">{{ monthlyRecipients().length ? 'schedule_send' : 'warning' }}</mat-icon>
           @if (monthlyRecipients().length) {

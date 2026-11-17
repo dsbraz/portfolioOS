@@ -10,15 +10,19 @@ from app.domain.models.monthly_indicator_token import MonthlyIndicatorToken
 from app.domain.models.monthly_report_dispatch import DispatchKind
 from app.domain.models.period import Period
 from app.domain.models.startup import Startup
-from app.domain.repositories import ExecutiveRepository, MonthlyIndicatorRepository
+from app.domain.repositories import (
+    ExecutiveRepository,
+    MonthlyIndicatorRepository,
+    StartupRepository,
+)
 from app.domain.validators import validate_period_closed
 
 
 class PlanMonthlyReport:
     """Who gets the link of the month that just closed, and which link.
 
-    A `MonthlyReportSkip` when there is nothing to send: the period is already
-    reported (who is missing comes from the platform, never from the channel),
+    A `MonthlyReportSkip` when there is nothing to send: the startup is no
+    longer followed (exited, switched off), the period is already reported (who is missing comes from the platform, never from the channel),
     or nobody marked has an address. Generating the link is a write, so it only
     happens when someone will receive it.
 
@@ -29,9 +33,11 @@ class PlanMonthlyReport:
 
     def __init__(
         self,
+        startup_repository: StartupRepository,
         executive_repository: ExecutiveRepository,
         indicator_repository: MonthlyIndicatorRepository,
     ) -> None:
+        self._startup_repository = startup_repository
         self._executive_repository = executive_repository
         self._indicator_repository = indicator_repository
 
@@ -42,6 +48,14 @@ class PlanMonthlyReport:
             today = date.today()
             period = Period(year=today.year, month=today.month).previous()
         validate_period_closed(period)
+
+        # The job listed the startups once, at the start of the run, and sends
+        # one after another: an exit, or the send switched off, may have landed
+        # since. Read it fresh, before anything is written.
+        current = await self._startup_repository.get_by_id(startup.id)
+        if current is None or not current.receives_monthly_report_for(period):
+            return MonthlyReportSkip.NOT_FOLLOWED
+        startup = current
 
         reported = await self._indicator_repository.get_by_startup_and_period(
             startup.id, period.month, period.year

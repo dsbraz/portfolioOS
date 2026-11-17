@@ -56,7 +56,8 @@ periods up to the exit month; a later period is refused. Existing indicators,
 meetings and executives stay editable. An exited
 startup has no reporting link: every link already sent stops working, whatever
 its period, a new one cannot be generated, and `Links anteriores` is no longer
-offered. Undoing the exit brings the old links back. A startup can exit only
+offered. The monthly e-mail, if switched on, stops too; the setting is kept, so
+undoing the exit brings it back along with the old links. A startup can exit only
 once; to correct an entry, `Mais ações` → `Desfazer saída`, which makes it
 tracked again, then record it anew.
 

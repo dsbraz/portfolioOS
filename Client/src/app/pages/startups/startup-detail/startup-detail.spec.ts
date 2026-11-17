@@ -239,6 +239,7 @@ describe('StartupDetail (loading and ARIA)', () => {
   describe('monthly e-mail', () => {
     afterEach(() => {
       startup.monthly_report_enabled = false;
+      startup.exited_on = null;
       executiveFixture.receives_monthly_report = false;
       executivesList = null;
     });
@@ -276,6 +277,20 @@ describe('StartupDetail (loading and ARIA)', () => {
 
       expect(note).toContain('para Ana Costa.');
       expect(note).toContain('Mesmo e-mail de quem já recebe, sem cópia: Bruno Lima.');
+    });
+
+    // The job skips an exited startup; promising a send it will not make would
+    // mislead whoever reads the page.
+    it('should say the send is suspended once the startup exited', async () => {
+      startup.monthly_report_enabled = true;
+      startup.exited_on = '2026-03-20';
+      executiveFixture.receives_monthly_report = true;
+
+      const el = await mount();
+      const note = el.querySelector('.monthly-report-note')?.textContent ?? '';
+
+      expect(note).toContain('Envio mensal suspenso');
+      expect(note).not.toContain('vai por e-mail no dia');
     });
 
     it('should warn in text when nobody would receive it', async () => {

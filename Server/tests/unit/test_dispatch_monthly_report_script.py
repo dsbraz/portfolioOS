@@ -212,6 +212,19 @@ async def test_a_reported_startup_is_skipped_quietly(capsys):
     assert capsys.readouterr().out == ""
 
 
+@pytest.mark.asyncio
+async def test_a_startup_no_longer_followed_is_skipped_not_failed(capsys):
+    # An exit recorded during the run is the platform working, not a failure:
+    # the run must not exit non-zero for it.
+    async def plan_one(_):
+        return MonthlyReportSkip.NOT_FOLLOWED
+
+    summary = await dispatch_all([_startup("Payface")], plan_one, MagicMock())
+
+    assert (summary.sent, summary.failed, summary.without_recipients) == (0, 0, 0)
+    assert "FORA DO ACOMPANHAMENTO Payface" in capsys.readouterr().out
+
+
 def test_period_flag_takes_a_closed_month():
     assert parse_period("2025-10") == Period(year=2025, month=10)
 

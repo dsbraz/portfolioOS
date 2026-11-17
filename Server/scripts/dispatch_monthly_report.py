@@ -165,6 +165,11 @@ async def dispatch_all(
             continue
         if plan is MonthlyReportSkip.ALREADY_REPORTED:
             continue
+        if plan is MonthlyReportSkip.NOT_FOLLOWED:
+            # Exited or switched off since the run listed it: nothing to send,
+            # and not a failure — but said, so the run log explains the gap.
+            print(f"FORA DO ACOMPANHAMENTO {startup.name}: nenhum envio")
+            continue
         if plan is MonthlyReportSkip.NO_RECIPIENTS:
             # Not a failure of the job, but a gap: say it where the operator
             # reads the run, not only on the startup's page.
@@ -210,7 +215,9 @@ async def main(kind: DispatchKind, period: Period | None = None) -> None:
     async def plan_one(startup: Startup) -> MonthlyReportPlan | MonthlyReportSkip:
         async with async_session() as session, session.begin():
             return await PlanMonthlyReport(
-                ExecutiveRepository(session), MonthlyIndicatorRepository(session)
+                StartupRepository(session),
+                ExecutiveRepository(session),
+                MonthlyIndicatorRepository(session),
             ).execute(startup, kind, period)
 
     async def claim(

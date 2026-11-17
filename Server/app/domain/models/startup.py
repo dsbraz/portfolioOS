@@ -146,5 +146,20 @@ class Startup(Base):
             return False
         return self.exited_on is None or period < self._exit_month()
 
+    def receives_monthly_report_for(self, period: Period) -> bool:
+        """Whether the monthly job may e-mail the reporting link for `period`.
+
+        Only where the send is on, and never once the startup exited — it has no
+        reporting link at all, so an e-mail would carry a link that answers 409.
+        Nor for a month it is not tracked in, such as one before the investment.
+        `monthly_report_enabled` is left as it was on exit, so undoing the exit
+        restores the send exactly as it stood.
+        """
+        return (
+            self.monthly_report_enabled
+            and self.exited_on is None
+            and self.is_tracked_in(period)
+        )
+
     def _exit_month(self) -> Period:
         return Period(year=self.exited_on.year, month=self.exited_on.month)
