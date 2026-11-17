@@ -119,8 +119,8 @@ async def public_create_monthly_indicator(
             detail="Token invalido ou expirado",
         )
 
-    # The same check the form ran when it opened: a link for a period after the
-    # startup's exit is refused (409), and a deleted startup answers 404.
+    # The same check the form ran when it opened: an exited startup has no
+    # reporting link, whatever the period (409); a deleted one answers 404.
     startup, _ = await get_form.execute(indicator_token)
     if not startup:
         raise HTTPException(

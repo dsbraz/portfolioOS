@@ -11,7 +11,7 @@ class UndoStartupExit:
 
     async def execute(self, startup: Startup) -> Startup:
         if startup.exited_on is None:
-            raise ConflictError("Startup nao tem saida registrada")
+            raise ConflictError("Startup não tem saída registrada")
 
         startup.exited_on = None
         startup.exit_type = None

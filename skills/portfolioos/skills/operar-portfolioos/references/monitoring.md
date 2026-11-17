@@ -16,7 +16,8 @@ the startup name, which is a link. Read:
   reported period.
 
 The table lists only the startups tracked in the selected period. A startup that
-exited still appears up to its exit month and disappears from the month after;
+exited appears in every month before its exit; in the exit month it appears only
+if it already reported that month, and from then on it no longer appears;
 exited startups are listed below the table, under `Encerradas`, with exit date
 and type, each name a link to the startup page.
 

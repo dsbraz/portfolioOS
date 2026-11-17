@@ -88,7 +88,7 @@ describe('StartupExitDialog', () => {
 
   it('stays open with what was typed and shows the refusal', () => {
     startupService.recordExit.mockReturnValue(
-      throwError(() => ({ error: { detail: 'Saida da startup ja registrada' } })),
+      throwError(() => ({ error: { detail: 'Saída da startup já registrada' } })),
     );
     fill();
 
@@ -98,7 +98,7 @@ describe('StartupExitDialog', () => {
     expect(dialogRef.close).not.toHaveBeenCalled();
     expect(component.form.controls.exit_type.value).toBe(ExitType.WRITE_OFF);
     const alert = (fixture.nativeElement as HTMLElement).querySelector('[role="alert"]');
-    expect(alert?.textContent).toContain('Saida da startup ja registrada');
+    expect(alert?.textContent).toContain('Saída da startup já registrada');
     expect(component.saving()).toBe(false);
   });
 });

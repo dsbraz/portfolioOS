@@ -95,6 +95,13 @@ describe('Portfolio (exited startups)', () => {
     expect(cells).toEqual(['Vendida SA', '20/03/2026', 'Venda (M&A ou secundária)']);
   });
 
+  it('does not call the portfolio empty when every startup has exited', async () => {
+    const { el } = await mount(() => of({ items: [exited], total: 1 }));
+
+    expect(el.textContent).toContain('Nenhuma startup acompanhada neste período');
+    expect(el.textContent).not.toContain('Nenhuma startup cadastrada');
+  });
+
   it('says so when no startup has exited', async () => {
     const { el } = await mount(() => of({ items: [], total: 0 }));
 

@@ -97,11 +97,17 @@ class Startup(Base):
         if self.exited_on is not None:
             raise ConflictError(EXITED_STARTUP_HAS_NO_LINK)
 
-    def is_tracked_in(self, period: Period) -> bool:
+    def is_tracked_in(self, period: Period, reported: bool = False) -> bool:
         """Whether the startup is still followed in `period`.
 
-        The exit month itself still counts: the startup usually reported it.
+        Every month before the exit counts and every month after it does not.
+        The exit month counts only if the startup `reported` it: its links close
+        with the exit, so an unreported exit month would be a pending report
+        nobody could ever send — while a reported one keeps its numbers.
         """
         if self.exited_on is None:
             return True
-        return period <= Period(year=self.exited_on.year, month=self.exited_on.month)
+        exit_month = Period(year=self.exited_on.year, month=self.exited_on.month)
+        if period < exit_month:
+            return True
+        return period == exit_month and reported

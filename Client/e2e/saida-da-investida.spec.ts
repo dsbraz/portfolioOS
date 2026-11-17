@@ -9,12 +9,12 @@ import {
 } from './support/app';
 
 /**
- * Recording an exit: the startup stops being tracked after the exit month and
- * stays reachable under `Encerradas`, with its history.
+ * Recording an exit: the startup stops being tracked and stays reachable under
+ * `Encerradas`, with its history.
  *
  * The exit falls in `CENARIO.periodo` (Jul/2026), chosen explicitly, and the
- * monitoring is checked on that month and the next one — never on whatever
- * month the wall clock is in. Mid-month on purpose, so no time zone can move
+ * monitoring is checked around it — never on whatever month the wall clock is
+ * in. Mid-month on purpose, so no time zone can move
  * the date into another month.
  */
 test.describe('saída da investida', () => {
@@ -64,12 +64,13 @@ test.describe('saída da investida', () => {
     const monitoradas = page.getByRole('region', { name: /startups monitoradas/ });
     const encerradas = page.getByRole('region', { name: /startups encerradas/ });
 
-    // The exit month still counts: the startup usually reported it.
-    await page.goto(`/portfolio?month=7&year=${CENARIO.periodo.ano}`);
+    // Before the exit it was tracked, and the past stays as it was.
+    await page.goto(`/portfolio?month=6&year=${CENARIO.periodo.ano}`);
     await expect(monitoradas.getByRole('link', { name: nome, exact: true })).toBeVisible();
 
-    // From the next month on it is no longer tracked — but still one click away.
-    await page.goto(`/portfolio?month=8&year=${CENARIO.periodo.ano}`);
+    // It never reported July and its links are closed, so the exit month is not
+    // a pending report — it leaves the monitoring, but stays one click away.
+    await page.goto(`/portfolio?month=7&year=${CENARIO.periodo.ano}`);
     await expect(monitoradas).toBeVisible();
     await expect(monitoradas.getByRole('link', { name: nome, exact: true })).toHaveCount(0);
     await encerradas.getByRole('link', { name: nome, exact: true }).click();

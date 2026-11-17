@@ -71,8 +71,15 @@
       <mat-card class="empty-state">
         <mat-card-content>
           <mat-icon class="empty-icon">rocket_launch</mat-icon>
-          <h2>Nenhuma startup cadastrada</h2>
-          <p>Clique em "Nova Startup" para adicionar a primeira.</p>
+          <!-- An empty period is not an empty portfolio when every startup has
+               exited: saying "none registered" would contradict the list below. -->
+          @if (exitedStartups()?.length) {
+            <h2>Nenhuma startup acompanhada neste período</h2>
+            <p>As startups encerradas estão listadas abaixo.</p>
+          } @else {
+            <h2>Nenhuma startup cadastrada</h2>
+            <p>Clique em "Nova Startup" para adicionar a primeira.</p>
+          }
         </mat-card-content>
       </mat-card>
     } @else {

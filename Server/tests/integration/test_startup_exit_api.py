@@ -137,20 +137,63 @@ async def test_list_filters_by_tracked(client: AsyncClient):
     assert exited["total"] == 1
 
 
+async def _summary(client: AsyncClient, month: int) -> dict:
+    return (await client.get(f"/api/portfolio/summary?month={month}&year=2026")).json()
+
+
 @pytest.mark.asyncio
-async def test_portfolio_stops_counting_after_the_exit_month(client: AsyncClient):
+async def test_portfolio_counts_before_the_exit_and_stops_after_it(client: AsyncClient):
     await _create_startup(client, "Ativa")
     exited_id = await _create_startup(client, "Vendida")
     await client.put(f"/api/startups/{exited_id}/exit", json=EXIT)
 
-    in_exit_month = (
-        await client.get("/api/portfolio/summary?month=3&year=2026")
-    ).json()
-    after_exit = (await client.get("/api/portfolio/summary?month=4&year=2026")).json()
+    before_exit = await _summary(client, 2)
+    after_exit = await _summary(client, 4)
 
-    assert in_exit_month["total_startups"] == 2
+    assert before_exit["total_startups"] == 2
     assert after_exit["total_startups"] == 1
     assert [row["startup"]["name"] for row in after_exit["startups"]] == ["Ativa"]
+
+
+@pytest.mark.asyncio
+async def test_unreported_exit_month_is_not_a_pending_report(client: AsyncClient):
+    # The links are closed by the exit, so the month could never be reported.
+    await _create_startup(client, "Ativa")
+    exited_id = await _create_startup(client, "Vendida")
+    await client.put(f"/api/startups/{exited_id}/exit", json=EXIT)
+
+    in_exit_month = await _summary(client, 3)
+
+    assert in_exit_month["total_startups"] == 1
+    assert [row["startup"]["name"] for row in in_exit_month["startups"]] == ["Ativa"]
+
+
+@pytest.mark.asyncio
+async def test_reported_exit_month_keeps_its_numbers(client: AsyncClient):
+    await _create_startup(client, "Ativa")
+    exited_id = await _create_startup(client, "Vendida")
+    await client.post(
+        f"/api/startups/{exited_id}/monthly-indicators",
+        json={"month": 3, "year": 2026, "total_revenue": 5000},
+    )
+    await client.put(f"/api/startups/{exited_id}/exit", json=EXIT)
+
+    in_exit_month = await _summary(client, 3)
+
+    assert in_exit_month["total_startups"] == 2
+    assert float(in_exit_month["revenue"]) == 5000
+    assert in_exit_month["monthly_report_pct"] == 50.0
+
+
+@pytest.mark.asyncio
+async def test_investment_date_after_the_exit_is_400(client: AsyncClient, startup_id: str):
+    await client.put(f"/api/startups/{startup_id}/exit", json=EXIT)
+
+    resp = await client.patch(
+        f"/api/startups/{startup_id}", json={"investment_date": "2026-04-01"}
+    )
+
+    assert resp.status_code == 400
 
 
 @pytest.mark.asyncio

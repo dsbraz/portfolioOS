@@ -22,12 +22,12 @@ class RecordStartupExit:
         exit_notes: str | None,
     ) -> Startup:
         if startup.exited_on is not None:
-            raise ConflictError("Saida da startup ja registrada")
+            raise ConflictError("Saída da startup já registrada")
         if exited_on > date.today():
-            raise InvalidInputError("Data da saida nao pode ser no futuro")
+            raise InvalidInputError("Data da saída não pode ser no futuro")
         if exited_on < startup.investment_date:
             raise InvalidInputError(
-                "Data da saida nao pode ser anterior ao investimento"
+                "Data da saída não pode ser anterior ao investimento"
             )
 
         startup.exited_on = exited_on

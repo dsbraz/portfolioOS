@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from app.application.startup.record_startup_exit import RecordStartupExit
+from app.application.startup.update_startup import UpdateStartup
 from app.application.startup.undo_startup_exit import UndoStartupExit
 from app.domain.exceptions import ConflictError, InvalidInputError
 from app.domain.models.period import Period
@@ -34,17 +35,28 @@ def test_a_startup_without_exit_is_tracked_in_any_period():
     assert _startup().is_tracked_in(Period(year=2030, month=1))
 
 
-def test_a_startup_is_still_tracked_in_the_month_it_exited():
+def test_a_startup_is_tracked_before_the_month_it_exited():
     startup = _startup(exited_on=date(2026, 3, 20))
 
-    assert startup.is_tracked_in(Period(year=2026, month=3))
     assert startup.is_tracked_in(Period(year=2026, month=2))
+    assert startup.is_tracked_in(Period(year=2025, month=12))
+
+
+def test_the_exit_month_counts_only_if_the_startup_reported_it():
+    # Its links are closed, so an unreported exit month could never be resolved:
+    # counting it would leave a pending report nobody can send.
+    startup = _startup(exited_on=date(2026, 3, 20))
+
+    assert startup.is_tracked_in(Period(year=2026, month=3), reported=True)
+    assert not startup.is_tracked_in(Period(year=2026, month=3), reported=False)
+    assert not startup.is_tracked_in(Period(year=2026, month=3))
 
 
 def test_a_startup_is_not_tracked_after_the_month_it_exited():
     startup = _startup(exited_on=date(2026, 3, 20))
 
     assert not startup.is_tracked_in(Period(year=2026, month=4))
+    assert not startup.is_tracked_in(Period(year=2026, month=4), reported=True)
     assert not startup.is_tracked_in(Period(year=2027, month=1))
 
 
@@ -127,3 +139,29 @@ async def test_undo_without_an_exit_is_a_conflict(repo):
     with pytest.raises(ConflictError):
         await UndoStartupExit(repo).execute(_startup())
     repo.update.assert_not_awaited()
+
+
+# --- UpdateStartup keeps the exit coherent ---
+
+
+@pytest.mark.asyncio
+async def test_investment_date_cannot_move_past_the_exit(repo):
+    startup = _startup(exited_on=date(2026, 3, 20), exit_type=ExitType.SALE)
+
+    with pytest.raises(InvalidInputError):
+        await UpdateStartup(repo).execute(
+            startup, {"investment_date": date(2026, 3, 21)}
+        )
+    assert startup.investment_date == date(2024, 3, 10)
+    repo.update.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_investment_date_on_the_exit_day_is_accepted(repo):
+    startup = _startup(exited_on=date(2026, 3, 20), exit_type=ExitType.SALE)
+
+    result = await UpdateStartup(repo).execute(
+        startup, {"investment_date": date(2026, 3, 20)}
+    )
+
+    assert result.investment_date == date(2026, 3, 20)
